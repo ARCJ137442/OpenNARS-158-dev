@@ -23,29 +23,31 @@ package com.googlecode.opennars.entity;
 
 import com.googlecode.opennars.language.*;
 import com.googlecode.opennars.main.*;
+import com.googlecode.opennars.main.Memory.ReportType;
 import com.googlecode.opennars.parser.Symbols;
 
 /**
  * A Sentence contains a Statement, a TruthValue, and a Base list.
- *<p>
+ * <p>
  * It is used as the premises and conclusions of all inference rules.
  */
-public abstract class Sentence {    
+public abstract class Sentence {
     protected Term content;
     protected char punctuation;
     protected TruthValue truth = null;
     protected Base base = null;
-    protected boolean input = false;            // whether it is an input sentence
-    protected Judgement bestSolution = null;       // for Question and Goal
-    protected Memory memory;					// to change things
-//    protected Object token;						// to track information through inferences
-    
+    protected boolean input = false; // whether it is an input sentence
+    protected Judgement bestSolution = null; // for Question and Goal
+    protected Memory memory; // to change things
+    // protected Object token; // to track information through inferences
+
     /**
      * Make a Sentence from an input String. Called by StringParser.
-     * @param term The content of the sentence
-     * @param punc The punctuation (and therefore, type) of the sentence
+     * 
+     * @param term  The content of the sentence
+     * @param punc  The punctuation (and therefore, type) of the sentence
      * @param truth The truth value of the sentence, if it is a Judgement (or Goal)
-     * @param base The base of the truth value (for Judgement or Goal)
+     * @param base  The base of the truth value (for Judgement or Goal)
      * @return the Sentence generated from the arguments
      */
     public static Sentence make(Term term, char punc, TruthValue truth, Base base, Memory memory) {
@@ -64,11 +66,12 @@ public abstract class Sentence {
     }
 
     /**
-     * Make a derived Sentence. Called by memory 
-     * @param term The content of the sentence
-     * @param oldS A sample sentence providing the type of the new sentence
+     * Make a derived Sentence. Called by memory
+     * 
+     * @param term  The content of the sentence
+     * @param oldS  A sample sentence providing the type of the new sentence
      * @param truth The truth value of the sentence, if it is a Judgement (or Goal)
-     * @param base The base of the truth value (for Judgement or Goal)
+     * @param base  The base of the truth value (for Judgement or Goal)
      * @return the Sentence generated from the arguments
      */
     public static Sentence make(Sentence oldS, Term term, TruthValue truth, Base base, Memory memory) {
@@ -80,7 +83,7 @@ public abstract class Sentence {
             return new Goal(term, Symbols.GOAL_MARK, truth, base, memory);
         return new Judgement(term, Symbols.JUDGMENT_MARK, truth, base, memory);
     }
-    
+
     public Term getContent() {
         return content;
     }
@@ -96,7 +99,7 @@ public abstract class Sentence {
     public Base getBase() {
         return null;
     }
-    
+
     // distinguish Judgement from Goal
     public boolean isJudgment() {
         return (punctuation == Symbols.JUDGMENT_MARK);
@@ -105,7 +108,7 @@ public abstract class Sentence {
     public boolean isInput() {
         return input;
     }
-    
+
     public void setInput() {
         input = true;
     }
@@ -113,44 +116,44 @@ public abstract class Sentence {
     public Judgement getBestSolution() {
         return bestSolution;
     }
-    
+
     public void setBestSolution(Judgement judg) {
         bestSolution = judg;
         if (input)
-            memory.report(judg, false);        // report answer to input question
+            memory.report(judg, ReportType.ANSWER); // report answer to input question
     }
-    
+
     // display a sentence
     public String toString() {
         StringBuffer s = new StringBuffer();
         s.append(content.getName());
         s.append(punctuation + " ");
         if (truth != null) {
-            s.append(truth.toString()); 
+            s.append(truth.toString());
             s.append(base.toString());
         }
         if (bestSolution != null)
             s.append("BestSolution: " + bestSolution);
-        
+
         return s.toString();
     }
-    
+
     // display a sentence in compact form (2 digits)
     public String toString2() {
         StringBuffer s = new StringBuffer();
         s.append(content.getName());
         s.append(punctuation + " ");
         if (truth != null) {
-            s.append(truth.toString2()); 
+            s.append(truth.toString2());
         }
         return s.toString();
     }
 
-	public boolean isGoal() {
-		return (this.punctuation == Symbols.GOAL_MARK);
-	}
-	
-	public boolean isQuestion() {
-		return (this.punctuation == Symbols.QUESTION_MARK);
-	}
+    public boolean isGoal() {
+        return (this.punctuation == Symbols.GOAL_MARK);
+    }
+
+    public boolean isQuestion() {
+        return (this.punctuation == Symbols.QUESTION_MARK);
+    }
 }
