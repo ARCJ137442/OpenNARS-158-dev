@@ -1,7 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
+<html lang="en">
 
-<head>NARS</head>
+<title>OpenNARS 1.5.8</title>
+
+<head>
+    <meta charset="utf-8">
+</head>NARS</head>
 
 <body>
 
@@ -9,7 +13,13 @@
 
     <h2>Package Specification</h2>
 
-    The code for distribution is <tt>NARS.jar</tt>, in Java 1.7.0_21.
+    The code for distribution is
+    <tt>opennars-158-gui.jar</tt>,
+    <tt>opennars-158-shell.jar</tt>
+    and <tt>opennars-158-batch.jar</tt>
+    in Java
+    1.7.0_21.
+
     <p>
         It works both as :
     <ul>
@@ -17,12 +27,15 @@
         <li>an applet (with restricted functionality and display);</li>
         <li>a command line batch tool</li>
     </ul>
+    </p>
+
     <p>
         To run the application from the command line, go to the folder containing NARS.jar
         and type the following:
     <pre>
-            java -cp NARS.jar nars.main_nogui.NARSBatch nars-dist/Examples/Example-NAL1-edited.txt
+            java -jar opennars-158-batch.jar nars-dist/Examples/Example-NAL1-edited.txt
         </pre>
+    </p>
 
     For more information, see
     <a href="http://nars.wang.googlepages.com/home">NARS website</a>,
