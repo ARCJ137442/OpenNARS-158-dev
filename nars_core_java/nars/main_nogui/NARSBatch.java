@@ -117,7 +117,8 @@ public class NARSBatch {
     }
 
     /**
-     * Initialize the system at the control center.<p>
+     * Initialize the system at the control center.
+     * <p>
      * Can instantiate multiple reasoners
      */
     public final void init() {

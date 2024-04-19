@@ -40,7 +40,7 @@ public class ReasonerBatch {
     /**
      * global DEBUG print switch
      */
-    public static final boolean DEBUG = false;
+    public static boolean DEBUG = false;
     /**
      * The name of the reasoner
      */
@@ -97,7 +97,7 @@ public class ReasonerBatch {
         clock = 0;
         memory.init();
         Stamp.init();
-//	    timer = 0;
+        // timer = 0;
     }
 
     public Memory getMemory() {
@@ -185,7 +185,7 @@ public class ReasonerBatch {
             for (OutputChannel channelOut : outputChannels) {
                 channelOut.nextOutput(output);
             }
-            output.clear();	// this will trigger display the current value of timer in Memory.report()
+            output.clear(); // this will trigger display the current value of timer in Memory.report()
         }
         if (running || walkingSteps > 0) {
             clock++;
@@ -246,7 +246,7 @@ public class ReasonerBatch {
     /**
      * To get the timer value and then to
      * reset it by {@link #initTimer()};
-     * plays the same role as {@link nars.gui.MainWindow#updateTimer()} 
+     * plays the same role as {@link nars.gui.MainWindow#updateTimer()}
      *
      * @return The previous timer value
      */
@@ -258,7 +258,7 @@ public class ReasonerBatch {
 
     /**
      * Reset timer;
-     * plays the same role as {@link nars.gui.MainWindow#initTimer()} 
+     * plays the same role as {@link nars.gui.MainWindow#initTimer()}
      */
     public void initTimer() {
         setTimer(0);

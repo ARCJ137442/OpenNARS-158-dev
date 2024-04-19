@@ -51,7 +51,7 @@ public class Symbols {
     public static final char SET_EXT_CLOSER = '}';
     public static final char SET_INT_OPENER = '[';
     public static final char SET_INT_CLOSER = ']';
-    
+
     /* special characors in argument list */
     public static final char ARGUMENT_SEPARATOR = ',';
     public static final char IMAGE_PLACE_HOLDER = '_';
@@ -91,7 +91,7 @@ public class Symbols {
     public static final char STAMP_CLOSER = '}';
     public static final char STAMP_SEPARATOR = ';';
     public static final char STAMP_STARTER = ':';
-    
+
     /* TermLink type, display only */
     public static final String TO_COMPONENT_1 = " @(";
     public static final String TO_COMPONENT_2 = ")_ ";
