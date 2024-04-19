@@ -1,8 +1,8 @@
 @echo off
 REM Very simple build script
 
-@REM DEL classes
-@REM mkdir classes
+rm -rf classes
+mkdir classes
 @REM javac -d classes -Xlint:unchecked nars_gui\src\main\java\*\*\*.java nars_core_java\src\main\java\*\*\*.java nars_core_java\*\*\*\*.java
 @REM javac -d classes -Xlint:unchecked nars_gui/src/main/java/*.java nars_core_java/src/main/java/*/*/*.java nars_core_java/*/*/*/*.java
 @REM 路径：
