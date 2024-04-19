@@ -1,2 +1,10 @@
 /dist/
 /nbproject/private/
+.vscode/
+
+# 编译时文件
+/classes/
+NARS.jar
+sources.txt
+manifest.txt
+compile.log
