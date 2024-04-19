@@ -29,23 +29,35 @@ public class Shell {
                 "Welcome to the OpenNARS Shell, type some Narsese input and press enter, use questions to get answers, or increase volume with *volume=n with n=0..100");
         reasoner.run();
         reasoner.getSilenceValue().set(100);
-        int cnt = 0;
         while (true) {
             synchronized (inputString) {
                 if (!"".equals(inputString)) {
                     try {
-                        if (inputString.startsWith("*volume=")) { // volume to be consistent with OpenNARS
+                        // 推理步进（手动）
+                        if (inputString.matches("[0-9]+")) {
+                            System.out.println("INFO: running " + inputString + " cycles.");
+                            int val = Integer.parseInt(inputString);
+                            for (int i = 0; i < val; i++)
+                                reasoner.tick();
+                        }
+                        // 设置音量
+                        else if (inputString.startsWith("*volume=")) { // volume to be consistent with OpenNARS
                             int val = Integer.parseInt(inputString.split("\\*volume=")[1]);
                             if (val >= 0 && val <= 100) {
                                 reasoner.getSilenceValue().set(100 - val);
                             } else {
                                 System.out.println("Volume ignored, not in range");
                             }
-                        } else if (inputString.startsWith("*debug=")) { // volume to be consistent with OpenNARS
+                        }
+                        // 开启debug模式
+                        else if (inputString.startsWith("*debug=")) { // volume to be consistent with OpenNARS
                             String param = inputString.split("\\*debug=")[1];
                             ReasonerBatch.DEBUG = !param.isEmpty();
-                        } else {
+                        }
+                        // 输入Narsese
+                        else {
                             reasoner.textInputLine(inputString);
+                            reasoner.tick(); // 输入之后至少推理步进一步
                         }
                         inputString = "";
                     } catch (Exception ex) {
@@ -53,11 +65,6 @@ public class Shell {
                     }
                 }
             }
-            reasoner.tick();
-            cnt++;
-            // if(cnt%10000 == 0) {
-            // System.out.println(cnt);
-            // }
         }
     }
 
@@ -65,10 +72,10 @@ public class Shell {
         @Override
         public void nextOutput(ArrayList<String> arg0) {
             for (String s : arg0) {
-                if (!s.matches("[0-9]+")) {
-                    // 就是此处输出
+                if (s.matches("[0-9]+"))
+                    System.out.println("INFO: ran " + s + " cycles.");
+                else
                     System.out.println(s);
-                }
             }
         }
 
