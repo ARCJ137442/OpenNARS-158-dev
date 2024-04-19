@@ -25,7 +25,7 @@ dir src /b /s /A:-D *.java > sources.txt
 @REM * nars_core_java/src/main/java/*/*/*.java
 @REM * nars_core_java/*/*/*/*.java
 @REM javac -classpath open-nars\src\lib\JSAP-2.1.jar -d classes @sources.txt -Xstdout compile.log
-javac -classpath open-nars\src\lib\*.jar -d classes @sources.txt -Xstdout compile.log
+javac -d classes @sources.txt -Xstdout compile.log
 @REM H:\A137442\Develop\AGI\NARS\OpenNARS-158\open-nars\tools\com\googlecode\opennars\tools\actuary\Actuary.java
 @REM ! ↑这是个孤立文件（核心shell、GUI不依赖它），但会导致编译失败——故需在sources.txt忽略
 
