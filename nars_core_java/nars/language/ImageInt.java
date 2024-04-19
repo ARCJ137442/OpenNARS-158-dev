@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -42,8 +42,9 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * constructor with partial values, called by make
-     * @param n The name of the term
-     * @param arg The component list of the term
+     *
+     * @param n     The name of the term
+     * @param arg   The component list of the term
      * @param index The index of relation in the component list
      */
     private ImageInt(String n, ArrayList<Term> arg, short index) {
@@ -53,11 +54,12 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
-     * @param cs Component list
-     * @param open Open variable list
+     *
+     * @param n          The name of the term
+     * @param cs         Component list
+     * @param open       Open variable list
      * @param complexity Syntactic complexity of the compound
-     * @param index The index of relation in the component list
+     * @param index      The index of relation in the component list
      */
     private ImageInt(String n, ArrayList<Term> cs, boolean con, short complexity, short index) {
         super(n, cs, con, complexity);
@@ -66,6 +68,7 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Clone an object
+     *
      * @return A new object, to be casted into an ImageInt
      */
     public Object clone() {
@@ -74,9 +77,10 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Try to make a new ImageExt. Called by StringParser.
+     *
      * @return the Term generated from the arguments
      * @param argList The list of components
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      */
     public static Term make(ArrayList<Term> argList, Memory memory) {
         if (argList.size() < 2) {
@@ -97,21 +101,25 @@ public class ImageInt extends CompoundTerm {
     }
 
     /**
-     * Try to make an Image from a Product and a relation. Called by the inference rules.
-     * @param product The product
+     * Try to make an Image from a Product and a relation. Called by the inference
+     * rules.
+     *
+     * @param product  The product
      * @param relation The relation
-     * @param index The index of the place-holder
-     * @param memory Reference to the memory
+     * @param index    The index of the place-holder
+     * @param memory   Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Term make(Product product, Term relation, short index, Memory memory) {
         if (relation instanceof Product) {
             Product p2 = (Product) relation;
             if ((product.size() == 2) && (p2.size() == 2)) {
-                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {// (\,_,(*,a,b),b) is reduced to a
+                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {// (\,_,(*,a,b),b) is reduced to
+                                                                                       // a
                     return p2.componentAt(0);
                 }
-                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {// (\,(*,a,b),a,_) is reduced to b
+                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {// (\,(*,a,b),a,_) is reduced to
+                                                                                       // b
                     return p2.componentAt(1);
                 }
             }
@@ -122,11 +130,13 @@ public class ImageInt extends CompoundTerm {
     }
 
     /**
-     * Try to make an Image from an existing Image and a component. Called by the inference rules.
-     * @param oldImage The existing Image
+     * Try to make an Image from an existing Image and a component. Called by the
+     * inference rules.
+     *
+     * @param oldImage  The existing Image
      * @param component The component to be added into the component list
-     * @param index The index of the place-holder in the new Image
-     * @param memory Reference to the memory
+     * @param index     The index of the place-holder in the new Image
+     * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Term make(ImageInt oldImage, Term component, short index, Memory memory) {
@@ -139,10 +149,12 @@ public class ImageInt extends CompoundTerm {
     }
 
     /**
-     * Try to make a new compound from a set of components. Called by the public make methods.
+     * Try to make a new compound from a set of components. Called by the public
+     * make methods.
+     *
      * @param argument The argument list
-     * @param index The index of the place-holder in the new Image
-     * @param memory Reference to the memory
+     * @param index    The index of the place-holder in the new Image
+     * @param memory   Reference to the memory
      * @return the Term generated from the arguments
      */
     public static Term make(ArrayList<Term> argument, short index, Memory memory) {
@@ -153,6 +165,7 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * get the index of the relation in the component list
+     *
      * @return the index of relation
      */
     public short getRelationIndex() {
@@ -161,6 +174,7 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Get the relation term in the Image
+     *
      * @return The term representing a relation
      */
     public Term getRelation() {
@@ -169,6 +183,7 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Get the other term in the Image
+     *
      * @return The term related
      */
     public Term getTheOtherComponent() {
@@ -179,7 +194,9 @@ public class ImageInt extends CompoundTerm {
     }
 
     /**
-     * Override the default in making the name of the current term from existing fields
+     * Override the default in making the name of the current term from existing
+     * fields
+     *
      * @return the name of the term
      */
     @Override
@@ -189,6 +206,7 @@ public class ImageInt extends CompoundTerm {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     public String operator() {

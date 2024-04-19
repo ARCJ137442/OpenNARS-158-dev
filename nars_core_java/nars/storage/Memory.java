@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -506,7 +506,7 @@ public class Memory {
      * separate GUI and inference, so this method takes as argument a
      * {@link BagObserver} and calls
      * {@link ConceptBag#addBagObserver(BagObserver, String)} ;
-     * 
+     *
      * see design for {@link Bag} and {@link nars.gui.BagWindow}
      * in {@link Bag#addBagObserver(BagObserver, String)}
      *

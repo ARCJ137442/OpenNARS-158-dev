@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -24,7 +24,7 @@
 package nars.io;
 
 /**
- * An interface to be implemented in all input channels 
+ * An interface to be implemented in all input channels
  * to get the input for the next moment from an input channel
  */
 public interface InputChannel {

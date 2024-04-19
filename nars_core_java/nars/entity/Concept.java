@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -83,12 +83,11 @@ public final class Concept extends Item {
      */
     private EntityObserver entityObserver = new NullEntityObserver();
 
-
     /* ---------- constructor and initialization ---------- */
     /**
      * Constructor, called in Memory.getConcept only
      *
-     * @param tm A term corresponding to the concept
+     * @param tm     A term corresponding to the concept
      * @param memory A reference to the memory
      */
     public Concept(Term tm, Memory memory) {
@@ -120,7 +119,7 @@ public final class Concept extends Item {
         } else {
             processQuestion(task);
         }
-        if (task.getBudget().aboveThreshold()) {    // still need to be processed
+        if (task.getBudget().aboveThreshold()) { // still need to be processed
             linkToTask(task);
         }
         entityObserver.refresh(displayContent());
@@ -142,8 +141,8 @@ public final class Concept extends Item {
             Stamp oldStamp = oldBelief.getStamp();
             if (newStamp.equals(oldStamp)) {
                 if (task.getParentTask().getSentence().isJudgment()) {
-                    task.getBudget().decPriority(0);    // duplicated task
-                }   // else: activated belief
+                    task.getBudget().decPriority(0); // duplicated task
+                } // else: activated belief
                 return;
             } else if (LocalRules.revisible(judg, oldBelief)) {
                 memory.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
@@ -155,7 +154,7 @@ public final class Concept extends Item {
         }
         if (task.getBudget().aboveThreshold()) {
             for (Task ques : questions) {
-//                LocalRules.trySolution(ques.getSentence(), judg, ques, memory);
+                // LocalRules.trySolution(ques.getSentence(), judg, ques, memory);
                 LocalRules.trySolution(judg, ques, memory);
             }
             addToTable(judg, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
@@ -185,11 +184,11 @@ public final class Concept extends Item {
             questions.add(task);
         }
         if (questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-            questions.remove(0);    // FIFO
+            questions.remove(0); // FIFO
         }
         Sentence newAnswer = evaluation(ques, beliefs);
         if (newAnswer != null) {
-//            LocalRules.trySolution(ques, newAnswer, task, memory);
+            // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, task, memory);
             return newAnswer.getTruth().getExpectation();
         } else {
@@ -203,12 +202,12 @@ public final class Concept extends Item {
      * <p>
      * The only method that calls the TaskLink constructor.
      *
-     * @param task The task to be linked
+     * @param task    The task to be linked
      * @param content The content of the task
      */
     private void linkToTask(Task task) {
         BudgetValue taskBudget = task.getBudget();
-        TaskLink taskLink = new TaskLink(task, null, taskBudget);   // link type: SELF
+        TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
         insertTaskLink(taskLink);
         if (term instanceof CompoundTerm) {
             if (termLinkTemplates.size() > 0) {
@@ -217,16 +216,17 @@ public final class Concept extends Item {
                     Term componentTerm;
                     Concept componentConcept;
                     for (TermLink termLink : termLinkTemplates) {
-//                        if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) { // avoid circular transform
+                        // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
+                        // // avoid circular transform
                         taskLink = new TaskLink(task, termLink, subBudget);
                         componentTerm = termLink.getTarget();
                         componentConcept = memory.getConcept(componentTerm);
                         if (componentConcept != null) {
                             componentConcept.insertTaskLink(taskLink);
                         }
-//                        }
+                        // }
                     }
-                    buildTermLinks(taskBudget);  // recursively insert TermLink
+                    buildTermLinks(taskBudget); // recursively insert TermLink
                 }
             }
         }
@@ -237,11 +237,11 @@ public final class Concept extends Item {
      * and remove redundant or low rank one
      *
      * @param newSentence The judgment to be processed
-     * @param table The table to be revised
-     * @param capacity The capacity of the table
+     * @param table       The table to be revised
+     * @param capacity    The capacity of the table
      */
     private void addToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
-        float rank1 = BudgetFunctions.rankBelief(newSentence);    // for the new isBelief
+        float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         Sentence judgment2;
         float rank2;
         int i;
@@ -269,7 +269,7 @@ public final class Concept extends Item {
      * Evaluate a query against beliefs (and desires in the future)
      *
      * @param query The question to be processed
-     * @param list The list of beliefs to be used
+     * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
     private Sentence evaluation(Sentence query, ArrayList<Sentence> list) {
@@ -323,9 +323,9 @@ public final class Concept extends Item {
                         concept = memory.getConcept(t);
                         if (concept != null) {
                             termLink1 = new TermLink(t, template, subBudget);
-                            insertTermLink(termLink1);   // this termLink to that
+                            insertTermLink(termLink1); // this termLink to that
                             termLink2 = new TermLink(term, template, subBudget);
-                            concept.insertTermLink(termLink2);   // that termLink to this
+                            concept.insertTermLink(termLink2); // that termLink to this
                             if (t instanceof CompoundTerm) {
                                 concept.buildTermLinks(subBudget);
                             }
@@ -363,7 +363,7 @@ public final class Concept extends Item {
      * @return The concept name, with taskBudget in the full version
      */
     @Override
-    public String toString() {  // called from concept bag
+    public String toString() { // called from concept bag
         if (NARSBatch.isStandAlone()) {
             return (super.toStringBrief() + " " + key);
         } else {
@@ -432,7 +432,7 @@ public final class Concept extends Item {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             memory.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
             if (memory.newStamp != null) {
-                Sentence belief2 = (Sentence) belief.clone();   // will this mess up priority adjustment?
+                Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?
                 return belief2;
             }
         }
@@ -452,14 +452,15 @@ public final class Concept extends Item {
         memory.currentBeliefLink = null;
         memory.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         Task task = currentTaskLink.getTargetTask();
-        memory.currentTask = task;  // one of the two places where this variable is set
-//      memory.getRecorder().append(" * Selected Task: " + task + "\n");    // for debugging
+        memory.currentTask = task; // one of the two places where this variable is set
+        // memory.getRecorder().append(" * Selected Task: " + task + "\n"); // for
+        // debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
             memory.currentBelief = null;
-            RuleTables.transformTask(currentTaskLink, memory);  // to turn this into structural inference as below?
+            RuleTables.transformTask(currentTaskLink, memory); // to turn this into structural inference as below?
         } else {
             int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
-//        while (memory.noResult() && (termLinkCount > 0)) {
+            // while (memory.noResult() && (termLinkCount > 0)) {
             while (termLinkCount > 0) {
                 TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
                 if (termLink != null) {
@@ -486,8 +487,8 @@ public final class Concept extends Item {
      * {@link nars.storage.Bag#addBagObserver(BagObserver, String)}
      *
      * @param entityObserver {@link EntityObserver} to set; TODO make it a real
-     * observer pattern (i.e. with a plurality of observers)
-     * @param showLinks Whether to display the task links
+     *                       observer pattern (i.e. with a plurality of observers)
+     * @param showLinks      Whether to display the task links
      */
     @SuppressWarnings("unchecked")
     public void startPlay(EntityObserver entityObserver, boolean showLinks) {

@@ -1,17 +1,17 @@
 // Table 3.3: The Basic Syllogistic Rules
-**** Deduction , Exemplification 
+**** Deduction , Exemplification
 < M --> P >.
 < S --> M >.
 < S --> P >?
 < P --> S >?
 11
-**** Induction 
+**** Induction
 < M --> P >.
 < M --> S >.
 < S --> P >?
 < P --> S >?
 6
-**** Abduction 
+**** Abduction
 < P --> M >.
 < S --> M >.
 < S --> P >?

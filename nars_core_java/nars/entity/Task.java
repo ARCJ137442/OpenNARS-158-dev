@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -62,9 +62,9 @@ public class Task extends Item {
     /**
      * Constructor for a derived task
      *
-     * @param s The sentence
-     * @param b The budget
-     * @param parentTask The task from which this new task is derived
+     * @param s            The sentence
+     * @param b            The budget
+     * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
      */
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief) {
@@ -76,11 +76,11 @@ public class Task extends Item {
     /**
      * Constructor for an activated task
      *
-     * @param s The sentence
-     * @param b The budget
-     * @param parentTask The task from which this new task is derived
+     * @param s            The sentence
+     * @param b            The budget
+     * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
-     * @param solution The belief to be used in future inference
+     * @param solution     The belief to be used in future inference
      */
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
         this(s, b, parentTask, parentBelief);
@@ -128,9 +128,9 @@ public class Task extends Item {
      *
      * @return Whether the Task is derived by a StructuralRule
      */
-//    public boolean isStructural() {
-//        return (parentBelief == null) && (parentTask != null);
-//    }
+    // public boolean isStructural() {
+    // return (parentBelief == null) && (parentTask != null);
+    // }
     /**
      * Merge one Task into another
      *

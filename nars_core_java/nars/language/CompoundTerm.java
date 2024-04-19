@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -74,7 +74,7 @@ public abstract class CompoundTerm extends Term {
     /**
      * Constructor called from subclasses constructors to clone the fields
      *
-     * @param name Name
+     * @param name       Name
      * @param components Component list
      * @param isConstant Whether the term refers to a concept
      * @param complexity Complexity of the compound term
@@ -107,7 +107,7 @@ public abstract class CompoundTerm extends Term {
     /**
      * Constructor called from subclasses constructors to initialize the fields
      *
-     * @param name Name of the compound
+     * @param name       Name of the compound
      * @param components Component list
      */
     protected CompoundTerm(String name, ArrayList<Term> components) {
@@ -182,9 +182,9 @@ public abstract class CompoundTerm extends Term {
     /**
      * Try to make a compound term from a template and a list of components
      *
-     * @param compound The template
+     * @param compound   The template
      * @param components The components
-     * @param memory Reference to the memory
+     * @param memory     Reference to the memory
      * @return A compound term or null
      */
     public static Term make(CompoundTerm compound, ArrayList<Term> components, Memory memory) {
@@ -202,8 +202,8 @@ public abstract class CompoundTerm extends Term {
      * <p>
      * Called from StringParser
      *
-     * @param op Term operator
-     * @param arg Component list
+     * @param op     Term operator
+     * @param arg    Component list
      * @param memory Reference to the memory
      * @return A compound term or null
      */
@@ -303,7 +303,7 @@ public abstract class CompoundTerm extends Term {
     /**
      * default method to make the oldName of a compound term from given fields
      *
-     * @param op the term operator
+     * @param op  the term operator
      * @param arg the list of components
      * @return the oldName of the term
      */
@@ -327,7 +327,7 @@ public abstract class CompoundTerm extends Term {
      *
      * @param opener the set opener
      * @param closer the set closer
-     * @param arg the list of components
+     * @param arg    the list of components
      * @return the oldName of the term
      */
     protected static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
@@ -345,8 +345,8 @@ public abstract class CompoundTerm extends Term {
     /**
      * default method to make the oldName of an image term from given fields
      *
-     * @param op the term operator
-     * @param arg the list of components
+     * @param op            the term operator
+     * @param arg           the list of components
      * @param relationIndex the location of the place holder
      * @return the oldName of the term
      */
@@ -511,8 +511,8 @@ public abstract class CompoundTerm extends Term {
     /**
      * Try to add a component into a compound
      *
-     * @param t1 The compound
-     * @param t2 The component
+     * @param t1     The compound
+     * @param t2     The component
      * @param memory Reference to the memory
      * @return The new compound
      */
@@ -533,8 +533,8 @@ public abstract class CompoundTerm extends Term {
     /**
      * Try to remove a component from a compound
      *
-     * @param t1 The compound
-     * @param t2 The component
+     * @param t1     The compound
+     * @param t2     The component
      * @param memory Reference to the memory
      * @return The new compound
      */
@@ -565,9 +565,9 @@ public abstract class CompoundTerm extends Term {
      * Try to replace a component in a compound at a given index by another one
      *
      * @param compound The compound
-     * @param index The location of replacement
-     * @param t The new component
-     * @param memory Reference to the memory
+     * @param index    The location of replacement
+     * @param t        The new component
+     * @param memory   Reference to the memory
      * @return The new compound
      */
     public static Term setComponent(CompoundTerm compound, int index, Term t, Memory memory) {
@@ -658,7 +658,7 @@ public abstract class CompoundTerm extends Term {
                 ((CompoundTerm) t1).applySubstitute(subs);
             }
         }
-        if (this.isCommutative()) {         // re-order
+        if (this.isCommutative()) { // re-order
             TreeSet<Term> s = new TreeSet<>(components);
             components = new ArrayList<>(s);
         }
@@ -676,7 +676,7 @@ public abstract class CompoundTerm extends Term {
      */
     public ArrayList<TermLink> prepareComponentLinks() {
         ArrayList<TermLink> componentLinks = new ArrayList<>();
-        short type = (this instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND;   // default
+        short type = (this instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
         prepareComponentLinks(componentLinks, type, this);
         return componentLinks;
     }
@@ -687,21 +687,22 @@ public abstract class CompoundTerm extends Term {
      * <p>
      *
      * @param componentLinks The list of TermLink templates built so far
-     * @param type The type of TermLink to be built
-     * @param term The CompoundTerm for which the links are built
+     * @param type           The type of TermLink to be built
+     * @param term           The CompoundTerm for which the links are built
      */
     private void prepareComponentLinks(ArrayList<TermLink> componentLinks, short type, CompoundTerm term) {
-        Term t1, t2, t3;                    // components at different levels
-        for (int i = 0; i < term.size(); i++) {     // first level components
+        Term t1, t2, t3; // components at different levels
+        for (int i = 0; i < term.size(); i++) { // first level components
             t1 = term.componentAt(i);
             if (t1.isConstant()) {
                 componentLinks.add(new TermLink(t1, type, i));
             }
             if (((this instanceof Equivalence) || ((this instanceof Implication) && (i == 0)))
                     && ((t1 instanceof Conjunction) || (t1 instanceof Negation))) {
-                ((CompoundTerm) t1).prepareComponentLinks(componentLinks, TermLink.COMPOUND_CONDITION, (CompoundTerm) t1);
+                ((CompoundTerm) t1).prepareComponentLinks(componentLinks, TermLink.COMPOUND_CONDITION,
+                        (CompoundTerm) t1);
             } else if (t1 instanceof CompoundTerm) {
-                for (int j = 0; j < ((CompoundTerm) t1).size(); j++) {  // second level components
+                for (int j = 0; j < ((CompoundTerm) t1).size(); j++) { // second level components
                     t2 = ((CompoundTerm) t1).componentAt(j);
                     if (t2.isConstant()) {
                         if ((t1 instanceof Product) || (t1 instanceof ImageExt) || (t1 instanceof ImageInt)) {
@@ -717,7 +718,7 @@ public abstract class CompoundTerm extends Term {
                     if ((t2 instanceof Product) || (t2 instanceof ImageExt) || (t2 instanceof ImageInt)) {
                         for (int k = 0; k < ((CompoundTerm) t2).size(); k++) {
                             t3 = ((CompoundTerm) t2).componentAt(k);
-                            if (t3.isConstant()) {                           // third level
+                            if (t3.isConstant()) { // third level
                                 if (type == TermLink.COMPOUND_CONDITION) {
                                     componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, 0, i, j, k));
                                 } else {

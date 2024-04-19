@@ -9,7 +9,7 @@ javac -d classes -Xlint:unchecked nars_gui/$SRC/*/*/*.java \
 
 # javac -d classes -Xlint:unchecked nars/*/*.java
 echo 'Main-Class: nars.main.NARS' > manifest.txt
-jar cvfm NARS.jar manifest.txt -C classes . 
+jar cvfm NARS.jar manifest.txt -C classes .
 rm manifest.txt
 
 echo ''

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -29,14 +29,15 @@ import nars.language.Term;
 /**
  * A link between a compound term and a component term
  * <p>
- * A TermLink links the current Term to a target Term, which is 
+ * A TermLink links the current Term to a target Term, which is
  * either a component of, or compound made from, the current term.
  * <p>
  * Neither of the two terms contain variable shared with other terms.
  * <p>
  * The index value(s) indicates the location of the component in the compound.
  * <p>
- * This class is mainly used in inference.RuleTable to dispatch premises to inference rules
+ * This class is mainly used in inference.RuleTable to dispatch premises to
+ * inference rules
  */
 public class TermLink extends Item {
     /** At C, point to C; TaskLink only */
@@ -59,22 +60,26 @@ public class TermLink extends Item {
     private Term target;
     /** The type of link, one of the above */
     protected short type;
-    /** The index of the component in the component list of the compound, may have up to 4 levels */
+    /**
+     * The index of the component in the component list of the compound, may have up
+     * to 4 levels
+     */
     protected short[] index;
 
     /**
      * Constructor for TermLink template
      * <p>
      * called in CompoundTerm.prepareComponentLinks only
-     * @param t Target Term
-     * @param p Link type
+     *
+     * @param t       Target Term
+     * @param p       Link type
      * @param indices Component indices in compound, may be 1 to 4
      */
     public TermLink(Term t, short p, int... indices) {
         target = t;
         type = p;
         assert (type % 2 == 0); // template types all point to compound, though the target is component
-        if (type == TermLink.COMPOUND_CONDITION) {  // the first index is 0 by default
+        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
             index = new short[indices.length + 1];
             index[0] = 0;
             for (int i = 0; i < indices.length; i++) {
@@ -88,7 +93,9 @@ public class TermLink extends Item {
         }
     }
 
-    /** called from TaskLink
+    /**
+     * called from TaskLink
+     *
      * @param s The key of the TaskLink
      * @param v The budget value of the TaskLink
      */
@@ -100,16 +107,17 @@ public class TermLink extends Item {
      * Constructor to make actual TermLink from a template
      * <p>
      * called in Concept.buildTermLinks only
-     * @param t Target Term
+     *
+     * @param t        Target Term
      * @param template TermLink template previously prepared
-     * @param v Budget value of the link
+     * @param v        Budget value of the link
      */
     public TermLink(Term t, TermLink template, BudgetValue v) {
         super(t.getName(), v);
         target = t;
         type = template.getType();
         if (template.getTarget().equals(t)) {
-            type--;     // point to component
+            type--; // point to component
         }
         index = template.getIndices();
         setKey();
@@ -120,10 +128,10 @@ public class TermLink extends Item {
      */
     protected final void setKey() {
         String at1, at2;
-        if ((type % 2) == 1) {  // to component
+        if ((type % 2) == 1) { // to component
             at1 = Symbols.TO_COMPONENT_1;
             at2 = Symbols.TO_COMPONENT_2;
-        } else {                // to compound
+        } else { // to compound
             at1 = Symbols.TO_COMPOUND_1;
             at2 = Symbols.TO_COMPOUND_2;
         }
@@ -141,6 +149,7 @@ public class TermLink extends Item {
 
     /**
      * Get the target of the link
+     *
      * @return The Term pointed by the link
      */
     public Term getTarget() {
@@ -149,6 +158,7 @@ public class TermLink extends Item {
 
     /**
      * Get the link type
+     *
      * @return Type of the link
      */
     public short getType() {
@@ -157,6 +167,7 @@ public class TermLink extends Item {
 
     /**
      * Get all the indices
+     *
      * @return The index array
      */
     public short[] getIndices() {
@@ -165,6 +176,7 @@ public class TermLink extends Item {
 
     /**
      * Get one index by level
+     *
      * @param i The index level
      * @return The index value
      */

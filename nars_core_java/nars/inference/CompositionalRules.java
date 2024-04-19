@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -37,58 +37,60 @@ import nars.storage.Memory;
  */
 public final class CompositionalRules {
 
-    static void IntroVarSameSubjectOrPredicate(Sentence originalMainSentence, Sentence subSentence, Term component, Term content, int index,Memory memory) {
-        Sentence cloned=(Sentence) originalMainSentence.clone();
-        Term T1=cloned.getContent();
-        if(!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
+    static void IntroVarSameSubjectOrPredicate(Sentence originalMainSentence, Sentence subSentence, Term component,
+            Term content, int index, Memory memory) {
+        Sentence cloned = (Sentence) originalMainSentence.clone();
+        Term T1 = cloned.getContent();
+        if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
             return;
         }
-        CompoundTerm T=(CompoundTerm) T1;
-        CompoundTerm T2=(CompoundTerm) content.clone();
-        if((component instanceof Inheritance && content instanceof Inheritance) ||
-           (component instanceof Similarity && content instanceof Similarity)) {
-            CompoundTerm result=T;
-            if(component.equals(content)) {
-                return; //wouldnt make sense to create a conjunction here, would contain a statement twice
+        CompoundTerm T = (CompoundTerm) T1;
+        CompoundTerm T2 = (CompoundTerm) content.clone();
+        if ((component instanceof Inheritance && content instanceof Inheritance) ||
+                (component instanceof Similarity && content instanceof Similarity)) {
+            CompoundTerm result = T;
+            if (component.equals(content)) {
+                return; // wouldnt make sense to create a conjunction here, would contain a statement
+                        // twice
             }
-            if(((Statement)component).getPredicate().equals(((Statement)content).getPredicate()) && !(((Statement)component).getPredicate() instanceof Variable)) {
-                Variable V=new Variable("#depIndVar1");
-                CompoundTerm zw=(CompoundTerm) T.getComponents().get(index).clone();
-                zw=(CompoundTerm) CompoundTerm.setComponent(zw,1,V,memory);
-                T2=(CompoundTerm) CompoundTerm.setComponent(T2,1,V,memory);
-                if(zw == null || T2 == null || zw.equals(T2)) {
+            if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
+                    && !(((Statement) component).getPredicate() instanceof Variable)) {
+                Variable V = new Variable("#depIndVar1");
+                CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
+                zw = (CompoundTerm) CompoundTerm.setComponent(zw, 1, V, memory);
+                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 1, V, memory);
+                if (zw == null || T2 == null || zw.equals(T2)) {
                     return;
                 }
-                Conjunction res=(Conjunction) Conjunction.make(zw, T2, memory);
-                T=(CompoundTerm) CompoundTerm.setComponent(T, index, res, memory);
-            }
-            else 
-            if(((Statement)component).getSubject().equals(((Statement)content).getSubject()) && !(((Statement)component).getSubject() instanceof Variable)) {
-                Variable V=new Variable("#depIndVar2");
-                CompoundTerm zw=(CompoundTerm) T.getComponents().get(index).clone();
-                zw=(CompoundTerm) CompoundTerm.setComponent(zw,0,V,memory);
-                T2=(CompoundTerm) CompoundTerm.setComponent(T2,0,V,memory);
-                if(zw == null || T2 == null || zw.equals(T2)) {
+                Conjunction res = (Conjunction) Conjunction.make(zw, T2, memory);
+                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, memory);
+            } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
+                    && !(((Statement) component).getSubject() instanceof Variable)) {
+                Variable V = new Variable("#depIndVar2");
+                CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
+                zw = (CompoundTerm) CompoundTerm.setComponent(zw, 0, V, memory);
+                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 0, V, memory);
+                if (zw == null || T2 == null || zw.equals(T2)) {
                     return;
                 }
-                Conjunction res=(Conjunction) Conjunction.make(zw, T2, memory);
-                T=(CompoundTerm) CompoundTerm.setComponent(T, index, res, memory);
+                Conjunction res = (Conjunction) Conjunction.make(zw, T2, memory);
+                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, memory);
             }
             TruthValue truth = TruthFunctions.induction(originalMainSentence.getTruth(), subSentence.getTruth());
             BudgetValue budget = BudgetFunctions.compoundForward(truth, T, memory);
             memory.doublePremiseTask(T, truth, budget);
         }
     }
-    
+
     /* -------------------- intersections and differences -------------------- */
     /**
      * {<S ==> M>, <P ==> M>} |- {<(S|P) ==> M>, <(S&P) ==> M>, <(S-P) ==> M>,
      * <(P-S) ==> M>}
      *
      * @param taskSentence The first premise
-     * @param belief The second premise
-     * @param index The location of the shared term
-     * @param memory Reference to the memory
+     * @param belief       The second premise
+     * @param index        The location of the shared term
+     * @param memory       Reference to the memory
      */
     static void composeCompound(Statement taskContent, Statement beliefContent, int index, Memory memory) {
         if ((!memory.currentTask.getSentence().isJudgment()) || (taskContent.getClass() != beliefContent.getClass())) {
@@ -100,7 +102,8 @@ public final class CompositionalRules {
         if ((componentT instanceof CompoundTerm) && ((CompoundTerm) componentT).containAllComponents(componentB)) {
             decomposeCompound((CompoundTerm) componentT, componentB, componentCommon, index, true, memory);
             return;
-        } else if ((componentB instanceof CompoundTerm) && ((CompoundTerm) componentB).containAllComponents(componentT)) {
+        } else if ((componentB instanceof CompoundTerm)
+                && ((CompoundTerm) componentB).containAllComponents(componentT)) {
             decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, index, false, memory);
             return;
         }
@@ -132,7 +135,7 @@ public final class CompositionalRules {
             processComposed(taskContent, (Term) componentCommon.clone(), termOr, truthOr, memory);
             processComposed(taskContent, (Term) componentCommon.clone(), termAnd, truthAnd, memory);
             processComposed(taskContent, (Term) componentCommon.clone(), termDif, truthDif, memory);
-        } else {    // index == 1
+        } else { // index == 1
             if (taskContent instanceof Inheritance) {
                 termOr = IntersectionExt.make(componentT, componentB, memory);
                 termAnd = IntersectionInt.make(componentT, componentB, memory);
@@ -154,20 +157,22 @@ public final class CompositionalRules {
             processComposed(taskContent, termDif, (Term) componentCommon.clone(), truthDif, memory);
         }
         if (taskContent instanceof Inheritance) {
-            introVarOuter(taskContent, beliefContent, index, memory);//            introVarImage(taskContent, beliefContent, index, memory);
+            introVarOuter(taskContent, beliefContent, index, memory);// introVarImage(taskContent, beliefContent, index,
+                                                                     // memory);
         }
     }
 
     /**
      * Finish composing implication term
      *
-     * @param premise1 Type of the contentInd
-     * @param subject Subject of contentInd
+     * @param premise1  Type of the contentInd
+     * @param subject   Subject of contentInd
      * @param predicate Predicate of contentInd
-     * @param truth TruthValue of the contentInd
-     * @param memory Reference to the memory
+     * @param truth     TruthValue of the contentInd
+     * @param memory    Reference to the memory
      */
-    private static void processComposed(Statement statement, Term subject, Term predicate, TruthValue truth, Memory memory) {
+    private static void processComposed(Statement statement, Term subject, Term predicate, TruthValue truth,
+            Memory memory) {
         if ((subject == null) || (predicate == null)) {
             return;
         }
@@ -182,15 +187,16 @@ public final class CompositionalRules {
     /**
      * {<(S|P) ==> M>, <P ==> M>} |- <S ==> M>
      *
-     * @param implication The implication term to be decomposed
+     * @param implication     The implication term to be decomposed
      * @param componentCommon The part of the implication to be removed
-     * @param term1 The other term in the contentInd
-     * @param index The location of the shared term: 0 for subject, 1 for
-     * predicate
-     * @param compoundTask Whether the implication comes from the task
-     * @param memory Reference to the memory
+     * @param term1           The other term in the contentInd
+     * @param index           The location of the shared term: 0 for subject, 1 for
+     *                        predicate
+     * @param compoundTask    Whether the implication comes from the task
+     * @param memory          Reference to the memory
      */
-    private static void decomposeCompound(CompoundTerm compound, Term component, Term term1, int index, boolean compoundTask, Memory memory) {
+    private static void decomposeCompound(CompoundTerm compound, Term component, Term term1, int index,
+            boolean compoundTask, Memory memory) {
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
         }
@@ -279,10 +285,10 @@ public final class CompositionalRules {
     /**
      * {(||, S, P), P} |- S {(&&, S, P), P} |- S
      *
-     * @param implication The implication term to be decomposed
+     * @param implication     The implication term to be decomposed
      * @param componentCommon The part of the implication to be removed
-     * @param compoundTask Whether the implication comes from the task
-     * @param memory Reference to the memory
+     * @param compoundTask    Whether the implication comes from the task
+     * @param memory          Reference to the memory
      */
     static void decomposeStatement(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
         Task task = memory.currentTask;
@@ -343,11 +349,11 @@ public final class CompositionalRules {
     /**
      * Introduce a dependent variable in an outer-layer conjunction
      *
-     * @param taskContent The first premise <M --> S>
+     * @param taskContent   The first premise <M --> S>
      * @param beliefContent The second premise <M --> P>
-     * @param index The location of the shared term: 0 for subject, 1 for
-     * predicate
-     * @param memory Reference to the memory
+     * @param index         The location of the shared term: 0 for subject, 1 for
+     *                      predicate
+     * @param memory        Reference to the memory
      */
     private static void introVarOuter(Statement taskContent, Statement beliefContent, int index, Memory memory) {
         TruthValue truthT = memory.currentTask.getSentence().getTruth();
@@ -430,18 +436,19 @@ public final class CompositionalRules {
      * {<M --> S>, <C ==> <M --> P>>} |- <(&&, <#x --> S>, C) ==> <#x --> P>>
      * {<M --> S>, (&&, C, <M --> P>)} |- (&&, C, <<#x --> S> ==> <#x --> P>>)
      *
-     * @param taskContent The first premise directly used in internal induction,
-     * <M --> S>
+     * @param taskContent   The first premise directly used in internal induction,
+     *                      <M --> S>
      * @param beliefContent The componentCommon to be used as a premise in
-     * internal induction, <M --> P>
-     * @param oldCompound The whole contentInd of the first premise, Implication
-     * or Conjunction
-     * @param memory Reference to the memory
+     *                      internal induction, <M --> P>
+     * @param oldCompound   The whole contentInd of the first premise, Implication
+     *                      or Conjunction
+     * @param memory        Reference to the memory
      */
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound, Memory memory) {
         Task task = memory.currentTask;
         Sentence taskSentence = task.getSentence();
-        if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass()) || oldCompound.containComponent(premise1)) {
+        if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())
+                || oldCompound.containComponent(premise1)) {
             return;
         }
         Term subject1 = premise1.getSubject();

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -59,11 +59,12 @@ public class Sentence implements Cloneable {
     /**
      * Create a Sentence with the given fields
      *
-     * @param content The Term that forms the content of the sentence
+     * @param content     The Term that forms the content of the sentence
      * @param punctuation The punctuation indicating the type of the sentence
-     * @param truth The truth value of the sentence, null for question
-     * @param stamp The stamp of the sentence indicating its derivation time and
-     * base
+     * @param truth       The truth value of the sentence, null for question
+     * @param stamp       The stamp of the sentence indicating its derivation time
+     *                    and
+     *                    base
      */
     public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp) {
         this.content = content;
@@ -77,12 +78,13 @@ public class Sentence implements Cloneable {
     /**
      * Create a Sentence with the given fields
      *
-     * @param content The Term that forms the content of the sentence
+     * @param content     The Term that forms the content of the sentence
      * @param punctuation The punctuation indicating the type of the sentence
-     * @param truth The truth value of the sentence, null for question
-     * @param stamp The stamp of the sentence indicating its derivation time and
-     * base
-     * @param revisible Whether the sentence can be revised
+     * @param truth       The truth value of the sentence, null for question
+     * @param stamp       The stamp of the sentence indicating its derivation time
+     *                    and
+     *                    base
+     * @param revisible   Whether the sentence can be revised
      */
     public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp, boolean revisible) {
         this.content = content;
@@ -103,7 +105,8 @@ public class Sentence implements Cloneable {
     public boolean equals(Object that) {
         if (that instanceof Sentence) {
             Sentence t = (Sentence) that;
-            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.getTruth()) && stamp.equals(t.getStamp());
+            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.getTruth())
+                    && stamp.equals(t.getStamp());
         }
         return false;
     }
@@ -146,7 +149,8 @@ public class Sentence implements Cloneable {
         if (truth == null) {
             return new Sentence((Term) content.clone(), punctuation, null, (Stamp) stamp.clone());
         }
-        return new Sentence((Term) content.clone(), punctuation, new TruthValue(truth), (Stamp) stamp.clone(), revisible);
+        return new Sentence((Term) content.clone(), punctuation, new TruthValue(truth), (Stamp) stamp.clone(),
+                revisible);
     }
 
     /**
@@ -206,7 +210,7 @@ public class Sentence implements Cloneable {
     public void setStamp(Stamp s) {
         stamp = s;
     }
-    
+
     /**
      * Distinguish Judgment from Goal ("instanceof Judgment" doesn't work)
      *

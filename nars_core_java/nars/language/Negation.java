@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -36,7 +36,7 @@ public class Negation extends CompoundTerm {
     /**
      * Constructor with partial values, called by make
      *
-     * @param n The name of the term
+     * @param n   The name of the term
      * @param arg The component list of the term
      */
     private Negation(ArrayList<Term> arg) {
@@ -46,10 +46,10 @@ public class Negation extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n The name of the term
-     * @param cs Component list
+     * @param n    The name of the term
+     * @param cs   Component list
      * @param open Open variable list
-     * @param i Syntactic complexity of the compound
+     * @param i    Syntactic complexity of the compound
      */
     private Negation(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
@@ -68,14 +68,14 @@ public class Negation extends CompoundTerm {
     /**
      * Try to make a Negation of one component. Called by the inference rules.
      *
-     * @param t The component
+     * @param t      The component
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Term make(Term t, Memory memory) {
         if (t instanceof Negation) {
             return ((CompoundTerm) t).cloneComponents().get(0);
-        }         // (--,(--,P)) = P
+        } // (--,(--,P)) = P
         ArrayList<Term> argument = new ArrayList<>();
         argument.add(t);
         return make(argument, memory);
@@ -86,7 +86,7 @@ public class Negation extends CompoundTerm {
      *
      * @return the Term generated from the arguments
      * @param argument The list of components
-     * @param memory Reference to the memory
+     * @param memory   Reference to the memory
      */
     public static Term make(ArrayList<Term> argument, Memory memory) {
         if (argument.size() != 1) {

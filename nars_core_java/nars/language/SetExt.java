@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -35,7 +35,8 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Constructor with partial values, called by make
-     * @param n The name of the term
+     *
+     * @param n   The name of the term
      * @param arg The component list of the term
      */
     private SetExt(ArrayList<Term> arg) {
@@ -44,10 +45,11 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
-     * @param cs Component list
+     *
+     * @param n    The name of the term
+     * @param cs   Component list
      * @param open Open variable list
-     * @param i Syntactic complexity of the compound
+     * @param i    Syntactic complexity of the compound
      */
     private SetExt(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
@@ -55,6 +57,7 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Clone a SetExt
+     *
      * @return A new object, to be casted into a SetExt
      */
     public Object clone() {
@@ -63,7 +66,8 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Try to make a new set from one component. Called by the inference rules.
-     * @param t The compoment
+     *
+     * @param t      The compoment
      * @param memory Reference to the memeory
      * @return A compound generated or a term it reduced to
      */
@@ -75,9 +79,10 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Try to make a new SetExt. Called by StringParser.
+     *
      * @return the Term generated from the arguments
      * @param argList The list of components
-     * @param memory Reference to the memeory
+     * @param memory  Reference to the memeory
      */
     public static Term make(ArrayList<Term> argList, Memory memory) {
         TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
@@ -85,8 +90,10 @@ public class SetExt extends CompoundTerm {
     }
 
     /**
-     * Try to make a new compound from a set of components. Called by the public make methods.
-     * @param set a set of Term as compoments
+     * Try to make a new compound from a set of components. Called by the public
+     * make methods.
+     *
+     * @param set    a set of Term as compoments
      * @param memory Reference to the memeory
      * @return the Term generated from the arguments
      */
@@ -102,6 +109,7 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     public String operator() {
@@ -110,6 +118,7 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Check if the compound is communitative.
+     *
      * @return true for communitative
      */
     @Override
@@ -119,6 +128,7 @@ public class SetExt extends CompoundTerm {
 
     /**
      * Make a String representation of the set, override the default.
+     *
      * @return true for communitative
      */
     @Override
@@ -126,4 +136,3 @@ public class SetExt extends CompoundTerm {
         return makeSetName(Symbols.SET_EXT_OPENER, components, Symbols.SET_EXT_CLOSER);
     }
 }
-

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -29,13 +29,15 @@ import nars.io.Symbols;
 import nars.storage.Memory;
 
 /**
- * A compound term whose extension is the intersection of the extensions of its components
+ * A compound term whose extension is the intersection of the extensions of its
+ * components
  */
 public class IntersectionExt extends CompoundTerm {
 
     /**
      * Constructor with partial values, called by make
-     * @param n The name of the term
+     *
+     * @param n   The name of the term
      * @param arg The component list of the term
      */
     private IntersectionExt(ArrayList<Term> arg) {
@@ -44,10 +46,11 @@ public class IntersectionExt extends CompoundTerm {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
-     * @param cs Component list
+     *
+     * @param n    The name of the term
+     * @param cs   Component list
      * @param open Open variable list
-     * @param i Syntactic complexity of the compound
+     * @param i    Syntactic complexity of the compound
      */
     private IntersectionExt(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
@@ -55,6 +58,7 @@ public class IntersectionExt extends CompoundTerm {
 
     /**
      * Clone an object
+     *
      * @return A new object, to be casted into a IntersectionExt
      */
     public Object clone() {
@@ -62,9 +66,11 @@ public class IntersectionExt extends CompoundTerm {
     }
 
     /**
-     * Try to make a new compound from two components. Called by the inference rules.
-     * @param term1 The first compoment
-     * @param term2 The first compoment
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     *
+     * @param term1  The first compoment
+     * @param term2  The first compoment
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
@@ -72,25 +78,25 @@ public class IntersectionExt extends CompoundTerm {
         TreeSet<Term> set;
         if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.addAll(((CompoundTerm) term2).cloneComponents());        // set union
+            set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
             return SetInt.make(set, memory);
         }
         if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.retainAll(((CompoundTerm) term2).cloneComponents());     // set intersection
+            set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
             return SetExt.make(set, memory);
         }
         if (term1 instanceof IntersectionExt) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             if (term2 instanceof IntersectionExt) {
                 set.addAll(((CompoundTerm) term2).cloneComponents());
-            }               // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
+            } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
             else {
                 set.add((Term) term2.clone());
-            }               // (&,(&,P,Q),R) = (&,P,Q,R)
+            } // (&,(&,P,Q),R) = (&,P,Q,R)
         } else if (term2 instanceof IntersectionExt) {
             set = new TreeSet<Term>(((CompoundTerm) term2).cloneComponents());
-            set.add((Term) term1.clone());    // (&,R,(&,P,Q)) = (&,P,Q,R)
+            set.add((Term) term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
         } else {
             set = new TreeSet<Term>();
             set.add((Term) term1.clone());
@@ -101,9 +107,10 @@ public class IntersectionExt extends CompoundTerm {
 
     /**
      * Try to make a new IntersectionExt. Called by StringParser.
+     *
      * @return the Term generated from the arguments
      * @param argList The list of components
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      */
     public static Term make(ArrayList<Term> argList, Memory memory) {
         TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
@@ -111,15 +118,17 @@ public class IntersectionExt extends CompoundTerm {
     }
 
     /**
-     * Try to make a new compound from a set of components. Called by the public make methods.
-     * @param set a set of Term as compoments
+     * Try to make a new compound from a set of components. Called by the public
+     * make methods.
+     *
+     * @param set    a set of Term as compoments
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
     public static Term make(TreeSet<Term> set, Memory memory) {
         if (set.size() == 1) {
             return set.first();
-        }                         // special case: single component
+        } // special case: single component
         ArrayList<Term> argument = new ArrayList<Term>(set);
         String name = makeCompoundName(Symbols.INTERSECTION_EXT_OPERATOR, argument);
         Term t = memory.nameToListedTerm(name);
@@ -128,6 +137,7 @@ public class IntersectionExt extends CompoundTerm {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     public String operator() {
@@ -136,6 +146,7 @@ public class IntersectionExt extends CompoundTerm {
 
     /**
      * Check if the compound is communitative.
+     *
      * @return true for communitative
      */
     @Override

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -88,8 +88,8 @@ public class InferenceWindow extends NarsFrame implements ActionListener, ItemLi
         JScrollPane scrollPane = new JScrollPane(text);
         gridbag.setConstraints(scrollPane, c);
         add(scrollPane);
-//        gridbag.setConstraints(text, c);
-//        add(text);
+        // gridbag.setConstraints(text, c);
+        // add(text);
 
         c.weighty = 0.0;
         c.gridwidth = 1;
@@ -98,9 +98,9 @@ public class InferenceWindow extends NarsFrame implements ActionListener, ItemLi
         gridbag.setConstraints(watchText, c);
         add(watchText);
 
-        watchType = new JComboBox<String>(new String[]{"No Watch",
-            "Watch Term",
-            "Watch String"});
+        watchType = new JComboBox<String>(new String[] { "No Watch",
+                "Watch Term",
+                "Watch String" });
         gridbag.setConstraints(watchType, c);
         watchType.addItemListener(this);
         add(watchType);

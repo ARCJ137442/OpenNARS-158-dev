@@ -1,17 +1,18 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <html>
+
 <body>
 
-Term hierarchy in Narsese
+  Term hierarchy in Narsese
 
-<h2>Package Specification</h2>
+  <h2>Package Specification</h2>
 
-Open-NARS implements the following formal language, Narsese.
-<pre>
+  Open-NARS implements the following formal language, Narsese.
+  <pre>
            &lt;sentence&gt; ::= &lt;judgment&gt;
                         | &lt;question&gt;
            &lt;judgment&gt; ::= &lt;statement&gt; &lt;truth-value&gt;
-           &lt;question&gt; ::= &lt;statement&gt; 
+           &lt;question&gt; ::= &lt;statement&gt;
           &lt;statement&gt; ::= &lt;&lt;term&gt; &lt;relation&gt; &lt;term&gt;&gt;
                         | &lt;compound-statement&gt;
                         | &lt;term&gt;
@@ -48,14 +49,15 @@ Open-NARS implements the following formal language, Narsese.
         &lt;truth-value&gt; : a pair of real numbers in [0, 1] x (0, 1)
 </pre>
 
-Major methods in the Term classes:
-<ul>
-<li>constructors</li>
-<li>get and set</li>
-<li>clone, compare, and unify</li>
-<li>create and access corresponding concept</li>
-<li>structural operation in compound</li>
-</ul>
+  Major methods in the Term classes:
+  <ul>
+    <li>constructors</li>
+    <li>get and set</li>
+    <li>clone, compare, and unify</li>
+    <li>create and access corresponding concept</li>
+    <li>structural operation in compound</li>
+  </ul>
 
 </body>
+
 </html>

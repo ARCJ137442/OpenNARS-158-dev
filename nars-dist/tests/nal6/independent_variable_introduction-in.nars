@@ -1,7 +1,7 @@
 // made by combining Table 8.3 and Table 3.3: Basic Syllogistic Rules
 
 // Table 8.3: Sample Independent-Variable Introduction Rules
-**** Induction 
+**** Induction
 <M --> P>.
 <M --> S>.
 <<$x --> S> ==> <$x --> P>>?

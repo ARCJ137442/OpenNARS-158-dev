@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -42,8 +42,7 @@ public class NARS implements Runnable {
     /**
      * The project web sites.
      */
-    public static final String WEBSITE
-            = " Open-NARS website:  http://code.google.com/p/open-nars/ \n"
+    public static final String WEBSITE = " Open-NARS website:  http://code.google.com/p/open-nars/ \n"
             + "      NARS website:  http://sites.google.com/site/narswang/";
     /**
      * The internal working thread of the system.
@@ -60,7 +59,7 @@ public class NARS implements Runnable {
      * Create an instance of the class
      *
      * @param args optional argument used : one input file, possibly followed by
-     * --silence <integer>
+     *             --silence <integer>
      */
     public static void main(String args[]) {
         NARSBatch.setStandAlone(true);
@@ -108,7 +107,8 @@ public class NARS implements Runnable {
             } catch (InterruptedException e) {
             }
             try {
-                // NOTE: try/catch not necessary for input errors , but may be useful for other troubles
+                // NOTE: try/catch not necessary for input errors , but may be useful for other
+                // troubles
                 reasoner.tick();
             } catch (Exception e) {
             }

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -120,6 +120,7 @@ public class Term implements Cloneable, Comparable<Term> {
 
     /**
      * Orders among terms: variable < atomic < compound
+     *
      * @param that The Term to be compared with the current Term
      * @return The same as compareTo as defined on Strings
      */

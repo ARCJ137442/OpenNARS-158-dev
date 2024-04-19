@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -33,17 +33,20 @@ import nars.storage.Memory;
  */
 public final class SyllogisticRules {
 
-    /* --------------- rules used in both first-tense inference and higher-tense inference --------------- */
+    /*
+     * --------------- rules used in both first-tense inference and higher-tense
+     * inference ---------------
+     */
     /**
      * <pre>
      * {<S ==> M>, <M ==> P>} |- {<S ==> P>, <P ==> S>}
      * </pre>
      *
-     * @param term1 Subject of the first new task
-     * @param term2 Predicate of the first new task
+     * @param term1    Subject of the first new task
+     * @param term2    Predicate of the first new task
      * @param sentence The first premise
-     * @param belief The second premise
-     * @param memory Reference to the memory
+     * @param belief   The second premise
+     * @param memory   Reference to the memory
      */
     static void dedExe(Term term1, Term term2, Sentence sentence, Sentence belief, Memory memory) {
         if (Statement.invalidStatement(term1, term2)) {
@@ -73,12 +76,12 @@ public final class SyllogisticRules {
     /**
      * {<M ==> S>, <M ==> P>} |- {<S ==> P>, <P ==> S>, <S <=> P>}
      *
-     * @param term1 Subject of the first new task
-     * @param term2 Predicate of the first new task
+     * @param term1        Subject of the first new task
+     * @param term2        Predicate of the first new task
      * @param taskSentence The first premise
-     * @param belief The second premise
-     * @param figure Locations of the shared term in premises
-     * @param memory Reference to the memory
+     * @param belief       The second premise
+     * @param figure       Locations of the shared term in premises
+     * @param memory       Reference to the memory
      */
     static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Sentence belief, int figure, Memory memory) {
         if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
@@ -114,10 +117,10 @@ public final class SyllogisticRules {
     /**
      * {<S ==> P>, <M <=> P>} |- <S ==> P>
      *
-     * @param subj Subject of the new task
-     * @param pred Predicate of the new task
-     * @param asym The asymmetric premise
-     * @param sym The symmetric premise
+     * @param subj   Subject of the new task
+     * @param pred   Predicate of the new task
+     * @param asym   The asymmetric premise
+     * @param sym    The symmetric premise
      * @param figure Locations of the shared term in premises
      * @param memory Reference to the memory
      */
@@ -147,12 +150,12 @@ public final class SyllogisticRules {
     /**
      * {<S <=> M>, <M <=> P>} |- <S <=> P>
      *
-     * @param term1 Subject of the new task
-     * @param term2 Predicate of the new task
-     * @param belief The first premise
+     * @param term1    Subject of the new task
+     * @param term2    Predicate of the new task
+     * @param belief   The first premise
      * @param sentence The second premise
-     * @param figure Locations of the shared term in premises
-     * @param memory Reference to the memory
+     * @param figure   Locations of the shared term in premises
+     * @param memory   Reference to the memory
      */
     static void resemblance(Term term1, Term term2, Sentence belief, Sentence sentence, int figure, Memory memory) {
         if (Statement.invalidStatement(term1, term2)) {
@@ -178,9 +181,9 @@ public final class SyllogisticRules {
      * |- <M --> P> {<<M --> S> <=> <M --> P>>, <M --> P>} |- <M --> S>
      *
      * @param mainSentence The implication/equivalence premise
-     * @param subSentence The premise on part of s1
-     * @param side The location of s2 in s1
-     * @param memory Reference to the memory
+     * @param subSentence  The premise on part of s1
+     * @param side         The location of s2 in s1
+     * @param memory       Reference to the memory
      */
     static void detachment(Sentence mainSentence, Sentence subSentence, int side, Memory memory) {
         Statement statement = (Statement) mainSentence.getContent();
@@ -235,12 +238,12 @@ public final class SyllogisticRules {
      * S2>} |- <(&&, S2, S3) ==> P>
      *
      * @param premise1 The conditional premise
-     * @param index The location of the shared term in the condition of premise1
+     * @param index    The location of the shared term in the condition of premise1
      * @param premise2 The premise which, or part of which, appears in the
-     * condition of premise1
-     * @param side The location of the shared term in premise2: 0 for subject, 1
-     * for predicate, -1 for the whole term
-     * @param memory Reference to the memory
+     *                 condition of premise1
+     * @param side     The location of the shared term in premise2: 0 for subject, 1
+     *                 for predicate, -1 for the whole term
+     * @param memory   Reference to the memory
      */
     static void conditionalDedInd(Implication premise1, short index, Term premise2, int side, Memory memory) {
         Task task = memory.currentTask;
@@ -268,9 +271,11 @@ public final class SyllogisticRules {
         if (index2 >= 0) {
             index = (short) index2;
         } else {
-            boolean match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index), commonComponent, premise1, premise2);
+            boolean match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index), commonComponent,
+                    premise1, premise2);
             if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
-                match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
+                match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index),
+                        ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
             }
             if (!match) {
                 return;
@@ -314,12 +319,12 @@ public final class SyllogisticRules {
      * {<(&&, S1, S2) <=> P>, (&&, S1, S2)} |- P
      *
      * @param premise1 The equivalence premise
-     * @param index The location of the shared term in the condition of premise1
+     * @param index    The location of the shared term in the condition of premise1
      * @param premise2 The premise which, or part of which, appears in the
-     * condition of premise1
-     * @param side The location of the shared term in premise2: 0 for subject, 1
-     * for predicate, -1 for the whole term
-     * @param memory Reference to the memory
+     *                 condition of premise1
+     * @param side     The location of the shared term in premise2: 0 for subject, 1
+     *                 for predicate, -1 for the whole term
+     * @param memory   Reference to the memory
      */
     static void conditionalAna(Equivalence premise1, short index, Term premise2, int side, Memory memory) {
         Task task = memory.currentTask;
@@ -341,9 +346,11 @@ public final class SyllogisticRules {
         if (!(tm instanceof Conjunction))
             return;
         Conjunction oldCondition = (Conjunction) tm;
-        boolean match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index), commonComponent, premise1, premise2);
+        boolean match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index), commonComponent,
+                premise1, premise2);
         if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
-            match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
+            match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index),
+                    ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
         }
         if (!match) {
             return;
@@ -383,11 +390,11 @@ public final class SyllogisticRules {
     /**
      * {<(&&, S2, S3) ==> P>, <(&&, S1, S3) ==> P>} |- <S1 ==> S2>
      *
-     * @param cond1 The condition of the first premise
-     * @param cond2 The condition of the second premise
+     * @param cond1       The condition of the first premise
+     * @param cond2       The condition of the second premise
      * @param taskContent The first premise
-     * @param st2 The second premise
-     * @param memory Reference to the memory
+     * @param st2         The second premise
+     * @param memory      Reference to the memory
      * @return Whether there are derived tasks
      */
     static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2, Memory memory) {
@@ -399,11 +406,13 @@ public final class SyllogisticRules {
         }
         Term term1 = null;
         Term term2 = null;
-//        if ((cond1 instanceof Conjunction) && !Variable.containVarDep(cond1.getName())) {
+        // if ((cond1 instanceof Conjunction) &&
+        // !Variable.containVarDep(cond1.getName())) {
         if (cond1 instanceof Conjunction) {
             term1 = CompoundTerm.reduceComponents((Conjunction) cond1, cond2, memory);
         }
-//        if ((cond2 instanceof Conjunction) && !Variable.containVarDep(cond2.getName())) {
+        // if ((cond2 instanceof Conjunction) &&
+        // !Variable.containVarDep(cond2.getName())) {
         if (cond2 instanceof Conjunction) {
             term2 = CompoundTerm.reduceComponents((Conjunction) cond2, cond1, memory);
         }
@@ -452,14 +461,14 @@ public final class SyllogisticRules {
     /**
      * {(&&, <#x() --> S>, <#x() --> P>>, <M --> P>} |- <M --> S>
      *
-     * @param compound The compound term to be decomposed
-     * @param component The part of the compound to be removed
+     * @param compound     The compound term to be decomposed
+     * @param component    The part of the compound to be removed
      * @param compoundTask Whether the compound comes from the task
-     * @param memory Reference to the memory
+     * @param memory       Reference to the memory
      */
     static void elimiVarDep(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
         Term content = CompoundTerm.reduceComponents(compound, component, memory);
-        if ((content == null) || ((content instanceof Statement) && ((Statement)content).invalid()))
+        if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
         Task task = memory.currentTask;
         Sentence sentence = task.getSentence();

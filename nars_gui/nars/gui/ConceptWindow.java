@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -122,7 +122,9 @@ public class ConceptWindow extends NarsFrame implements ActionListener, EntityOb
         setVisible(true);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     *
      * @see nars.gui.EntityObserver#post(java.lang.String)
      */
     @Override
@@ -135,7 +137,8 @@ public class ConceptWindow extends NarsFrame implements ActionListener, EntityOb
      * This is called when Concept removes this as its window.
      */
     public void detachFromConcept() {
-        // The Play and Stop buttons and Derivation checkbox no longer do anything, so disable.
+        // The Play and Stop buttons and Derivation checkbox no longer do anything, so
+        // disable.
         playButton.setEnabled(false);
         stopButton.setEnabled(false);
     }
@@ -146,7 +149,7 @@ public class ConceptWindow extends NarsFrame implements ActionListener, EntityOb
      * @param e The ActionEvent
      */
     @Override
-	public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e) {
         Object s = e.getSource();
         if (s == playButton) {
             concept.play();
@@ -172,8 +175,8 @@ public class ConceptWindow extends NarsFrame implements ActionListener, EntityOb
     }
 
     @Override
-	public BagObserver<Concept> createBagObserver() {
-		return new BagWindow<Concept>();
+    public BagObserver<Concept> createBagObserver() {
+        return new BagWindow<Concept>();
     }
 
     @Override

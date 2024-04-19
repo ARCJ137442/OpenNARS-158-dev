@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 package nars.gui;
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -37,7 +38,8 @@ public class MessageDialog extends JDialog implements ActionListener, WindowList
 
     /**
      * Constructor
-     * @param parent The parent Frame
+     *
+     * @param parent  The parent Frame
      * @param message The text to be displayed
      */
     public MessageDialog(Frame parent, String message) {
@@ -62,6 +64,7 @@ public class MessageDialog extends JDialog implements ActionListener, WindowList
 
     /**
      * Handling button click
+     *
      * @param e The ActionEvent
      */
     public void actionPerformed(ActionEvent e) {

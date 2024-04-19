@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -129,9 +129,12 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
         experienceWriter = new ExperienceWriter(reasoner);
         inputWindow = reasoner.getInputWindow();
         conceptWin = new TermWindow(memory);
-        forgetTW = new ParameterWindow("Task Forgetting Rate", Parameters.TASK_LINK_FORGETTING_CYCLE, memory.getTaskForgettingRate());
-        forgetBW = new ParameterWindow("Belief Forgetting Rate", Parameters.TERM_LINK_FORGETTING_CYCLE, memory.getBeliefForgettingRate());
-        forgetCW = new ParameterWindow("Concept Forgetting Rate", Parameters.CONCEPT_FORGETTING_CYCLE, memory.getConceptForgettingRate());
+        forgetTW = new ParameterWindow("Task Forgetting Rate", Parameters.TASK_LINK_FORGETTING_CYCLE,
+                memory.getTaskForgettingRate());
+        forgetBW = new ParameterWindow("Belief Forgetting Rate", Parameters.TERM_LINK_FORGETTING_CYCLE,
+                memory.getBeliefForgettingRate());
+        forgetCW = new ParameterWindow("Concept Forgetting Rate", Parameters.CONCEPT_FORGETTING_CYCLE,
+                memory.getConceptForgettingRate());
         silentW = new ParameterWindow("Report Silence Level", Parameters.SILENT_LEVEL, reasoner.getSilenceValue());
 
         record = new InferenceRecorder();
@@ -317,9 +320,9 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
                 memory.getExportStrings().add("*****RESET*****");
             } else if (label.equals("Concepts")) {
                 /* see design for Bag and {@link BagWindow} in {@link Bag#startPlay(String)} */
-				memory.conceptsStartPlay(new BagWindow<Concept>(), "Active Concepts");
+                memory.conceptsStartPlay(new BagWindow<Concept>(), "Active Concepts");
             } else if (label.equals("Buffered Tasks")) {
-				memory.taskBuffersStartPlay(new BagWindow<Task>(), "Buffered Tasks");
+                memory.taskBuffersStartPlay(new BagWindow<Task>(), "Buffered Tasks");
             } else if (label.equals("Concept Content")) {
                 conceptWin.setVisible(true);
             } else if (label.equals("Inference Log")) {
@@ -336,14 +339,14 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
             } else if (label.equals("Report Silence Level")) {
                 silentW.setVisible(true);
             } else if (label.equals("Related Information")) {
-//                MessageDialog web = 
-                		new MessageDialog(this, NARS.WEBSITE);
+                // MessageDialog web =
+                new MessageDialog(this, NARS.WEBSITE);
             } else if (label.equals("About NARS")) {
-//                MessageDialog info = 
-                		new MessageDialog(this, NARS.INFO);
+                // MessageDialog info =
+                new MessageDialog(this, NARS.INFO);
             } else {
-//                MessageDialog ua = 
-                		new MessageDialog(this, UNAVAILABLE);
+                // MessageDialog ua =
+                new MessageDialog(this, UNAVAILABLE);
             }
         }
     }
@@ -368,17 +371,19 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
      */
     @Override
     public void nextOutput(final ArrayList<String> lines) {
-    	if (!lines.isEmpty()) {
-			String text = "";
-			for (Object line : lines) {
-				text += line + "\n";
-			}
-			final String text2 = text;
-			SwingUtilities.invokeLater( new Runnable() {
-    			@Override public void run() {
-    				ioText.append(text2);
-    			}});
-    	}
+        if (!lines.isEmpty()) {
+            String text = "";
+            for (Object line : lines) {
+                text += line + "\n";
+            }
+            final String text2 = text;
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ioText.append(text2);
+                }
+            });
+        }
     }
 
     /**

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -35,6 +35,7 @@ public class Equivalence extends Statement {
 
     /**
      * Constructor with partial values, called by make
+     *
      * @param components The component list of the term
      */
     protected Equivalence(ArrayList<Term> components) {
@@ -43,9 +44,10 @@ public class Equivalence extends Statement {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
+     *
+     * @param n          The name of the term
      * @param components Component list
-     * @param constant Whether the statement contains open variable
+     * @param constant   Whether the statement contains open variable
      * @param complexity Syntactic complexity of the compound
      */
     protected Equivalence(String n, ArrayList<Term> components, boolean constant, short complexity) {
@@ -54,6 +56,7 @@ public class Equivalence extends Statement {
 
     /**
      * Clone an object
+     *
      * @return A new object
      */
     @Override
@@ -62,13 +65,16 @@ public class Equivalence extends Statement {
     }
 
     /**
-     * Try to make a new compound from two components. Called by the inference rules.
-     * @param subject The first component
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     *
+     * @param subject   The first component
      * @param predicate The second component
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Equivalence make(Term subject, Term predicate, Memory memory) {  // to be extended to check if subject is Conjunction
+    public static Equivalence make(Term subject, Term predicate, Memory memory) { // to be extended to check if subject
+                                                                                  // is Conjunction
         if ((subject instanceof Implication) || (subject instanceof Equivalence)) {
             return null;
         }
@@ -94,6 +100,7 @@ public class Equivalence extends Statement {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     @Override
@@ -103,6 +110,7 @@ public class Equivalence extends Statement {
 
     /**
      * Check if the compound is commutative.
+     *
      * @return true for commutative
      */
     @Override

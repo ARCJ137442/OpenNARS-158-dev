@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -42,27 +42,27 @@ public class InferenceRecorder implements IInferenceRecorder {
     private PrintWriter logFile = null;
 
     @Override
-	public void init() {
+    public void init() {
         window.clear();
     }
 
     @Override
-	public void show() {
+    public void show() {
         window.setVisible(true);
     }
 
     @Override
-	public void play() {
+    public void play() {
         isReporting = true;
     }
 
     @Override
-	public void stop() {
+    public void stop() {
         isReporting = false;
     }
 
     @Override
-	public void append(String s) {
+    public void append(String s) {
         if (isReporting) {
             window.append(s);
         }
@@ -72,7 +72,7 @@ public class InferenceRecorder implements IInferenceRecorder {
     }
 
     @Override
-	public void openLogFile() {
+    public void openLogFile() {
         FileDialog dialog = new FileDialog((FileDialog) null, "Inference Log", FileDialog.SAVE);
         dialog.setVisible(true);
         String directoryName = dialog.getDirectory();
@@ -87,15 +87,14 @@ public class InferenceRecorder implements IInferenceRecorder {
     }
 
     @Override
-	public void closeLogFile() {
+    public void closeLogFile() {
         logFile.close();
         logFile = null;
         window.resetBackground();
     }
 
     @Override
-	public boolean isLogging() {
+    public boolean isLogging() {
         return (logFile != null);
     }
 }
-

@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 package nars.io;
+
 import java.util.ArrayList;
 
 /**

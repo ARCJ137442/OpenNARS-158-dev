@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -31,16 +31,21 @@ import nars.main_nogui.ReasonerBatch;
 
 /**
  * Each Sentence has a time stamp, consisting the following components:
- * (1) The creation time of the sentence, 
- * (2) A evidentialBase of serial numbers of sentence, from which the sentence is derived.
- * Each input sentence gets a unique serial number, though the creation time may be not unique.
- * The derived sentences inherits serial numbers from its parents, cut at the baseLength limit.
+ * (1) The creation time of the sentence,
+ * (2) A evidentialBase of serial numbers of sentence, from which the sentence
+ * is derived.
+ * Each input sentence gets a unique serial number, though the creation time may
+ * be not unique.
+ * The derived sentences inherits serial numbers from its parents, cut at the
+ * baseLength limit.
  */
 public class Stamp implements Cloneable {
 
-    /** serial number, for the whole system 
+    /**
+     * serial number, for the whole system
      * TODO : should it really be static?
-     * or a Stamp be a field in {@link ReasonerBatch} ? */
+     * or a Stamp be a field in {@link ReasonerBatch} ?
+     */
     private static long currentSerial = 0;
     /** serial numbers */
     private long[] evidentialBase;
@@ -51,6 +56,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Generate a new stamp, with a new serial number, for a new Task
+     *
      * @param time Creation time of the stamp
      */
     public Stamp(long time) {
@@ -63,6 +69,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Generate a new stamp identical with a given one
+     *
      * @param old The stamp to be cloned
      */
     private Stamp(Stamp old) {
@@ -72,10 +79,12 @@ public class Stamp implements Cloneable {
     }
 
     /**
-     * Generate a new stamp from an existing one, with the same evidentialBase but different creation time
+     * Generate a new stamp from an existing one, with the same evidentialBase but
+     * different creation time
      * <p>
      * For single-premise rules
-     * @param old The stamp of the single premise
+     *
+     * @param old  The stamp of the single premise
      * @param time The current time
      */
     public Stamp(Stamp old, long time) {
@@ -87,7 +96,8 @@ public class Stamp implements Cloneable {
     /**
      * Generate a new stamp for derived sentence by merging the two from parents
      * the first one is no shorter than the second
-     * @param first The first Stamp
+     *
+     * @param first  The first Stamp
      * @param second The second Stamp
      */
     private Stamp(Stamp first, Stamp second, long time) {
@@ -115,9 +125,10 @@ public class Stamp implements Cloneable {
      * Try to merge two Stamps, return null if have overlap
      * <p>
      * By default, the event time of the first stamp is used in the result
-     * @param first The first Stamp
+     *
+     * @param first  The first Stamp
      * @param second The second Stamp
-     * @param time The new creation time
+     * @param time   The new creation time
      * @return The merged Stamp, or null
      */
     public static Stamp make(Stamp first, Stamp second, long time) {
@@ -137,6 +148,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Clone a stamp
+     *
      * @return The cloned stamp
      */
     @Override
@@ -153,6 +165,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Return the baseLength of the evidentialBase
+     *
      * @return Length of the Stamp
      */
     public int length() {
@@ -161,6 +174,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Get a number from the evidentialBase by index, called in this class only
+     *
      * @param i The index
      * @return The number at the index
      */
@@ -170,6 +184,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Get the evidentialBase, called in this class only
+     *
      * @return The evidentialBase of numbers
      */
     private long[] getBase() {
@@ -178,6 +193,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Convert the evidentialBase into a set
+     *
      * @return The TreeSet representation of the evidential base
      */
     private TreeSet<Long> toSet() {
@@ -190,6 +206,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Check if two stamps contains the same content
+     *
      * @param that The Stamp to be compared
      * @return Whether the two have contain the same elements
      */
@@ -205,6 +222,7 @@ public class Stamp implements Cloneable {
 
     /**
      * The hash code of Stamp
+     *
      * @return The hash code
      */
     @Override
@@ -214,6 +232,7 @@ public class Stamp implements Cloneable {
 
     /**
      * Get the creationTime of the truth-value
+     *
      * @return The creation time
      */
     public long getCreationTime() {
@@ -223,6 +242,7 @@ public class Stamp implements Cloneable {
     /**
      * Get a String form of the Stamp for display
      * Format: {creationTime [: eventTime] : evidentialBase}
+     *
      * @return The Stamp as a String
      */
     @Override

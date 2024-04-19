@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -39,16 +39,19 @@ public final class StructuralRules {
 
     private static final float RELIANCE = Parameters.RELIANCE;
 
-    /* -------------------- transform between compounds and components -------------------- */
+    /*
+     * -------------------- transform between compounds and components
+     * --------------------
+     */
     /**
      * {<S --> P>, S@(S&T)} |- <(S&T) --> (P&T)> {<S --> P>, S@(M-S)} |- <(M-P)
      * --> (M-S)>
      *
-     * @param compound The compound term
-     * @param index The location of the indicated term in the compound
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
      * @param statement The premise
-     * @param side The location of the indicated term in the premise
-     * @param memory Reference to the memory
+     * @param side      The location of the indicated term in the premise
+     * @param memory    Reference to the memory
      */
     static void structuralCompose2(CompoundTerm compound, short index, Statement statement, short side, Memory memory) {
         if (compound.equals(statement.componentAt(side))) {
@@ -108,7 +111,7 @@ public final class StructuralRules {
      * {<(S&T) --> (P&T)>, S@(S&T)} |- <S --> P>
      *
      * @param statement The premise
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     static void structuralDecompose2(Statement statement, int index, Memory memory) {
         Term subj = statement.getSubject();
@@ -152,7 +155,7 @@ public final class StructuralRules {
      * conclusion
      *
      * @param compound The compound term
-     * @param index The location of focus in the compound
+     * @param index    The location of focus in the compound
      * @return Whether the direction of inheritance should be revised
      */
     private static boolean switchOrder(CompoundTerm compound, short index) {
@@ -164,10 +167,10 @@ public final class StructuralRules {
     /**
      * {<S --> P>, P@(P&Q)} |- <S --> (P&Q)>
      *
-     * @param compound The compound term
-     * @param index The location of the indicated term in the compound
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
      * @param statement The premise
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     static void structuralCompose1(CompoundTerm compound, short index, Statement statement, Memory memory) {
         if (!memory.currentTask.getSentence().isJudgment()) {
@@ -211,10 +214,10 @@ public final class StructuralRules {
     /**
      * {<(S&T) --> P>, S@(S&T)} |- <S --> P>
      *
-     * @param compound The compound term
-     * @param index The location of the indicated term in the compound
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
      * @param statement The premise
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     static void structuralDecompose1(CompoundTerm compound, short index, Statement statement, Memory memory) {
         if (!memory.currentTask.getSentence().isJudgment()) {
@@ -258,10 +261,10 @@ public final class StructuralRules {
     /**
      * Common final operations of the above two methods
      *
-     * @param subject The subject of the new task
+     * @param subject   The subject of the new task
      * @param predicate The predicate of the new task
-     * @param truth The truth value of the new task
-     * @param memory Reference to the memory
+     * @param truth     The truth value of the new task
+     * @param memory    Reference to the memory
      */
     private static void structuralStatement(Term subject, Term predicate, TruthValue truth, Memory memory) {
         Task task = memory.currentTask;
@@ -279,10 +282,10 @@ public final class StructuralRules {
     /**
      * {<S --> {P}>} |- <S <-> {P}>
      *
-     * @param compound The set compound
+     * @param compound  The set compound
      * @param statement The premise
-     * @param side The location of the indicated term in the premise
-     * @param memory Reference to the memory
+     * @param side      The location of the indicated term in the premise
+     * @param memory    Reference to the memory
      */
     static void transformSetRelation(CompoundTerm compound, Statement statement, short side, Memory memory) {
         if (compound.size() > 1) {
@@ -327,11 +330,11 @@ public final class StructuralRules {
      * M)} |- <(*, S, M) --> P> {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M -->
      * (/, P, S, _)>
      *
-     * @param inh An Inheritance statement
+     * @param inh        An Inheritance statement
      * @param oldContent The whole content
-     * @param indices The indices of the TaskLink
-     * @param task The task
-     * @param memory Reference to the memory
+     * @param indices    The indices of the TaskLink
+     * @param task       The task
+     * @param memory     Reference to the memory
      */
     static void transformProductImage(Inheritance inh, CompoundTerm oldContent, short[] indices, Memory memory) {
         Term subject = inh.getSubject();
@@ -384,18 +387,21 @@ public final class StructuralRules {
         } else {
             ArrayList<Term> componentList;
             Term condition = oldContent.componentAt(0);
-            if (((oldContent instanceof Implication) || (oldContent instanceof Equivalence)) && (condition instanceof Conjunction)) {
+            if (((oldContent instanceof Implication) || (oldContent instanceof Equivalence))
+                    && (condition instanceof Conjunction)) {
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
                 Term newCond = CompoundTerm.make((CompoundTerm) condition, componentList, memory);
-                content = Statement.make((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate(), memory);
+                content = Statement.make((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate(),
+                        memory);
             } else {
                 componentList = oldContent.cloneComponents();
                 componentList.set(indices[0], newInh);
                 if (oldContent instanceof Conjunction) {
                     content = CompoundTerm.make(oldContent, componentList, memory);
                 } else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence)) {
-                    content = Statement.make((Statement) oldContent, componentList.get(0), componentList.get(1), memory);
+                    content = Statement.make((Statement) oldContent, componentList.get(0), componentList.get(1),
+                            memory);
                 }
             }
         }
@@ -419,9 +425,9 @@ public final class StructuralRules {
      * --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P> {<S --> (/, P, _,
      * M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param subject The subject term
+     * @param subject   The subject term
      * @param predicate The predicate term
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     private static void transformSubjectPI(CompoundTerm subject, Term predicate, Memory memory) {
         TruthValue truth = memory.currentTask.getSentence().getTruth();
@@ -473,9 +479,9 @@ public final class StructuralRules {
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P> {<S --> (/,
      * P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param subject The subject term
+     * @param subject   The subject term
      * @param predicate The predicate term
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     private static void transformPredicatePI(Term subject, CompoundTerm predicate, Memory memory) {
         TruthValue truth = memory.currentTask.getSentence().getTruth();
@@ -521,16 +527,15 @@ public final class StructuralRules {
         }
     }
 
-
     /* --------------- Disjunction and Conjunction transform --------------- */
     /**
      * {(&&, A, B), A@(&&, A, B)} |- A, or answer (&&, A, B)? using A {(||, A,
      * B), A@(||, A, B)} |- A, or answer (||, A, B)? using A
      *
-     * @param compound The premise
-     * @param component The recognized component in the premise
+     * @param compound     The premise
+     * @param component    The recognized component in the premise
      * @param compoundTask Whether the compound comes from the task
-     * @param memory Reference to the memory
+     * @param memory       Reference to the memory
      */
     static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
         if (!component.isConstant()) {
@@ -562,7 +567,7 @@ public final class StructuralRules {
      * {A, A@(--, A)} |- (--, A)
      *
      * @param content The premise
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      */
     public static void transformNegation(Term content, Memory memory) {
         Task task = memory.currentTask;
@@ -584,7 +589,7 @@ public final class StructuralRules {
      * {<A ==> B>, A@(--, A)} |- <(--, B) ==> (--, A)>
      *
      * @param statement The premise
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      */
     static void contraposition(Statement statement, Sentence sentence, Memory memory) {
         Term subj = statement.getSubject();

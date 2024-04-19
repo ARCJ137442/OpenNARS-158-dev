@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -35,6 +35,7 @@ public class Implication extends Statement {
 
     /**
      * Constructor with partial values, called by make
+     *
      * @param arg The component list of the term
      */
     protected Implication(ArrayList<Term> arg) {
@@ -43,10 +44,11 @@ public class Implication extends Statement {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
-     * @param cs Component list
+     *
+     * @param n   The name of the term
+     * @param cs  Component list
      * @param con Whether it is a constant term
-     * @param i Syntactic complexity of the compound
+     * @param i   Syntactic complexity of the compound
      */
     protected Implication(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
@@ -54,6 +56,7 @@ public class Implication extends Statement {
 
     /**
      * Clone an object
+     *
      * @return A new object
      */
     public Object clone() {
@@ -61,10 +64,12 @@ public class Implication extends Statement {
     }
 
     /**
-     * Try to make a new compound from two components. Called by the inference rules.
-     * @param subject The first component
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     *
+     * @param subject   The first component
      * @param predicate The second component
-     * @param memory Reference to the memory
+     * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Implication make(Term subject, Term predicate, Memory memory) {
@@ -74,7 +79,8 @@ public class Implication extends Statement {
         if ((subject == null) || (predicate == null)) {
             return null;
         }
-        if ((subject instanceof Implication) || (subject instanceof Equivalence) || (predicate instanceof Equivalence)) {
+        if ((subject instanceof Implication) || (subject instanceof Equivalence)
+                || (predicate instanceof Equivalence)) {
             return null;
         }
         if (invalidStatement(subject, predicate)) {
@@ -100,6 +106,7 @@ public class Implication extends Statement {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     public String operator() {

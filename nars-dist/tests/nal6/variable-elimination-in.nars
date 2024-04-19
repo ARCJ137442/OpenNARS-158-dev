@@ -1,11 +1,11 @@
 // Table 8.2: Sample Independent-Variable Elimination Rules
-* Deduction 
+* Deduction
 <<#x --> S> ==> <#x --> P >>.
 < M --> S >.
 <M --> P >?
 6
 
-* Abduction 
+* Abduction
 <<#x --> S> ==> <#x --> P >>.
 < M --> P >.
 <M --> S>?

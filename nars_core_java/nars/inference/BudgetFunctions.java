@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -43,7 +43,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static float truthToQuality(TruthValue t) {
         float exp = t.getExpectation();
-        return (float) Math.max(exp, (1 - exp)*0.75);
+        return (float) Math.max(exp, (1 - exp) * 0.75);
     }
 
     /**
@@ -64,17 +64,17 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Evaluate the quality of a belief as a solution to a problem, then reward
      * the belief and de-prioritize the problem
      *
-     * @param problem The problem (question or goal) to be solved
+     * @param problem  The problem (question or goal) to be solved
      * @param solution The belief as solution
-     * @param task The task to be immediately processed, or null for continued
-     * process
+     * @param task     The task to be immediately processed, or null for continued
+     *                 process
      * @return The budget for the new task which is the belief activated, if
-     * necessary
+     *         necessary
      */
     static BudgetValue solutionEval(Sentence problem, Sentence solution, Task task, Memory memory) {
         BudgetValue budget = null;
         boolean feedbackToLinks = false;
-        if (task == null) {                   // called in continued processing
+        if (task == null) { // called in continued processing
             task = memory.currentTask;
             feedbackToLinks = true;
         }
@@ -84,7 +84,8 @@ public final class BudgetFunctions extends UtilityFunctions {
             task.incPriority(quality);
         } else {
             float taskPriority = task.getPriority();
-            budget = new BudgetValue(or(taskPriority, quality), task.getDurability(), truthToQuality(solution.getTruth()));
+            budget = new BudgetValue(or(taskPriority, quality), task.getDurability(),
+                    truthToQuality(solution.getTruth()));
             task.setPriority(Math.min(1 - quality, taskPriority));
         }
         if (feedbackToLinks) {
@@ -101,10 +102,11 @@ public final class BudgetFunctions extends UtilityFunctions {
      *
      * @param tTruth The truth value of the judgment in the task
      * @param bTruth The truth value of the belief
-     * @param truth The truth value of the conclusion of revision
+     * @param truth  The truth value of the conclusion of revision
      * @return The budget for the new task
      */
-    static BudgetValue revise(TruthValue tTruth, TruthValue bTruth, TruthValue truth, boolean feedbackToLinks, Memory memory) {
+    static BudgetValue revise(TruthValue tTruth, TruthValue bTruth, TruthValue truth, boolean feedbackToLinks,
+            Memory memory) {
         float difT = truth.getExpDifAbs(tTruth);
         Task task = memory.currentTask;
         task.decPriority(1 - difT);
@@ -128,7 +130,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Update a belief
      *
-     * @param task The task containing new belief
+     * @param task   The task containing new belief
      * @param bTruth Truth value of the previous belief
      * @return Budget value of the updating task
      */
@@ -159,7 +161,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Activate a concept by an incoming TaskLink
      *
      * @param concept The concept
-     * @param budget The budget for the new item
+     * @param budget  The budget for the new item
      */
     public static void activate(Concept concept, BudgetValue budget) {
         float oldPri = concept.getPriority();
@@ -181,16 +183,16 @@ public final class BudgetFunctions extends UtilityFunctions {
      * of times of access, priority 1 will become d, it is a system parameter
      * adjustable in run time.
      *
-     * @param budget The previous budget value
-     * @param forgetRate The budget for the new item
+     * @param budget            The previous budget value
+     * @param forgetRate        The budget for the new item
      * @param relativeThreshold The relative threshold of the bag
      */
     public static void forget(BudgetValue budget, float forgetRate, float relativeThreshold) {
-        double quality = budget.getQuality() * relativeThreshold;      // re-scaled quality
-        double p = budget.getPriority() - quality;                     // priority above quality
+        double quality = budget.getQuality() * relativeThreshold; // re-scaled quality
+        double p = budget.getPriority() - quality; // priority above quality
         if (p > 0) {
             quality += p * Math.pow(budget.getDurability(), 1.0 / (forgetRate * p));
-        }    // priority Durability
+        } // priority Durability
         budget.setPriority((float) quality);
     }
 
@@ -198,7 +200,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Merge an item into another one in a bag, when the two are identical
      * except in budget values
      *
-     * @param baseValue The budget value to be modified
+     * @param baseValue   The budget value to be modified
      * @param adjustValue The budget doing the adjusting
      */
     public static void merge(BudgetValue baseValue, BudgetValue adjustValue) {
@@ -221,7 +223,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Backward inference result and adjustment, stronger case
      *
-     * @param truth The truth value of the belief deriving the conclusion
+     * @param truth  The truth value of the belief deriving the conclusion
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
@@ -232,7 +234,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Backward inference result and adjustment, weaker case
      *
-     * @param truth The truth value of the belief deriving the conclusion
+     * @param truth  The truth value of the belief deriving the conclusion
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
@@ -244,9 +246,9 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Forward inference with CompoundTerm conclusion
      *
-     * @param truth The truth value of the conclusion
+     * @param truth   The truth value of the conclusion
      * @param content The content of the conclusion
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
     public static BudgetValue compoundForward(TruthValue truth, Term content, Memory memory) {
@@ -257,7 +259,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Backward inference with CompoundTerm conclusion, stronger case
      *
      * @param content The content of the conclusion
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
     public static BudgetValue compoundBackward(Term content, Memory memory) {
@@ -268,7 +270,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Backward inference with CompoundTerm conclusion, weaker case
      *
      * @param content The content of the conclusion
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
     public static BudgetValue compoundBackwardWeak(Term content, Memory memory) {
@@ -278,9 +280,9 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Common processing for all inference step
      *
-     * @param qual Quality of the inference
+     * @param qual       Quality of the inference
      * @param complexity Syntactic complexity of the conclusion
-     * @param memory Reference to the memory
+     * @param memory     Reference to the memory
      * @return Budget of the conclusion task
      */
     private static BudgetValue budgetInference(float qual, int complexity, Memory memory) {

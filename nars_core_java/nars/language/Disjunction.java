@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -28,14 +28,15 @@ import java.util.*;
 import nars.io.Symbols;
 import nars.storage.Memory;
 
-/** 
+/**
  * A disjunction of Statements.
  */
 public class Disjunction extends CompoundTerm {
 
     /**
      * Constructor with partial values, called by make
-     * @param n The name of the term
+     *
+     * @param n   The name of the term
      * @param arg The component list of the term
      */
     private Disjunction(ArrayList<Term> arg) {
@@ -44,10 +45,11 @@ public class Disjunction extends CompoundTerm {
 
     /**
      * Constructor with full values, called by clone
-     * @param n The name of the term
-     * @param cs Component list
+     *
+     * @param n    The name of the term
+     * @param cs   Component list
      * @param open Open variable list
-     * @param i Syntactic complexity of the compound
+     * @param i    Syntactic complexity of the compound
      */
     private Disjunction(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
@@ -55,6 +57,7 @@ public class Disjunction extends CompoundTerm {
 
     /**
      * Clone an object
+     *
      * @return A new object
      */
     @Override
@@ -63,9 +66,11 @@ public class Disjunction extends CompoundTerm {
     }
 
     /**
-     * Try to make a new Disjunction from two components. Called by the inference rules.
-     * @param term1 The first component
-     * @param term2 The first component
+     * Try to make a new Disjunction from two components. Called by the inference
+     * rules.
+     *
+     * @param term1  The first component
+     * @param term2  The first component
      * @param memory Reference to the memory
      * @return A Disjunction generated or a Term it reduced to
      */
@@ -78,10 +83,10 @@ public class Disjunction extends CompoundTerm {
             } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
             else {
                 set.add((Term) term2.clone());
-            }                          // (&,(&,P,Q),R) = (&,P,Q,R)
+            } // (&,(&,P,Q),R) = (&,P,Q,R)
         } else if (term2 instanceof Disjunction) {
             set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add((Term) term1.clone());                              // (&,R,(&,P,Q)) = (&,P,Q,R)
+            set.add((Term) term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
         } else {
             set = new TreeSet<>();
             set.add((Term) term1.clone());
@@ -92,8 +97,9 @@ public class Disjunction extends CompoundTerm {
 
     /**
      * Try to make a new IntersectionExt. Called by StringParser.
+     *
      * @param argList a list of Term as components
-     * @param memory Reference to the memory
+     * @param memory  Reference to the memory
      * @return the Term generated from the arguments
      */
     public static Term make(ArrayList<Term> argList, Memory memory) {
@@ -102,15 +108,17 @@ public class Disjunction extends CompoundTerm {
     }
 
     /**
-     * Try to make a new Disjunction from a set of components. Called by the public make methods.
-     * @param set a set of Term as components
+     * Try to make a new Disjunction from a set of components. Called by the public
+     * make methods.
+     *
+     * @param set    a set of Term as components
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
     public static Term make(TreeSet<Term> set, Memory memory) {
         if (set.size() == 1) {
             return set.first();
-        }                         // special case: single component
+        } // special case: single component
         ArrayList<Term> argument = new ArrayList<>(set);
         String name = makeCompoundName(Symbols.DISJUNCTION_OPERATOR, argument);
         Term t = memory.nameToListedTerm(name);
@@ -119,6 +127,7 @@ public class Disjunction extends CompoundTerm {
 
     /**
      * Get the operator of the term.
+     *
      * @return the operator of the term
      */
     @Override
@@ -128,6 +137,7 @@ public class Disjunction extends CompoundTerm {
 
     /**
      * Disjunction is commutative.
+     *
      * @return true for commutative
      */
     @Override

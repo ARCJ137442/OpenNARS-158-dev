@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -48,9 +48,9 @@ public class Parameters {
 
     /* ---------- logical parameters ---------- */
     /** Evidential Horizon, the amount of future evidence to be considered. */
-    public static final int HORIZON = 1;    // or 2, can be float
+    public static final int HORIZON = 1; // or 2, can be float
     /** Reliance factor, the empirical confidence of analytical truth. */
-    public static final float RELIANCE = (float) 0.9;    // the same as default confidence
+    public static final float RELIANCE = (float) 0.9; // the same as default confidence
 
     /* ---------- budget thresholds ---------- */
     /** The budget threshold rate for task to be accepted. */
@@ -75,7 +75,10 @@ public class Parameters {
     /* ---------- space management ---------- */
     /** Level granularity in Bag, two digits */
     public static final int BAG_LEVEL = 100;
-    /** Level separation in Bag, one digit, for display (run-time adjustable) and management (fixed) */
+    /**
+     * Level separation in Bag, one digit, for display (run-time adjustable) and
+     * management (fixed)
+     */
     public static final int BAG_THRESHOLD = 10;
     /** Hashtable load factor in Bag */
     public static final float LOAD_FACTOR = (float) 0.5;
@@ -87,7 +90,7 @@ public class Parameters {
     public static final int TERM_LINK_BAG_SIZE = 100;
     /** Size of TaskBuffer */
     public static final int TASK_BUFFER_SIZE = 10;
-    
+
     /* ---------- avoiding repeated reasoning ---------- */
     /** Maximum length of Stamp, a power of 2 */
     public static final int MAXIMUM_STAMP_LENGTH = 8;

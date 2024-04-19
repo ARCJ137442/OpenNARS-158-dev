@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 package nars.gui;
+
 import javax.swing.*;
 
 import java.awt.*;
@@ -42,24 +43,25 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
     /** parameter values */
     private int defaultValue, previousValue; // , currentValue;
     private AtomicInteger currentValue;
-    
+
     /**
      * Constructor
+     *
      * @param title Parameter name
-     * @param dft The default value of the parameter
-     * @param value  
+     * @param dft   The default value of the parameter
+     * @param value
      */
-    ParameterWindow(String title, int dft, AtomicInteger currentValue ) {
+    ParameterWindow(String title, int dft, AtomicInteger currentValue) {
         super(title);
-//        System.out.println("ParameterWindow.ParameterWindow(): " +
-//        		"title " + title +
-//        		"currentValue " + currentValue);
+        // System.out.println("ParameterWindow.ParameterWindow(): " +
+        // "title " + title +
+        // "currentValue " + currentValue);
         defaultValue = dft;
         this.currentValue = currentValue;
-        
-//        previousValue = dft;
+
+        // previousValue = dft;
         previousValue = currentValue.get();
-        currentValue.set( dft );
+        currentValue.set(dft);
         setLayout(new GridLayout(3, 3, 8, 4));
         getContentPane().setBackground(SINGLE_WINDOW_COLOR);
         JLabel sp1 = new JLabel("");
@@ -72,7 +74,7 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
         sp2.setBackground(SINGLE_WINDOW_COLOR);
         add(sp2);
         add(new JLabel("0", JLabel.RIGHT));
-//        valueBar = new JScrollBar(Scrollbar.HORIZONTAL, dft, 0, 0, 100);
+        // valueBar = new JScrollBar(Scrollbar.HORIZONTAL, dft, 0, 0, 100);
         valueBar = new JScrollBar(Scrollbar.HORIZONTAL, currentValue.get(), 0, 0, 100);
         valueBar.addAdjustmentListener(this);
         addWindowFocusListener(this);
@@ -92,6 +94,7 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
 
     /**
      * Get the value of the parameter
+     *
      * @return The current value
      */
     public int value() {
@@ -100,17 +103,18 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
 
     /**
      * Handling button click
+     *
      * @param e The ActionEvent
      */
     public void actionPerformed(ActionEvent e) {
         Object s = e.getSource();
         if (s == defaultButton) {
-            currentValue.set( defaultValue );
-            valueBar.setValue(currentValue.get() );
+            currentValue.set(defaultValue);
+            valueBar.setValue(currentValue.get());
             valueLabel.setText(String.valueOf(currentValue));
         } else if (s == undoButton) {
-            currentValue.set( previousValue );
-            valueBar.setValue(currentValue.get() );
+            currentValue.set(previousValue);
+            valueBar.setValue(currentValue.get());
             valueLabel.setText(String.valueOf(currentValue));
         } else if (s == hideButton) {
             close();
@@ -129,6 +133,7 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
 
     /**
      * Handling scrollbar movement
+     *
      * @param e The AdjustmentEvent
      */
     public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -136,20 +141,24 @@ public class ParameterWindow extends NarsFrame implements ActionListener, Adjust
             int v = valueBar.getValue();
             valueLabel.setText(String.valueOf(v));
             valueBar.setValue(v);
-            currentValue.set( v );
+            currentValue.set(v);
         }
     }
 
-	@Override
-	/** hack to update the slider to the correct value when app. has been started with
-	 * --silence 100
-	 * <p/>
-	 * I consider using PropertyChangeSupport for the silence level,
-	 * or leveraging valueBar's model. */
-	public void windowGainedFocus(WindowEvent e) {
-		valueBar.setValue(currentValue.get());
-	}
+    @Override
+    /**
+     * hack to update the slider to the correct value when app. has been started
+     * with
+     * --silence 100
+     * <p/>
+     * I consider using PropertyChangeSupport for the silence level,
+     * or leveraging valueBar's model.
+     */
+    public void windowGainedFocus(WindowEvent e) {
+        valueBar.setValue(currentValue.get());
+    }
 
-	@Override
-	public void windowLostFocus(WindowEvent e) {}
+    @Override
+    public void windowLostFocus(WindowEvent e) {
+    }
 }

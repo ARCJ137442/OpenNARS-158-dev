@@ -1,4 +1,4 @@
-/* 
+/*
  * The MIT License
  *
  * Copyright 2019 The OpenNARS authors.
@@ -26,19 +26,20 @@ package nars.storage;
 import nars.entity.Item;
 
 /**
- * Bag Observer; similar to Observer design pattern, except that here we have a single observer
+ * Bag Observer; similar to Observer design pattern, except that here we have a
+ * single observer
  */
 public interface BagObserver<BagType extends Item> {
 
     /**
      * Set a name for this observer
      */
-	public abstract void setTitle(String title);
+    public abstract void setTitle(String title);
 
     /**
      * Set the observed Bag
      */
-	public abstract void setBag( Bag<BagType> concepts );
+    public abstract void setBag(Bag<BagType> concepts);
 
     /**
      * Post given bag content
