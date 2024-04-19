@@ -30,18 +30,22 @@ javac -classpath open-nars\src\lib\*.jar -d classes @sources.txt -Xstdout compil
 @REM ! ↑这是个孤立文件（核心shell、GUI不依赖它），但会导致编译失败——故需在sources.txt忽略
 
 @REM ==后续其它构建代码==
-@REM 构建NARS代码（classes）到jar文件
-@REM echo "Main-Class: nars.main.NARS" > manifest.txt
-@REM ↑原命令
+@REM 构建NARS代码（classes）到jar文件（GUI）
 echo Main-Class: nars.main.NARS > manifest.txt
-jar -cvfm NARS.jar manifest.txt -C classes . 
+jar -cvfm opennars-158.jar manifest.txt -C classes .
+DEL manifest.txt
+
+@REM 构建NARS代码（classes）到jar文件（Shell）
+echo Main-Class: nars.main_nogui.Shell > manifest.txt
+jar -cvfm opennars-158-shell.jar manifest.txt -C classes .
 DEL manifest.txt
 
 echo You can now launch:
-echo java -jar NARS.jar
+echo java -jar opennars-158.jar
 echo or
-echo java -jar NARS.jar nars-dist/Examples/Example-NAL1-edited.txt --silence 90
+echo java -jar opennars-158.jar nars-dist/Examples/Example-NAL1-edited.txt --silence 90
 echo or
-echo java -cp NARS.jar nars.main_nogui.NARSBatch  nars-dist/Examples/Example-NAL1-edited.txt
-echo or
-echo java -cp "*" nars.main_nogui.Shell
+echo java -jar opennars-158-shell.jar
+@REM echo or
+@REM ↓这条无法奏效
+@REM echo java -jar opennars-158-shell.jar nars-dist/Examples/Example-NAL1-edited.txt
