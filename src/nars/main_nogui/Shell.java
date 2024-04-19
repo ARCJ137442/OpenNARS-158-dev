@@ -20,6 +20,8 @@ public class Shell {
 
     static String inputString = "";
 
+    static boolean isRunning = false;
+
     public static void main(String[] args) {
         ReasonerBatch reasoner = new ReasonerBatch();
         reasoner.addOutputChannel(new ShellOutput());
@@ -29,41 +31,45 @@ public class Shell {
                 "Welcome to the OpenNARS Shell, type some Narsese input and press enter, use questions to get answers, or increase volume with *volume=n with n=0..100");
         reasoner.run();
         reasoner.getSilenceValue().set(100);
-        while (true) {
-            synchronized (inputString) {
-                if (!"".equals(inputString)) {
-                    try {
-                        // 推理步进（手动）
-                        if (inputString.matches("[0-9]+")) {
-                            System.out.println("INFO: running " + inputString + " cycles.");
-                            int val = Integer.parseInt(inputString);
-                            for (int i = 0; i < val; i++)
-                                reasoner.tick();
-                        }
-                        // 设置音量
-                        else if (inputString.startsWith("*volume=")) { // volume to be consistent with OpenNARS
-                            int val = Integer.parseInt(inputString.split("\\*volume=")[1]);
-                            if (val >= 0 && val <= 100) {
-                                reasoner.getSilenceValue().set(100 - val);
-                            } else {
-                                System.out.println("Volume ignored, not in range");
-                            }
-                        }
-                        // 开启debug模式
-                        else if (inputString.startsWith("*debug=")) { // volume to be consistent with OpenNARS
-                            String param = inputString.split("\\*debug=")[1];
-                            ReasonerBatch.DEBUG = !param.isEmpty();
-                        }
-                        // 输入Narsese
-                        else {
-                            reasoner.textInputLine(inputString);
-                            reasoner.tick(); // 输入之后至少推理步进一步
-                        }
-                        inputString = "";
-                    } catch (Exception ex) {
-                        inputString = "";
+        isRunning = true;
+        while (isRunning) {
+            // 此处的代码交给inputThread
+        }
+    }
+
+    public static void inputLine(ReasonerBatch reasoner, String inputString) {
+
+        if (!"".equals(inputString)) {
+            try {
+                // 推理步进（手动）
+                if (inputString.matches("[0-9]+")) {
+                    System.out.println("INFO: running " + inputString + " cycles.");
+                    int val = Integer.parseInt(inputString);
+                    for (int i = 0; i < val; i++)
+                        reasoner.tick();
+                }
+                // 设置音量
+                else if (inputString.startsWith("*volume=")) { // volume to be consistent with OpenNARS
+                    int val = Integer.parseInt(inputString.split("\\*volume=")[1]);
+                    if (val >= 0 && val <= 100) {
+                        reasoner.getSilenceValue().set(100 - val);
+                    } else {
+                        System.out.println("Volume ignored, not in range");
                     }
                 }
+                // 开启debug模式
+                else if (inputString.startsWith("*debug=")) { // volume to be consistent with OpenNARS
+                    String param = inputString.split("\\*debug=")[1];
+                    ReasonerBatch.DEBUG = !param.isEmpty();
+                }
+                // 输入Narsese
+                else {
+                    reasoner.textInputLine(inputString);
+                    reasoner.tick(); // 输入之后至少推理步进一步
+                }
+                inputString = "";
+            } catch (Exception ex) {
+                inputString = "";
             }
         }
     }
@@ -72,9 +78,10 @@ public class Shell {
         @Override
         public void nextOutput(ArrayList<String> arg0) {
             for (String s : arg0) {
-                if (s.matches("[0-9]+"))
-                    System.out.println("INFO: ran " + s + " cycles.");
-                else
+                if (s.matches("[0-9]+")) {
+                    // System.out.println("INFO: ran " + s + " cycles.");
+                    // * 🚩已经在`inputLine`中输出过，此处忽略
+                } else
                     System.out.println(s);
             }
         }
@@ -102,6 +109,7 @@ public class Shell {
                     if (line != null) {
                         synchronized (inputString) {
                             inputString = line;
+                            inputLine(reasoner, inputString);
                         }
                     }
 
