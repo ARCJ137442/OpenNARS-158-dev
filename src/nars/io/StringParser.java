@@ -102,15 +102,15 @@ public abstract class StringParser extends Symbols {
             String truthString = getTruthString(buffer);
             String str = buffer.toString().trim();
             int last = str.length() - 1;
-            char punc = str.charAt(last);
+            char punctuation = str.charAt(last);
             Stamp stamp = new Stamp(time);
-            TruthValue truth = parseTruth(truthString, punc);
+            TruthValue truth = parseTruth(truthString, punctuation);
             Term content = parseTerm(str.substring(0, last), memory);
-            Sentence sentence = new Sentence(content, punc, truth, stamp);
-            if ((content instanceof Conjunction) && Variable.containVarDep(content.getName())) {
-                sentence.setRevisible(false);
+            Sentence sentence = new Sentence(content, punctuation, truth, stamp);
+            if ((content instanceof Conjunction) && Variable.containVarD(content.getName())) {
+                sentence.setRevisable(false);
             }
-            BudgetValue budget = parseBudget(budgetString, punc, truth);
+            BudgetValue budget = parseBudget(budgetString, punctuation, truth);
             task = new Task(sentence, budget);
         } catch (InvalidInputException e) {
             String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
@@ -221,7 +221,7 @@ public abstract class StringParser extends Symbols {
             default:
                 throw new InvalidInputException("unknown punctuation: '" + punctuation + "'");
         }
-        if (s != null) { // overrite default
+        if (s != null) { // override default
             int i = s.indexOf(VALUE_SEPARATOR);
             if (i < 0) { // default durability
                 priority = Float.parseFloat(s);
@@ -406,7 +406,7 @@ public abstract class StringParser extends Symbols {
     /**
      * Locate the first top-level separator in a CompoundTerm
      *
-     * @return the index of the next seperator in a String
+     * @return the index of the next separator in a String
      * @param s     The String to be parsed
      * @param first The starting index
      */

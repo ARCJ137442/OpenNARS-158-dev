@@ -244,9 +244,9 @@ public abstract class Statement extends CompoundTerm {
     }
 
     public static boolean invalidPair(String s1, String s2) {
-        if (Variable.containVarIndep(s1) && !Variable.containVarIndep(s2)) {
+        if (Variable.containVarI(s1) && !Variable.containVarI(s2)) {
             return true;
-        } else if (!Variable.containVarIndep(s1) && Variable.containVarIndep(s2)) {
+        } else if (!Variable.containVarI(s1) && Variable.containVarI(s2)) {
             return true;
         }
         return false;

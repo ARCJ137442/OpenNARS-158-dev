@@ -405,7 +405,7 @@ public class Memory {
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
             newStamp = new Stamp(currentBelief.getStamp(), getTime());
         }
-        Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp, taskSentence.getRevisible());
+        Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp, taskSentence.getRevisable());
         Task newTask = new Task(newSentence, newBudget, currentTask, null);
         derivedTask(newTask);
     }

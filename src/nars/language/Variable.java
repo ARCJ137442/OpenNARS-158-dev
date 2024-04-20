@@ -88,7 +88,7 @@ public class Variable extends Term {
      * @param n The string name to be checked
      * @return Whether the name contains an independent variable
      */
-    public static boolean containVarIndep(String n) {
+    public static boolean containVarI(String n) {
         return n.indexOf(Symbols.VAR_INDEPENDENT) >= 0;
     }
 
@@ -99,7 +99,7 @@ public class Variable extends Term {
      * @param n The string name to be checked
      * @return Whether the name contains a dependent variable
      */
-    public static boolean containVarDep(String n) {
+    public static boolean containVarD(String n) {
         return n.indexOf(Symbols.VAR_DEPENDENT) >= 0;
     }
 
@@ -110,7 +110,7 @@ public class Variable extends Term {
      * @param n The string name to be checked
      * @return Whether the name contains a query variable
      */
-    public static boolean containVarQuery(String n) {
+    public static boolean containVarQ(String n) {
         return n.indexOf(Symbols.VAR_QUERY) >= 0;
     }
 
@@ -122,7 +122,7 @@ public class Variable extends Term {
      * @return Whether the name contains a variable
      */
     public static boolean containVar(String n) {
-        return containVarIndep(n) || containVarDep(n) || containVarQuery(n);
+        return containVarI(n) || containVarD(n) || containVarQ(n);
     }
 
     /**

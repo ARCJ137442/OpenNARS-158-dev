@@ -54,7 +54,7 @@ public class Sentence implements Cloneable {
     /**
      * Whether the sentence can be revised
      */
-    private boolean revisible;
+    private boolean revisable;
 
     /**
      * Create a Sentence with the given fields
@@ -72,7 +72,7 @@ public class Sentence implements Cloneable {
         this.punctuation = punctuation;
         this.truth = truth;
         this.stamp = stamp;
-        this.revisible = true;
+        this.revisable = true;
     }
 
     /**
@@ -84,15 +84,15 @@ public class Sentence implements Cloneable {
      * @param stamp       The stamp of the sentence indicating its derivation time
      *                    and
      *                    base
-     * @param revisible   Whether the sentence can be revised
+     * @param revisable   Whether the sentence can be revised
      */
-    public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp, boolean revisible) {
+    public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp, boolean revisable) {
         this.content = content;
         this.content.renameVariables();
         this.punctuation = punctuation;
         this.truth = truth;
         this.stamp = stamp;
-        this.revisible = revisible;
+        this.revisable = revisable;
     }
 
     /**
@@ -150,7 +150,7 @@ public class Sentence implements Cloneable {
             return new Sentence((Term) content.clone(), punctuation, null, (Stamp) stamp.clone());
         }
         return new Sentence((Term) content.clone(), punctuation, new TruthValue(truth), (Stamp) stamp.clone(),
-                revisible);
+                revisable);
     }
 
     /**
@@ -233,12 +233,12 @@ public class Sentence implements Cloneable {
         return (content.getName().indexOf(Symbols.VAR_QUERY) >= 0);
     }
 
-    public boolean getRevisible() {
-        return revisible;
+    public boolean getRevisable() {
+        return revisable;
     }
 
-    public void setRevisible(boolean b) {
-        revisible = b;
+    public void setRevisable(boolean b) {
+        revisable = b;
     }
 
     /**

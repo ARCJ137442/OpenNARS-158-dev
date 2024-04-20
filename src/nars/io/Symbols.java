@@ -28,7 +28,7 @@ package nars.io;
  */
 public class Symbols {
 
-    /* sentence type and delimitors */
+    /* sentence type and delimiters */
     public static final char JUDGMENT_MARK = '.';
     public static final char QUESTION_MARK = '?';
 
@@ -37,12 +37,12 @@ public class Symbols {
     public static final char VAR_DEPENDENT = '#';
     public static final char VAR_QUERY = '?';
 
-    /* numerical value delimitors, must be different from the Term delimitors */
+    /* numerical value delimiters, must be different from the Term delimiters */
     public static final char BUDGET_VALUE_MARK = '$';
     public static final char TRUTH_VALUE_MARK = '%';
     public static final char VALUE_SEPARATOR = ';';
 
-    /* CompountTerm delimitors, must use 4 different pairs */
+    /* CompoundTerm delimiters, must use 4 different pairs */
     public static final char COMPOUND_TERM_OPENER = '(';
     public static final char COMPOUND_TERM_CLOSER = ')';
     public static final char STATEMENT_OPENER = '<';
@@ -52,11 +52,11 @@ public class Symbols {
     public static final char SET_INT_OPENER = '[';
     public static final char SET_INT_CLOSER = ']';
 
-    /* special characors in argument list */
+    /* special characters in argument list */
     public static final char ARGUMENT_SEPARATOR = ',';
     public static final char IMAGE_PLACE_HOLDER = '_';
 
-    /* CompountTerm operators, length = 1 */
+    /* CompoundTerm operators, length = 1 */
     public static final String INTERSECTION_EXT_OPERATOR = "&";
     public static final String INTERSECTION_INT_OPERATOR = "|";
     public static final String DIFFERENCE_EXT_OPERATOR = "-";

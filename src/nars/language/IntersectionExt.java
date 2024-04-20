@@ -69,8 +69,8 @@ public class IntersectionExt extends CompoundTerm {
      * Try to make a new compound from two components. Called by the inference
      * rules.
      *
-     * @param term1  The first compoment
-     * @param term2  The first compoment
+     * @param term1  The first component
+     * @param term2  The first component
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
@@ -121,7 +121,7 @@ public class IntersectionExt extends CompoundTerm {
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
      *
-     * @param set    a set of Term as compoments
+     * @param set    a set of Term as components
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */

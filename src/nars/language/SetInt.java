@@ -68,7 +68,7 @@ public class SetInt extends CompoundTerm {
     /**
      * Try to make a new set from one component. Called by the inference rules.
      *
-     * @param t      The compoment
+     * @param t      The component
      * @param memory Reference to the memeory
      * @return A compound generated or a term it reduced to
      */
@@ -94,7 +94,7 @@ public class SetInt extends CompoundTerm {
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
      *
-     * @param set    a set of Term as compoments
+     * @param set    a set of Term as components
      * @param memory Reference to the memeory
      * @return the Term generated from the arguments
      */

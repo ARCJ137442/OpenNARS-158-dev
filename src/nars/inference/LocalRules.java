@@ -69,7 +69,7 @@ public class LocalRules {
      * @return If revision is possible between the two sentences
      */
     public static boolean revisible(Sentence s1, Sentence s2) {
-        return (s1.getContent().equals(s2.getContent()) && s1.getRevisible());
+        return (s1.getContent().equals(s2.getContent()) && s1.getRevisable());
     }
 
     /**
@@ -261,11 +261,11 @@ public class LocalRules {
         Term subjB = beliefContent.getSubject();
         Term predB = beliefContent.getPredicate();
         Term otherTerm;
-        if (Variable.containVarQuery(subjT.getName())) {
+        if (Variable.containVarQ(subjT.getName())) {
             otherTerm = (predT.equals(subjB)) ? predB : subjB;
             content = Statement.make(content, otherTerm, predT, memory);
         }
-        if (Variable.containVarQuery(predT.getName())) {
+        if (Variable.containVarQ(predT.getName())) {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
             content = Statement.make(content, subjT, otherTerm, memory);
         }

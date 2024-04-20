@@ -304,7 +304,7 @@ public final class CompositionalRules {
             budget = BudgetFunctions.compoundBackward(content, memory);
             memory.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
-            if (Variable.containVarQuery(sentence.getContent().getName())) {
+            if (Variable.containVarQ(sentence.getContent().getName())) {
                 Concept contentConcept = memory.termToConcept(content);
                 if (contentConcept == null) {
                     return;
