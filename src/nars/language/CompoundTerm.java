@@ -28,8 +28,6 @@ import java.util.*;
 import nars.entity.*;
 import nars.storage.*;
 import nars.io.Symbols;
-import static nars.language.CompoundTerm.make;
-import static nars.language.CompoundTerm.makeCompoundName;
 
 /**
  * A CompoundTerm is a Term with internal (syntactic) structure

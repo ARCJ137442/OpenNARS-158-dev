@@ -204,6 +204,13 @@ public class Variable extends Term {
             if (t != null) { // already mapped
                 return findSubstitute(type, term1, t, map1, map2);
             } else { // not mapped yet
+                /*
+                 * 📝【2024-04-22 00:13:19】发生在如下场景：
+                 * <(&&, <A-->C>, <B-->$2>) ==> <C-->$2>>.
+                 * <(&&, <A-->$1>, <B-->D>) ==> <$1-->D>>.
+                 * <(&&, <A-->C>, <B-->D>) ==> <C-->D>>?
+                 * 📌要点：可能两边各有「需要被替换」的地方
+                 */
                 map2.put(var2, term1); // elimination
                 if (isCommonVariable(var2)) {
                     map1.put(var2, term1);

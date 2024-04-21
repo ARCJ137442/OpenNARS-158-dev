@@ -63,8 +63,7 @@ public class Sentence implements Cloneable {
      * @param punctuation The punctuation indicating the type of the sentence
      * @param truth       The truth value of the sentence, null for question
      * @param stamp       The stamp of the sentence indicating its derivation time
-     *                    and
-     *                    base
+     *                    and base
      */
     public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp) {
         this.content = content;

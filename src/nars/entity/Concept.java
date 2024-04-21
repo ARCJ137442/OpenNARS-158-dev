@@ -62,7 +62,7 @@ public final class Concept extends Item {
      */
     private final TermLinkBag termLinks;
     /**
-     * Link templates of TermLink, only in concepts with CompoundTerm jmv TODO
+     * Link templates of TermLink, only in concepts with CompoundTerm TODO(jmv)
      * explain more
      */
     private ArrayList<TermLink> termLinkTemplates;
@@ -134,30 +134,30 @@ public final class Concept extends Item {
      * @return Whether to continue the processing of the task
      */
     private void processJudgment(Task task) {
-        Sentence judg = task.getSentence();
-        Sentence oldBelief = evaluation(judg, beliefs);
+        Sentence judgment = task.getSentence();
+        Sentence oldBelief = evaluation(judgment, beliefs);
         if (oldBelief != null) {
-            Stamp newStamp = judg.getStamp();
+            Stamp newStamp = judgment.getStamp();
             Stamp oldStamp = oldBelief.getStamp();
             if (newStamp.equals(oldStamp)) {
                 if (task.getParentTask().getSentence().isJudgment()) {
                     task.getBudget().decPriority(0); // duplicated task
                 } // else: activated belief
                 return;
-            } else if (LocalRules.revisible(judg, oldBelief)) {
+            } else if (LocalRules.revisable(judgment, oldBelief)) {
                 memory.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
                 if (memory.newStamp != null) {
                     memory.currentBelief = oldBelief;
-                    LocalRules.revision(judg, oldBelief, false, memory);
+                    LocalRules.revision(judgment, oldBelief, false, memory);
                 }
             }
         }
         if (task.getBudget().aboveThreshold()) {
             for (Task ques : questions) {
-                // LocalRules.trySolution(ques.getSentence(), judg, ques, memory);
-                LocalRules.trySolution(judg, ques, memory);
+                // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
+                LocalRules.trySolution(judgment, ques, memory);
             }
-            addToTable(judg, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
+            addToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
 
@@ -279,11 +279,11 @@ public final class Concept extends Item {
         float currentBest = 0;
         float beliefQuality;
         Sentence candidate = null;
-        for (Sentence judg : list) {
-            beliefQuality = LocalRules.solutionQuality(query, judg);
+        for (Sentence judgment : list) {
+            beliefQuality = LocalRules.solutionQuality(query, judgment);
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;
-                candidate = judg;
+                candidate = judgment;
             }
         }
         return candidate;

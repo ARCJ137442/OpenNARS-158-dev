@@ -361,13 +361,13 @@ public class Memory {
      * @param newContent The content of the sentence in task
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
-     * @param revisible  Whether the sentence is revisible
+     * @param revisable  Whether the sentence is revisable
      */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisible) {
+    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
         if (newContent != null) {
             Sentence taskSentence = currentTask.getSentence();
             Sentence newSentence = new Sentence(newContent, taskSentence.getPunctuation(), newTruth, newStamp,
-                    revisible);
+                    revisable);
             Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
             derivedTask(newTask);
         }

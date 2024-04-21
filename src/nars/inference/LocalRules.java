@@ -53,7 +53,7 @@ public class LocalRules {
     public static void match(Task task, Sentence belief, Memory memory) {
         Sentence sentence = (Sentence) task.getSentence().clone();
         if (sentence.isJudgment()) {
-            if (revisible(sentence, belief)) {
+            if (revisable(sentence, belief)) {
                 revision(sentence, belief, true, memory);
             }
         } else if (Variable.unify(Symbols.VAR_QUERY, sentence.getContent(), (Term) belief.getContent().clone())) {
@@ -68,7 +68,7 @@ public class LocalRules {
      * @param s2 The second sentence
      * @return If revision is possible between the two sentences
      */
-    public static boolean revisible(Sentence s1, Sentence s2) {
+    public static boolean revisable(Sentence s1, Sentence s2) {
         return (s1.getContent().equals(s2.getContent()) && s1.getRevisable());
     }
 
