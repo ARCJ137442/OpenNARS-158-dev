@@ -54,7 +54,30 @@ public class Memory {
         IN,
         OUT,
         ANSWER,
-        EXE,
+        EXE;
+
+        /**
+         * 将报告类型转换为字符串
+         * * 📝Java在枚举的开头用一个语句定义所有枚举项
+         *
+         * @param type 报告类型
+         * @return 字符串（仅名称）
+         */
+        @Override
+        public String toString() {
+            switch (this) {
+                case IN:
+                    return "IN";
+                case OUT:
+                    return "OUT";
+                case ANSWER:
+                    return "ANSWER";
+                case EXE:
+                    return "EXE";
+                default: // * 穷举后不会发生
+                    return "OTHER";
+            }
+        }
     }
 
     /**
@@ -555,24 +578,7 @@ public class Memory {
                 exportStrings.add(String.valueOf(timer));
             }
         }
-        String s;
-        switch (type) {
-            case IN:
-                s = "IN: ";
-                break;
-            case OUT:
-                s = "OUT: ";
-                break;
-            case ANSWER:
-                s = "ANSWER: ";
-                break;
-            case EXE:
-                s = "EXE: ";
-                break;
-            default: // * 实际上不会发生
-                s = "OTHER: ";
-                break;
-        }
+        String s = type.toString() + ": ";
         s += sentence.toStringBrief();
         exportStrings.add(s);
     }
