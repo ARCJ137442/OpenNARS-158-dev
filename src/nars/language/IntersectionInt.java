@@ -145,9 +145,9 @@ public class IntersectionInt extends CompoundTerm {
     }
 
     /**
-     * Check if the compound is communitative.
+     * Check if the compound is commutative.
      *
-     * @return true for communitative
+     * @return true for commutative
      */
     @Override
     public boolean isCommutative() {

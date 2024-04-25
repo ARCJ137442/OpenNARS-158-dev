@@ -114,12 +114,12 @@ public class ImageInt extends CompoundTerm {
         if (relation instanceof Product) {
             Product p2 = (Product) relation;
             if ((product.size() == 2) && (p2.size() == 2)) {
-                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {// (\,_,(*,a,b),b) is reduced to
-                                                                                       // a
+                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {
+                    // (\,_,(*,a,b),b) is reduced to a
                     return p2.componentAt(0);
                 }
-                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {// (\,(*,a,b),a,_) is reduced to
-                                                                                       // b
+                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {
+                    // (\,(*,a,b),a,_) is reduced to b
                     return p2.componentAt(1);
                 }
             }

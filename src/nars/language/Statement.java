@@ -144,7 +144,7 @@ public abstract class Statement extends CompoundTerm {
     }
 
     /**
-     * Check Statement relation symbol, called in StringPaser
+     * Check Statement relation symbol, called in StringParser
      *
      * @param s0 The String to be checked
      * @return if the given String is a relation symbol

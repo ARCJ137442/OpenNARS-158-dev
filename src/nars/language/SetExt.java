@@ -68,7 +68,7 @@ public class SetExt extends CompoundTerm {
      * Try to make a new set from one component. Called by the inference rules.
      *
      * @param t      The component
-     * @param memory Reference to the memeory
+     * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Term make(Term t, Memory memory) {
@@ -82,7 +82,7 @@ public class SetExt extends CompoundTerm {
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
-     * @param memory  Reference to the memeory
+     * @param memory  Reference to the memory
      */
     public static Term make(ArrayList<Term> argList, Memory memory) {
         TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
@@ -94,7 +94,7 @@ public class SetExt extends CompoundTerm {
      * make methods.
      *
      * @param set    a set of Term as components
-     * @param memory Reference to the memeory
+     * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
     public static Term make(TreeSet<Term> set, Memory memory) {
@@ -117,9 +117,9 @@ public class SetExt extends CompoundTerm {
     }
 
     /**
-     * Check if the compound is communitative.
+     * Check if the compound is communicative.
      *
-     * @return true for communitative
+     * @return true for commutative
      */
     @Override
     public boolean isCommutative() {
@@ -129,7 +129,7 @@ public class SetExt extends CompoundTerm {
     /**
      * Make a String representation of the set, override the default.
      *
-     * @return true for communitative
+     * @return true for commutative
      */
     @Override
     public String makeName() {

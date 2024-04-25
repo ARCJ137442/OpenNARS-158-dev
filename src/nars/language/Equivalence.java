@@ -85,9 +85,9 @@ public class Equivalence extends Statement {
             return null;
         }
         if (subject.compareTo(predicate) > 0) {
-            Term interm = subject;
+            Term inner = subject;
             subject = predicate;
-            predicate = interm;
+            predicate = inner;
         }
         String name = makeStatementName(subject, Symbols.EQUIVALENCE_RELATION, predicate);
         Term t = memory.nameToListedTerm(name);

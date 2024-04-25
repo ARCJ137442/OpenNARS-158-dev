@@ -69,7 +69,7 @@ public class Product extends CompoundTerm {
      *
      * @return the Term generated from the arguments
      * @param argument The list of components
-     * @param memory   Reference to the memeory
+     * @param memory   Reference to the memory
      */
     public static Term make(ArrayList<Term> argument, Memory memory) {
         String name = makeCompoundName(Symbols.PRODUCT_OPERATOR, argument);
@@ -85,7 +85,7 @@ public class Product extends CompoundTerm {
      * @param component The component to be added into the component list
      * @param index     The index of the place-holder in the new Image -- optional
      *                  parameter
-     * @param memory    Reference to the memeory
+     * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
     public static Term make(CompoundTerm image, Term component, int index, Memory memory) {
