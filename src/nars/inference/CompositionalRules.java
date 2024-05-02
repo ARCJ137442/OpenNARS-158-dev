@@ -1,7 +1,6 @@
 package nars.inference;
 
 import java.util.*;
-
 import nars.entity.*;
 import nars.language.*;
 import nars.storage.Memory;
@@ -25,7 +24,7 @@ public final class CompositionalRules {
         CompoundTerm T2 = (CompoundTerm) content.clone();
         if ((component instanceof Inheritance && content instanceof Inheritance) ||
                 (component instanceof Similarity && content instanceof Similarity)) {
-            CompoundTerm result = T;
+            // CompoundTerm result = T;
             if (component.equals(content)) {
                 return; // wouldnt make sense to create a conjunction here, would contain a statement
                         // twice

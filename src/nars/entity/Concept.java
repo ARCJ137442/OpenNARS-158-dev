@@ -106,7 +106,7 @@ public final class Concept extends Item {
      * To accept a new judgment as isBelief, and check for revisions and
      * solutions
      *
-     * @param judg The judgment to be accepted
+     * @param task The judgment to be accepted
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */

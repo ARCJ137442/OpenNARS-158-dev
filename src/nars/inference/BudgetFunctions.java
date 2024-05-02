@@ -27,12 +27,12 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Determine the rank of a judgment by its quality and originality (stamp
      * length), called from Concept
      *
-     * @param judg The judgment to be ranked
+     * @param judgment The judgment to be ranked
      * @return The rank of the judgment, according to truth value only
      */
-    public static float rankBelief(Sentence judg) {
-        float confidence = judg.getTruth().getConfidence();
-        float originality = 1.0f / (judg.getStamp().length() + 1);
+    public static float rankBelief(Sentence judgment) {
+        float confidence = judgment.getTruth().getConfidence();
+        float originality = 1.0f / (judgment.getStamp().length() + 1);
         return or(confidence, originality);
     }
 

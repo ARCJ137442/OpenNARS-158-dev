@@ -135,10 +135,10 @@ public class Task extends Item {
      * Set the best-so-far solution for a Question or Goal, and report answer
      * for input question
      *
-     * @param judg The solution to be remembered
+     * @param judgment The solution to be remembered
      */
-    public void setBestSolution(Sentence judg) {
-        bestSolution = judg;
+    public void setBestSolution(Sentence judgment) {
+        bestSolution = judgment;
     }
 
     /**
