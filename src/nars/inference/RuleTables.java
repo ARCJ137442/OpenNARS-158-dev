@@ -134,9 +134,8 @@ public class RuleTables {
                         break;
                     case TermLink.COMPOUND_STATEMENT:
                         if (belief != null) {
-                            if (taskTerm instanceof Implication) // TODO maybe put instanceof test within
-                                                                 // conditionalDedIndWithVar()
-                            {
+                            // TODO maybe put instanceof test within conditionalDedIndWithVar()
+                            if (taskTerm instanceof Implication) {
                                 Term subj = ((Implication) taskTerm).getSubject();
                                 if (subj instanceof Negation) {
                                     if (task.getSentence().isJudgment()) {

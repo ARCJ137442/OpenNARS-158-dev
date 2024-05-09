@@ -39,8 +39,8 @@ public final class Concept extends Item {
      */
     private final TermLinkBag termLinks;
     /**
-     * Link templates of TermLink, only in concepts with CompoundTerm TODO(jmv)
-     * explain more
+     * Link templates of TermLink, only in concepts with CompoundTerm
+     * TODO(jmv) explain more
      */
     private ArrayList<TermLink> termLinkTemplates;
     /**
@@ -217,7 +217,7 @@ public final class Concept extends Item {
      * @param table       The table to be revised
      * @param capacity    The capacity of the table
      */
-    private void addToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
+    private static void addToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
         float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         Sentence judgment2;
         float rank2;
@@ -249,7 +249,7 @@ public final class Concept extends Item {
      * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
-    private Sentence evaluation(Sentence query, ArrayList<Sentence> list) {
+    private static Sentence evaluation(Sentence query, ArrayList<Sentence> list) {
         if (list == null) {
             return null;
         }

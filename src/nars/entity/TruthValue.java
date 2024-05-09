@@ -120,7 +120,7 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     /**
      * Check if the truth value is negative
      *
-     * @return True if the frequence is less than 1/2
+     * @return True if the frequency is less than 1/2
      */
     public boolean isNegative() {
         return getFrequency() < 0.5;
@@ -166,7 +166,7 @@ public class TruthValue implements Cloneable { // implements Cloneable {
 
     /**
      * A simplified String representation of a TruthValue, where each factor is
-     * accruate to 1%
+     * accurate to 1%
      *
      * @return The String
      */
