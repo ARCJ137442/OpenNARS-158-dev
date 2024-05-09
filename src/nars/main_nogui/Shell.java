@@ -41,8 +41,14 @@ public class Shell {
 
         if (!"".equals(inputString)) {
             try {
+                // 退出程序
+                // * 🎯【2024-05-09 13:35:47】在其它语言中通过`java -jar`启动OpenNARS时，主动退出不容易——总是有残余进程
+                if (inputString.startsWith("*exit") || inputString.startsWith("*quit")) {
+                    System.out.println("TERMINATED: OpenNARS exited by command \"" + inputString + "\".");
+                    System.exit(0);
+                }
                 // 推理步进（手动）
-                if (inputString.matches("[0-9]+")) {
+                else if (inputString.matches("[0-9]+")) {
                     System.out.println("INFO: running " + inputString + " cycles.");
                     int val = Integer.parseInt(inputString);
                     for (int i = 0; i < val; i++)
