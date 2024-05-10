@@ -60,13 +60,13 @@ public class Parameters {
     /** Hashtable load factor in Bag */
     public static final float LOAD_FACTOR = (float) 0.5;
     /** Size of ConceptBag */
-    public static final int CONCEPT_BAG_SIZE = 1000;
+    public static final int CONCEPT_BAG_SIZE = 10000;
     /** Size of TaskLinkBag */
     public static final int TASK_LINK_BAG_SIZE = 20;
     /** Size of TermLinkBag */
-    public static final int TERM_LINK_BAG_SIZE = 100;
+    public static final int TERM_LINK_BAG_SIZE = 20;
     /** Size of TaskBuffer */
-    public static final int TASK_BUFFER_SIZE = 10;
+    public static final int TASK_BUFFER_SIZE = 20;
 
     /* ---------- avoiding repeated reasoning ---------- */
     /** Maximum length of Stamp, a power of 2 */
