@@ -11,7 +11,8 @@ import nars.storage.Memory;
 public final class SyllogisticRules {
 
     /*
-     * --------------- rules used in both first-tense inference and higher-tense
+     * --------------- rules used in both
+     * first-tense inference and higher-tense
      * inference ---------------
      */
     /**
@@ -94,30 +95,30 @@ public final class SyllogisticRules {
     /**
      * {<S ==> P>, <M <=> P>} |- <S ==> P>
      *
-     * @param subj   Subject of the new task
-     * @param pred   Predicate of the new task
-     * @param asym   The asymmetric premise
-     * @param sym    The symmetric premise
-     * @param figure Locations of the shared term in premises
-     * @param memory Reference to the memory
+     * @param subj       Subject of the new task
+     * @param pred       Predicate of the new task
+     * @param asymmetric The asymmetric premise
+     * @param symmetric  The symmetric premise
+     * @param figure     Locations of the shared term in premises
+     * @param memory     Reference to the memory
      */
-    static void analogy(Term subj, Term pred, Sentence asym, Sentence sym, int figure, Memory memory) {
+    static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, int figure, Memory memory) {
         if (Statement.invalidStatement(subj, pred)) {
             return;
         }
-        Statement st = (Statement) asym.getContent();
+        Statement st = (Statement) asymmetric.getContent();
         TruthValue truth = null;
         BudgetValue budget;
         Sentence sentence = memory.currentTask.getSentence();
         CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
         if (sentence.isQuestion()) {
             if (taskTerm.isCommutative()) {
-                budget = BudgetFunctions.backwardWeak(asym.getTruth(), memory);
+                budget = BudgetFunctions.backwardWeak(asymmetric.getTruth(), memory);
             } else {
-                budget = BudgetFunctions.backward(sym.getTruth(), memory);
+                budget = BudgetFunctions.backward(symmetric.getTruth(), memory);
             }
         } else {
-            truth = TruthFunctions.analogy(asym.getTruth(), sym.getTruth());
+            truth = TruthFunctions.analogy(asymmetric.getTruth(), symmetric.getTruth());
             budget = BudgetFunctions.forward(truth, memory);
         }
         Term content = Statement.make(st, subj, pred, memory);
@@ -153,9 +154,10 @@ public final class SyllogisticRules {
 
     /* --------------- rules used only in conditional inference --------------- */
     /**
-     * {<<M --> S> ==> <M --> P>>, <M --> S>} |- <M --> P> {<<M --> S> ==> <M
-     * --> P>>, <M --> P>} |- <M --> S> {<<M --> S> <=> <M --> P>>, <M --> S>}
-     * |- <M --> P> {<<M --> S> <=> <M --> P>>, <M --> P>} |- <M --> S>
+     * {<<M --> S> ==> <M --> P>>, <M --> S>} |- <M --> P>
+     * {<<M --> S> ==> <M --> P>>, <M --> P>} |- <M --> S>
+     * {<<M --> S> <=> <M --> P>>, <M --> S>} |- <M --> P>
+     * {<<M --> S> <=> <M --> P>>, <M --> P>} |- <M --> S>
      *
      * @param mainSentence The implication/equivalence premise
      * @param subSentence  The premise on part of s1
@@ -210,9 +212,9 @@ public final class SyllogisticRules {
     }
 
     /**
-     * {<(&&, S1, S2, S3) ==> P>, S1} |- <(&&, S2, S3) ==> P> {<(&&, S2, S3) ==>
-     * P>, <S1 ==> S2>} |- <(&&, S1, S3) ==> P> {<(&&, S1, S3) ==> P>, <S1 ==>
-     * S2>} |- <(&&, S2, S3) ==> P>
+     * {<(&&, S1, S2, S3) ==> P>, S1} |- <(&&, S2, S3) ==> P>
+     * {<(&&, S2, S3) ==> P>, <S1 ==> S2>} |- <(&&, S1, S3) ==> P>
+     * {<(&&, S1, S3) ==> P>, <S1 ==> S2>} |- <(&&, S2, S3) ==> P>
      *
      * @param premise1 The conditional premise
      * @param index    The location of the shared term in the condition of premise1
@@ -367,11 +369,11 @@ public final class SyllogisticRules {
     /**
      * {<(&&, S2, S3) ==> P>, <(&&, S1, S3) ==> P>} |- <S1 ==> S2>
      *
-     * @param cond1       The condition of the first premise
-     * @param cond2       The condition of the second premise
-     * @param taskContent The first premise
-     * @param st2         The second premise
-     * @param memory      Reference to the memory
+     * @param cond1  The condition of the first premise
+     * @param cond2  The condition of the second premise
+     * @param st1    The first premise
+     * @param st2    The second premise
+     * @param memory Reference to the memory
      * @return Whether there are derived tasks
      */
     static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2, Memory memory) {
@@ -443,7 +445,7 @@ public final class SyllogisticRules {
      * @param compoundTask Whether the compound comes from the task
      * @param memory       Reference to the memory
      */
-    static void elimiVarDep(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
+    static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
         Term content = CompoundTerm.reduceComponents(compound, component, memory);
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;

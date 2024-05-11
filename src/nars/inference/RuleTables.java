@@ -529,7 +529,7 @@ public class RuleTables {
         if (component.getClass() == statement.getClass()) {
             if ((compound instanceof Conjunction) && (memory.currentBelief != null)) {
                 if (Variable.unify(Symbols.VAR_DEPENDENT, component, statement, compound, statement)) {
-                    SyllogisticRules.elimiVarDep(compound, component, statement.equals(beliefTerm), memory);
+                    SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), memory);
                 } else if (task.getSentence().isJudgment()) { // && !compound.containComponent(component)) {
                     CompositionalRules.introVarInner(statement, (Statement) component, compound, memory);
                 } else if (Variable.unify(Symbols.VAR_QUERY, component, statement, compound, statement)) {
