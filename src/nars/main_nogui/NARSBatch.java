@@ -26,7 +26,7 @@ public class NARSBatch {
     ReasonerBatch reasoner;
     private boolean logging;
     private PrintStream out = System.out;
-    private boolean dumpLastState = true;
+    private final boolean dumpLastState = true;
     /**
      * Flag to distinguish the two running modes of the project.
      */

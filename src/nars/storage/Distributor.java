@@ -6,9 +6,9 @@ package nars.storage;
 class Distributor {
 
     /** Shuffled sequence of index numbers */
-    private int order[];
+    private final int order[];
     /** Capacity of the array */
-    private int capacity;
+    private final int capacity;
 
     /**
      * For any number N < range, there is N+1 copies of it in the array, distributed

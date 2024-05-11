@@ -18,11 +18,11 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     /**
      * The frequency factor of the truth value
      */
-    private ShortFloat frequency;
+    private final ShortFloat frequency;
     /**
      * The confidence factor of the truth value
      */
-    private ShortFloat confidence;
+    private final ShortFloat confidence;
     /**
      * Whether the truth value is derived from a definition
      */

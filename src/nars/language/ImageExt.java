@@ -15,7 +15,7 @@ import nars.storage.Memory;
 public class ImageExt extends CompoundTerm {
 
     /** The index of relation in the component list */
-    private short relationIndex;
+    private final short relationIndex;
 
     /**
      * Constructor with partial values, called by make

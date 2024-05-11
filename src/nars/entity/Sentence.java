@@ -14,20 +14,20 @@ public class Sentence implements Cloneable {
     /**
      * The content of a Sentence is a Term
      */
-    private Term content;
+    private final Term content;
     /**
      * The punctuation also indicates the type of the Sentence: Judgment,
      * Question, or Goal
      */
-    private char punctuation;
+    private final char punctuation;
     /**
      * The truth value of Judgment
      */
-    private TruthValue truth;
+    private final TruthValue truth;
     /**
      * Partial record of the derivation path
      */
-    private Stamp stamp;
+    private final Stamp stamp;
     /**
      * Whether the sentence can be revised
      */
@@ -156,14 +156,14 @@ public class Sentence implements Cloneable {
         return (Term) content.clone();
     }
 
-    /**
-     * Set the content Term of the Sentence
-     *
-     * @param t The new content
-     */
-    public void setContent(Term t) {
-        content = t;
-    }
+    // /**
+    // * Set the content Term of the Sentence
+    // *
+    // * @param t The new content
+    // */
+    // public void setContent(Term t) {
+    // content = t;
+    // }
 
     /**
      * Get the truth value of the sentence
@@ -183,9 +183,9 @@ public class Sentence implements Cloneable {
         return stamp;
     }
 
-    public void setStamp(Stamp s) {
-        stamp = s;
-    }
+    // public void setStamp(Stamp s) {
+    // stamp = s;
+    // }
 
     /**
      * Distinguish Judgment from Goal ("instanceof Judgment" doesn't work)

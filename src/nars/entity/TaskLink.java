@@ -14,15 +14,15 @@ public class TaskLink extends TermLink {
     /**
      * The Task linked. The "target" field in TermLink is not used here.
      */
-    private Task targetTask;
+    private final Task targetTask;
     /**
      * Remember the TermLinks that has been used recently with this TaskLink
      */
-    private String recordedLinks[];
+    private final String recordedLinks[];
     /**
      * Remember the time when each TermLink is used with this TaskLink
      */
-    private long recordingTime[];
+    private final long recordingTime[];
     /**
      * The number of TermLinks remembered
      */
@@ -38,15 +38,9 @@ public class TaskLink extends TermLink {
      * @param v        The budget
      */
     public TaskLink(Task t, TermLink template, BudgetValue v) {
-        super("", v);
+        super("", v, template == null ? TermLink.SELF : template.getType(),
+                template == null ? null : template.getIndices());
         targetTask = t;
-        if (template == null) {
-            type = TermLink.SELF;
-            index = null;
-        } else {
-            type = template.getType();
-            index = template.getIndices();
-        }
         recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         counter = 0;

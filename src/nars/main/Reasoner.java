@@ -29,8 +29,7 @@ public class Reasoner extends ReasonerBatch {
      * @param name The name of the reasoner
      */
     Reasoner(String name) {
-        super();
-        this.name = name;
+        super(name);
         inputWindow = new InputWindow(this, name);
         mainWindow = new MainWindow(this, name);
         inputChannels.add(inputWindow);

@@ -42,7 +42,7 @@ public final class Concept extends Item {
      * Link templates of TermLink, only in concepts with CompoundTerm
      * TODO(jmv) explain more
      */
-    private ArrayList<TermLink> termLinkTemplates;
+    private final ArrayList<TermLink> termLinkTemplates;
     /**
      * Question directly asked about the term
      */
@@ -54,7 +54,7 @@ public final class Concept extends Item {
     /**
      * Reference to the memory
      */
-    Memory memory;
+    final Memory memory;
     /**
      * The display window
      */
@@ -71,12 +71,14 @@ public final class Concept extends Item {
         super(tm.getName());
         term = tm;
         this.memory = memory;
-        questions = new ArrayList<>();
-        beliefs = new ArrayList<>();
-        taskLinks = new TaskLinkBag(memory);
-        termLinks = new TermLinkBag(memory);
+        this.questions = new ArrayList<>();
+        this.beliefs = new ArrayList<>();
+        this.taskLinks = new TaskLinkBag(memory);
+        this.termLinks = new TermLinkBag(memory);
         if (tm instanceof CompoundTerm) {
-            termLinkTemplates = ((CompoundTerm) tm).prepareComponentLinks();
+            this.termLinkTemplates = ((CompoundTerm) tm).prepareComponentLinks();
+        } else {
+            this.termLinkTemplates = null;
         }
     }
 

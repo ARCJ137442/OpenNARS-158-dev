@@ -25,11 +25,11 @@ public class Stamp implements Cloneable {
      */
     private static long currentSerial = 0;
     /** serial numbers */
-    private long[] evidentialBase;
+    private final long[] evidentialBase;
     /** evidentialBase baseLength */
-    private int baseLength;
+    private final int baseLength;
     /** creation time of the stamp */
-    private long creationTime;
+    private final long creationTime;
 
     /**
      * Generate a new stamp, with a new serial number, for a new Task

@@ -73,7 +73,7 @@ public abstract class Bag<E extends Item> {
     /**
      * reference to memory
      */
-    protected Memory memory;
+    protected final Memory memory;
 
     private BagObserver<E> bagObserver = new NullBagObserver<>();
 

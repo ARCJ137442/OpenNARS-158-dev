@@ -34,14 +34,14 @@ public class TermLink extends Item {
     /** At C, point to <(*, C, B) --> A>; TaskLink only */
     public static final short TRANSFORM = 8;
     /** The linked Term */
-    private Term target;
+    private final Term target;
     /** The type of link, one of the above */
-    protected short type;
+    protected final short type;
     /**
      * The index of the component in the component list of the compound, may have up
      * to 4 levels
      */
-    protected short[] index;
+    protected final short[] index;
 
     /**
      * Constructor for TermLink template
@@ -53,6 +53,7 @@ public class TermLink extends Item {
      * @param indices Component indices in compound, may be 1 to 4
      */
     public TermLink(Term t, short p, int... indices) {
+        super(null);
         target = t;
         type = p;
         assert (type % 2 == 0); // template types all point to compound, though the target is component
@@ -73,11 +74,16 @@ public class TermLink extends Item {
     /**
      * called from TaskLink
      *
-     * @param s The key of the TaskLink
-     * @param v The budget value of the TaskLink
+     * @param s       The key of the TaskLink
+     * @param v       The budget value of the TaskLink
+     * @param type    Link type
+     * @param indices Component indices in compound, may be 1 to 4
      */
-    protected TermLink(String s, BudgetValue v) {
+    protected TermLink(String s, BudgetValue v, short type, short[] indices) {
         super(s, v);
+        this.target = null;
+        this.type = type;
+        this.index = indices;
     }
 
     /**
@@ -92,10 +98,11 @@ public class TermLink extends Item {
     public TermLink(Term t, TermLink template, BudgetValue v) {
         super(t.getName(), v);
         target = t;
-        type = template.getType();
+        short type = template.getType();
         if (template.getTarget().equals(t)) {
             type--; // point to component
         }
+        this.type = type;
         index = template.getIndices();
         setKey();
     }

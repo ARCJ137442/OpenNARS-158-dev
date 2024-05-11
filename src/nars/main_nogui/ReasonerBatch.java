@@ -21,19 +21,19 @@ public class ReasonerBatch {
     /**
      * The name of the reasoner
      */
-    protected String name;
+    protected final String name;
     /**
      * The memory of the reasoner
      */
-    protected Memory memory;
+    protected final Memory memory;
     /**
      * The input channels of the reasoner
      */
-    protected ArrayList<InputChannel> inputChannels;
+    protected final ArrayList<InputChannel> inputChannels;
     /**
      * The output channels of the reasoner
      */
-    protected ArrayList<OutputChannel> outputChannels;
+    protected final ArrayList<OutputChannel> outputChannels;
     /**
      * System clock, relatively defined to guarantee the repeatability of
      * behaviors
@@ -56,9 +56,17 @@ public class ReasonerBatch {
      * System clock - number of cycles since last output
      */
     private long timer;
-    private AtomicInteger silenceValue = new AtomicInteger(Parameters.SILENT_LEVEL);
+    private final AtomicInteger silenceValue = new AtomicInteger(Parameters.SILENT_LEVEL);
 
     public ReasonerBatch() {
+        name = null;
+        memory = new Memory(this);
+        inputChannels = new ArrayList<>();
+        outputChannels = new ArrayList<>();
+    }
+
+    public ReasonerBatch(String name) {
+        this.name = name;
         memory = new Memory(this);
         inputChannels = new ArrayList<>();
         outputChannels = new ArrayList<>();
