@@ -21,8 +21,8 @@ public final class StructuralRules {
      * --------------------
      */
     /**
-     * {<S --> P>, S@(S&T)} |- <(S&T) --> (P&T)> {<S --> P>, S@(M-S)} |- <(M-P)
-     * --> (M-S)>
+     * {<S --> P>, S@(S&T)} |- <(S&T) --> (P&T)>
+     * {<S --> P>, S@(M-S)} |- <(M-P) --> (M-S)>
      *
      * @param compound  The compound term
      * @param index     The location of the indicated term in the compound
@@ -302,10 +302,10 @@ public final class StructuralRules {
 
     /* -------------------- products and images transform -------------------- */
     /**
-     * Equivalent transformation between products and images {<(*, S, M) --> P>,
-     * S@(*, S, M)} |- <S --> (/, P, _, M)> {<S --> (/, P, _, M)>, P@(/, P, _,
-     * M)} |- <(*, S, M) --> P> {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M -->
-     * (/, P, S, _)>
+     * Equivalent transformation between products and images
+     * {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
+     * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
      * @param inh        An Inheritance statement
      * @param oldContent The whole content
@@ -397,10 +397,11 @@ public final class StructuralRules {
     }
 
     /**
-     * Equivalent transformation between products and images when the subject is
-     * a compound {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)> {<S
-     * --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P> {<S --> (/, P, _,
-     * M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
+     * Equivalent transformation between products and images when the subject is a
+     * compound
+     * {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
+     * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
      * @param subject   The subject term
      * @param predicate The predicate term
@@ -451,10 +452,11 @@ public final class StructuralRules {
     }
 
     /**
-     * Equivalent transformation between products and images when the predicate
-     * is a compound {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
-     * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P> {<S --> (/,
-     * P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
+     * Equivalent transformation between products and images when the predicate is a
+     * compound
+     * {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
+     * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
      * @param subject   The subject term
      * @param predicate The predicate term
@@ -506,8 +508,8 @@ public final class StructuralRules {
 
     /* --------------- Disjunction and Conjunction transform --------------- */
     /**
-     * {(&&, A, B), A@(&&, A, B)} |- A, or answer (&&, A, B)? using A {(||, A,
-     * B), A@(||, A, B)} |- A, or answer (||, A, B)? using A
+     * {(&&, A, B), A@(&&, A, B)} |- A, or answer (&&, A, B)? using A
+     * {(||, A, B), A@(||, A, B)} |- A, or answer (||, A, B)? using A
      *
      * @param compound     The premise
      * @param component    The recognized component in the premise

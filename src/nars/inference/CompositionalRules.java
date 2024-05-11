@@ -13,7 +13,9 @@ import nars.storage.Memory;
  */
 public final class CompositionalRules {
 
-    static void IntroVarSameSubjectOrPredicate(Sentence originalMainSentence, Sentence subSentence, Term component,
+    static void IntroVarSameSubjectOrPredicate(
+            Sentence originalMainSentence,
+            Sentence subSentence, Term component,
             Term content, int index, Memory memory) {
         Sentence cloned = (Sentence) originalMainSentence.clone();
         Term T1 = cloned.getContent();
@@ -26,8 +28,9 @@ public final class CompositionalRules {
                 (component instanceof Similarity && content instanceof Similarity)) {
             // CompoundTerm result = T;
             if (component.equals(content)) {
-                return; // wouldnt make sense to create a conjunction here, would contain a statement
-                        // twice
+                // wouldn't make sense to create a conjunction here,
+                // would contain a statement twice
+                return;
             }
             if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
                     && !(((Statement) component).getPredicate() instanceof Variable)) {
@@ -60,15 +63,21 @@ public final class CompositionalRules {
 
     /* -------------------- intersections and differences -------------------- */
     /**
-     * {<S ==> M>, <P ==> M>} |- {<(S|P) ==> M>, <(S&P) ==> M>, <(S-P) ==> M>,
-     * <(P-S) ==> M>}
+     * {<S ==> M>, <P ==> M>} |- {
+     * <(S|P) ==> M>, <(S&P) ==> M>,
+     * <(S-P) ==> M>, <(P-S) ==> M>
+     * }
      *
      * @param taskSentence The first premise
      * @param belief       The second premise
      * @param index        The location of the shared term
      * @param memory       Reference to the memory
      */
-    static void composeCompound(Statement taskContent, Statement beliefContent, int index, Memory memory) {
+    static void composeCompound(
+            Statement taskContent,
+            Statement beliefContent,
+            int index,
+            Memory memory) {
         if ((!memory.currentTask.getSentence().isJudgment()) || (taskContent.getClass() != beliefContent.getClass())) {
             return;
         }
@@ -133,8 +142,8 @@ public final class CompositionalRules {
             processComposed(taskContent, termDif, (Term) componentCommon.clone(), truthDif, memory);
         }
         if (taskContent instanceof Inheritance) {
-            introVarOuter(taskContent, beliefContent, index, memory);// introVarImage(taskContent, beliefContent, index,
-                                                                     // memory);
+            introVarOuter(taskContent, beliefContent, index, memory);
+            // introVarImage(taskContent, beliefContent, index, memory);
         }
     }
 
@@ -147,7 +156,9 @@ public final class CompositionalRules {
      * @param truth     TruthValue of the contentInd
      * @param memory    Reference to the memory
      */
-    private static void processComposed(Statement statement, Term subject, Term predicate, TruthValue truth,
+    private static void processComposed(
+            Statement statement,
+            Term subject, Term predicate, TruthValue truth,
             Memory memory) {
         if ((subject == null) || (predicate == null)) {
             return;
@@ -171,7 +182,9 @@ public final class CompositionalRules {
      * @param compoundTask    Whether the implication comes from the task
      * @param memory          Reference to the memory
      */
-    private static void decomposeCompound(CompoundTerm compound, Term component, Term term1, int index,
+    private static void decomposeCompound(
+            CompoundTerm compound, Term component,
+            Term term1, int index,
             boolean compoundTask, Memory memory) {
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
@@ -266,7 +279,9 @@ public final class CompositionalRules {
      * @param compoundTask    Whether the implication comes from the task
      * @param memory          Reference to the memory
      */
-    static void decomposeStatement(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
+    static void decomposeStatement(
+            CompoundTerm compound, Term component,
+            boolean compoundTask, Memory memory) {
         Task task = memory.currentTask;
         Sentence sentence = task.getSentence();
         Sentence belief = memory.currentBelief;
@@ -331,7 +346,10 @@ public final class CompositionalRules {
      *                      predicate
      * @param memory        Reference to the memory
      */
-    private static void introVarOuter(Statement taskContent, Statement beliefContent, int index, Memory memory) {
+    private static void introVarOuter(
+            Statement taskContent,
+            Statement beliefContent,
+            int index, Memory memory) {
         TruthValue truthT = memory.currentTask.getSentence().getTruth();
         TruthValue truthB = memory.currentBelief.getTruth();
         Variable varInd = new Variable("$varInd1");
