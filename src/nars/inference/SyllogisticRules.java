@@ -30,11 +30,11 @@ public final class SyllogisticRules {
         if (Statement.invalidStatement(term1, term2)) {
             return;
         }
-        TruthValue value1 = sentence.getTruth();
-        TruthValue value2 = belief.getTruth();
+        final TruthValue value1 = sentence.getTruth();
+        final TruthValue value2 = belief.getTruth();
         TruthValue truth1 = null;
         TruthValue truth2 = null;
-        BudgetValue budget1, budget2;
+        final BudgetValue budget1, budget2;
         if (sentence.isQuestion()) {
             budget1 = BudgetFunctions.backwardWeak(value2, memory);
             budget2 = BudgetFunctions.backwardWeak(value2, memory);
@@ -44,9 +44,9 @@ public final class SyllogisticRules {
             budget1 = BudgetFunctions.forward(truth1, memory);
             budget2 = BudgetFunctions.forward(truth2, memory);
         }
-        Statement content = (Statement) sentence.getContent();
-        Statement content1 = Statement.make(content, term1, term2, memory);
-        Statement content2 = Statement.make(content, term2, term1, memory);
+        final Statement content = (Statement) sentence.getContent();
+        final Statement content1 = Statement.make(content, term1, term2, memory);
+        final Statement content2 = Statement.make(content, term2, term1, memory);
         memory.doublePremiseTask(content1, truth1, budget1);
         memory.doublePremiseTask(content2, truth2, budget2);
     }
@@ -65,13 +65,13 @@ public final class SyllogisticRules {
         if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
             return;
         }
-        Statement taskContent = (Statement) taskSentence.getContent();
+        final Statement taskContent = (Statement) taskSentence.getContent();
         TruthValue truth1 = null;
         TruthValue truth2 = null;
         TruthValue truth3 = null;
-        BudgetValue budget1, budget2, budget3;
-        TruthValue value1 = taskSentence.getTruth();
-        TruthValue value2 = belief.getTruth();
+        final BudgetValue budget1, budget2, budget3;
+        final TruthValue value1 = taskSentence.getTruth();
+        final TruthValue value2 = belief.getTruth();
         if (taskSentence.isQuestion()) {
             budget1 = BudgetFunctions.backward(value2, memory);
             budget2 = BudgetFunctions.backwardWeak(value2, memory);
@@ -84,9 +84,9 @@ public final class SyllogisticRules {
             budget2 = BudgetFunctions.forward(truth2, memory);
             budget3 = BudgetFunctions.forward(truth3, memory);
         }
-        Statement statement1 = Statement.make(taskContent, term1, term2, memory);
-        Statement statement2 = Statement.make(taskContent, term2, term1, memory);
-        Statement statement3 = Statement.makeSym(taskContent, term1, term2, memory);
+        final Statement statement1 = Statement.make(taskContent, term1, term2, memory);
+        final Statement statement2 = Statement.make(taskContent, term2, term1, memory);
+        final Statement statement3 = Statement.makeSym(taskContent, term1, term2, memory);
         memory.doublePremiseTask(statement1, truth1, budget1);
         memory.doublePremiseTask(statement2, truth2, budget2);
         memory.doublePremiseTask(statement3, truth3, budget3);
@@ -106,12 +106,13 @@ public final class SyllogisticRules {
         if (Statement.invalidStatement(subj, pred)) {
             return;
         }
-        Statement st = (Statement) asymmetric.getContent();
-        TruthValue truth = null;
-        BudgetValue budget;
-        Sentence sentence = memory.currentTask.getSentence();
-        CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
+        final Statement st = (Statement) asymmetric.getContent();
+        final TruthValue truth;
+        final BudgetValue budget;
+        final Sentence sentence = memory.currentTask.getSentence();
+        final CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
         if (sentence.isQuestion()) {
+            truth = null;
             if (taskTerm.isCommutative()) {
                 budget = BudgetFunctions.backwardWeak(asymmetric.getTruth(), memory);
             } else {
@@ -139,16 +140,17 @@ public final class SyllogisticRules {
         if (Statement.invalidStatement(term1, term2)) {
             return;
         }
-        Statement st = (Statement) belief.getContent();
-        TruthValue truth = null;
-        BudgetValue budget;
+        final Statement st = (Statement) belief.getContent();
+        final TruthValue truth;
+        final BudgetValue budget;
         if (sentence.isQuestion()) {
+            truth = null;
             budget = BudgetFunctions.backward(belief.getTruth(), memory);
         } else {
             truth = TruthFunctions.resemblance(belief.getTruth(), sentence.getTruth());
             budget = BudgetFunctions.forward(truth, memory);
         }
-        Term statement = Statement.make(st, term1, term2, memory);
+        final Term statement = Statement.make(st, term1, term2, memory);
         memory.doublePremiseTask(statement, truth, budget);
     }
 
@@ -165,14 +167,14 @@ public final class SyllogisticRules {
      * @param memory       Reference to the memory
      */
     static void detachment(Sentence mainSentence, Sentence subSentence, int side, Memory memory) {
-        Statement statement = (Statement) mainSentence.getContent();
+        final Statement statement = (Statement) mainSentence.getContent();
         if (!(statement instanceof Implication) && !(statement instanceof Equivalence)) {
             return;
         }
-        Term subject = statement.getSubject();
-        Term predicate = statement.getPredicate();
-        Term content;
-        Term term = subSentence.getContent();
+        final Term subject = statement.getSubject();
+        final Term predicate = statement.getPredicate();
+        final Term content;
+        final Term term = subSentence.getContent();
         if ((side == 0) && term.equals(subject)) {
             content = predicate;
         } else if ((side == 1) && term.equals(predicate)) {
@@ -183,14 +185,15 @@ public final class SyllogisticRules {
         if ((content instanceof Statement) && ((Statement) content).invalid()) {
             return;
         }
-        Sentence taskSentence = memory.currentTask.getSentence();
-        Sentence beliefSentence = memory.currentBelief;
-        TruthValue beliefTruth = beliefSentence.getTruth();
-        TruthValue truth1 = mainSentence.getTruth();
-        TruthValue truth2 = subSentence.getTruth();
-        TruthValue truth = null;
-        BudgetValue budget;
+        final Sentence taskSentence = memory.currentTask.getSentence();
+        final Sentence beliefSentence = memory.currentBelief;
+        final TruthValue beliefTruth = beliefSentence.getTruth();
+        final TruthValue truth1 = mainSentence.getTruth();
+        final TruthValue truth2 = subSentence.getTruth();
+        final TruthValue truth;
+        final BudgetValue budget;
         if (taskSentence.isQuestion()) {
+            truth = null;
             if (statement instanceof Equivalence) {
                 budget = BudgetFunctions.backward(beliefTruth, memory);
             } else if (side == 0) {
@@ -225,13 +228,13 @@ public final class SyllogisticRules {
      * @param memory   Reference to the memory
      */
     static void conditionalDedInd(Implication premise1, short index, Term premise2, int side, Memory memory) {
-        Task task = memory.currentTask;
-        Sentence taskSentence = task.getSentence();
-        Sentence belief = memory.currentBelief;
-        boolean deduction = (side != 0);
-        boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
-        Term commonComponent;
-        Term newComponent = null;
+        final Task task = memory.currentTask;
+        final Sentence taskSentence = task.getSentence();
+        final Sentence belief = memory.currentBelief;
+        final boolean deduction = (side != 0);
+        final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final Term commonComponent;
+        final Term newComponent;
         if (side == 0) {
             commonComponent = ((Statement) premise2).getSubject();
             newComponent = ((Statement) premise2).getPredicate();
@@ -240,13 +243,14 @@ public final class SyllogisticRules {
             newComponent = ((Statement) premise2).getSubject();
         } else {
             commonComponent = premise2;
+            newComponent = null;
         }
-        Term subj = premise1.getSubject();
+        final Term subj = premise1.getSubject();
         if (!(subj instanceof Conjunction)) {
             return;
         }
-        Conjunction oldCondition = (Conjunction) subj;
-        int index2 = oldCondition.getComponents().indexOf(commonComponent);
+        final Conjunction oldCondition = (Conjunction) subj;
+        final int index2 = oldCondition.getComponents().indexOf(commonComponent);
         if (index2 >= 0) {
             index = (short) index2;
         } else {
@@ -260,13 +264,13 @@ public final class SyllogisticRules {
                 return;
             }
         }
-        Term newCondition;
+        final Term newCondition;
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
             newCondition = CompoundTerm.setComponent(oldCondition, index, newComponent, memory);
         }
-        Term content;
+        final Term content;
         if (newCondition != null) {
             content = Statement.make(premise1, newCondition, premise1.getPredicate(), memory);
         } else {
@@ -275,11 +279,12 @@ public final class SyllogisticRules {
         if (content == null) {
             return;
         }
-        TruthValue truth1 = taskSentence.getTruth();
-        TruthValue truth2 = belief.getTruth();
-        TruthValue truth = null;
-        BudgetValue budget;
+        final TruthValue truth1 = taskSentence.getTruth();
+        final TruthValue truth2 = belief.getTruth();
+        final TruthValue truth;
+        final BudgetValue budget;
         if (taskSentence.isQuestion()) {
+            truth = null;
             budget = BudgetFunctions.backwardWeak(truth2, memory);
         } else {
             if (deduction) {
@@ -306,12 +311,12 @@ public final class SyllogisticRules {
      * @param memory   Reference to the memory
      */
     static void conditionalAna(Equivalence premise1, short index, Term premise2, int side, Memory memory) {
-        Task task = memory.currentTask;
-        Sentence taskSentence = task.getSentence();
-        Sentence belief = memory.currentBelief;
-        boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
-        Term commonComponent;
-        Term newComponent = null;
+        final Task task = memory.currentTask;
+        final Sentence taskSentence = task.getSentence();
+        final Sentence belief = memory.currentBelief;
+        final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final Term commonComponent;
+        final Term newComponent;
         if (side == 0) {
             commonComponent = ((Statement) premise2).getSubject();
             newComponent = ((Statement) premise2).getPredicate();
@@ -320,11 +325,12 @@ public final class SyllogisticRules {
             newComponent = ((Statement) premise2).getSubject();
         } else {
             commonComponent = premise2;
+            newComponent = null;
         }
-        Term tm = premise1.getSubject();
+        final Term tm = premise1.getSubject();
         if (!(tm instanceof Conjunction))
             return;
-        Conjunction oldCondition = (Conjunction) tm;
+        final Conjunction oldCondition = (Conjunction) tm;
         boolean match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
         if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
@@ -334,13 +340,13 @@ public final class SyllogisticRules {
         if (!match) {
             return;
         }
-        Term newCondition;
+        final Term newCondition;
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
             newCondition = CompoundTerm.setComponent(oldCondition, index, newComponent, memory);
         }
-        Term content;
+        final Term content;
         if (newCondition != null) {
             content = Statement.make(premise1, newCondition, premise1.getPredicate(), memory);
         } else {
@@ -349,11 +355,12 @@ public final class SyllogisticRules {
         if (content == null) {
             return;
         }
-        TruthValue truth1 = taskSentence.getTruth();
-        TruthValue truth2 = belief.getTruth();
-        TruthValue truth = null;
-        BudgetValue budget;
+        final TruthValue truth1 = taskSentence.getTruth();
+        final TruthValue truth2 = belief.getTruth();
+        final TruthValue truth;
+        final BudgetValue budget;
         if (taskSentence.isQuestion()) {
+            truth = null;
             budget = BudgetFunctions.backwardWeak(truth2, memory);
         } else {
             if (conditionalTask) {
@@ -383,36 +390,41 @@ public final class SyllogisticRules {
         if (!(cond1 instanceof Conjunction) && !(cond2 instanceof Conjunction)) {
             return false;
         }
-        Term term1 = null;
-        Term term2 = null;
+        final Term term1;
+        final Term term2;
         // if ((cond1 instanceof Conjunction) &&
         // !Variable.containVarDep(cond1.getName())) {
         if (cond1 instanceof Conjunction) {
             term1 = CompoundTerm.reduceComponents((Conjunction) cond1, cond2, memory);
+        } else {
+            term1 = null;
         }
         // if ((cond2 instanceof Conjunction) &&
         // !Variable.containVarDep(cond2.getName())) {
         if (cond2 instanceof Conjunction) {
             term2 = CompoundTerm.reduceComponents((Conjunction) cond2, cond1, memory);
+        } else {
+            term2 = null;
         }
         if ((term1 == null) && (term2 == null)) {
             return false;
         }
-        Task task = memory.currentTask;
-        Sentence sentence = task.getSentence();
-        Sentence belief = memory.currentBelief;
-        TruthValue value1 = sentence.getTruth();
-        TruthValue value2 = belief.getTruth();
-        Term content;
-        TruthValue truth = null;
-        BudgetValue budget;
+        final Task task = memory.currentTask;
+        final Sentence sentence = task.getSentence();
+        final Sentence belief = memory.currentBelief;
+        final TruthValue value1 = sentence.getTruth();
+        final TruthValue value2 = belief.getTruth();
         if (term1 != null) {
+            final Term content;
+            final TruthValue truth;
+            final BudgetValue budget;
             if (term2 != null) {
                 content = Statement.make(st2, term2, term1, memory);
             } else {
                 content = term1;
             }
             if (sentence.isQuestion()) {
+                truth = null;
                 budget = BudgetFunctions.backwardWeak(value2, memory);
             } else {
                 truth = TruthFunctions.abduction(value2, value1);
@@ -421,18 +433,22 @@ public final class SyllogisticRules {
             memory.doublePremiseTask(content, truth, budget);
         }
         if (term2 != null) {
+            final Term content2;
+            final TruthValue truth2;
+            final BudgetValue budget2;
             if (term1 != null) {
-                content = Statement.make(st1, term1, term2, memory);
+                content2 = Statement.make(st1, term1, term2, memory);
             } else {
-                content = term2;
+                content2 = term2;
             }
             if (sentence.isQuestion()) {
-                budget = BudgetFunctions.backwardWeak(value2, memory);
+                truth2 = null;
+                budget2 = BudgetFunctions.backwardWeak(value2, memory);
             } else {
-                truth = TruthFunctions.abduction(value1, value2);
-                budget = BudgetFunctions.forward(truth, memory);
+                truth2 = TruthFunctions.abduction(value1, value2);
+                budget2 = BudgetFunctions.forward(truth2, memory);
             }
-            memory.doublePremiseTask(content, truth, budget);
+            memory.doublePremiseTask(content2, truth2, budget2);
         }
         return true;
     }
@@ -446,17 +462,18 @@ public final class SyllogisticRules {
      * @param memory       Reference to the memory
      */
     static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask, Memory memory) {
-        Term content = CompoundTerm.reduceComponents(compound, component, memory);
+        final Term content = CompoundTerm.reduceComponents(compound, component, memory);
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
-        Task task = memory.currentTask;
-        Sentence sentence = task.getSentence();
-        Sentence belief = memory.currentBelief;
-        TruthValue v1 = sentence.getTruth();
-        TruthValue v2 = belief.getTruth();
-        TruthValue truth = null;
-        BudgetValue budget;
+        final Task task = memory.currentTask;
+        final Sentence sentence = task.getSentence();
+        final Sentence belief = memory.currentBelief;
+        final TruthValue v1 = sentence.getTruth();
+        final TruthValue v2 = belief.getTruth();
+        final TruthValue truth;
+        final BudgetValue budget;
         if (sentence.isQuestion()) {
+            truth = null;
             budget = (compoundTask ? BudgetFunctions.backward(v2, memory) : BudgetFunctions.backwardWeak(v2, memory));
         } else {
             truth = (compoundTask ? TruthFunctions.anonymousAnalogy(v1, v2) : TruthFunctions.anonymousAnalogy(v2, v1));

@@ -20,15 +20,12 @@ public class RuleTables {
      * @param memory Reference to the memory
      */
     public static void reason(TaskLink tLink, TermLink bLink, Memory memory) {
-        Task task = memory.currentTask;
-        Sentence taskSentence = task.getSentence();
-        Term taskTerm = (Term) taskSentence.getContent().clone(); // cloning for substitution
-        Term beliefTerm = (Term) bLink.getTarget().clone(); // cloning for substitution
-        Concept beliefConcept = memory.termToConcept(beliefTerm);
-        Sentence belief = null;
-        if (beliefConcept != null) {
-            belief = beliefConcept.getBelief(task);
-        }
+        final Task task = memory.currentTask;
+        final Sentence taskSentence = task.getSentence();
+        final Term taskTerm = (Term) taskSentence.getContent().clone(); // cloning for substitution
+        final Term beliefTerm = (Term) bLink.getTarget().clone(); // cloning for substitution
+        final Concept beliefConcept = memory.termToConcept(beliefTerm);
+        final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(task) : null;
         memory.currentBelief = belief; // may be null
         if (belief != null) {
             LocalRules.match(task, belief, memory);
@@ -36,8 +33,8 @@ public class RuleTables {
         if (!memory.noResult() && task.getSentence().isJudgment()) {
             return;
         }
-        short tIndex = tLink.getIndex(0);
-        short bIndex = bLink.getIndex(0);
+        final short tIndex = tLink.getIndex(0);
+        final short bIndex = bLink.getIndex(0);
         switch (tLink.getType()) { // dispatch first by TaskLink type
             case TermLink.SELF:
                 switch (bLink.getType()) {
@@ -59,15 +56,15 @@ public class RuleTables {
                         break;
                     case TermLink.COMPONENT_CONDITION:
                         if (belief != null) {
-                            bIndex = bLink.getIndex(1);
-                            SyllogisticRules.conditionalDedInd((Implication) taskTerm, bIndex, beliefTerm, tIndex,
+                            final short bIndex2 = bLink.getIndex(1);
+                            SyllogisticRules.conditionalDedInd((Implication) taskTerm, bIndex2, beliefTerm, tIndex,
                                     memory);
                         }
                         break;
                     case TermLink.COMPOUND_CONDITION:
                         if (belief != null) {
-                            bIndex = bLink.getIndex(1);
-                            SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex, taskTerm, tIndex,
+                            final short bIndex2 = bLink.getIndex(1);
+                            SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex2, taskTerm, tIndex,
                                     memory);
                         }
                         break;
@@ -116,10 +113,10 @@ public class RuleTables {
                         break;
                     case TermLink.COMPOUND_CONDITION:
                         if (belief != null) {
-                            bIndex = bLink.getIndex(1);
+                            final short bIndex2 = bLink.getIndex(1);
                             if (beliefTerm instanceof Implication) {
-                                conditionalDedIndWithVar((Implication) beliefTerm, bIndex, (Statement) taskTerm, tIndex,
-                                        memory);
+                                conditionalDedIndWithVar((Implication) beliefTerm, bIndex2, (Statement) taskTerm,
+                                        tIndex, memory);
                             }
                         }
                         break;
@@ -169,9 +166,9 @@ public class RuleTables {
      * @param memory     Reference to the memory
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm, Memory memory) {
-        Sentence taskSentence = memory.currentTask.getSentence();
-        Sentence belief = memory.currentBelief;
-        int figure;
+        final Sentence taskSentence = memory.currentTask.getSentence();
+        final Sentence belief = memory.currentBelief;
+        final int figure;
         if (taskTerm instanceof Inheritance) {
             if (beliefTerm instanceof Inheritance) {
                 figure = indexToFigure(tLink, bLink);
@@ -234,9 +231,9 @@ public class RuleTables {
      * @param memory   Reference to the memory
      */
     private static void asymmetricAsymmetric(Sentence sentence, Sentence belief, int figure, Memory memory) {
-        Statement s1 = (Statement) sentence.cloneContent();
-        Statement s2 = (Statement) belief.cloneContent();
-        Term t1, t2;
+        final Statement s1 = (Statement) sentence.cloneContent();
+        final Statement s2 = (Statement) belief.cloneContent();
+        final Term t1, t2;
         switch (figure) {
             case 11: // induction
                 if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
@@ -306,9 +303,9 @@ public class RuleTables {
      * @param memory Reference to the memory
      */
     private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, Memory memory) {
-        Statement asymSt = (Statement) asym.cloneContent();
-        Statement symSt = (Statement) sym.cloneContent();
-        Term t1, t2;
+        final Statement asymSt = (Statement) asym.cloneContent();
+        final Statement symSt = (Statement) sym.cloneContent();
+        final Term t1, t2;
         switch (figure) {
             case 11:
                 if (Variable.unify(Symbols.VAR_INDEPENDENT, asymSt.getSubject(), symSt.getSubject(), asymSt, symSt)) {
@@ -367,8 +364,8 @@ public class RuleTables {
      * @param memory       Reference to the memory
      */
     private static void symmetricSymmetric(Sentence belief, Sentence taskSentence, int figure, Memory memory) {
-        Statement s1 = (Statement) belief.cloneContent();
-        Statement s2 = (Statement) taskSentence.cloneContent();
+        final Statement s1 = (Statement) belief.cloneContent();
+        final Statement s2 = (Statement) taskSentence.cloneContent();
         switch (figure) {
             case 11:
                 if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
@@ -411,10 +408,10 @@ public class RuleTables {
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
             Memory memory) {
-        Sentence mainSentence = (Sentence) originalMainSentence.clone(); // for substitution
-        Statement statement = (Statement) mainSentence.getContent();
-        Term component = statement.componentAt(index);
-        Term content = subSentence.getContent();
+        final Sentence mainSentence = (Sentence) originalMainSentence.clone(); // for substitution
+        final Statement statement = (Statement) mainSentence.getContent();
+        final Term component = statement.componentAt(index);
+        final Term content = subSentence.getContent();
         if (((component instanceof Inheritance) || (component instanceof Negation)) && (memory.currentBelief != null)) {
             if (component.isConstant()) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, memory);
@@ -422,7 +419,7 @@ public class RuleTables {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, memory);
             } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
                     && (memory.currentTask.getSentence().isJudgment())) {
-                Statement s2 = (Statement) statement.getPredicate();
+                final Statement s2 = (Statement) statement.getPredicate();
                 if (s2.getSubject().equals(((Statement) content).getSubject())) {
                     CompositionalRules.introVarInner((Statement) content, s2, statement, memory);
                 }
@@ -448,14 +445,16 @@ public class RuleTables {
      */
     private static void conditionalDedIndWithVar(Implication conditional, short index, Statement statement, short side,
             Memory memory) {
-        CompoundTerm condition = (CompoundTerm) conditional.getSubject();
-        Term component = condition.componentAt(index);
-        Term component2 = null;
+        final CompoundTerm condition = (CompoundTerm) conditional.getSubject();
+        final Term component = condition.componentAt(index);
+        final Term component2;
         if (statement instanceof Inheritance) {
             component2 = statement;
             side = -1;
         } else if (statement instanceof Implication) {
             component2 = statement.componentAt(side);
+        } else {
+            component2 = null;
         }
         if (component2 != null) {
             boolean unifiable = Variable.unify(Symbols.VAR_INDEPENDENT, component, component2, conditional, statement);
@@ -524,8 +523,8 @@ public class RuleTables {
      */
     private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             Term beliefTerm, Memory memory) {
-        Term component = compound.componentAt(index);
-        Task task = memory.currentTask;
+        final Term component = compound.componentAt(index);
+        final Task task = memory.currentTask;
         if (component.getClass() == statement.getClass()) {
             if ((compound instanceof Conjunction) && (memory.currentBelief != null)) {
                 if (Variable.unify(Symbols.VAR_DEPENDENT, component, statement, compound, statement)) {
@@ -596,9 +595,9 @@ public class RuleTables {
      * @param memory Reference to the memory
      */
     public static void transformTask(TaskLink tLink, Memory memory) {
-        CompoundTerm content = (CompoundTerm) memory.currentTask.getContent().clone();
-        short[] indices = tLink.getIndices();
-        Term inh = null;
+        final CompoundTerm content = (CompoundTerm) memory.currentTask.getContent().clone();
+        final short[] indices = tLink.getIndices();
+        final Term inh;
         if ((indices.length == 2) || (content instanceof Inheritance)) { // <(*, term, #) --> #>
             inh = content;
         } else if (indices.length == 3) { // <<(*, term, #) --> #> ==> #>
@@ -611,6 +610,8 @@ public class RuleTables {
             } else {
                 return;
             }
+        } else {
+            inh = null;
         }
         if (inh instanceof Inheritance) {
             StructuralRules.transformProductImage((Inheritance) inh, content, indices, memory);
