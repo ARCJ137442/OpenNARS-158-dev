@@ -175,6 +175,8 @@ public abstract class StringParser extends Symbols {
 
     /**
      * parse the input String into a BudgetValue
+     * * 📝【2024-05-13 11:33:08】传参示例
+     * * `s`: "1.0"、"1.0;0.9;0.9"
      *
      * @param truth       the TruthValue of the task
      * @param s           input String
@@ -185,29 +187,34 @@ public abstract class StringParser extends Symbols {
      *                                                    BudgetValue
      */
     private static BudgetValue parseBudget(String s, char punctuation, TruthValue truth) throws InvalidInputException {
-        float priority, durability;
+        float priority, durability, quality;
         switch (punctuation) {
             case JUDGMENT_MARK:
                 priority = Parameters.DEFAULT_JUDGMENT_PRIORITY;
                 durability = Parameters.DEFAULT_JUDGMENT_DURABILITY;
+                quality = BudgetFunctions.truthToQuality(truth);
                 break;
             case QUESTION_MARK:
                 priority = Parameters.DEFAULT_QUESTION_PRIORITY;
                 durability = Parameters.DEFAULT_QUESTION_DURABILITY;
+                quality = 1; // * 📝「问题」没有真值
                 break;
             default:
                 throw new InvalidInputException("unknown punctuation: '" + punctuation + "'");
         }
+        // * 🚩覆盖性默认值（从字符串）
         if (s != null) { // override default
-            int i = s.indexOf(VALUE_SEPARATOR);
-            if (i < 0) { // default durability
-                priority = Float.parseFloat(s);
-            } else {
-                priority = Float.parseFloat(s.substring(0, i));
-                durability = Float.parseFloat(s.substring(i + 1));
+            // * 🚩【2024-05-13 11:32:19】使用`String.split`多次拆分
+            String[] floatStrings = s.split(String.valueOf(VALUE_SEPARATOR));
+            switch (floatStrings.length) {
+                case 3: // full budget-value
+                    quality = Float.parseFloat(floatStrings[2]);
+                case 2: // default quality
+                    durability = Float.parseFloat(floatStrings[1]);
+                case 1: // default durability
+                    priority = Float.parseFloat(floatStrings[0]);
             }
         }
-        float quality = (truth == null) ? 1 : BudgetFunctions.truthToQuality(truth);
         return new BudgetValue(priority, durability, quality);
     }
 

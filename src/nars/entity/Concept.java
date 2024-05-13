@@ -113,11 +113,11 @@ public final class Concept extends Item {
      * @return Whether to continue the processing of the task
      */
     private void processJudgment(Task task) {
-        Sentence judgment = task.getSentence();
-        Sentence oldBelief = evaluation(judgment, beliefs);
+        final Sentence judgment = task.getSentence();
+        final Sentence oldBelief = evaluation(judgment, beliefs);
         if (oldBelief != null) {
-            Stamp newStamp = judgment.getStamp();
-            Stamp oldStamp = oldBelief.getStamp();
+            final Stamp newStamp = judgment.getStamp();
+            final Stamp oldStamp = oldBelief.getStamp();
             if (newStamp.equals(oldStamp)) {
                 if (task.getParentTask().getSentence().isJudgment()) {
                     task.getBudget().decPriority(0); // duplicated task
@@ -132,7 +132,7 @@ public final class Concept extends Item {
             }
         }
         if (task.getBudget().aboveThreshold()) {
-            for (Task ques : questions) {
+            for (final Task ques : questions) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
                 LocalRules.trySolution(judgment, ques, memory);
             }
@@ -150,8 +150,8 @@ public final class Concept extends Item {
         Sentence ques = task.getSentence();
         boolean newQuestion = true;
         if (questions != null) {
-            for (Task t : questions) {
-                Sentence q = t.getSentence();
+            for (final Task t : questions) {
+                final Sentence q = t.getSentence();
                 if (q.getContent().equals(ques.getContent())) {
                     ques = q;
                     newQuestion = false;
@@ -165,7 +165,7 @@ public final class Concept extends Item {
         if (questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
             questions.remove(0); // FIFO
         }
-        Sentence newAnswer = evaluation(ques, beliefs);
+        final Sentence newAnswer = evaluation(ques, beliefs);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, task, memory);
@@ -185,23 +185,22 @@ public final class Concept extends Item {
      * @param content The content of the task
      */
     private void linkToTask(Task task) {
-        BudgetValue taskBudget = task.getBudget();
-        TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
+        final BudgetValue taskBudget = task.getBudget();
+        final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
         insertTaskLink(taskLink);
         if (term instanceof CompoundTerm) {
             if (termLinkTemplates.size() > 0) {
-                BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, termLinkTemplates.size());
+                final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget,
+                        termLinkTemplates.size());
                 if (subBudget.aboveThreshold()) {
-                    Term componentTerm;
-                    Concept componentConcept;
                     for (TermLink termLink : termLinkTemplates) {
                         // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
                         // // avoid circular transform
-                        taskLink = new TaskLink(task, termLink, subBudget);
-                        componentTerm = termLink.getTarget();
-                        componentConcept = memory.getConcept(componentTerm);
+                        final TaskLink tLink = new TaskLink(task, termLink, subBudget);
+                        final Term componentTerm = termLink.getTarget();
+                        final Concept componentConcept = memory.getConcept(componentTerm);
                         if (componentConcept != null) {
-                            componentConcept.insertTaskLink(taskLink);
+                            componentConcept.insertTaskLink(tLink);
                         }
                         // }
                     }
@@ -220,13 +219,11 @@ public final class Concept extends Item {
      * @param capacity    The capacity of the table
      */
     private static void addToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
-        float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
-        Sentence judgment2;
-        float rank2;
+        final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         int i;
         for (i = 0; i < table.size(); i++) {
-            judgment2 = table.get(i);
-            rank2 = BudgetFunctions.rankBelief(judgment2);
+            final Sentence judgment2 = table.get(i);
+            final float rank2 = BudgetFunctions.rankBelief(judgment2);
             if (rank1 >= rank2) {
                 if (newSentence.equivalentTo(judgment2)) {
                     return;
@@ -277,7 +274,7 @@ public final class Concept extends Item {
      * @param taskLink The termLink to be inserted
      */
     public void insertTaskLink(TaskLink taskLink) {
-        BudgetValue taskBudget = taskLink.getBudget();
+        final BudgetValue taskBudget = taskLink.getBudget();
         taskLinks.putIn(taskLink);
         memory.activateConcept(this, taskBudget);
     }
@@ -380,8 +377,8 @@ public final class Concept extends Item {
      */
     @Override
     public float getQuality() {
-        float linkPriority = termLinks.averagePriority();
-        float termComplexityFactor = 1.0f / term.getComplexity();
+        final float linkPriority = termLinks.averagePriority();
+        final float termComplexityFactor = 1.0f / term.getComplexity();
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
     }
 
@@ -406,12 +403,12 @@ public final class Concept extends Item {
      * @return The selected isBelief
      */
     public Sentence getBelief(Task task) {
-        Sentence taskSentence = task.getSentence();
-        for (Sentence belief : beliefs) {
+        final Sentence taskSentence = task.getSentence();
+        for (final Sentence belief : beliefs) {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             memory.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
             if (memory.newStamp != null) {
-                Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?
+                final Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?
                 return belief2;
             }
         }
@@ -423,14 +420,14 @@ public final class Concept extends Item {
      * An atomic step in a concept, only called in {@link Memory#processConcept}
      */
     public void fire() {
-        TaskLink currentTaskLink = taskLinks.takeOut();
+        final TaskLink currentTaskLink = taskLinks.takeOut();
         if (currentTaskLink == null) {
             return;
         }
         memory.currentTaskLink = currentTaskLink;
         memory.currentBeliefLink = null;
         memory.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
-        Task task = currentTaskLink.getTargetTask();
+        final Task task = currentTaskLink.getTargetTask();
         memory.currentTask = task; // one of the two places where this variable is set
         // memory.getRecorder().append(" * Selected Task: " + task + "\n"); // for
         // debugging
@@ -441,7 +438,7 @@ public final class Concept extends Item {
             int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
             // while (memory.noResult() && (termLinkCount > 0)) {
             while (termLinkCount > 0) {
-                TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
+                final TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
                 if (termLink != null) {
                     memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
                     memory.currentBeliefLink = termLink;
@@ -500,16 +497,16 @@ public final class Concept extends Item {
      * @return String representation of direct content
      */
     public String displayContent() {
-        StringBuilder buffer = new StringBuilder();
+        final StringBuilder buffer = new StringBuilder();
         buffer.append("\n  Beliefs:\n");
         if (beliefs.size() > 0) {
-            for (Sentence s : beliefs) {
+            for (final Sentence s : beliefs) {
                 buffer.append(s).append("\n");
             }
         }
         buffer.append("\n  Question:\n");
         if (questions.size() > 0) {
-            for (Task t : questions) {
+            for (final Task t : questions) {
                 buffer.append(t).append("\n");
             }
         }
