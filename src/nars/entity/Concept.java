@@ -7,6 +7,14 @@ import nars.inference.LocalRules;
 import nars.inference.RuleTables;
 import nars.inference.UtilityFunctions;
 import nars.language.CompoundTerm;
+import nars.language.Conjunction;
+import nars.language.Equivalence;
+import nars.language.ImageExt;
+import nars.language.ImageInt;
+import nars.language.Implication;
+import nars.language.Negation;
+import nars.language.Product;
+import nars.language.Statement;
 import nars.language.Term;
 import nars.main_nogui.NARSBatch;
 import nars.main_nogui.Parameters;
@@ -76,9 +84,93 @@ public final class Concept extends Item {
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
         if (tm instanceof CompoundTerm) {
-            this.termLinkTemplates = CompoundTerm.prepareComponentLinks(((CompoundTerm) tm));
+            this.termLinkTemplates = prepareComponentLinks(((CompoundTerm) tm));
         } else {
             this.termLinkTemplates = null;
+        }
+    }
+
+    /* ----- link CompoundTerm and its components ----- */
+    /**
+     * Build TermLink templates to constant components and subcomponents
+     * <p>
+     * The compound type determines the link type; the component type determines
+     * whether to build the link.
+     *
+     * @return A list of TermLink templates
+     */
+    public static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
+        ArrayList<TermLink> componentLinks = new ArrayList<>();
+        short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
+        prepareComponentLinks(self, componentLinks, type, self);
+        return componentLinks;
+    }
+
+    /**
+     * Collect TermLink templates into a list, go down one level except in
+     * special cases
+     * <p>
+     *
+     * @param self           The CompoundTerm for which the links are built
+     * @param componentLinks The list of TermLink templates built so far
+     * @param type           The type of TermLink to be built
+     * @param term           The CompoundTerm for which the links are built
+     */
+    private static void prepareComponentLinks(
+            final CompoundTerm self,
+            final ArrayList<TermLink> componentLinks,
+            final short type,
+            final CompoundTerm term) {
+        for (int i = 0; i < term.size(); i++) { // first level components
+            final Term t1 = term.componentAt(i);
+            if (t1.isConstant()) {
+                componentLinks.add(new TermLink(t1, type, i));
+                // * 📝【2024-05-15 18:21:25】案例笔记 概念="<(&&,A,B) ==> D>"：
+                // * 📄self="<(&&,A,B) ==> D>" ~> "(&&,A,B)" [i=0]
+                // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
+                // * 📄self="(&&,A,B)" ~> "A" [i=0]
+                // * @ 6=COMPOUND_CONDITION "At C, point to <(&&, C, B) ==> A>"
+                // * 📄self="(&&,A,B)" ~> "B" [i=1]
+                // * @ 6=COMPOUND_CONDITION "At C, point to <(&&, C, B) ==> A>"
+                // * 📄self="<(&&,A,B) ==> D>" ~> "D" [i=1]
+                // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
+                // * 📄self="(&&,A,B)" ~> "A" [i=0]
+                // * @ 2=COMPOUND "At C, point to (&&, A, C)"
+                // * 📄self="(&&,A,B)" ~> "B" [i=1]
+                // * @ 2=COMPOUND "At C, point to (&&, A, C)"
+            }
+            if (((self instanceof Equivalence) || ((self instanceof Implication) && (i == 0)))
+                    && ((t1 instanceof Conjunction) || (t1 instanceof Negation))) {
+                prepareComponentLinks(((CompoundTerm) t1), componentLinks, TermLink.COMPOUND_CONDITION,
+                        (CompoundTerm) t1);
+            } else if (t1 instanceof CompoundTerm) {
+                for (int j = 0; j < ((CompoundTerm) t1).size(); j++) { // second level components
+                    final Term t2 = ((CompoundTerm) t1).componentAt(j);
+                    if (t2.isConstant()) {
+                        if ((t1 instanceof Product) || (t1 instanceof ImageExt) || (t1 instanceof ImageInt)) {
+                            if (type == TermLink.COMPOUND_CONDITION) {
+                                componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, 0, i, j));
+                            } else {
+                                componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, i, j));
+                            }
+                        } else {
+                            componentLinks.add(new TermLink(t2, type, i, j));
+                        }
+                    }
+                    if ((t2 instanceof Product) || (t2 instanceof ImageExt) || (t2 instanceof ImageInt)) {
+                        for (int k = 0; k < ((CompoundTerm) t2).size(); k++) {
+                            final Term t3 = ((CompoundTerm) t2).componentAt(k);
+                            if (t3.isConstant()) { // third level
+                                if (type == TermLink.COMPOUND_CONDITION) {
+                                    componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, 0, i, j, k));
+                                } else {
+                                    componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, i, j, k));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
