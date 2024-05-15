@@ -649,10 +649,10 @@ public abstract class CompoundTerm extends Term {
      *
      * @return A list of TermLink templates
      */
-    public ArrayList<TermLink> prepareComponentLinks() {
+    public static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
         ArrayList<TermLink> componentLinks = new ArrayList<>();
-        short type = (this instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
-        prepareComponentLinks(componentLinks, type, this);
+        short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
+        prepareComponentLinks(self, componentLinks, type, self);
         return componentLinks;
     }
 
@@ -665,16 +665,17 @@ public abstract class CompoundTerm extends Term {
      * @param type           The type of TermLink to be built
      * @param term           The CompoundTerm for which the links are built
      */
-    private void prepareComponentLinks(ArrayList<TermLink> componentLinks, short type, CompoundTerm term) {
+    private static void prepareComponentLinks(CompoundTerm self, ArrayList<TermLink> componentLinks, short type,
+            CompoundTerm term) {
         Term t1, t2, t3; // components at different levels
         for (int i = 0; i < term.size(); i++) { // first level components
             t1 = term.componentAt(i);
             if (t1.isConstant()) {
                 componentLinks.add(new TermLink(t1, type, i));
             }
-            if (((this instanceof Equivalence) || ((this instanceof Implication) && (i == 0)))
+            if (((self instanceof Equivalence) || ((self instanceof Implication) && (i == 0)))
                     && ((t1 instanceof Conjunction) || (t1 instanceof Negation))) {
-                ((CompoundTerm) t1).prepareComponentLinks(componentLinks, TermLink.COMPOUND_CONDITION,
+                prepareComponentLinks(((CompoundTerm) t1), componentLinks, TermLink.COMPOUND_CONDITION,
                         (CompoundTerm) t1);
             } else if (t1 instanceof CompoundTerm) {
                 for (int j = 0; j < ((CompoundTerm) t1).size(); j++) { // second level components

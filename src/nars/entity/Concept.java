@@ -76,7 +76,7 @@ public final class Concept extends Item {
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
         if (tm instanceof CompoundTerm) {
-            this.termLinkTemplates = ((CompoundTerm) tm).prepareComponentLinks();
+            this.termLinkTemplates = CompoundTerm.prepareComponentLinks(((CompoundTerm) tm));
         } else {
             this.termLinkTemplates = null;
         }
