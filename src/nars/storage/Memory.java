@@ -495,19 +495,31 @@ public class Memory {
      * Select a concept to fire.
      */
     private void processConcept() {
-        // * 🚩拿出一个概念，准备点火
-        currentConcept = concepts.takeOut();
-        if (currentConcept != null) {
-            currentTerm = currentConcept.getTerm();
-            recorder.append(" * Selected Concept: " + currentTerm + "\n");
-            concepts.putBack(currentConcept); // current Concept remains in the bag all the time
-            fireConcept(); // a working workCycle
+        switch (this.preFire()) {
+            case NeedRunReason: // * 🚩真正要开始「概念推理」
+                // * 🚩拿出尽可能多的「词项链」以产生推理
+                final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(currentConcept, currentTaskLink);
+                // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
+                for (final TermLink termLink : toReasonLinks) {
+                    this.currentBeliefLink = termLink;
+                    // * 🔥启动概念推理：点火！
+                    RuleTables.reason(currentTaskLink, termLink, this);
+                    currentConcept.__putTermLinkBack(termLink);
+                }
+            case Transform: // * 🚩遇到「只进行『转换推理』」的情况：只放回任务链
+                currentConcept.__putTaskLinkBack(currentTaskLink);
+            case NoConcept: // * 🚩无概念：直接返回
+            case NoTaskLink: // * 🚩无任务链：直接返回
+                return;
         }
     }
 
     /* ---------- main loop ---------- */
 
+    /** 🆕预点火的结果 */
     private enum PreFireResult {
+        /** 对应「没有概念要处理」的情形 */
+        NoConcept,
         /** 对应「没有任务链要处理」的情形 */
         NoTaskLink,
         /** 对应「拿出的任务链要按NAL-4的规则转换」的情形（仍然是「直接推理」） */
@@ -517,13 +529,29 @@ public class Memory {
     }
 
     /**
-     * ✨预点火
+     * 🆕✨预点火
      * * 🎯仍然属于「直接推理」，是「直接处理判断、目标、问题等」的一部分
-     * * 🚩仍有「参与构建『推理上下文』」的作用
+     * * 📌仍有「参与构建『推理上下文』」的作用
+     * * 🎯从「记忆区」拿出「概念」并从其中拿出「任务链」：若都有，则进入「概念推理」阶段
      *
      * @return 预点火结果 {@link PreFireResult}
      */
     private PreFireResult preFire() {
+        // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
+
+        // * 🚩拿出一个概念，准备点火
+        currentConcept = concepts.takeOut();
+        if (currentConcept == null) {
+            return PreFireResult.NoConcept;
+        }
+        currentTerm = currentConcept.getTerm();
+        recorder.append(" * Selected Concept: " + currentTerm + "\n");
+        concepts.putBack(currentConcept); // current Concept remains in the bag all the time
+        // a working workCycle
+        // * An atomic step in a concept, only called in {@link Memory#processConcept}
+        // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
+
+        // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
         final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             return PreFireResult.NoTaskLink;
@@ -542,31 +570,9 @@ public class Memory {
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             return PreFireResult.Transform;
         }
-        return PreFireResult.NeedRunReason;
-    }
 
-    /**
-     * An atomic step in a concept, only called in {@link Memory#processConcept}
-     */
-    private void fireConcept() {
-        // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
-        final PreFireResult preFireResult = preFire();
-        switch (preFireResult) {
-            case NeedRunReason: // * 🚩真正要开始「概念推理」
-                // * 🚩拿出尽可能多的「词项链」以产生推理
-                final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(currentConcept, currentTaskLink);
-                // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
-                for (final TermLink termLink : toReasonLinks) {
-                    this.currentBeliefLink = termLink;
-                    // * 🔥启动概念推理：点火！
-                    RuleTables.reason(currentTaskLink, termLink, this);
-                    currentConcept.__putTermLinkBack(termLink);
-                }
-            case Transform: // * 🚩遇到「只进行『转换推理』」的情况：只放回任务链
-                currentConcept.__putTaskLinkBack(currentTaskLink);
-            case NoTaskLink: // * 🚩无任务链：直接返回
-                return;
-        }
+        // * 🚩终于要轮到「点火」
+        return PreFireResult.NeedRunReason;
     }
 
     /**
