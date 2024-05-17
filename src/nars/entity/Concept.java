@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
-import nars.inference.RuleTables;
 import nars.inference.UtilityFunctions;
 import nars.language.CompoundTerm;
 import nars.language.Conjunction;
@@ -511,58 +510,36 @@ public final class Concept extends Item {
         return null;
     }
 
-    /* ---------- main loop ---------- */
-
     /**
-     * An atomic step in a concept, only called in {@link Memory#processConcept}
+     * 🆕从「任务链袋」获取一个任务链
+     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
      */
-    public void fire() {
-        final TaskLink currentTaskLink = taskLinks.takeOut();
-        if (currentTaskLink == null) {
-            return;
-        }
-        memory.currentTaskLink = currentTaskLink;
-        memory.currentBeliefLink = null;
-        memory.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
-        final Task task = currentTaskLink.getTargetTask();
-        memory.currentTask = task; // one of the two places where this variable is set
-        // memory.getRecorder().append(" * Selected Task: " + task + "\n");
-        // for debugging
-        if (currentTaskLink.getType() == TermLink.TRANSFORM) {
-            memory.currentBelief = null;
-            RuleTables.transformTask(currentTaskLink, memory); // to turn this into structural inference as below?
-        } else {
-            // * 🚩拿出尽可能多的「词项链」以产生推理
-            final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(currentTaskLink);
-            // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
-            for (final TermLink termLink : toReasonLinks) {
-                memory.currentBeliefLink = termLink;
-                RuleTables.reason(currentTaskLink, termLink, memory);
-                termLinks.putBack(termLink);
-            }
-        }
-        taskLinks.putBack(currentTaskLink);
+    public TaskLink __takeOutTaskLink() {
+        return this.taskLinks.takeOut();
     }
 
     /**
-     * 围绕任务链，获取可推理的词项链列表
-     *
-     * @param currentTaskLink 当前任务链
-     * @return 将要被拿去推理的词项链列表
+     * 🆕从「词项链袋」获取一个词项链
+     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
      */
-    private ArrayList<TermLink> chooseLTermLinksToReason(TaskLink currentTaskLink) {
-        final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
-        int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
-        // while (memory.noResult() && (termLinkCount > 0)) {
-        while (termLinkCount > 0) {
-            final TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
-            if (termLink == null)
-                break;
-            memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
-            toReasonLinks.add(termLink);
-            termLinkCount--;
-        }
-        return toReasonLinks;
+    public TermLink __takeOutTermLink(TaskLink currentTaskLink, long time) {
+        return this.termLinks.takeOut(currentTaskLink, time);
+    }
+
+    /**
+     * 🆕将一个任务链放回「任务链袋」
+     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     */
+    public boolean __putTaskLinkBack(TaskLink link) {
+        return this.taskLinks.putBack(link);
+    }
+
+    /**
+     * 🆕将一个词项链放回「词项链袋」
+     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     */
+    public boolean __putTermLinkBack(TermLink link) {
+        return this.termLinks.putBack(link);
     }
 
     /* ---------- display ---------- */

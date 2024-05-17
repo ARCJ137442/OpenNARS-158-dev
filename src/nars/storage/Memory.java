@@ -13,6 +13,7 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.inference.BudgetFunctions;
+import nars.inference.RuleTables;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
 import nars.main_nogui.Parameters;
@@ -499,8 +500,62 @@ public class Memory {
             currentTerm = currentConcept.getTerm();
             recorder.append(" * Selected Concept: " + currentTerm + "\n");
             concepts.putBack(currentConcept); // current Concept remains in the bag all the time
-            currentConcept.fire(); // a working workCycle
+            fireConcept(currentConcept); // a working workCycle
         }
+    }
+
+    /* ---------- main loop ---------- */
+
+    /**
+     * An atomic step in a concept, only called in {@link Memory#processConcept}
+     */
+    private void fireConcept(Concept self) {
+        final TaskLink currentTaskLink = self.__takeOutTaskLink();
+        if (currentTaskLink == null) {
+            return;
+        }
+        this.currentTaskLink = currentTaskLink;
+        this.currentBeliefLink = null;
+        this.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
+        final Task task = currentTaskLink.getTargetTask();
+        this.currentTask = task; // one of the two places where this variable is set
+        // this.getRecorder().append(" * Selected Task: " + task + "\n");
+        // for debugging
+        if (currentTaskLink.getType() == TermLink.TRANSFORM) {
+            this.currentBelief = null;
+            RuleTables.transformTask(currentTaskLink, this); // to turn this into structural inference as below?
+        } else {
+            // * 🚩拿出尽可能多的「词项链」以产生推理
+            final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(self, currentTaskLink);
+            // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
+            for (final TermLink termLink : toReasonLinks) {
+                this.currentBeliefLink = termLink;
+                RuleTables.reason(currentTaskLink, termLink, this);
+                self.__putTermLinkBack(termLink);
+            }
+        }
+        self.__putTaskLinkBack(currentTaskLink);
+    }
+
+    /**
+     * 🆕围绕任务链，获取可推理的词项链列表
+     *
+     * @param currentTaskLink 当前任务链
+     * @return 将要被拿去推理的词项链列表
+     */
+    private ArrayList<TermLink> chooseLTermLinksToReason(Concept concept, TaskLink currentTaskLink) {
+        final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
+        int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
+        // while (this.noResult() && (termLinkCount > 0)) {
+        while (termLinkCount > 0) {
+            final TermLink termLink = concept.__takeOutTermLink(currentTaskLink, this.getTime());
+            if (termLink == null)
+                break;
+            this.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
+            toReasonLinks.add(termLink);
+            termLinkCount--;
+        }
+        return toReasonLinks;
     }
 
     /* ---------- task processing ---------- */
