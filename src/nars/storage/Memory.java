@@ -445,12 +445,12 @@ public class Memory {
         recorder.append(" --- " + clock + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
-        processDirect();
+        final Iterable<TermLink> toReasonLinks = processDirect();
 
         // * 🚩内部概念高级推理 阶段 * //
-        if (noResult()) { // necessary?
-            processConcept();
-        }
+        if (toReasonLinks != null)
+            // * 🚩都选好了⇒开始
+            processConcept(toReasonLinks);
 
         novelTasks.refresh();
     }
@@ -474,12 +474,15 @@ public class Memory {
      * 🆕本地直接推理
      * * 🚩最终只和「本地规则」与{@link Concept#directProcess}有关
      */
-    private void processDirect() {
+    private Iterable<TermLink> processDirect() {
+        // * 🚩处理已有任务（新任务/新近任务）
         processNewTask();
         // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
         if (noResult()) { // necessary?
             processNovelTask();
         }
+        // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
+        return preprocessConcept(this);
     }
 
     /**
@@ -521,43 +524,18 @@ public class Memory {
     /**
      * Select a concept to fire.
      */
-    private void processConcept() {
-        // * 🚩选择概念、选择任务链
-        switch (preFire(this)) {
-            case NeedRunReason: // * 🚩真正要开始「概念推理」
-                // * 🚩拿出尽可能多的「词项链」以产生推理
-                final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(
-                        this,
-                        currentConcept,
-                        currentTaskLink);
-                // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
-                for (final TermLink termLink : toReasonLinks) {
-                    this.currentBeliefLink = termLink;
-                    // * 🔥启动概念推理：点火！
-                    RuleTables.reason(currentTaskLink, termLink, this);
-                    currentConcept.__putTermLinkBack(termLink);
-                }
-            case Transform: // * 🚩遇到「只进行『转换推理』」的情况：只放回任务链
-                currentConcept.__putTaskLinkBack(currentTaskLink);
-            case NoConcept: // * 🚩无概念：直接返回
-            case NoTaskLink: // * 🚩无任务链：直接返回
-                return;
+    private void processConcept(Iterable<TermLink> toReasonLinks) {
+        // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
+        for (final TermLink termLink : toReasonLinks) {
+            this.currentBeliefLink = termLink;
+            // * 🔥启动概念推理：点火！
+            RuleTables.reason(currentTaskLink, termLink, this);
+            currentConcept.__putTermLinkBack(termLink);
         }
+        this.currentConcept.__putTaskLinkBack(currentTaskLink);
     }
 
     /* ---------- main loop ---------- */
-
-    /** 🆕预点火的结果 */
-    private enum PreFireResult {
-        /** 对应「没有概念要处理」的情形 */
-        NoConcept,
-        /** 对应「没有任务链要处理」的情形 */
-        NoTaskLink,
-        /** 对应「拿出的任务链要按NAL-4的规则转换」的情形（仍然是「直接推理」） */
-        Transform,
-        /** 对应「确实要开始按规则表分发推理」的情形（将进入「概念推理」） */
-        NeedRunReason,
-    }
 
     /**
      * 🆕✨预点火
@@ -567,13 +545,17 @@ public class Memory {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private static PreFireResult preFire(Memory self) {
+    private static Iterable<TermLink> preprocessConcept(Memory self) {
+        // * 🚩推理前判断「是否有必要」
+        if (!self.noResult()) // necessary?
+            return null;
+
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
         self.currentConcept = self.concepts.takeOut();
         if (self.currentConcept == null) {
-            return PreFireResult.NoConcept;
+            return null;
         }
         self.currentTerm = self.currentConcept.getTerm();
         self.recorder.append(" * Selected Concept: " + self.currentTerm + "\n");
@@ -585,7 +567,7 @@ public class Memory {
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
         final TaskLink currentTaskLink = self.currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
-            return PreFireResult.NoTaskLink;
+            return null;
         }
         self.currentTaskLink = currentTaskLink;
         self.currentBeliefLink = null;
@@ -599,11 +581,16 @@ public class Memory {
             RuleTables.transformTask(currentTaskLink, self);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
-            return PreFireResult.Transform;
+            // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
+            self.currentConcept.__putTaskLinkBack(currentTaskLink);
+            return null;
         }
 
-        // * 🚩终于要轮到「点火」
-        return PreFireResult.NeedRunReason;
+        // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
+        return chooseLTermLinksToReason(
+                self,
+                self.currentConcept,
+                currentTaskLink);
     }
 
     /**
