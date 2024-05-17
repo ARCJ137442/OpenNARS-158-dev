@@ -531,19 +531,23 @@ public final class Concept extends Item {
             memory.currentBelief = null;
             RuleTables.transformTask(currentTaskLink, memory); // to turn this into structural inference as below?
         } else {
+            // * 🚩拿出尽可能多的「词项链」以产生推理
+            final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
             int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
             // while (memory.noResult() && (termLinkCount > 0)) {
             while (termLinkCount > 0) {
                 final TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
-                if (termLink != null) {
-                    memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
-                    memory.currentBeliefLink = termLink;
-                    RuleTables.reason(currentTaskLink, termLink, memory);
-                    termLinks.putBack(termLink);
-                    termLinkCount--;
-                } else {
-                    termLinkCount = 0;
-                }
+                if (termLink == null)
+                    break;
+                memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
+                toReasonLinks.add(termLink);
+                termLinkCount--;
+            }
+            // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
+            for (final TermLink termLink : toReasonLinks) {
+                memory.currentBeliefLink = termLink;
+                RuleTables.reason(currentTaskLink, termLink, memory);
+                termLinks.putBack(termLink);
             }
         }
         taskLinks.putBack(currentTaskLink);

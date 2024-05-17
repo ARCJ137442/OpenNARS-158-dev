@@ -26,7 +26,7 @@ public class RuleTables {
         final Term beliefTerm = (Term) bLink.getTarget().clone(); // cloning for substitution
         final Concept beliefConcept = memory.termToConcept(beliefTerm);
         final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(task) : null;
-        memory.currentBelief = belief; // may be null
+        memory.currentBelief = belief; // ! may be null
         if (belief != null) {
             LocalRules.match(task, belief, memory);
         }
