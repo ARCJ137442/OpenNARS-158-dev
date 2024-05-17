@@ -291,7 +291,7 @@ public final class Concept extends Item {
                         // // avoid circular transform
                         final TaskLink tLink = new TaskLink(task, termLink, subBudget);
                         final Term componentTerm = termLink.getTarget();
-                        final Concept componentConcept = memory.getConcept(componentTerm);
+                        final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
                         if (componentConcept != null) {
                             componentConcept.insertTaskLink(tLink);
                         }
@@ -389,7 +389,7 @@ public final class Concept extends Item {
                 for (TermLink template : termLinkTemplates) {
                     if (template.getType() != TermLink.TRANSFORM) {
                         t = template.getTarget();
-                        concept = memory.getConcept(t);
+                        concept = memory.getConceptOrCreate(t);
                         if (concept != null) {
                             termLink1 = new TermLink(t, template, subBudget);
                             insertTermLink(termLink1); // this termLink to that

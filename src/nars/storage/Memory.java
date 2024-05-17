@@ -222,25 +222,43 @@ public class Memory {
     }
 
     /**
+     * 🆕判断「记忆区中是否已有概念」
+     * * 🚩Check if a Term has a Concept.
+     *
+     * @param term The Term naming a concept
+     * @return true if the Term has a Concept in the memory
+     */
+    public boolean hasConcept(Term term) {
+        return termToConcept(term) != null;
+    }
+
+    /**
      * Get the Concept associated to a Term, or create it.
      *
      * @param term indicating the concept
      * @return an existing Concept, or a new one, or null ( TODO bad smell )
      */
-    public Concept getConcept(Term term) {
+    public Concept getConceptOrCreate(Term term) {
+        // * 🚩不给「非常量词项」新建概念
         if (!term.isConstant()) {
             return null;
         }
-        String n = term.getName();
-        Concept concept = concepts.get(n);
-        if (concept == null) {
-            concept = new Concept(term, this); // the only place to make a new Concept
-            boolean created = concepts.putIn(concept);
-            if (!created) {
-                return null;
-            }
-        }
-        return concept;
+        // * 🚩尝试从概念袋中获取「已有概念」，否则创建概念
+        final Concept concept = termToConcept(term);
+        return concept == null ? makeNewConcept(term) : concept;
+    }
+
+    /**
+     * 🆕新建一个概念
+     * * 📌概念只可能由此被创建
+     *
+     * @param term 概念对应的词项
+     * @return 已经被置入「概念袋」的概念 | 创建失败时返回`
+     */
+    private Concept makeNewConcept(Term term) {
+        final Concept concept = new Concept(term, this); // the only place to make a new Concept
+        final boolean created = concepts.putIn(concept);
+        return created ? concept : null;
     }
 
     /**
@@ -427,16 +445,13 @@ public class Memory {
         recorder.append(" --- " + clock + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
-        processNewTask();
-        // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
-        if (noResult()) { // necessary?
-            processNovelTask();
-        }
+        processDirect();
 
         // * 🚩内部概念高级推理 阶段 * //
         if (noResult()) { // necessary?
             processConcept();
         }
+
         novelTasks.refresh();
     }
 
@@ -456,21 +471,33 @@ public class Memory {
     }
 
     /**
+     * 🆕本地直接推理
+     * * 🚩最终只和「本地规则」与{@link Concept#directProcess}有关
+     */
+    private void processDirect() {
+        processNewTask();
+        // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
+        if (noResult()) { // necessary?
+            processNovelTask();
+        }
+    }
+
+    /**
      * Process the newTasks accumulated in the previous workCycle, accept input
      * ones and those that corresponding to existing concepts, plus one from the
      * buffer.
      */
     private void processNewTask() {
-        Task task;
-        int counter = newTasks.size(); // don't include new tasks produced in the current workCycle
-        while (counter-- > 0) {
-            task = newTasks.removeFirst();
-            if (task.isInput() || (termToConcept(task.getContent()) != null)) { // new input or existing concept
+        // don't include new tasks produced in the current workCycle
+        for (int counter = newTasks.size(); counter > 0; counter--) {
+            final Task task = newTasks.removeFirst();
+            // new input or existing concept
+            if (task.isInput() || hasConcept(task.getContent())) {
                 immediateProcess(task);
             } else {
-                Sentence s = task.getSentence();
+                final Sentence s = task.getSentence();
                 if (s.isJudgment()) {
-                    double d = s.getTruth().getExpectation();
+                    final double d = s.getTruth().getExpectation();
                     if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
                         novelTasks.putIn(task); // new concept formation
                     } else {
@@ -495,10 +522,14 @@ public class Memory {
      * Select a concept to fire.
      */
     private void processConcept() {
-        switch (this.preFire()) {
+        // * 🚩选择概念、选择任务链
+        switch (preFire(this)) {
             case NeedRunReason: // * 🚩真正要开始「概念推理」
                 // * 🚩拿出尽可能多的「词项链」以产生推理
-                final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(currentConcept, currentTaskLink);
+                final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(
+                        this,
+                        currentConcept,
+                        currentTaskLink);
                 // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
                 for (final TermLink termLink : toReasonLinks) {
                     this.currentBeliefLink = termLink;
@@ -536,36 +567,36 @@ public class Memory {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private PreFireResult preFire() {
+    private static PreFireResult preFire(Memory self) {
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        currentConcept = concepts.takeOut();
-        if (currentConcept == null) {
+        self.currentConcept = self.concepts.takeOut();
+        if (self.currentConcept == null) {
             return PreFireResult.NoConcept;
         }
-        currentTerm = currentConcept.getTerm();
-        recorder.append(" * Selected Concept: " + currentTerm + "\n");
-        concepts.putBack(currentConcept); // current Concept remains in the bag all the time
+        self.currentTerm = self.currentConcept.getTerm();
+        self.recorder.append(" * Selected Concept: " + self.currentTerm + "\n");
+        self.concepts.putBack(self.currentConcept); // current Concept remains in the bag all the time
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
 
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
+        final TaskLink currentTaskLink = self.currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             return PreFireResult.NoTaskLink;
         }
-        this.currentTaskLink = currentTaskLink;
-        this.currentBeliefLink = null;
-        this.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
+        self.currentTaskLink = currentTaskLink;
+        self.currentBeliefLink = null;
+        self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
-        this.currentTask = task; // one of the two places where this variable is set
-        // this.getRecorder().append(" * Selected Task: " + task + "\n");
+        self.currentTask = task; // one of the two places where this variable is set
+        // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
-            this.currentBelief = null;
-            RuleTables.transformTask(currentTaskLink, this);
+            self.currentBelief = null;
+            RuleTables.transformTask(currentTaskLink, self);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             return PreFireResult.Transform;
@@ -581,15 +612,16 @@ public class Memory {
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
      */
-    private ArrayList<TermLink> chooseLTermLinksToReason(Concept concept, TaskLink currentTaskLink) {
+    private static ArrayList<TermLink> chooseLTermLinksToReason(Memory self, Concept concept,
+            TaskLink currentTaskLink) {
         final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
-        // while (this.noResult() && (termLinkCount > 0)) {
+        // while (self.noResult() && (termLinkCount > 0)) {
         while (termLinkCount > 0) {
-            final TermLink termLink = concept.__takeOutTermLink(currentTaskLink, this.getTime());
+            final TermLink termLink = concept.__takeOutTermLink(currentTaskLink, self.getTime());
             if (termLink == null)
                 break;
-            this.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
+            self.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
             toReasonLinks.add(termLink);
             termLinkCount--;
         }
@@ -604,13 +636,13 @@ public class Memory {
      * @param task the task to be accepted
      */
     private void immediateProcess(Task task) {
-        currentTask = task; // one of the two places where this variable is set
-        recorder.append("!!! Insert: " + task + "\n");
-        currentTerm = task.getContent();
-        currentConcept = getConcept(currentTerm);
-        if (currentConcept != null) {
-            activateConcept(currentConcept, task.getBudget());
-            currentConcept.directProcess(task);
+        this.currentTask = task; // one of the two places where this variable is set
+        this.recorder.append("!!! Insert: " + task + "\n");
+        this.currentTerm = task.getContent();
+        this.currentConcept = getConceptOrCreate(currentTerm);
+        if (this.currentConcept != null) {
+            activateConcept(this.currentConcept, task.getBudget());
+            this.currentConcept.directProcess(task);
         }
     }
 
