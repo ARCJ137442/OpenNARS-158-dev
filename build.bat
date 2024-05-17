@@ -9,7 +9,8 @@ mkdir classes
 @REM ↓使用 /A:-D 忽略目录 | 参考自 `dir --help`
 dir /b /s /A:-D *.java > sources.txt
 @REM ↑这是所有Java代码，可能编译顺序不能保证，但实际上无需顾虑顺序（编译器会自动做依赖分析）
-javac -d classes @sources.txt -Xstdout compile.log
+@REM * ↓ 使用`-source 1.8 -target 1.8`指定要兼容的Java版本（此处面向Java8）
+javac -source 1.8 -target 1.8 -d classes @sources.txt -Xstdout compile.log
 
 @REM ==后续其它构建代码==
 @REM 1 构建NARS代码（classes）到jar文件（GUI）
