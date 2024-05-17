@@ -264,8 +264,12 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     private static BudgetValue budgetInference(float qual, int complexity, Memory memory) {
         Item t = memory.currentTaskLink;
+        // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
+        // if (t == null) {
+        // t = memory.currentTask;
+        // }
         if (t == null) {
-            t = memory.currentTask;
+            throw new NullPointerException("t shouldn't be `null`!");
         }
         float priority = t.getPriority();
         float durability = t.getDurability() / complexity;

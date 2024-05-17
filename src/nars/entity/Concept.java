@@ -99,7 +99,7 @@ public final class Concept extends Item {
      *
      * @return A list of TermLink templates
      */
-    public static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
+    private static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
         ArrayList<TermLink> componentLinks = new ArrayList<>();
         short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
         prepareComponentLinks(self, componentLinks, type, self);
@@ -216,6 +216,8 @@ public final class Concept extends Item {
                 } // else: activated belief
                 return;
             } else if (LocalRules.revisable(judgment, oldBelief)) {
+                // * 📝OpenNARS 3.0.4亦有覆盖：
+                // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
                 memory.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
                 if (memory.newStamp != null) {
                     memory.currentBelief = oldBelief;
@@ -238,7 +240,7 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    public float processQuestion(Task task) {
+    private float processQuestion(Task task) {
         Sentence ques = task.getSentence();
         boolean newQuestion = true;
         if (questions != null) {
@@ -365,7 +367,7 @@ public final class Concept extends Item {
      *
      * @param taskLink The termLink to be inserted
      */
-    public void insertTaskLink(TaskLink taskLink) {
+    private void insertTaskLink(TaskLink taskLink) {
         final BudgetValue taskBudget = taskLink.getBudget();
         taskLinks.putIn(taskLink);
         memory.activateConcept(this, taskBudget);
@@ -378,7 +380,7 @@ public final class Concept extends Item {
      *
      * @param taskBudget The BudgetValue of the task
      */
-    public void buildTermLinks(BudgetValue taskBudget) {
+    private void buildTermLinks(BudgetValue taskBudget) {
         Term t;
         Concept concept;
         TermLink termLink1, termLink2;
@@ -411,7 +413,7 @@ public final class Concept extends Item {
      *
      * @param termLink The termLink to be inserted
      */
-    public void insertTermLink(TermLink termLink) {
+    private void insertTermLink(TermLink termLink) {
         termLinks.putIn(termLink);
     }
 
@@ -457,7 +459,7 @@ public final class Concept extends Item {
         return res;
     }
 
-    private String toStringIfNotNull(Object item, String title) {
+    public String toStringIfNotNull(Object item, String title) {
         return item == null ? "" : "\n " + title + ":" + item.toString();
     }
 
@@ -498,6 +500,8 @@ public final class Concept extends Item {
         final Sentence taskSentence = task.getSentence();
         for (final Sentence belief : beliefs) {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
+            // * 📝在OpenNARS 3.0.4中也会被覆盖：
+            // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
             memory.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
             if (memory.newStamp != null) {
                 final Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?

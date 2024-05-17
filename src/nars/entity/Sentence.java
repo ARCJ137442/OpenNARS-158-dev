@@ -49,6 +49,9 @@ public class Sentence implements Cloneable {
         this.truth = truth;
         this.stamp = stamp;
         this.revisable = true;
+        if (stamp == null) {
+            throw new NullPointerException("Stamp is null!");
+        }
     }
 
     /**
@@ -69,6 +72,9 @@ public class Sentence implements Cloneable {
         this.truth = truth;
         this.stamp = stamp;
         this.revisable = revisable;
+        if (stamp == null) {
+            throw new NullPointerException("Stamp is null!");
+        }
     }
 
     /**

@@ -92,36 +92,36 @@ public class Memory {
     /**
      * The selected Term
      */
-    public Term currentTerm;
+    public Term currentTerm = null;
     /**
      * The selected Concept
      */
-    public Concept currentConcept;
+    public Concept currentConcept = null;
     /**
      * The selected TaskLink
      */
-    public TaskLink currentTaskLink;
+    public TaskLink currentTaskLink = null;
     /**
      * The selected Task
      */
-    public Task currentTask;
+    public Task currentTask = null;
     /**
      * The selected TermLink
      */
-    public TermLink currentBeliefLink;
+    public TermLink currentBeliefLink = null;
     /**
      * The selected belief
      */
-    public Sentence currentBelief;
+    public Sentence currentBelief = null;
     /**
      * The new Stamp
      */
-    public Stamp newStamp;
+    public Stamp newStamp = null;
     /**
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
      */
-    protected HashMap<Term, Term> substitute;
+    protected HashMap<Term, Term> substitute = null;
 
     public static Random randomNumber = new Random(1);
 
@@ -400,6 +400,7 @@ public class Memory {
             return;
         }
         Sentence taskSentence = currentTask.getSentence();
+        // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
             newStamp = new Stamp(taskSentence.getStamp(), getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
@@ -420,6 +421,8 @@ public class Memory {
      * @param clock The current time to be displayed
      */
     public void workCycle(long clock) {
+        // * 🆕每次工作循环前，清理上下文防串
+        clearContext();
         recorder.append(" --- " + clock + " ---\n");
         processNewTask();
         if (noResult()) { // necessary?
@@ -429,6 +432,21 @@ public class Memory {
             processConcept();
         }
         novelTasks.refresh();
+    }
+
+    /**
+     * 清理推导上下文
+     * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
+     */
+    private void clearContext() {
+        currentTerm = null;
+        currentConcept = null;
+        currentTaskLink = null;
+        currentTask = null;
+        currentBeliefLink = null;
+        currentBelief = null;
+        newStamp = null;
+        substitute = null;
     }
 
     /**
