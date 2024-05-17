@@ -424,10 +424,15 @@ public class Memory {
         // * 🆕每次工作循环前，清理上下文防串
         clearContext();
         recorder.append(" --- " + clock + " ---\n");
+
+        // * 🚩本地任务直接处理 阶段 * //
         processNewTask();
+        // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
         if (noResult()) { // necessary?
             processNovelTask();
         }
+
+        // * 🚩内部概念高级推理 阶段 * //
         if (noResult()) { // necessary?
             processConcept();
         }

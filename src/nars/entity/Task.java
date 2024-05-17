@@ -14,11 +14,11 @@ public class Task extends Item {
     /**
      * Task from which the Task is derived, or null if input
      */
-    private Task parentTask;
+    private final Task parentTask;
     /**
      * Belief from which the Task is derived, or null if derived from a theorem
      */
-    private Sentence parentBelief;
+    private final Sentence parentBelief;
     /**
      * For Question and Goal: best solution found so far
      */
@@ -34,6 +34,8 @@ public class Task extends Item {
         super(s.toKey(), b); // change to toKey()
         sentence = s;
         key = sentence.toKey();
+        parentTask = null;
+        parentBelief = null;
     }
 
     /**
@@ -45,7 +47,9 @@ public class Task extends Item {
      * @param parentBelief The belief from which this new task is derived
      */
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief) {
-        this(s, b);
+        super(s.toKey(), b); // change to toKey()
+        sentence = s;
+        key = sentence.toKey();
         this.parentTask = parentTask;
         this.parentBelief = parentBelief;
     }
