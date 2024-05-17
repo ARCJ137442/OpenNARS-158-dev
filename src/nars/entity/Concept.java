@@ -512,6 +512,7 @@ public final class Concept extends Item {
     }
 
     /* ---------- main loop ---------- */
+
     /**
      * An atomic step in a concept, only called in {@link Memory#processConcept}
      */
@@ -525,24 +526,14 @@ public final class Concept extends Item {
         memory.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
         memory.currentTask = task; // one of the two places where this variable is set
-        // memory.getRecorder().append(" * Selected Task: " + task + "\n"); // for
-        // debugging
+        // memory.getRecorder().append(" * Selected Task: " + task + "\n");
+        // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
             memory.currentBelief = null;
             RuleTables.transformTask(currentTaskLink, memory); // to turn this into structural inference as below?
         } else {
             // * 🚩拿出尽可能多的「词项链」以产生推理
-            final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
-            int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
-            // while (memory.noResult() && (termLinkCount > 0)) {
-            while (termLinkCount > 0) {
-                final TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
-                if (termLink == null)
-                    break;
-                memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
-                toReasonLinks.add(termLink);
-                termLinkCount--;
-            }
+            final ArrayList<TermLink> toReasonLinks = chooseLTermLinksToReason(currentTaskLink);
             // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
             for (final TermLink termLink : toReasonLinks) {
                 memory.currentBeliefLink = termLink;
@@ -551,6 +542,27 @@ public final class Concept extends Item {
             }
         }
         taskLinks.putBack(currentTaskLink);
+    }
+
+    /**
+     * 围绕任务链，获取可推理的词项链列表
+     *
+     * @param currentTaskLink 当前任务链
+     * @return 将要被拿去推理的词项链列表
+     */
+    private ArrayList<TermLink> chooseLTermLinksToReason(TaskLink currentTaskLink) {
+        final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
+        int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
+        // while (memory.noResult() && (termLinkCount > 0)) {
+        while (termLinkCount > 0) {
+            final TermLink termLink = termLinks.takeOut(currentTaskLink, memory.getTime());
+            if (termLink == null)
+                break;
+            memory.getRecorder().append(" * Selected TermLink: " + termLink + "\n");
+            toReasonLinks.add(termLink);
+            termLinkCount--;
+        }
+        return toReasonLinks;
     }
 
     /* ---------- display ---------- */

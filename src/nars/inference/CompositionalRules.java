@@ -295,19 +295,22 @@ public final class CompositionalRules {
             memory.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
             if (Variable.containVarQ(sentence.getContent().getName())) {
-                Concept contentConcept = memory.termToConcept(content);
+                final Concept contentConcept = memory.termToConcept(content);
                 if (contentConcept == null) {
                     return;
                 }
-                Sentence contentBelief = contentConcept.getBelief(task);
+                final Sentence contentBelief = contentConcept.getBelief(task);
                 if (contentBelief == null) {
                     return;
                 }
-                Task contentTask = new Task(contentBelief, task.getBudget());
+                final Task contentTask = new Task(contentBelief, task.getBudget());
                 memory.currentTask = contentTask;
-                Term conj = Conjunction.make(component, content, memory);
+                final Term conj = Conjunction.make(component, content, memory);
+                // * ↓不会用到`memory.currentTask`
                 truth = TruthFunctions.intersection(contentBelief.getTruth(), belief.getTruth());
+                // * ↓不会用到`memory.currentTask`
                 budget = BudgetFunctions.compoundForward(truth, conj, memory);
+                // ! ⚠️↓会用到`memory.currentTask`：构建新结论时要用到
                 memory.doublePremiseTask(conj, truth, budget);
             }
         } else {
@@ -395,32 +398,39 @@ public final class CompositionalRules {
                 }
             }
         }
-        Statement state1 = Inheritance.make(term11, term12, memory);
-        Statement state2 = Inheritance.make(term21, term22, memory);
+
+        final Statement state1 = Inheritance.make(term11, term12, memory);
+        final Statement state2 = Inheritance.make(term21, term22, memory);
         Term content = Implication.make(state1, state2, memory);
         if (content == null) {
             return;
         }
-        TruthValue truth = TruthFunctions.induction(truthT, truthB);
-        BudgetValue budget = BudgetFunctions.compoundForward(truth, content, memory);
+        TruthValue truth;
+        BudgetValue budget;
+        truth = TruthFunctions.induction(truthT, truthB);
+        budget = BudgetFunctions.compoundForward(truth, content, memory);
         memory.doublePremiseTask(content, truth, budget);
+
         content = Implication.make(state2, state1, memory);
         truth = TruthFunctions.induction(truthB, truthT);
         budget = BudgetFunctions.compoundForward(truth, content, memory);
         memory.doublePremiseTask(content, truth, budget);
+
         content = Equivalence.make(state1, state2, memory);
         truth = TruthFunctions.comparison(truthT, truthB);
         budget = BudgetFunctions.compoundForward(truth, content, memory);
         memory.doublePremiseTask(content, truth, budget);
+
         final Variable varDep = new Variable("#varDep");
+        final Statement newState1, newState2;
         if (index == 0) {
-            state1 = Inheritance.make(varDep, taskContent.getPredicate(), memory);
-            state2 = Inheritance.make(varDep, beliefContent.getPredicate(), memory);
+            newState1 = Inheritance.make(varDep, taskContent.getPredicate(), memory);
+            newState2 = Inheritance.make(varDep, beliefContent.getPredicate(), memory);
         } else {
-            state1 = Inheritance.make(taskContent.getSubject(), varDep, memory);
-            state2 = Inheritance.make(beliefContent.getSubject(), varDep, memory);
+            newState1 = Inheritance.make(taskContent.getSubject(), varDep, memory);
+            newState2 = Inheritance.make(beliefContent.getSubject(), varDep, memory);
         }
-        content = Conjunction.make(state1, state2, memory);
+        content = Conjunction.make(newState1, newState2, memory);
         truth = TruthFunctions.intersection(truthT, truthB);
         budget = BudgetFunctions.compoundForward(truth, content, memory);
         memory.doublePremiseTask(content, truth, budget, false);
