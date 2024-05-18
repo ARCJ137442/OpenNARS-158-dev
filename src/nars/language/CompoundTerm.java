@@ -2,7 +2,6 @@ package nars.language;
 
 import java.util.*;
 
-import nars.entity.*;
 import nars.storage.*;
 import nars.io.Symbols;
 
