@@ -227,7 +227,7 @@ public final class Concept extends Item {
                 memory.context.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
                 if (memory.context.newStamp != null) {
                     memory.context.currentBelief = oldBelief;
-                    LocalRules.revision(judgment, oldBelief, false, memory);
+                    LocalRules.revision(judgment, oldBelief, false, memory.context);
                 }
             }
         }
@@ -236,7 +236,7 @@ public final class Concept extends Item {
         if (task.getBudget().aboveThreshold()) {
             for (final Task existedQuestion : this.questions) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
-                LocalRules.trySolution(judgment, existedQuestion, memory);
+                LocalRules.trySolution(judgment, existedQuestion, memory.context);
             }
             addBeliefToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
         }
@@ -264,7 +264,7 @@ public final class Concept extends Item {
         final Sentence newAnswer = evaluation(question, beliefs);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
-            LocalRules.trySolution(newAnswer, task, memory);
+            LocalRules.trySolution(newAnswer, task, memory.context);
         }
 
         if (newQuestion) {

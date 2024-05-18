@@ -408,7 +408,7 @@ public class Memory {
         for (final TermLink termLink : toReasonLinks) {
             context.currentBeliefLink = termLink;
             // * 🔥启动概念推理：点火！
-            RuleTables.reason(context.currentTaskLink, termLink, this);
+            RuleTables.reason(context.currentTaskLink, termLink, this.context);
             context.currentConcept.__putTermLinkBack(termLink);
         }
         context.currentConcept.__putTaskLinkBack(context.currentTaskLink);
@@ -457,7 +457,7 @@ public class Memory {
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
             self.context.currentBelief = null;
-            RuleTables.transformTask(currentTaskLink, self);
+            RuleTables.transformTask(currentTaskLink, self.context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
