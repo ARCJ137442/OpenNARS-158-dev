@@ -125,17 +125,6 @@ public class Memory {
 
     /* ---------- access utilities ---------- */
 
-    /**
-     * 添加新任务
-     * * 🚩添加任务到「新任务」缓冲区
-     * * 🎯推理周期中添加任务
-     *
-     * @param task
-     */
-    public void addNewTask(Task task) {
-        newTasks.add(task);
-    }
-
     public ArrayList<String> getExportStrings() {
         return exportStrings;
     }
@@ -150,6 +139,20 @@ public class Memory {
 
     public long getTime() {
         return reasoner.getTime();
+    }
+
+    /**
+     * 用于转发推理器的{@link ReasonerBatch#getTimer}
+     */
+    public long getTimer() {
+        return reasoner.getTimer();
+    }
+
+    /**
+     * 用于转发推理器的{@link ReasonerBatch#updateTimer}
+     */
+    public long updateTimer() {
+        return reasoner.updateTimer();
     }
 
     /**
@@ -297,7 +300,7 @@ public class Memory {
     public void inputTask(Task task) {
         if (task.getBudget().aboveThreshold()) {
             recorder.append("!!! Perceived: " + task + "\n");
-            report(task.getSentence(), ReportType.IN); // report input
+            context.report(task.getSentence(), ReportType.IN); // report input
             newTasks.add(task); // wait to be processed in the next workCycle
         } else {
             recorder.append("!!! Neglected: " + task + "\n");
@@ -314,8 +317,6 @@ public class Memory {
      * @param clock The current time to be displayed
      */
     public void workCycle(long clock) {
-        // * 🆕每次工作循环前，清理上下文防串
-        this.context.clear();
         recorder.append(" --- " + clock + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
@@ -326,7 +327,26 @@ public class Memory {
             // * 🚩都选好了⇒开始
             processConcept(toReasonLinks);
 
+        // * 🚩最后收尾 阶段 * //
+        absorbContext();
         novelTasks.refresh();
+    }
+
+    /**
+     * 吸收「推理上下文」
+     */
+    private void absorbContext() {
+        final DerivationContext context = this.context;
+        // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
+        for (final Task newTask : context.newTasks) {
+            this.newTasks.add(newTask);
+        }
+        // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
+        for (final String exportString : context.exportStrings) {
+            this.exportStrings.add(exportString);
+        }
+        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+        context.clear();
     }
 
     /**
@@ -523,36 +543,6 @@ public class Memory {
     public void taskBuffersStartPlay(BagObserver<Task> bagObserver, String s) {
         bagObserver.setBag(novelTasks);
         novelTasks.addBagObserver(bagObserver, s);
-    }
-
-    /**
-     * Display input/output sentence in the output channels. The only place to
-     * add Objects into exportStrings. Currently only Strings are added, though
-     * in the future there can be outgoing Tasks; also if exportStrings is empty
-     * display the current value of timer ( exportStrings is emptied in
-     * {@link ReasonerBatch#doTick()} - TODO fragile mechanism)
-     *
-     * @param sentence the sentence to be displayed
-     * @param input    whether the task is input
-     */
-    public void report(Sentence sentence, ReportType type) {
-        if (ReasonerBatch.DEBUG) {
-            System.out.println("// report( clock " + reasoner.getTime()
-            // + ", input " + input
-                    + ", timer " + reasoner.getTimer()
-                    + ", Sentence " + sentence
-                    + ", exportStrings " + exportStrings);
-            System.out.flush();
-        }
-        if (exportStrings.isEmpty()) {
-            long timer = reasoner.updateTimer();
-            if (timer > 0) {
-                exportStrings.add(String.valueOf(timer));
-            }
-        }
-        String s = type.toString() + ": ";
-        s += sentence.toStringBrief();
-        exportStrings.add(s);
     }
 
     @Override

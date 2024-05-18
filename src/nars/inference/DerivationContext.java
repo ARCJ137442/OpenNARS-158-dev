@@ -1,6 +1,8 @@
 package nars.inference;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 import nars.entity.BudgetValue;
@@ -12,6 +14,7 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.language.Term;
+import nars.main_nogui.ReasonerBatch;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
 
@@ -28,6 +31,19 @@ public class DerivationContext {
     public Memory memory;
 
     /* ---------- Short-term workspace for a single cycle ---------- */
+    /**
+     * List of new tasks accumulated in one cycle, to be processed in the next
+     * cycle
+     * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
+     * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+     */
+    public final LinkedList<Task> newTasks = new LinkedList<>();
+    /**
+     * List of Strings or Tasks to be sent to the output channels
+     * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
+     * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+     */
+    public final ArrayList<String> exportStrings = new ArrayList<>();
     /**
      * The selected Term
      */
@@ -89,6 +105,7 @@ public class DerivationContext {
      * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
      */
     public void clear() {
+        // * 🚩清理上下文变量
         this.currentTerm = null;
         this.currentConcept = null;
         this.currentTaskLink = null;
@@ -97,6 +114,9 @@ public class DerivationContext {
         this.currentBelief = null;
         this.newStamp = null;
         this.substitute = null;
+        // * 🚩清理推理结果
+        this.newTasks.clear();
+        this.exportStrings.clear();
     }
 
     /**
@@ -117,10 +137,10 @@ public class DerivationContext {
             // 100.0f;
             float minSilent = memory.getSilenceValue().get() / 100.0f;
             if (s > minSilent) { // only report significant derived Tasks
-                memory.report(task.getSentence(), ReportType.OUT);
+                report(task.getSentence(), ReportType.OUT);
             }
         }
-        memory.addNewTask(task);
+        newTasks.add(task);
     }
 
     /**
@@ -136,9 +156,9 @@ public class DerivationContext {
             // .getMainWindow().silentW.value() / 100.0f;
             final float minSilent = memory.getSilenceValue().get() / 100.0f;
             if (budget > minSilent) { // only report significant derived Tasks
-                memory.report(task.getSentence(), ReportType.OUT);
+                report(task.getSentence(), ReportType.OUT);
             }
-            memory.addNewTask(task);
+            newTasks.add(task);
         } else {
             memory.getRecorder().append("!!! Ignored: " + task + "\n");
         }
@@ -218,5 +238,35 @@ public class DerivationContext {
                 taskSentence.getRevisable());
         Task newTask = new Task(newSentence, newBudget, currentTask, null);
         derivedTask(newTask);
+    }
+
+    /**
+     * Display input/output sentence in the output channels. The only place to
+     * add Objects into exportStrings. Currently only Strings are added, though
+     * in the future there can be outgoing Tasks; also if exportStrings is empty
+     * display the current value of timer ( exportStrings is emptied in
+     * {@link ReasonerBatch#doTick()} - TODO fragile mechanism)
+     *
+     * @param sentence the sentence to be displayed
+     * @param input    whether the task is input
+     */
+    public void report(Sentence sentence, ReportType type) {
+        if (ReasonerBatch.DEBUG) {
+            System.out.println("// report( clock " + memory.getTime()
+            // + ", input " + input
+                    + ", timer " + memory.getTimer()
+                    + ", Sentence " + sentence
+                    + ", exportStrings " + exportStrings);
+            System.out.flush();
+        }
+        if (exportStrings.isEmpty()) {
+            long timer = memory.updateTimer();
+            if (timer > 0) {
+                exportStrings.add(String.valueOf(timer));
+            }
+        }
+        String s = type.toString() + ": ";
+        s += sentence.toStringBrief();
+        exportStrings.add(s);
     }
 }
