@@ -185,8 +185,8 @@ public final class Concept extends Item {
      */
     public void directProcess() {
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
-        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.currentTask`
-        final Task task = memory.currentTask;
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
+        final Task task = memory.context.currentTask;
         if (task.getSentence().isJudgment()) {
             processJudgment();
         } else {
@@ -207,8 +207,8 @@ public final class Concept extends Item {
      * @return Whether to continue the processing of the task
      */
     private void processJudgment() {
-        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.currentTask`
-        final Task task = memory.currentTask;
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
+        final Task task = memory.context.currentTask;
         final Sentence judgment = task.getSentence();
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, beliefs);
@@ -224,9 +224,9 @@ public final class Concept extends Item {
             } else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
-                memory.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
-                if (memory.newStamp != null) {
-                    memory.currentBelief = oldBelief;
+                memory.context.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
+                if (memory.context.newStamp != null) {
+                    memory.context.currentBelief = oldBelief;
                     LocalRules.revision(judgment, oldBelief, false, memory);
                 }
             }
@@ -252,8 +252,8 @@ public final class Concept extends Item {
      * @return Whether to continue the processing of the task
      */
     private void processQuestion() {
-        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.currentTask`
-        final Task task = memory.currentTask;
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
+        final Task task = memory.context.currentTask;
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
         final Sentence existedQuestion = findExistedQuestion();
@@ -280,13 +280,13 @@ public final class Concept extends Item {
     /**
      * 🆕根据输入的任务，寻找并尝试返回已有的问题
      * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
-     * * 🚩经上游确认，此处的`task`只可能是`memory.currentTask`
+     * * 🚩经上游确认，此处的`task`只可能是`memory.context.currentTask`
      *
      * @param taskSentence 要在「自身所有问题」中查找相似的「问题」任务
      * @return 已有的问题，或为空
      */
     private Sentence findExistedQuestion(/* final Task questionTask */) {
-        final Task questionTask = memory.currentTask;
+        final Task questionTask = memory.context.currentTask;
         final Sentence taskSentence = questionTask.getSentence();
         if (this.questions != null) {
             for (final Task existedQuestion : this.questions) {
@@ -532,8 +532,8 @@ public final class Concept extends Item {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
-            memory.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
-            if (memory.newStamp != null) {
+            memory.context.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
+            if (memory.context.newStamp != null) {
                 final Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?
                 return belief2;
             }

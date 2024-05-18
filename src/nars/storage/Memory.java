@@ -13,6 +13,7 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.inference.BudgetFunctions;
+import nars.inference.DerivationContext;
 import nars.inference.RuleTables;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
@@ -90,41 +91,12 @@ public class Memory {
      * List of Strings or Tasks to be sent to the output channels
      */
     private final ArrayList<String> exportStrings;
-    /**
-     * The selected Term
-     */
-    public Term currentTerm = null;
-    /**
-     * The selected Concept
-     */
-    public Concept currentConcept = null;
-    /**
-     * The selected TaskLink
-     */
-    public TaskLink currentTaskLink = null;
-    /**
-     * The selected Task
-     */
-    public Task currentTask = null;
-    /**
-     * The selected TermLink
-     */
-    public TermLink currentBeliefLink = null;
-    /**
-     * The selected belief
-     */
-    public Sentence currentBelief = null;
-    /**
-     * The new Stamp
-     */
-    public Stamp newStamp = null;
-    /**
-     * The substitution that unify the common term in the Task and the Belief
-     * TODO unused
-     */
-    protected HashMap<Term, Term> substitute = null;
 
-    public static Random randomNumber = new Random(1);
+    /**
+     * 🆕新的「推理上下文」对象
+     * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
+     */
+    public DerivationContext context = new DerivationContext(this);
 
     /* ---------- Constructor ---------- */
     /**
@@ -149,7 +121,7 @@ public class Memory {
         newTasks.clear();
         exportStrings.clear();
         reasoner.initTimer();
-        randomNumber = new Random(1);
+        DerivationContext.init();
         recorder.append("\n-----RESET-----\n");
     }
 
@@ -322,7 +294,7 @@ public class Memory {
      *                        forward/backward correspondence
      */
     public void activatedTask(BudgetValue budget, Sentence sentence, Sentence candidateBelief) {
-        Task task = new Task(sentence, budget, currentTask, sentence, candidateBelief);
+        Task task = new Task(sentence, budget, context.currentTask, sentence, candidateBelief);
         recorder.append("!!! Activated: " + task.toString() + "\n");
         if (sentence.isQuestion()) {
             float s = task.getBudget().summary();
@@ -366,9 +338,10 @@ public class Memory {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
         if (newContent != null) {
-            Sentence newSentence = new Sentence(newContent, currentTask.getSentence().getPunctuation(), newTruth,
-                    newStamp);
-            Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
+            Sentence newSentence = new Sentence(newContent, context.currentTask.getSentence().getPunctuation(),
+                    newTruth,
+                    context.newStamp);
+            Task newTask = new Task(newSentence, newBudget, context.currentTask, context.currentBelief);
             derivedTask(newTask);
         }
     }
@@ -384,10 +357,10 @@ public class Memory {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
         if (newContent != null) {
-            Sentence taskSentence = currentTask.getSentence();
-            Sentence newSentence = new Sentence(newContent, taskSentence.getPunctuation(), newTruth, newStamp,
+            Sentence taskSentence = context.currentTask.getSentence();
+            Sentence newSentence = new Sentence(newContent, taskSentence.getPunctuation(), newTruth, context.newStamp,
                     revisable);
-            Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
+            Task newTask = new Task(newSentence, newBudget, context.currentTask, context.currentBelief);
             derivedTask(newTask);
         }
     }
@@ -401,7 +374,7 @@ public class Memory {
      * @param newBudget  The budget value in task
      */
     public void singlePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        singlePremiseTask(newContent, currentTask.getSentence().getPunctuation(), newTruth, newBudget);
+        singlePremiseTask(newContent, context.currentTask.getSentence().getPunctuation(), newTruth, newBudget);
     }
 
     /**
@@ -414,19 +387,20 @@ public class Memory {
      * @param newBudget   The budget value in task
      */
     public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
-        Task parentTask = currentTask.getParentTask();
+        Task parentTask = context.currentTask.getParentTask();
         if (parentTask != null && newContent.equals(parentTask.getContent())) { // circular structural inference
             return;
         }
-        Sentence taskSentence = currentTask.getSentence();
+        Sentence taskSentence = context.currentTask.getSentence();
         // final Stamp newStamp; // * 📝实际上并不需要动
-        if (taskSentence.isJudgment() || currentBelief == null) {
-            newStamp = new Stamp(taskSentence.getStamp(), getTime());
+        if (taskSentence.isJudgment() || context.currentBelief == null) {
+            context.newStamp = new Stamp(taskSentence.getStamp(), getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            newStamp = new Stamp(currentBelief.getStamp(), getTime());
+            context.newStamp = new Stamp(context.currentBelief.getStamp(), getTime());
         }
-        Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp, taskSentence.getRevisable());
-        Task newTask = new Task(newSentence, newBudget, currentTask, null);
+        Sentence newSentence = new Sentence(newContent, punctuation, newTruth, context.newStamp,
+                taskSentence.getRevisable());
+        Task newTask = new Task(newSentence, newBudget, context.currentTask, null);
         derivedTask(newTask);
     }
 
@@ -441,7 +415,7 @@ public class Memory {
      */
     public void workCycle(long clock) {
         // * 🆕每次工作循环前，清理上下文防串
-        clearContext();
+        this.context.clear();
         recorder.append(" --- " + clock + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
@@ -453,21 +427,6 @@ public class Memory {
             processConcept(toReasonLinks);
 
         novelTasks.refresh();
-    }
-
-    /**
-     * 清理推导上下文
-     * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
-     */
-    private void clearContext() {
-        currentTerm = null;
-        currentConcept = null;
-        currentTaskLink = null;
-        currentTask = null;
-        currentBeliefLink = null;
-        currentBelief = null;
-        newStamp = null;
-        substitute = null;
     }
 
     /**
@@ -527,12 +486,12 @@ public class Memory {
     private void processConcept(Iterable<TermLink> toReasonLinks) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         for (final TermLink termLink : toReasonLinks) {
-            this.currentBeliefLink = termLink;
+            context.currentBeliefLink = termLink;
             // * 🔥启动概念推理：点火！
-            RuleTables.reason(currentTaskLink, termLink, this);
-            currentConcept.__putTermLinkBack(termLink);
+            RuleTables.reason(context.currentTaskLink, termLink, this);
+            context.currentConcept.__putTermLinkBack(termLink);
         }
-        this.currentConcept.__putTaskLinkBack(currentTaskLink);
+        context.currentConcept.__putTaskLinkBack(context.currentTaskLink);
     }
 
     /* ---------- main loop ---------- */
@@ -553,43 +512,43 @@ public class Memory {
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        self.currentConcept = self.concepts.takeOut();
-        if (self.currentConcept == null) {
+        self.context.currentConcept = self.concepts.takeOut();
+        if (self.context.currentConcept == null) {
             return null;
         }
-        self.currentTerm = self.currentConcept.getTerm();
-        self.recorder.append(" * Selected Concept: " + self.currentTerm + "\n");
-        self.concepts.putBack(self.currentConcept); // current Concept remains in the bag all the time
+        self.context.currentTerm = self.context.currentConcept.getTerm();
+        self.recorder.append(" * Selected Concept: " + self.context.currentTerm + "\n");
+        self.concepts.putBack(self.context.currentConcept); // current Concept remains in the bag all the time
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
 
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = self.currentConcept.__takeOutTaskLink();
+        final TaskLink currentTaskLink = self.context.currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             return null;
         }
-        self.currentTaskLink = currentTaskLink;
-        self.currentBeliefLink = null;
+        self.context.currentTaskLink = currentTaskLink;
+        self.context.currentBeliefLink = null;
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
-        self.currentTask = task; // one of the two places where this variable is set
+        self.context.currentTask = task; // one of the two places where this variable is set
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
-            self.currentBelief = null;
+            self.context.currentBelief = null;
             RuleTables.transformTask(currentTaskLink, self);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
-            self.currentConcept.__putTaskLinkBack(currentTaskLink);
+            self.context.currentConcept.__putTaskLinkBack(currentTaskLink);
             return null;
         }
 
         // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
         return chooseTermLinksToReason(
                 self,
-                self.currentConcept,
+                self.context.currentConcept,
                 currentTaskLink);
     }
 
@@ -623,14 +582,14 @@ public class Memory {
      * @param task the task to be accepted
      */
     private void immediateProcess(final Task task) {
-        this.currentTask = task; // one of the two places where this variable is set
-        final Task currentTask = this.currentTask;
+        context.currentTask = task; // one of the two places where this variable is set
+        final Task currentTask = context.currentTask;
         this.recorder.append("!!! Insert: " + currentTask + "\n");
-        this.currentConcept = getConceptOrCreate(currentTask.getContent());
-        if (this.currentConcept != null) {
-            this.currentTerm = this.currentConcept.getTerm();
-            activateConcept(this.currentConcept, currentTask.getBudget());
-            this.currentConcept.directProcess();
+        context.currentConcept = getConceptOrCreate(currentTask.getContent());
+        if (context.currentConcept != null) {
+            context.currentTerm = context.currentConcept.getTerm();
+            activateConcept(context.currentConcept, currentTask.getBudget());
+            context.currentConcept.directProcess();
         }
     }
 
@@ -698,12 +657,15 @@ public class Memory {
 
     @Override
     public String toString() {
-        return toStringLongIfNotNull(concepts, "concepts")
+        String result = toStringLongIfNotNull(concepts, "concepts")
                 + toStringLongIfNotNull(novelTasks, "novelTasks")
-                + toStringIfNotNull(newTasks, "newTasks")
-                + toStringLongIfNotNull(currentTask, "currentTask")
-                + toStringLongIfNotNull(currentBeliefLink, "currentBeliefLink")
-                + toStringIfNotNull(currentBelief, "currentBelief");
+                + toStringIfNotNull(newTasks, "newTasks");
+        if (context != null) {
+            result += toStringLongIfNotNull(context.currentTask, "currentTask")
+                    + toStringLongIfNotNull(context.currentBeliefLink, "currentBeliefLink")
+                    + toStringIfNotNull(context.currentBelief, "currentBelief");
+        }
+        return result;
     }
 
     private String toStringLongIfNotNull(Bag<?> item, String title) {

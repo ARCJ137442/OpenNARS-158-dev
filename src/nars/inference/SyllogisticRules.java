@@ -109,7 +109,7 @@ public final class SyllogisticRules {
         final Statement st = (Statement) asymmetric.getContent();
         final TruthValue truth;
         final BudgetValue budget;
-        final Sentence sentence = memory.currentTask.getSentence();
+        final Sentence sentence = memory.context.currentTask.getSentence();
         final CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
         if (sentence.isQuestion()) {
             truth = null;
@@ -185,8 +185,8 @@ public final class SyllogisticRules {
         if ((content instanceof Statement) && ((Statement) content).invalid()) {
             return;
         }
-        final Sentence taskSentence = memory.currentTask.getSentence();
-        final Sentence beliefSentence = memory.currentBelief;
+        final Sentence taskSentence = memory.context.currentTask.getSentence();
+        final Sentence beliefSentence = memory.context.currentBelief;
         final TruthValue beliefTruth = beliefSentence.getTruth();
         final TruthValue truth1 = mainSentence.getTruth();
         final TruthValue truth2 = subSentence.getTruth();
@@ -228,9 +228,9 @@ public final class SyllogisticRules {
      * @param memory   Reference to the memory
      */
     static void conditionalDedInd(Implication premise1, short index, Term premise2, int side, Memory memory) {
-        final Task task = memory.currentTask;
+        final Task task = memory.context.currentTask;
         final Sentence taskSentence = task.getSentence();
-        final Sentence belief = memory.currentBelief;
+        final Sentence belief = memory.context.currentBelief;
         final boolean deduction = (side != 0);
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
@@ -311,9 +311,9 @@ public final class SyllogisticRules {
      * @param memory   Reference to the memory
      */
     static void conditionalAna(Equivalence premise1, short index, Term premise2, int side, Memory memory) {
-        final Task task = memory.currentTask;
+        final Task task = memory.context.currentTask;
         final Sentence taskSentence = task.getSentence();
-        final Sentence belief = memory.currentBelief;
+        final Sentence belief = memory.context.currentBelief;
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
@@ -409,9 +409,9 @@ public final class SyllogisticRules {
         if ((term1 == null) && (term2 == null)) {
             return false;
         }
-        final Task task = memory.currentTask;
+        final Task task = memory.context.currentTask;
         final Sentence sentence = task.getSentence();
-        final Sentence belief = memory.currentBelief;
+        final Sentence belief = memory.context.currentBelief;
         final TruthValue value1 = sentence.getTruth();
         final TruthValue value2 = belief.getTruth();
         if (term1 != null) {
@@ -465,9 +465,9 @@ public final class SyllogisticRules {
         final Term content = CompoundTerm.reduceComponents(compound, component, memory);
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
-        final Task task = memory.currentTask;
+        final Task task = memory.context.currentTask;
         final Sentence sentence = task.getSentence();
-        final Sentence belief = memory.currentBelief;
+        final Sentence belief = memory.context.currentBelief;
         final TruthValue v1 = sentence.getTruth();
         final TruthValue v2 = belief.getTruth();
         final TruthValue truth;

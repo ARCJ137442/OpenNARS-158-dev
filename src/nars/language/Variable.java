@@ -2,8 +2,8 @@ package nars.language;
 
 import java.util.*;
 
+import nars.inference.DerivationContext;
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A variable term, which does not correspond to a concept
@@ -208,7 +208,7 @@ public class Variable extends Term {
             }
             ArrayList<Term> list = cTerm1.cloneComponents();
             if (cTerm1.isCommutative()) {
-                Collections.shuffle(list, Memory.randomNumber);
+                Collections.shuffle(list, DerivationContext.randomNumber);
             }
             for (int i = 0; i < cTerm1.size(); i++) { // assuming matching order
                 Term t1 = list.get(i);

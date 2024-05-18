@@ -28,10 +28,10 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     public static void match(Memory memory) {
-        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`memory.currentTask`
-        final Task task = memory.currentTask;
-        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`memory.currentBelief`
-        final Sentence belief = memory.currentBelief;
+        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`memory.context.currentTask`
+        final Task task = memory.context.currentTask;
+        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`memory.context.currentBelief`
+        final Sentence belief = memory.context.currentBelief;
 
         final Sentence sentence = (Sentence) task.getSentence().clone();
         if (sentence.isJudgment()) {
@@ -126,8 +126,8 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     public static void matchReverse(Memory memory) {
-        Task task = memory.currentTask;
-        Sentence belief = memory.currentBelief;
+        Task task = memory.context.currentTask;
+        Sentence belief = memory.context.currentBelief;
         Sentence sentence = task.getSentence();
         if (sentence.isJudgment()) {
             inferToSym((Sentence) sentence, belief, memory);
@@ -145,7 +145,7 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     public static void matchAsymSym(Sentence asym, Sentence sym, int figure, Memory memory) {
-        if (memory.currentTask.getSentence().isJudgment()) {
+        if (memory.context.currentTask.getSentence().isJudgment()) {
             inferToAsym((Sentence) asym, (Sentence) sym, memory);
         } else {
             convertRelation(memory);
@@ -204,7 +204,7 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     private static void conversion(Memory memory) {
-        TruthValue truth = TruthFunctions.conversion(memory.currentBelief.getTruth());
+        TruthValue truth = TruthFunctions.conversion(memory.context.currentBelief.getTruth());
         BudgetValue budget = BudgetFunctions.forward(truth, memory);
         convertedJudgment(truth, budget, memory);
     }
@@ -216,8 +216,8 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     private static void convertRelation(Memory memory) {
-        TruthValue truth = memory.currentBelief.getTruth();
-        if (((Statement) memory.currentTask.getContent()).isCommutative()) {
+        TruthValue truth = memory.context.currentBelief.getTruth();
+        if (((Statement) memory.context.currentTask.getContent()).isCommutative()) {
             truth = TruthFunctions.abduction(truth, 1.0f);
         } else {
             truth = TruthFunctions.deduction(truth, 1.0f);
@@ -236,8 +236,8 @@ public class LocalRules {
      * @param memory Reference to the memory
      */
     private static void convertedJudgment(TruthValue newTruth, BudgetValue newBudget, Memory memory) {
-        Statement content = (Statement) memory.currentTask.getContent();
-        Statement beliefContent = (Statement) memory.currentBelief.getContent();
+        Statement content = (Statement) memory.context.currentTask.getContent();
+        Statement beliefContent = (Statement) memory.context.currentBelief.getContent();
         Term subjT = content.getSubject();
         Term predT = content.getPredicate();
         Term subjB = beliefContent.getSubject();
