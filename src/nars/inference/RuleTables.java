@@ -7,7 +7,7 @@ import nars.io.Symbols;
 
 /**
  * Table of inference rules, indexed by the TermLinks for the task and the
- * belief. Used in indirective processing of a task, to dispatch inference cases
+ * belief. Used in indirect processing of a task, to dispatch inference cases
  * to the relevant inference rules.
  */
 public class RuleTables {
@@ -28,7 +28,7 @@ public class RuleTables {
         final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(task) : null;
         memory.currentBelief = belief; // ! may be null
         if (belief != null) {
-            LocalRules.match(task, belief, memory);
+            LocalRules.match(memory);
         }
         if (!memory.noResult() && task.getSentence().isJudgment()) {
             return;

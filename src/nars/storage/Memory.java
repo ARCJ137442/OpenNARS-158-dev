@@ -587,7 +587,7 @@ public class Memory {
         }
 
         // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
-        return chooseLTermLinksToReason(
+        return chooseTermLinksToReason(
                 self,
                 self.currentConcept,
                 currentTaskLink);
@@ -599,7 +599,7 @@ public class Memory {
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
      */
-    private static ArrayList<TermLink> chooseLTermLinksToReason(Memory self, Concept concept,
+    private static ArrayList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
             TaskLink currentTaskLink) {
         final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
@@ -622,14 +622,15 @@ public class Memory {
      *
      * @param task the task to be accepted
      */
-    private void immediateProcess(Task task) {
+    private void immediateProcess(final Task task) {
         this.currentTask = task; // one of the two places where this variable is set
-        this.recorder.append("!!! Insert: " + task + "\n");
-        this.currentTerm = task.getContent();
-        this.currentConcept = getConceptOrCreate(currentTerm);
+        final Task currentTask = this.currentTask;
+        this.recorder.append("!!! Insert: " + currentTask + "\n");
+        this.currentConcept = getConceptOrCreate(currentTask.getContent());
         if (this.currentConcept != null) {
-            activateConcept(this.currentConcept, task.getBudget());
-            this.currentConcept.directProcess(task);
+            this.currentTerm = this.currentConcept.getTerm();
+            activateConcept(this.currentConcept, currentTask.getBudget());
+            this.currentConcept.directProcess();
         }
     }
 

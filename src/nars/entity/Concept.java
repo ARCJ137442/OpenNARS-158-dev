@@ -91,7 +91,7 @@ public final class Concept extends Item {
 
     /* ----- link CompoundTerm and its components ----- */
     /**
-     * Build TermLink templates to constant components and subcomponents
+     * Build TermLink templates to constant components and sub-components
      * <p>
      * The compound type determines the link type; the component type determines
      * whether to build the link.
@@ -183,11 +183,14 @@ public final class Concept extends Item {
      *
      * @param task The task to be processed
      */
-    public void directProcess(Task task) {
+    public void directProcess() {
+        // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.currentTask`
+        final Task task = memory.currentTask;
         if (task.getSentence().isJudgment()) {
-            processJudgment(task);
+            processJudgment();
         } else {
-            processQuestion(task);
+            processQuestion();
         }
         if (task.getBudget().aboveThreshold()) { // still need to be processed
             linkToTask(task);
@@ -203,13 +206,17 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private void processJudgment(Task task) {
+    private void processJudgment() {
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.currentTask`
+        final Task task = memory.currentTask;
         final Sentence judgment = task.getSentence();
+        // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, beliefs);
         if (oldBelief != null) {
             final Stamp newStamp = judgment.getStamp();
             final Stamp oldStamp = oldBelief.getStamp();
             if (newStamp.equals(oldStamp)) {
+                // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().getSentence().isJudgment()) {
                     task.getBudget().decPriority(0); // duplicated task
                 } // else: activated belief
@@ -224,48 +231,72 @@ public final class Concept extends Item {
                 }
             }
         }
+        // * 🚩尝试用新的信念解决旧有问题
+        // * 📄如：先输入`A?`再输入`A.`
         if (task.getBudget().aboveThreshold()) {
-            for (final Task ques : questions) {
+            for (final Task existedQuestion : this.questions) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
-                LocalRules.trySolution(judgment, ques, memory);
+                LocalRules.trySolution(judgment, existedQuestion, memory);
             }
-            addToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
+            addBeliefToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
 
     /**
      * To answer a question by existing beliefs
+     * * 🚩【2024-05-18 15:39:46】根据OpenNARS 3.1.0、3.1.2 与 PyNARS，均不会返回浮点数
+     * * 📄其它OpenNARS版本中均不返回值，或返回的值并不使用
+     * * 📄PyNARS在`Memory._solve_question`
      *
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private float processQuestion(Task task) {
-        Sentence ques = task.getSentence();
-        boolean newQuestion = true;
-        if (questions != null) {
-            for (final Task t : questions) {
-                final Sentence q = t.getSentence();
-                if (q.getContent().equals(ques.getContent())) {
-                    ques = q;
-                    newQuestion = false;
-                    break;
-                }
-            }
-        }
-        if (newQuestion) {
-            questions.add(task);
-        }
-        if (questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-            questions.remove(0); // FIFO
-        }
-        final Sentence newAnswer = evaluation(ques, beliefs);
+    private void processQuestion() {
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.currentTask`
+        final Task task = memory.currentTask;
+
+        // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
+        final Sentence existedQuestion = findExistedQuestion();
+        final boolean newQuestion = existedQuestion == null;
+        final Sentence question = newQuestion ? task.getSentence() : existedQuestion;
+
+        // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
+        final Sentence newAnswer = evaluation(question, beliefs);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, task, memory);
-            return newAnswer.getTruth().getExpectation();
-        } else {
-            return 0.5f;
         }
+
+        if (newQuestion) {
+            // * 🚩不会添加重复的问题
+            questions.add(task);
+            // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
+            if (questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
+                questions.remove(0); // FIFO
+            }
+        }
+    }
+
+    /**
+     * 🆕根据输入的任务，寻找并尝试返回已有的问题
+     * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
+     * * 🚩经上游确认，此处的`task`只可能是`memory.currentTask`
+     *
+     * @param taskSentence 要在「自身所有问题」中查找相似的「问题」任务
+     * @return 已有的问题，或为空
+     */
+    private Sentence findExistedQuestion(/* final Task questionTask */) {
+        final Task questionTask = memory.currentTask;
+        final Sentence taskSentence = questionTask.getSentence();
+        if (this.questions != null) {
+            for (final Task existedQuestion : this.questions) {
+                final Sentence question = existedQuestion.getSentence();
+                if (question.getContent().equals(taskSentence.getContent())) {
+                    return question;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -311,7 +342,7 @@ public final class Concept extends Item {
      * @param table       The table to be revised
      * @param capacity    The capacity of the table
      */
-    private static void addToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
+    private static void addBeliefToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
         final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         int i;
         for (i = 0; i < table.size(); i++) {

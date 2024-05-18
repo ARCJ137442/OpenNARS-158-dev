@@ -27,8 +27,13 @@ public class LocalRules {
      * @param belief The belief
      * @param memory Reference to the memory
      */
-    public static void match(Task task, Sentence belief, Memory memory) {
-        Sentence sentence = (Sentence) task.getSentence().clone();
+    public static void match(Memory memory) {
+        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`memory.currentTask`
+        final Task task = memory.currentTask;
+        // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`memory.currentBelief`
+        final Sentence belief = memory.currentBelief;
+
+        final Sentence sentence = (Sentence) task.getSentence().clone();
         if (sentence.isJudgment()) {
             if (revisable(sentence, belief)) {
                 revision(sentence, belief, true, memory);

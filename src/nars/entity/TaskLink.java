@@ -26,7 +26,7 @@ public class TaskLink extends TermLink {
     /**
      * The number of TermLinks remembered
      */
-    int counter;
+    private int counter;
 
     /**
      * Constructor
@@ -44,7 +44,7 @@ public class TaskLink extends TermLink {
         recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         counter = 0;
-        setKey(); // as defined in TermLink
+        super.setKey(); // as defined in TermLink
         key += t.getKey();
     }
 
