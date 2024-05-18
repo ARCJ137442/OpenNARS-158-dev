@@ -47,8 +47,8 @@ public final class SyllogisticRules {
         final Statement content = (Statement) sentence.getContent();
         final Statement content1 = Statement.make(content, term1, term2, memory);
         final Statement content2 = Statement.make(content, term2, term1, memory);
-        memory.doublePremiseTask(content1, truth1, budget1);
-        memory.doublePremiseTask(content2, truth2, budget2);
+        memory.context.doublePremiseTask(content1, truth1, budget1);
+        memory.context.doublePremiseTask(content2, truth2, budget2);
     }
 
     /**
@@ -87,9 +87,9 @@ public final class SyllogisticRules {
         final Statement statement1 = Statement.make(taskContent, term1, term2, memory);
         final Statement statement2 = Statement.make(taskContent, term2, term1, memory);
         final Statement statement3 = Statement.makeSym(taskContent, term1, term2, memory);
-        memory.doublePremiseTask(statement1, truth1, budget1);
-        memory.doublePremiseTask(statement2, truth2, budget2);
-        memory.doublePremiseTask(statement3, truth3, budget3);
+        memory.context.doublePremiseTask(statement1, truth1, budget1);
+        memory.context.doublePremiseTask(statement2, truth2, budget2);
+        memory.context.doublePremiseTask(statement3, truth3, budget3);
     }
 
     /**
@@ -123,7 +123,7 @@ public final class SyllogisticRules {
             budget = BudgetFunctions.forward(truth, memory);
         }
         Term content = Statement.make(st, subj, pred, memory);
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -151,7 +151,7 @@ public final class SyllogisticRules {
             budget = BudgetFunctions.forward(truth, memory);
         }
         final Term statement = Statement.make(st, term1, term2, memory);
-        memory.doublePremiseTask(statement, truth, budget);
+        memory.context.doublePremiseTask(statement, truth, budget);
     }
 
     /* --------------- rules used only in conditional inference --------------- */
@@ -211,7 +211,7 @@ public final class SyllogisticRules {
             }
             budget = BudgetFunctions.forward(truth, memory);
         }
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -296,7 +296,7 @@ public final class SyllogisticRules {
             }
             budget = BudgetFunctions.forward(truth, memory);
         }
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -370,7 +370,7 @@ public final class SyllogisticRules {
             }
             budget = BudgetFunctions.forward(truth, memory);
         }
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -430,7 +430,7 @@ public final class SyllogisticRules {
                 truth = TruthFunctions.abduction(value2, value1);
                 budget = BudgetFunctions.forward(truth, memory);
             }
-            memory.doublePremiseTask(content, truth, budget);
+            memory.context.doublePremiseTask(content, truth, budget);
         }
         if (term2 != null) {
             final Term content2;
@@ -448,7 +448,7 @@ public final class SyllogisticRules {
                 truth2 = TruthFunctions.abduction(value1, value2);
                 budget2 = BudgetFunctions.forward(truth2, memory);
             }
-            memory.doublePremiseTask(content2, truth2, budget2);
+            memory.context.doublePremiseTask(content2, truth2, budget2);
         }
         return true;
     }
@@ -479,6 +479,6 @@ public final class SyllogisticRules {
             truth = (compoundTask ? TruthFunctions.anonymousAnalogy(v1, v2) : TruthFunctions.anonymousAnalogy(v2, v1));
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 }

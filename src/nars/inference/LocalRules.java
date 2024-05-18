@@ -70,7 +70,7 @@ public class LocalRules {
         TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
         BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, feedbackToLinks, memory);
         Term content = newBelief.getContent();
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -96,7 +96,7 @@ public class LocalRules {
         }
         BudgetValue budget = BudgetFunctions.solutionEval(problem, belief, task, memory);
         if ((budget != null) && budget.aboveThreshold()) {
-            memory.activatedTask(budget, belief, task.getParentBelief());
+            memory.context.activatedTask(budget, belief, task.getParentBelief());
         }
     }
 
@@ -175,7 +175,7 @@ public class LocalRules {
         TruthValue value2 = judgment2.getTruth();
         TruthValue truth = TruthFunctions.intersection(value1, value2);
         BudgetValue budget = BudgetFunctions.forward(truth, memory);
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -193,7 +193,7 @@ public class LocalRules {
         Statement content = Statement.make(statement, sub, pre, memory);
         TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
         BudgetValue budget = BudgetFunctions.forward(truth, memory);
-        memory.doublePremiseTask(content, truth, budget);
+        memory.context.doublePremiseTask(content, truth, budget);
     }
 
     /* -------------------- one-premise inference rules -------------------- */
@@ -251,6 +251,6 @@ public class LocalRules {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
             content = Statement.make(content, subjT, otherTerm, memory);
         }
-        memory.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
+        memory.context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
 }

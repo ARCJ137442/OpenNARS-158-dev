@@ -81,7 +81,7 @@ public final class StructuralRules {
             }
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /**
@@ -124,7 +124,7 @@ public final class StructuralRules {
             }
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /**
@@ -250,7 +250,7 @@ public final class StructuralRules {
             final Term content = Statement.make((Statement) oldContent, subject, predicate, memory);
             if (content != null) {
                 final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, memory);
-                memory.singlePremiseTask(content, truth, budget);
+                memory.context.singlePremiseTask(content, truth, budget);
             }
         }
     }
@@ -297,7 +297,7 @@ public final class StructuralRules {
         } else {
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /* -------------------- products and images transform -------------------- */
@@ -393,7 +393,7 @@ public final class StructuralRules {
         } else {
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /**
@@ -424,7 +424,7 @@ public final class StructuralRules {
                     } else {
                         budget = BudgetFunctions.compoundForward(truth, inheritance, memory);
                     }
-                    memory.singlePremiseTask(inheritance, truth, budget);
+                    memory.context.singlePremiseTask(inheritance, truth, budget);
                 }
             }
         } else if (subject instanceof ImageInt) {
@@ -445,7 +445,7 @@ public final class StructuralRules {
                     } else {
                         budget = BudgetFunctions.compoundForward(truth, inheritance, memory);
                     }
-                    memory.singlePremiseTask(inheritance, truth, budget);
+                    memory.context.singlePremiseTask(inheritance, truth, budget);
                 }
             }
         }
@@ -479,7 +479,7 @@ public final class StructuralRules {
                     } else {
                         budget = BudgetFunctions.compoundForward(truth, inheritance, memory);
                     }
-                    memory.singlePremiseTask(inheritance, truth, budget);
+                    memory.context.singlePremiseTask(inheritance, truth, budget);
                 }
             }
         } else if (predicate instanceof ImageExt) {
@@ -500,7 +500,7 @@ public final class StructuralRules {
                     } else {
                         budget = BudgetFunctions.compoundForward(truth, inheritance, memory);
                     }
-                    memory.singlePremiseTask(inheritance, truth, budget);
+                    memory.context.singlePremiseTask(inheritance, truth, budget);
                 }
             }
         }
@@ -538,7 +538,7 @@ public final class StructuralRules {
             }
             budget = BudgetFunctions.forward(truth, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /* --------------- Negation related rules --------------- */
@@ -561,7 +561,7 @@ public final class StructuralRules {
         } else {
             budget = BudgetFunctions.compoundForward(truth, content, memory);
         }
-        memory.singlePremiseTask(content, truth, budget);
+        memory.context.singlePremiseTask(content, truth, budget);
     }
 
     /**
@@ -583,13 +583,13 @@ public final class StructuralRules {
             } else {
                 budget = BudgetFunctions.compoundBackward(content, memory);
             }
-            memory.singlePremiseTask(content, Symbols.QUESTION_MARK, truth, budget);
+            memory.context.singlePremiseTask(content, Symbols.QUESTION_MARK, truth, budget);
         } else {
             if (content instanceof Implication) {
                 truth = TruthFunctions.contraposition(truth);
             }
             budget = BudgetFunctions.compoundForward(truth, content, memory);
-            memory.singlePremiseTask(content, Symbols.JUDGMENT_MARK, truth, budget);
+            memory.context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, truth, budget);
         }
     }
 }
