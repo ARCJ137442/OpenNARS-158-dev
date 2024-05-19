@@ -205,6 +205,17 @@ public class BudgetValue implements Cloneable {
     }
 
     /**
+     * 🆕根据值而非引用判等
+     */
+    @Override
+    public boolean equals(Object that) {
+        return (that instanceof BudgetValue
+                && this.getPriority() == ((BudgetValue) that).getPriority()
+                && this.getDurability() == ((BudgetValue) that).getDurability()
+                && this.getQuality() == ((BudgetValue) that).getQuality());
+    }
+
+    /**
      * Fully display the BudgetValue
      *
      * @return String representation of the value
