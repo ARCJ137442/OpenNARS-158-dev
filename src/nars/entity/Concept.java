@@ -22,6 +22,7 @@ import nars.storage.Memory;
 import nars.storage.NullBagObserver;
 import nars.storage.TaskLinkBag;
 import nars.storage.TermLinkBag;
+import nars.io.Symbols;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -184,14 +185,22 @@ public final class Concept extends Item {
      * @param task The task to be processed
      */
     public void directProcess() {
+        // TODO: 研究并断言其中「推理上下文」中各变量的可空性/可变性
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
         final Task task = memory.context.currentTask;
-        if (task.getSentence().isJudgment()) {
-            processJudgment();
-        } else {
-            processQuestion();
+        // * 🚩先根据类型分派推理
+        switch (task.getSentence().getPunctuation()) {
+            case Symbols.JUDGMENT_MARK:
+                processJudgment();
+                break;
+            case Symbols.QUESTION_MARK:
+                processQuestion();
+                break;
+            default:
+                throw new Error("Unknown punctuation of task: " + task.toStringLong());
         }
+        // * 🚩在推理后做链接
         if (task.getBudget().aboveThreshold()) { // still need to be processed
             linkToTask(task);
         }

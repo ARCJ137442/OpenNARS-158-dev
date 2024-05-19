@@ -372,10 +372,12 @@ public class Memory {
     private void processNewTask() {
         // don't include new tasks produced in the current workCycle
         for (int counter = newTasks.size(); counter > 0; counter--) {
-            final Task task = newTasks.removeFirst();
-            // new input or existing concept
+            context.currentTask = newTasks.removeFirst(); // new input or existing concept
+            // one of the two places where this variable is set
+            final Task task = context.currentTask;
             if (task.isInput() || hasConcept(task.getContent())) {
-                immediateProcess(task);
+                // one of the two places where this variable is set
+                immediateProcess();
             } else {
                 final Sentence s = task.getSentence();
                 if (s.isJudgment()) {
@@ -394,9 +396,10 @@ public class Memory {
      * Select a novel task to process.
      */
     private void processNovelTask() {
-        Task task = novelTasks.takeOut(); // select a task from novelTasks
-        if (task != null) {
-            immediateProcess(task);
+        context.currentTask = novelTasks.takeOut(); // select a task from novelTasks
+        // one of the two places where this variable is set
+        if (context.currentTask != null) {
+            immediateProcess();
         }
     }
 
@@ -501,14 +504,13 @@ public class Memory {
      *
      * @param task the task to be accepted
      */
-    private void immediateProcess(final Task task) {
-        context.currentTask = task; // one of the two places where this variable is set
-        final Task currentTask = context.currentTask;
-        this.recorder.append("!!! Insert: " + currentTask + "\n");
-        context.currentConcept = getConceptOrCreate(currentTask.getContent());
+    private void immediateProcess() {
+        final Task task = context.currentTask;
+        this.recorder.append("!!! Insert: " + task + "\n");
+        context.currentConcept = getConceptOrCreate(task.getContent());
         if (context.currentConcept != null) {
             context.currentTerm = context.currentConcept.getTerm();
-            activateConcept(context.currentConcept, currentTask.getBudget());
+            activateConcept(context.currentConcept, task.getBudget());
             context.currentConcept.directProcess();
         }
     }
