@@ -66,11 +66,11 @@ public class LocalRules {
      */
     public static void revision(Sentence newBelief, Sentence oldBelief, boolean feedbackToLinks,
             DerivationContext context) {
-        TruthValue newTruth = newBelief.getTruth();
-        TruthValue oldTruth = oldBelief.getTruth();
-        TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
-        BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, feedbackToLinks, context.memory);
-        Term content = newBelief.getContent();
+        final TruthValue newTruth = newBelief.getTruth();
+        final TruthValue oldTruth = oldBelief.getTruth();
+        final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
+        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, feedbackToLinks, context.memory);
+        final Term content = newBelief.getContent();
         context.doublePremiseTask(content, truth, budget);
     }
 

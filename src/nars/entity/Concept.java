@@ -221,7 +221,9 @@ public final class Concept extends Item {
                     task.getBudget().decPriority(0); // duplicated task
                 } // else: activated belief
                 return;
-            } else if (LocalRules.revisable(judgment, oldBelief)) {
+            } 
+            // * 🚩不重复 && 可修正 ⇒ 修正
+            else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
                 memory.context.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
