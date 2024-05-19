@@ -418,20 +418,29 @@ public class Memory {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         for (final TermLink termLink : toReasonLinks) {
-            context.currentBeliefLink = termLink;
+            // * 🚩每次「概念推理」只更改「当前信念」与「当前信念链」
+            final TermLink newBeliefLink = termLink;
+            final Sentence newBelief;
+            Stamp newStamp = null;
             final Concept beliefConcept = context.memory.termToConcept(termLink.getTarget());
             if (beliefConcept != null) {
-                context.currentBelief = beliefConcept.getBelief(context.currentTask);
-                // ! may be null
-                if (context.currentBelief != null) {
-                    context.newStamp = Stamp.uncheckedMerge(
+                newBelief = beliefConcept.getBelief(context.currentTask); // ! may be null
+                if (newBelief != null) {
+                    newStamp = Stamp.uncheckedMerge( // ! may be null
                             context.currentTask.getSentence().getStamp(),
                             // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                             // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
-                            context.currentBelief.getStamp(),
+                            newBelief.getStamp(),
                             context.memory.getTime());
                 }
+            } else {
+                newBelief = null;
             }
+            // * 🚩实际上就是「当前信念」「当前信念链」更改后的「新上下文」
+            // this.context.currentBelief = newBelief;
+            // this.context.currentBeliefLink = newBeliefLink;
+            // this.context.newStamp = newStamp;
+            this.context = this.context.cloneWithNewBelief(newBeliefLink, newBelief, newStamp);
             // * 🔥启动概念推理：点火！
             RuleTables.reason(this.context);
             context.currentConcept.__putTermLinkBack(termLink);

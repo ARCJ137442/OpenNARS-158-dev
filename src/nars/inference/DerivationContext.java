@@ -37,13 +37,13 @@ public class DerivationContext {
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
      */
-    public final LinkedList<Task> newTasks = new LinkedList<>();
+    public final LinkedList<Task> newTasks;
     /**
      * List of Strings or Tasks to be sent to the output channels
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
      */
-    public final ArrayList<String> exportStrings = new ArrayList<>();
+    public final ArrayList<String> exportStrings;
     /**
      * The selected Term
      */
@@ -90,7 +90,21 @@ public class DerivationContext {
      * @param memory 所反向引用的「记忆区」对象
      */
     public DerivationContext(final Memory memory) {
+        this(memory, new LinkedList<>(), new ArrayList<>());
+    }
+
+    /**
+     * 🆕带参初始化
+     * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
+     *
+     * @param memory
+     */
+    protected DerivationContext(final Memory memory,
+            final LinkedList<Task> newTasks,
+            final ArrayList<String> exportStrings) {
         this.memory = memory;
+        this.newTasks = newTasks;
+        this.exportStrings = exportStrings;
     }
 
     /**
@@ -98,6 +112,44 @@ public class DerivationContext {
      */
     public static void init() {
         randomNumber = new Random(1);
+    }
+
+    /**
+     * 「复制」推导上下文
+     * * 🚩只搬迁引用，并不更改所有权
+     */
+    public DerivationContext clone() {
+        // * 🚩创建新上下文，并随之迁移`final`变量
+        final DerivationContext self = new DerivationContext(this.memory, this.newTasks, this.exportStrings);
+        // * 🚩搬迁引用
+        self.currentTerm = this.currentTerm;
+        self.currentConcept = this.currentConcept;
+        self.currentTaskLink = this.currentTaskLink;
+        self.currentTask = this.currentTask;
+        self.currentBeliefLink = this.currentBeliefLink;
+        self.currentBelief = this.currentBelief;
+        self.newStamp = this.newStamp;
+        self.substitute = this.substitute;
+        // * 🚩返回新上下文
+        return self;
+    }
+
+    /**
+     * 「复制」推导上下文
+     * * 🚩只搬迁引用，并不更改所有权
+     */
+    public DerivationContext cloneWithNewBelief(
+            TermLink currentBeliefLink,
+            Sentence currentBelief,
+            Stamp newStamp) {
+        // * 🚩创建新上下文，并随之迁移`final`变量
+        final DerivationContext self = this.clone();
+        // * 🚩搬迁引用
+        self.currentBeliefLink = currentBeliefLink;
+        self.currentBelief = currentBelief;
+        self.newStamp = newStamp;
+        // * 🚩返回新上下文
+        return self;
     }
 
     /**

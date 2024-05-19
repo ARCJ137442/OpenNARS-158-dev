@@ -269,6 +269,7 @@ public final class Concept extends Item {
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
                 memory.context.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
                 if (memory.context.newStamp != null) {
+                    // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
                     memory.context.currentBelief = oldBelief;
                     LocalRules.revision(judgment, oldBelief, false, memory.context);
                 }
