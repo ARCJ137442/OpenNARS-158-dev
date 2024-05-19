@@ -7,6 +7,7 @@ import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Item;
 import nars.entity.Sentence;
+import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
@@ -419,8 +420,18 @@ public class Memory {
         for (final TermLink termLink : toReasonLinks) {
             context.currentBeliefLink = termLink;
             final Concept beliefConcept = context.memory.termToConcept(termLink.getTarget());
-            final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(context.currentTask) : null;
-            context.currentBelief = belief; // ! may be null
+            if (beliefConcept != null) {
+                context.currentBelief = beliefConcept.getBelief(context.currentTask);
+                // ! may be null
+                if (context.currentBelief != null) {
+                    context.newStamp = Stamp.uncheckedMerge(
+                            context.currentTask.getSentence().getStamp(),
+                            // * 📌此处的「时间戳」一定是「当前信念」的时间戳
+                            // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
+                            context.currentBelief.getStamp(),
+                            context.memory.getTime());
+                }
+            }
             // * 🔥启动概念推理：点火！
             RuleTables.reason(this.context);
             context.currentConcept.__putTermLinkBack(termLink);

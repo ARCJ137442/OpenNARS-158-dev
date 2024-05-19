@@ -188,10 +188,11 @@ public final class Concept extends Item {
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
         /*
-         * 📝此时非空的值（其它值均为空）：
-         * 当前任务
-         * 当前概念
-         * 当前词项
+         * 📝有效字段：{
+         * currentTask
+         * currentTerm
+         * currentConcept
+         * }
          */
         // * 🚩系列断言与赋值（实际使用中可删）
         if (memory.context.currentTask == null) {
@@ -211,6 +212,12 @@ public final class Concept extends Item {
         }
         if (memory.context.currentTaskLink != null) {
             throw new Error("currentTaskLink: 不符预期的可空情况");
+        }
+        if (memory.context.newStamp != null) {
+            throw new Error("newStamp: 不符预期的可空情况");
+        }
+        if (memory.context.substitute != null) {
+            throw new Error("substitute: 不符预期的可空情况");
         }
         final Task task = memory.context.currentTask;
 
@@ -558,6 +565,9 @@ public final class Concept extends Item {
      * get the first qualified one
      * <p>
      * only called in RuleTables.reason
+     * * 📝⚠️实际上并不`only called in RuleTables.reason`
+     * * 📄在「组合规则」的「回答带变量合取」时用到
+     * * 🚩改：去除其中「设置当前时间戳」的副作用，将其迁移到调用者处
      *
      * @param task The selected task
      * @return The selected isBelief
@@ -568,8 +578,9 @@ public final class Concept extends Item {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
-            memory.context.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
-            if (memory.context.newStamp != null) {
+            // memory.context.newStamp = Stamp.make(taskSentence.getStamp(),
+            // belief.getStamp(), memory.getTime());
+            if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
                 final Sentence belief2 = belief.clone(); // will this mess up priority adjustment?
                 return belief2;
             }

@@ -38,7 +38,7 @@ public class LocalRules {
             if (revisable(sentence, belief)) {
                 revision(sentence, belief, true, context);
             }
-        } else if (Variable.unify(Symbols.VAR_QUERY, sentence.getContent(), (Term) belief.getContent().clone())) {
+        } else if (Variable.unify(Symbols.VAR_QUERY, sentence.getContent(), belief.getContent().clone())) {
             trySolution(belief, task, context);
         }
     }
@@ -87,21 +87,26 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     public static void trySolution(Sentence belief, Task task, DerivationContext context) {
-        Sentence problem = task.getSentence();
-        Sentence oldBest = task.getBestSolution();
-        float newQ = solutionQuality(problem, belief);
+        final Sentence problem = task.getSentence();
+        final Sentence oldBest = task.getBestSolution();
+        // * 🚩验证这个信念是否为「解决问题的最优解」
+        final float newQ = solutionQuality(problem, belief);
         if (oldBest != null) {
             float oldQ = solutionQuality(problem, oldBest);
             if (oldQ >= newQ) {
                 return;
             }
         }
+        // * 🚩若比先前「最优解」还优，那就确立新的「最优解」
         task.setBestSolution(belief);
         if (task.isInput()) { // moved from Sentence
+            // * 🚩同时在此确立「回答」：只在回应「输入的任务」时反映
             context.report(belief, Memory.ReportType.ANSWER);
         }
-        BudgetValue budget = BudgetFunctions.solutionEval(problem, belief, task, context.memory);
-        if ((budget != null) && budget.aboveThreshold()) {
+        // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
+        final BudgetValue budget = BudgetFunctions.solutionEval(problem, belief, task, context.memory);
+        if (budget != null && budget.aboveThreshold()) {
+            // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, task.getParentBelief());
         }
     }
@@ -117,7 +122,7 @@ public class LocalRules {
         if (problem == null) {
             return solution.getTruth().getExpectation();
         }
-        TruthValue truth = solution.getTruth();
+        final TruthValue truth = solution.getTruth();
         if (problem.containQueryVar()) { // "yes/no" question
             return truth.getExpectation() / solution.getContent().getComplexity();
         } else { // "what" question or goal
@@ -132,9 +137,9 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     public static void matchReverse(DerivationContext context) {
-        Task task = context.currentTask;
-        Sentence belief = context.currentBelief;
-        Sentence sentence = task.getSentence();
+        final Task task = context.currentTask;
+        final Sentence belief = context.currentBelief;
+        final Sentence sentence = task.getSentence();
         if (sentence.isJudgment()) {
             inferToSym((Sentence) sentence, belief, context);
         } else {
@@ -160,27 +165,28 @@ public class LocalRules {
 
     /* -------------------- two-premise inference rules -------------------- */
     /**
-     * {<S --> P>, <P --> S} |- <S <-> p> Produce Similarity/Equivalence from a
-     * pair of reversed Inheritance/Implication
+     * {<S --> P>, <P --> S} |- <S <-> p>
+     * Produce Similarity/Equivalence from a pair of reversed
+     * Inheritance/Implication
      *
      * @param judgment1 The first premise
      * @param judgment2 The second premise
      * @param context   Reference to the derivation context
      */
     private static void inferToSym(Sentence judgment1, Sentence judgment2, DerivationContext context) {
-        Statement s1 = (Statement) judgment1.getContent();
-        Term t1 = s1.getSubject();
-        Term t2 = s1.getPredicate();
-        Term content;
+        final Statement s1 = (Statement) judgment1.getContent();
+        final Term t1 = s1.getSubject();
+        final Term t2 = s1.getPredicate();
+        final Term content;
         if (s1 instanceof Inheritance) {
             content = Similarity.make(t1, t2, context.memory);
         } else {
             content = Equivalence.make(t1, t2, context.memory);
         }
-        TruthValue value1 = judgment1.getTruth();
-        TruthValue value2 = judgment2.getTruth();
-        TruthValue truth = TruthFunctions.intersection(value1, value2);
-        BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
+        final TruthValue value1 = judgment1.getTruth();
+        final TruthValue value2 = judgment2.getTruth();
+        final TruthValue truth = TruthFunctions.intersection(value1, value2);
+        final BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -193,12 +199,12 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     private static void inferToAsym(Sentence asym, Sentence sym, DerivationContext context) {
-        Statement statement = (Statement) asym.getContent();
-        Term sub = statement.getPredicate();
-        Term pre = statement.getSubject();
-        Statement content = Statement.make(statement, sub, pre, context.memory);
-        TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
-        BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
+        final Statement statement = (Statement) asym.getContent();
+        final Term sub = statement.getPredicate();
+        final Term pre = statement.getSubject();
+        final Statement content = Statement.make(statement, sub, pre, context.memory);
+        final TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
+        final BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -210,8 +216,8 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     private static void conversion(DerivationContext context) {
-        TruthValue truth = TruthFunctions.conversion(context.currentBelief.getTruth());
-        BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
+        final TruthValue truth = TruthFunctions.conversion(context.currentBelief.getTruth());
+        final BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
         convertedJudgment(truth, budget, context);
     }
 
@@ -222,14 +228,15 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     private static void convertRelation(DerivationContext context) {
-        TruthValue truth = context.currentBelief.getTruth();
+        final TruthValue truth = context.currentBelief.getTruth();
+        final TruthValue newTruth;
         if (((Statement) context.currentTask.getContent()).isCommutative()) {
-            truth = TruthFunctions.abduction(truth, 1.0f);
+            newTruth = TruthFunctions.abduction(truth, 1.0f);
         } else {
-            truth = TruthFunctions.deduction(truth, 1.0f);
+            newTruth = TruthFunctions.deduction(truth, 1.0f);
         }
-        BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
-        convertedJudgment(truth, budget, context);
+        final BudgetValue budget = BudgetFunctions.forward(newTruth, context.memory);
+        convertedJudgment(newTruth, budget, context);
     }
 
     /**
@@ -243,11 +250,11 @@ public class LocalRules {
      */
     private static void convertedJudgment(TruthValue newTruth, BudgetValue newBudget, DerivationContext context) {
         Statement content = (Statement) context.currentTask.getContent();
-        Statement beliefContent = (Statement) context.currentBelief.getContent();
-        Term subjT = content.getSubject();
-        Term predT = content.getPredicate();
-        Term subjB = beliefContent.getSubject();
-        Term predB = beliefContent.getPredicate();
+        final Statement beliefContent = (Statement) context.currentBelief.getContent();
+        final Term subjT = content.getSubject();
+        final Term predT = content.getPredicate();
+        final Term subjB = beliefContent.getSubject();
+        final Term predB = beliefContent.getPredicate();
         Term otherTerm;
         if (Variable.containVarQ(subjT.getName())) {
             otherTerm = (predT.equals(subjB)) ? predB : subjB;

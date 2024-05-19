@@ -20,6 +20,16 @@ public class RuleTables {
      */
     public static void reason(DerivationContext context) {
         // * 🚩系列断言与赋值（实际使用中可删）
+        /*
+         * 📝有效字段：{
+         * currentTask
+         * currentTerm
+         * currentConcept
+         * currentBelief?
+         * currentBeliefLink
+         * currentTaskLink
+         * }
+         */
         if (context.currentTask == null) {
             throw new Error("currentTask: 不符预期的可空情况");
         }
@@ -29,7 +39,7 @@ public class RuleTables {
         if (context.currentConcept == null) {
             throw new Error("currentConcept: 不符预期的可空情况");
         }
-        if (context.currentBelief == null || context.currentBelief != null) { // * 📝可空
+        if (context.currentBelief == null && context.currentBelief != null) { // * 📝可空
             throw new Error("currentBelief: 不符预期的可空情况");
         }
         if (context.currentBeliefLink == null) {
@@ -37,6 +47,13 @@ public class RuleTables {
         }
         if (context.currentTaskLink == null) {
             throw new Error("currentTaskLink: 不符预期的可空情况");
+        }
+        if (context.newStamp != null && context.newStamp == null) {
+            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
+            throw new Error("newStamp: 不符预期的可空情况");
+        }
+        if (context.substitute != null) {
+            throw new Error("substitute: 不符预期的可空情况");
         }
         final TaskLink tLink = context.currentTaskLink;
         final TermLink bLink = context.currentBeliefLink;

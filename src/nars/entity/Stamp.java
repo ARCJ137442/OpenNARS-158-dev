@@ -109,13 +109,38 @@ public class Stamp implements Cloneable {
      * @return The merged Stamp, or null
      */
     public static Stamp make(Stamp first, Stamp second, long time) {
+        if (haveOverlap(first, second)) {
+            return null;
+        } else {
+            return uncheckedMerge(first, second, time);
+        }
+    }
+
+    /**
+     * 🆕独立出逻辑：时间戳是否不可合并
+     * * 📝语义：是否不可修正 / 证据基是否重叠
+     * * 🚩判断其证据基是否有相同证据
+     *
+     * @param first  待合并的Stamp
+     * @param second 待合并的Stamp
+     * @return 是否可合并
+     */
+    public static boolean haveOverlap(Stamp first, Stamp second) {
         for (int i = 0; i < first.length(); i++) {
             for (int j = 0; j < second.length(); j++) {
                 if (first.get(i) == second.get(j)) {
-                    return null;
+                    return true;
                 }
             }
         }
+        return false;
+    }
+
+    /**
+     * 🆕独立出逻辑：不经检查的合并
+     * * 🚩会按照顺序合并「时间戳」的证据基
+     */
+    public static Stamp uncheckedMerge(Stamp first, Stamp second, long time) {
         if (first.length() > second.length()) {
             return new Stamp(first, second, time);
         } else {

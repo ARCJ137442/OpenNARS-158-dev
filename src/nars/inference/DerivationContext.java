@@ -76,7 +76,7 @@ public class DerivationContext {
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
      */
-    protected HashMap<Term, Term> substitute = null;
+    public HashMap<Term, Term> substitute = null;
 
     /**
      * 用于「变量替换」中的「伪随机数生成器」
@@ -122,6 +122,7 @@ public class DerivationContext {
     /**
      * Activated task called in MatchingRules.trySolution and
      * Concept.processGoal
+     * * 📝仅被「答问」调用
      *
      * @param budget          The budget value of the new Task
      * @param sentence        The content of the new Task
@@ -175,10 +176,23 @@ public class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
+        doublePremiseTask(this.currentTask, newContent, newTruth, newBudget);
+    }
+
+    /**
+     * 🆕其直接调用来自组合规则
+     * * 🎯避免对`currentTask`的赋值，解耦调用（并让`currentTask`不可变）
+     *
+     * @param currentTask
+     * @param newContent
+     * @param newTruth
+     * @param newBudget
+     */
+    public void doublePremiseTask(Task currentTask, Term newContent, TruthValue newTruth, BudgetValue newBudget) {
         if (newContent != null) {
             final char newPunctuation = currentTask.getSentence().getPunctuation();
-            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, true);
-            final Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
+            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, this.newStamp, true);
+            final Task newTask = new Task(newSentence, newBudget, this.currentTask, this.currentBelief);
             derivedTask(newTask);
         }
     }
@@ -224,20 +238,20 @@ public class DerivationContext {
      * @param newBudget   The budget value in task
      */
     public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
-        Task parentTask = currentTask.getParentTask();
+        final Task parentTask = currentTask.getParentTask();
         if (parentTask != null && newContent.equals(parentTask.getContent())) { // circular structural inference
             return;
         }
-        Sentence taskSentence = currentTask.getSentence();
+        final Sentence taskSentence = currentTask.getSentence();
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
-            newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
+            this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
+            this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
-        Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
+        final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
-        Task newTask = new Task(newSentence, newBudget, currentTask, null);
+        final Task newTask = new Task(newSentence, newBudget, currentTask, null);
         derivedTask(newTask);
     }
 

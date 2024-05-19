@@ -272,7 +272,8 @@ public final class CompositionalRules {
     }
 
     /**
-     * {(||, S, P), P} |- S {(&&, S, P), P} |- S
+     * {(||, S, P), P} |- S
+     * {(&&, S, P), P} |- S
      *
      * @param implication     The implication term to be decomposed
      * @param componentCommon The part of the implication to be removed
@@ -300,19 +301,26 @@ public final class CompositionalRules {
                 if (contentConcept == null) {
                     return;
                 }
+                // * ⚠️↓又会在此修改`newStamp`
                 final Sentence contentBelief = contentConcept.getBelief(task);
                 if (contentBelief == null) {
                     return;
                 }
+                // * 💭【2024-05-19 20:48:50】实质上是借助「元素陈述」的内容来修正
+                context.newStamp = Stamp.uncheckedMerge(
+                        task.getSentence().getStamp(),
+                        contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
+                        context.memory.getTime());
                 final Task contentTask = new Task(contentBelief, task.getBudget());
-                context.currentTask = contentTask;
+                // context.currentTask = contentTask;
+                // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
                 final Term conj = Conjunction.make(component, content, context.memory);
-                // * ↓不会用到`context.currentTask`
+                // * ↓不会用到`context.currentTask`、`newStamp`
                 truth = TruthFunctions.intersection(contentBelief.getTruth(), belief.getTruth());
-                // * ↓不会用到`context.currentTask`
+                // * ↓不会用到`context.currentTask`、`newStamp`
                 budget = BudgetFunctions.compoundForward(truth, conj, context.memory);
-                // ! ⚠️↓会用到`context.currentTask`：构建新结论时要用到
-                context.doublePremiseTask(conj, truth, budget);
+                // ! ⚠️↓会用到`context.currentTask`、`newStamp`：构建新结论时要用到
+                context.doublePremiseTask(contentTask, conj, truth, budget);
             }
         } else {
             final TruthValue v1, v2;
