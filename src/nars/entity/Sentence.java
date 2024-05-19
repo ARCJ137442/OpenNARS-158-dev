@@ -40,20 +40,6 @@ public class Sentence implements Cloneable {
      * @param punctuation The punctuation indicating the type of the sentence
      * @param truth       The truth value of the sentence, null for question
      * @param stamp       The stamp of the sentence indicating its derivation time
-     *                    and base
-     */
-    public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp) {
-        // * 🚩默认就是`revisable = true`
-        this(content, punctuation, truth, stamp, true);
-    }
-
-    /**
-     * Create a Sentence with the given fields
-     *
-     * @param content     The Term that forms the content of the sentence
-     * @param punctuation The punctuation indicating the type of the sentence
-     * @param truth       The truth value of the sentence, null for question
-     * @param stamp       The stamp of the sentence indicating its derivation time
      *                    and
      *                    base
      * @param revisable   Whether the sentence can be revised
@@ -121,11 +107,9 @@ public class Sentence implements Cloneable {
      */
     @Override
     public Object clone() {
-        if (truth == null) {
-            return new Sentence((Term) content.clone(), punctuation, null, (Stamp) stamp.clone());
-        }
-        return new Sentence((Term) content.clone(), punctuation, new TruthValue(truth), (Stamp) stamp.clone(),
-                revisable);
+        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
+        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
+        return new Sentence((Term) content.clone(), punctuation, truth.clone(), stamp.clone(), revisable);
     }
 
     /**

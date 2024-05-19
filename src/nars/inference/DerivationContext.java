@@ -168,6 +168,7 @@ public class DerivationContext {
     /**
      * Shared final operations by all double-premise rules, called from the
      * rules except StructuralRules
+     * * 🚩【2024-05-19 12:44:55】构造函数简化：导出的结论<b>始终可修正</b>
      *
      * @param newContent The content of the sentence in task
      * @param newTruth   The truth value of the sentence in task
@@ -176,7 +177,7 @@ public class DerivationContext {
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
         if (newContent != null) {
             final char newPunctuation = currentTask.getSentence().getPunctuation();
-            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp);
+            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, true);
             final Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
             derivedTask(newTask);
         }
