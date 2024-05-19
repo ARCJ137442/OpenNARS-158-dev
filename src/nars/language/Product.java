@@ -37,7 +37,7 @@ public class Product extends CompoundTerm {
      *
      * @return A new object, to be casted into an ImageExt
      */
-    public Object clone() {
+    public Product clone() {
         return new Product(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 

@@ -38,7 +38,7 @@ public class IntersectionInt extends CompoundTerm {
      *
      * @return A new object, to be casted into a Conjunction
      */
-    public Object clone() {
+    public IntersectionInt clone() {
         return new IntersectionInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 
@@ -69,15 +69,15 @@ public class IntersectionInt extends CompoundTerm {
                 set.addAll(((CompoundTerm) term2).cloneComponents());
             } // (|,(|,P,Q),(|,R,S)) = (|,P,Q,R,S)
             else {
-                set.add((Term) term2.clone());
+                set.add(term2.clone());
             } // (|,(|,P,Q),R) = (|,P,Q,R)
         } else if (term2 instanceof IntersectionInt) {
             set = new TreeSet<Term>(((CompoundTerm) term2).cloneComponents());
-            set.add((Term) term1.clone()); // (|,R,(|,P,Q)) = (|,P,Q,R)
+            set.add(term1.clone()); // (|,R,(|,P,Q)) = (|,P,Q,R)
         } else {
             set = new TreeSet<Term>();
-            set.add((Term) term1.clone());
-            set.add((Term) term2.clone());
+            set.add(term1.clone());
+            set.add(term2.clone());
         }
         return make(set, memory);
     }

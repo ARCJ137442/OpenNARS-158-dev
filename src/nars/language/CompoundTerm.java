@@ -42,7 +42,7 @@ public abstract class CompoundTerm extends Term {
      * @return A clone of the compound term
      */
     @Override
-    public abstract Object clone();
+    public abstract CompoundTerm clone();
 
     /* ----- object builders, called from subclasses ----- */
     /**
@@ -627,7 +627,7 @@ public abstract class CompoundTerm extends Term {
                 while (subs.containsKey(t2)) {
                     t2 = subs.get(t2);
                 }
-                components.set(i, (Term) t2.clone());
+                components.set(i, t2.clone());
             } else if (t1 instanceof CompoundTerm) {
                 ((CompoundTerm) t1).applySubstitute(subs);
             }

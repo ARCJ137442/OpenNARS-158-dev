@@ -88,7 +88,7 @@ public class ShortFloat implements Cloneable {
      * @return A cloned ShortFloat
      */
     @Override
-    public Object clone() {
+    public ShortFloat clone() {
         return new ShortFloat(value);
     }
 

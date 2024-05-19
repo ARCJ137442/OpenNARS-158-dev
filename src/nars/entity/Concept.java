@@ -221,7 +221,7 @@ public final class Concept extends Item {
                     task.getBudget().decPriority(0); // duplicated task
                 } // else: activated belief
                 return;
-            } 
+            }
             // * 🚩不重复 && 可修正 ⇒ 修正
             else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
@@ -536,7 +536,7 @@ public final class Concept extends Item {
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
             memory.context.newStamp = Stamp.make(taskSentence.getStamp(), belief.getStamp(), memory.getTime());
             if (memory.context.newStamp != null) {
-                final Sentence belief2 = (Sentence) belief.clone(); // will this mess up priority adjustment?
+                final Sentence belief2 = belief.clone(); // will this mess up priority adjustment?
                 return belief2;
             }
         }

@@ -63,7 +63,7 @@ public class BudgetValue implements Cloneable {
      * Cloning method
      */
     @Override
-    public Object clone() {
+    public BudgetValue clone() {
         return new BudgetValue(this.getPriority(), this.getDurability(), this.getQuality());
     }
 

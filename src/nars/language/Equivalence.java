@@ -37,7 +37,7 @@ public class Equivalence extends Statement {
      * @return A new object
      */
     @Override
-    public Object clone() {
+    public Equivalence clone() {
         return new Equivalence(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 

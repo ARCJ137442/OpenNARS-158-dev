@@ -48,7 +48,7 @@ public class ImageInt extends CompoundTerm {
      *
      * @return A new object, to be casted into an ImageInt
      */
-    public Object clone() {
+    public ImageInt clone() {
         return new ImageInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity, relationIndex);
     }
 

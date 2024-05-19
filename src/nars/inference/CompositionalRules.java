@@ -15,14 +15,14 @@ public final class CompositionalRules {
     static void IntroVarSameSubjectOrPredicate(
             Sentence originalMainSentence,
             Sentence subSentence, Term component,
-            Term content, int index, DerivationContext context) {
-        final Sentence cloned = (Sentence) originalMainSentence.clone();
+            CompoundTerm content, int index, DerivationContext context) {
+        final Sentence cloned = originalMainSentence.clone();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
             return;
         }
         CompoundTerm T = (CompoundTerm) T1;
-        CompoundTerm T2 = (CompoundTerm) content.clone();
+        CompoundTerm T2 = content.clone();
         if ((component instanceof Inheritance && content instanceof Inheritance) ||
                 (component instanceof Similarity && content instanceof Similarity)) {
             // CompoundTerm result = T;
@@ -117,9 +117,9 @@ public final class CompositionalRules {
                 termOr = Disjunction.make(componentT, componentB, context.memory);
                 termAnd = Conjunction.make(componentT, componentB, context.memory);
             }
-            processComposed(taskContent, (Term) componentCommon.clone(), termOr, truthOr, context);
-            processComposed(taskContent, (Term) componentCommon.clone(), termAnd, truthAnd, context);
-            processComposed(taskContent, (Term) componentCommon.clone(), termDif, truthDif, context);
+            processComposed(taskContent, componentCommon.clone(), termOr, truthOr, context);
+            processComposed(taskContent, componentCommon.clone(), termAnd, truthAnd, context);
+            processComposed(taskContent, componentCommon.clone(), termDif, truthDif, context);
         } else { // index == 1
             if (taskContent instanceof Inheritance) {
                 termOr = IntersectionExt.make(componentT, componentB, context.memory);
@@ -137,9 +137,9 @@ public final class CompositionalRules {
                 termOr = Conjunction.make(componentT, componentB, context.memory);
                 termAnd = Disjunction.make(componentT, componentB, context.memory);
             }
-            processComposed(taskContent, termOr, (Term) componentCommon.clone(), truthOr, context);
-            processComposed(taskContent, termAnd, (Term) componentCommon.clone(), truthAnd, context);
-            processComposed(taskContent, termDif, (Term) componentCommon.clone(), truthDif, context);
+            processComposed(taskContent, termOr, componentCommon.clone(), truthOr, context);
+            processComposed(taskContent, termAnd, componentCommon.clone(), truthAnd, context);
+            processComposed(taskContent, termDif, componentCommon.clone(), truthDif, context);
         }
         if (taskContent instanceof Inheritance) {
             introVarOuter(taskContent, beliefContent, index, context);

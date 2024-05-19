@@ -38,7 +38,7 @@ public class SetInt extends CompoundTerm {
      *
      * @return A new object, to be casted into a SetInt
      */
-    public Object clone() {
+    public SetInt clone() {
         return new SetInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 

@@ -129,7 +129,7 @@ public class Stamp implements Cloneable {
      * @return The cloned stamp
      */
     @Override
-    public Object clone() {
+    public Stamp clone() {
         return new Stamp(this);
     }
 

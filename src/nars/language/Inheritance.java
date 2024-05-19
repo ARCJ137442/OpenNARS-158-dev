@@ -37,7 +37,7 @@ public class Inheritance extends Statement {
      *
      * @return A new object, to be casted into a SetExt
      */
-    public Object clone() {
+    public Inheritance clone() {
         return new Inheritance(name, (ArrayList<Term>) cloneList(components), isConstant, complexity);
     }
 

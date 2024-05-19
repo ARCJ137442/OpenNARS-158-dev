@@ -412,10 +412,10 @@ public class RuleTables {
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
             DerivationContext context) {
-        final Sentence mainSentence = (Sentence) originalMainSentence.clone(); // for substitution
+        final Sentence mainSentence = originalMainSentence.clone(); // for substitution
         final Statement statement = (Statement) mainSentence.getContent();
         final Term component = statement.componentAt(index);
-        final Term content = subSentence.getContent();
+        final CompoundTerm content = (CompoundTerm) subSentence.getContent();
         if (((component instanceof Inheritance) || (component instanceof Negation))
                 && (context.currentBelief != null)) {
             if (component.isConstant()) {

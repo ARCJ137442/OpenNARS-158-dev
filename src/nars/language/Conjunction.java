@@ -37,7 +37,7 @@ public class Conjunction extends CompoundTerm {
      * @return A new object
      */
     @Override
-    public Object clone() {
+    public Conjunction clone() {
         return new Conjunction(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 
@@ -113,15 +113,15 @@ public class Conjunction extends CompoundTerm {
                 set.addAll(((CompoundTerm) term2).cloneComponents());
             } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
             else {
-                set.add((Term) term2.clone());
+                set.add(term2.clone());
             } // (&,(&,P,Q),R) = (&,P,Q,R)
         } else if (term2 instanceof Conjunction) {
             set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add((Term) term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
+            set.add(term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
         } else {
             set = new TreeSet<>();
-            set.add((Term) term1.clone());
-            set.add((Term) term2.clone());
+            set.add(term1.clone());
+            set.add(term2.clone());
         }
         return make(set, memory);
     }

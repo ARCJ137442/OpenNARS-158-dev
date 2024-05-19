@@ -36,7 +36,7 @@ public class Implication extends Statement {
      *
      * @return A new object
      */
-    public Object clone() {
+    public Implication clone() {
         return new Implication(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
     }
 
