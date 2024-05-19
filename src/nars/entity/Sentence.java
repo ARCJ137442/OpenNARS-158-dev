@@ -109,7 +109,8 @@ public class Sentence implements Cloneable {
     public Sentence clone() {
         // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
         // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
-        return new Sentence(content.clone(), punctuation, truth.clone(), stamp.clone(), revisable);
+        return new Sentence(content.clone(), punctuation, truth == null ? null : truth.clone(), stamp.clone(),
+                revisable);
     }
 
     /**
