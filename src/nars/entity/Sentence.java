@@ -219,10 +219,6 @@ public class Sentence implements Cloneable {
         return revisable;
     }
 
-    public void setRevisable(boolean b) {
-        revisable = b;
-    }
-
     /**
      * Get a String representation of the sentence
      *

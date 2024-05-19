@@ -75,22 +75,20 @@ public abstract class StringParser extends Symbols {
         StringBuffer buffer = new StringBuffer(s);
         Task task = null;
         try {
-            String budgetString = getBudgetString(buffer);
-            String truthString = getTruthString(buffer);
-            String str = buffer.toString().trim();
-            int last = str.length() - 1;
-            char punctuation = str.charAt(last);
-            Stamp stamp = new Stamp(time);
-            TruthValue truth = parseTruth(truthString, punctuation);
-            Term content = parseTerm(str.substring(0, last), memory);
-            Sentence sentence = new Sentence(content, punctuation, truth, stamp);
-            if ((content instanceof Conjunction) && Variable.containVarD(content.getName())) {
-                sentence.setRevisable(false);
-            }
-            BudgetValue budget = parseBudget(budgetString, punctuation, truth);
+            final String budgetString = getBudgetString(buffer);
+            final String truthString = getTruthString(buffer);
+            final String str = buffer.toString().trim();
+            final int last = str.length() - 1;
+            final char punctuation = str.charAt(last);
+            final Stamp stamp = new Stamp(time);
+            final TruthValue truth = parseTruth(truthString, punctuation);
+            final Term content = parseTerm(str.substring(0, last), memory);
+            final boolean revisable = !(content instanceof Conjunction) && Variable.containVarD(content.getName());
+            final Sentence sentence = new Sentence(content, punctuation, truth, stamp, revisable);
+            final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
             task = new Task(sentence, budget);
         } catch (InvalidInputException e) {
-            String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
+            final String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
             System.out.println(message);
             // showWarning(message);
         }
