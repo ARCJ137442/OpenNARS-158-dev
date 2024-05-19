@@ -43,15 +43,8 @@ public class Sentence implements Cloneable {
      *                    and base
      */
     public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp) {
-        this.content = content;
-        this.content.renameVariables();
-        this.punctuation = punctuation;
-        this.truth = truth;
-        this.stamp = stamp;
-        this.revisable = true;
-        if (stamp == null) {
-            throw new NullPointerException("Stamp is null!");
-        }
+        // * 🚩默认就是`revisable = true`
+        this(content, punctuation, truth, stamp, true);
     }
 
     /**
