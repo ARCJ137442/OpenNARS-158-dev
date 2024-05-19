@@ -75,6 +75,16 @@ public class Shell {
                 }
                 inputString = "";
             } catch (Exception ex) {
+                /*
+                 * String stackTrace = "";
+                 * for (final StackTraceElement stElement : ex.getStackTrace()) {
+                 * stackTrace += "\tat " + stElement.toString();
+                 * }
+                 */
+                final String trace = ex.getStackTrace().length > 0 ? " @ " + ex.getStackTrace()[0].toString() : "";
+                System.out.println(
+                        "ERROR: (" + ex.getClass().toGenericString() + ") "
+                                + ex.getMessage() + trace /* + " @ " + stackTrace */);
                 inputString = "";
             }
         }

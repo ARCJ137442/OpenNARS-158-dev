@@ -59,7 +59,14 @@ public abstract class StringParser extends Symbols {
             int j = buffer.lastIndexOf(STAMP_OPENER + "");
             buffer.delete(j - 1, buffer.length());
         }
-        return parseTask(buffer.toString().trim(), memory, time);
+        try {
+            return parseTask(buffer.toString().trim(), memory, time);
+        } catch (Exception e) {
+            final String message = "ERR: !!! INVALID INPUT: parseExperience: " + buffer + " --- " + e.getMessage();
+            System.out.println(message);
+            // showWarning(message);
+            return null;
+        }
     }
 
     /**
@@ -71,7 +78,7 @@ public abstract class StringParser extends Symbols {
      * @param time   The current time
      * @return An experienced task
      */
-    public static Task parseTask(String s, Memory memory, long time) {
+    private static Task parseTask(String s, Memory memory, long time) {
         StringBuffer buffer = new StringBuffer(s);
         Task task = null;
         try {
@@ -83,7 +90,7 @@ public abstract class StringParser extends Symbols {
             final Stamp stamp = new Stamp(time);
             final TruthValue truth = parseTruth(truthString, punctuation);
             final Term content = parseTerm(str.substring(0, last), memory);
-            final boolean revisable = !(content instanceof Conjunction) && Variable.containVarD(content.getName());
+            final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content.getName()));
             final Sentence sentence = new Sentence(content, punctuation, truth, stamp, revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
             task = new Task(sentence, budget);
@@ -230,7 +237,7 @@ public abstract class StringParser extends Symbols {
      * @param memory Reference to the memory
      * @return the Term generated from the String
      */
-    public static Term parseTerm(String s0, Memory memory) {
+    private static Term parseTerm(String s0, Memory memory) {
         String s = s0.trim();
         try {
             if (s.length() == 0) {

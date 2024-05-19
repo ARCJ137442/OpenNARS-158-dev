@@ -33,7 +33,7 @@ public class LocalRules {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
         final Sentence belief = context.currentBelief;
 
-        final Sentence sentence = (Sentence) task.getSentence().clone();
+        final Sentence sentence = task.getSentence().clone();
         if (sentence.isJudgment()) {
             if (revisable(sentence, belief)) {
                 revision(sentence, belief, true, context);
@@ -45,13 +45,18 @@ public class LocalRules {
 
     /**
      * Check whether two sentences can be used in revision
+     * * 📝【2024-05-19 13:09:40】这里的`s1`、`s2`必定是「判断」类型
      *
      * @param s1 The first sentence
      * @param s2 The second sentence
      * @return If revision is possible between the two sentences
      */
     public static boolean revisable(Sentence s1, Sentence s2) {
-        return (s1.getContent().equals(s2.getContent()) && s1.getRevisable());
+        if (s1.isJudgment() && s2.isJudgment()) {
+            return (s1.getContent().equals(s2.getContent()) && s1.getRevisable());
+        } else {
+            throw new Error("Function revisable is only applicable for judgments");
+        }
     }
 
     /**
