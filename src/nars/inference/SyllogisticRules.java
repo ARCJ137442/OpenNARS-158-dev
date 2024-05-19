@@ -19,11 +19,11 @@ public final class SyllogisticRules {
      * {<S ==> M>, <M ==> P>} |- {<S ==> P>, <P ==> S>}
      * </pre>
      *
-     * @param term1          Subject of the first new task
-     * @param term2          Predicate of the first new task
-     * @param sentence       The first premise
-     * @param belief         The second premise
-     * @param context.memory Reference to the context.memory
+     * @param term1    Subject of the first new task
+     * @param term2    Predicate of the first new task
+     * @param sentence The first premise
+     * @param belief   The second premise
+     * @param context  Reference to the derivation context
      */
     static void dedExe(Term term1, Term term2, Sentence sentence, Sentence belief, DerivationContext context) {
         if (Statement.invalidStatement(term1, term2)) {
@@ -53,12 +53,12 @@ public final class SyllogisticRules {
     /**
      * {<M ==> S>, <M ==> P>} |- {<S ==> P>, <P ==> S>, <S <=> P>}
      *
-     * @param term1          Subject of the first new task
-     * @param term2          Predicate of the first new task
-     * @param taskSentence   The first premise
-     * @param belief         The second premise
-     * @param figure         Locations of the shared term in premises
-     * @param context.memory Reference to the context.memory
+     * @param term1        Subject of the first new task
+     * @param term2        Predicate of the first new task
+     * @param taskSentence The first premise
+     * @param belief       The second premise
+     * @param figure       Locations of the shared term in premises
+     * @param context      Reference to the derivation context
      */
     static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Sentence belief, int figure,
             DerivationContext context) {
@@ -95,12 +95,12 @@ public final class SyllogisticRules {
     /**
      * {<S ==> P>, <M <=> P>} |- <S ==> P>
      *
-     * @param subj           Subject of the new task
-     * @param pred           Predicate of the new task
-     * @param asymmetric     The asymmetric premise
-     * @param symmetric      The symmetric premise
-     * @param figure         Locations of the shared term in premises
-     * @param context.memory Reference to the context.memory
+     * @param subj       Subject of the new task
+     * @param pred       Predicate of the new task
+     * @param asymmetric The asymmetric premise
+     * @param symmetric  The symmetric premise
+     * @param figure     Locations of the shared term in premises
+     * @param context    Reference to the derivation context
      */
     static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, int figure,
             DerivationContext context) {
@@ -130,12 +130,12 @@ public final class SyllogisticRules {
     /**
      * {<S <=> M>, <M <=> P>} |- <S <=> P>
      *
-     * @param term1          Subject of the new task
-     * @param term2          Predicate of the new task
-     * @param belief         The first premise
-     * @param sentence       The second premise
-     * @param figure         Locations of the shared term in premises
-     * @param context.memory Reference to the context.memory
+     * @param term1    Subject of the new task
+     * @param term2    Predicate of the new task
+     * @param belief   The first premise
+     * @param sentence The second premise
+     * @param figure   Locations of the shared term in premises
+     * @param context  Reference to the derivation context
      */
     static void resemblance(Term term1, Term term2, Sentence belief, Sentence sentence, int figure,
             DerivationContext context) {
@@ -163,10 +163,10 @@ public final class SyllogisticRules {
      * {<<M --> S> <=> <M --> P>>, <M --> S>} |- <M --> P>
      * {<<M --> S> <=> <M --> P>>, <M --> P>} |- <M --> S>
      *
-     * @param mainSentence   The implication/equivalence premise
-     * @param subSentence    The premise on part of s1
-     * @param side           The location of s2 in s1
-     * @param context.memory Reference to the context.memory
+     * @param mainSentence The implication/equivalence premise
+     * @param subSentence  The premise on part of s1
+     * @param side         The location of s2 in s1
+     * @param context      Reference to the derivation context
      */
     static void detachment(Sentence mainSentence, Sentence subSentence, int side, DerivationContext context) {
         final Statement statement = (Statement) mainSentence.getContent();
@@ -221,15 +221,15 @@ public final class SyllogisticRules {
      * {<(&&, S2, S3) ==> P>, <S1 ==> S2>} |- <(&&, S1, S3) ==> P>
      * {<(&&, S1, S3) ==> P>, <S1 ==> S2>} |- <(&&, S2, S3) ==> P>
      *
-     * @param premise1       The conditional premise
-     * @param index          The location of the shared term in the condition of
-     *                       premise1
-     * @param premise2       The premise which, or part of which, appears in the
-     *                       condition of premise1
-     * @param side           The location of the shared term in premise2: 0 for
-     *                       subject, 1
-     *                       for predicate, -1 for the whole term
-     * @param context.memory Reference to the context.memory
+     * @param premise1 The conditional premise
+     * @param index    The location of the shared term in the condition of
+     *                 premise1
+     * @param premise2 The premise which, or part of which, appears in the
+     *                 condition of premise1
+     * @param side     The location of the shared term in premise2: 0 for
+     *                 subject, 1
+     *                 for predicate, -1 for the whole term
+     * @param context  Reference to the derivation context
      */
     static void conditionalDedInd(Implication premise1, short index, Term premise2, int side,
             DerivationContext context) {
@@ -307,15 +307,15 @@ public final class SyllogisticRules {
     /**
      * {<(&&, S1, S2) <=> P>, (&&, S1, S2)} |- P
      *
-     * @param premise1       The equivalence premise
-     * @param index          The location of the shared term in the condition of
-     *                       premise1
-     * @param premise2       The premise which, or part of which, appears in the
-     *                       condition of premise1
-     * @param side           The location of the shared term in premise2: 0 for
-     *                       subject, 1
-     *                       for predicate, -1 for the whole term
-     * @param context.memory Reference to the context.memory
+     * @param premise1 The equivalence premise
+     * @param index    The location of the shared term in the condition of
+     *                 premise1
+     * @param premise2 The premise which, or part of which, appears in the
+     *                 condition of premise1
+     * @param side     The location of the shared term in premise2: 0 for
+     *                 subject, 1
+     *                 for predicate, -1 for the whole term
+     * @param context  Reference to the derivation context
      */
     static void conditionalAna(Equivalence premise1, short index, Term premise2, int side, DerivationContext context) {
         final Task task = context.currentTask;
@@ -383,11 +383,11 @@ public final class SyllogisticRules {
     /**
      * {<(&&, S2, S3) ==> P>, <(&&, S1, S3) ==> P>} |- <S1 ==> S2>
      *
-     * @param cond1          The condition of the first premise
-     * @param cond2          The condition of the second premise
-     * @param st1            The first premise
-     * @param st2            The second premise
-     * @param context.memory Reference to the context.memory
+     * @param cond1   The condition of the first premise
+     * @param cond2   The condition of the second premise
+     * @param st1     The first premise
+     * @param st2     The second premise
+     * @param context Reference to the derivation context
      * @return Whether there are derived tasks
      */
     static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2, DerivationContext context) {
@@ -463,10 +463,10 @@ public final class SyllogisticRules {
     /**
      * {(&&, <#x() --> S>, <#x() --> P>>, <M --> P>} |- <M --> S>
      *
-     * @param compound       The compound term to be decomposed
-     * @param component      The part of the compound to be removed
-     * @param compoundTask   Whether the compound comes from the task
-     * @param context.memory Reference to the context.memory
+     * @param compound     The compound term to be decomposed
+     * @param component    The part of the compound to be removed
+     * @param compoundTask Whether the compound comes from the task
+     * @param context      Reference to the derivation context
      */
     static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContext context) {

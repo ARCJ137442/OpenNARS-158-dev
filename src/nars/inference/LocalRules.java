@@ -23,9 +23,9 @@ public class LocalRules {
      * <p>
      * called in RuleTables.reason
      *
-     * @param task           The task
-     * @param belief         The belief
-     * @param context.memory Reference to the context.memory
+     * @param task    The task
+     * @param belief  The belief
+     * @param context Reference to the derivation context
      */
     public static void match(DerivationContext context) {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
@@ -82,9 +82,9 @@ public class LocalRules {
     /**
      * Check if a Sentence provide a better answer to a Question or Goal
      *
-     * @param belief         The proposed answer
-     * @param task           The task to be processed
-     * @param context.memory Reference to the context.memory
+     * @param belief  The proposed answer
+     * @param task    The task to be processed
+     * @param context Reference to the derivation context
      */
     public static void trySolution(Sentence belief, Task task, DerivationContext context) {
         Sentence problem = task.getSentence();
@@ -129,7 +129,7 @@ public class LocalRules {
     /**
      * The task and belief match reversely
      *
-     * @param context.memory Reference to the context.memory
+     * @param context Reference to the derivation context
      */
     public static void matchReverse(DerivationContext context) {
         Task task = context.currentTask;
@@ -145,10 +145,10 @@ public class LocalRules {
     /**
      * Inheritance/Implication matches Similarity/Equivalence
      *
-     * @param asym           A Inheritance/Implication sentence
-     * @param sym            A Similarity/Equivalence sentence
-     * @param figure         location of the shared term
-     * @param context.memory Reference to the context.memory
+     * @param asym    A Inheritance/Implication sentence
+     * @param sym     A Similarity/Equivalence sentence
+     * @param figure  location of the shared term
+     * @param context Reference to the derivation context
      */
     public static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContext context) {
         if (context.currentTask.getSentence().isJudgment()) {
@@ -163,9 +163,9 @@ public class LocalRules {
      * {<S --> P>, <P --> S} |- <S <-> p> Produce Similarity/Equivalence from a
      * pair of reversed Inheritance/Implication
      *
-     * @param judgment1      The first premise
-     * @param judgment2      The second premise
-     * @param context.memory Reference to the context.memory
+     * @param judgment1 The first premise
+     * @param judgment2 The second premise
+     * @param context   Reference to the derivation context
      */
     private static void inferToSym(Sentence judgment1, Sentence judgment2, DerivationContext context) {
         Statement s1 = (Statement) judgment1.getContent();
@@ -188,9 +188,9 @@ public class LocalRules {
      * {<S <-> P>, <P --> S>} |- <S --> P> Produce an Inheritance/Implication
      * from a Similarity/Equivalence and a reversed Inheritance/Implication
      *
-     * @param asym           The asymmetric premise
-     * @param sym            The symmetric premise
-     * @param context.memory Reference to the context.memory
+     * @param asym    The asymmetric premise
+     * @param sym     The symmetric premise
+     * @param context Reference to the derivation context
      */
     private static void inferToAsym(Sentence asym, Sentence sym, DerivationContext context) {
         Statement statement = (Statement) asym.getContent();
@@ -207,7 +207,7 @@ public class LocalRules {
      * {<P --> S>} |- <S --> P> Produce an Inheritance/Implication from a
      * reversed Inheritance/Implication
      *
-     * @param context.memory Reference to the context.memory
+     * @param context Reference to the derivation context
      */
     private static void conversion(DerivationContext context) {
         TruthValue truth = TruthFunctions.conversion(context.currentBelief.getTruth());
@@ -219,7 +219,7 @@ public class LocalRules {
      * {<S --> P>} |- <S <-> P> {<S <-> P>} |- <S --> P> Switch between
      * Inheritance/Implication and Similarity/Equivalence
      *
-     * @param context.memory Reference to the context.memory
+     * @param context Reference to the derivation context
      */
     private static void convertRelation(DerivationContext context) {
         TruthValue truth = context.currentBelief.getTruth();
@@ -237,9 +237,9 @@ public class LocalRules {
      * <p>
      * called in MatchingRules
      *
-     * @param budget         The budget value of the new task
-     * @param truth          The truth value of the new task
-     * @param context.memory Reference to the context.memory
+     * @param budget  The budget value of the new task
+     * @param truth   The truth value of the new task
+     * @param context Reference to the derivation context
      */
     private static void convertedJudgment(TruthValue newTruth, BudgetValue newBudget, DerivationContext context) {
         Statement content = (Statement) context.currentTask.getContent();

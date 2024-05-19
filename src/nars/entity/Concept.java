@@ -185,10 +185,35 @@ public final class Concept extends Item {
      * @param task The task to be processed
      */
     public void directProcess() {
-        // TODO: 研究并断言其中「推理上下文」中各变量的可空性/可变性
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
+        /*
+         * 📝此时非空的值（其它值均为空）：
+         * 当前任务
+         * 当前概念
+         * 当前词项
+         */
+        // * 🚩系列断言与赋值（实际使用中可删）
+        if (memory.context.currentTask == null) {
+            throw new Error("currentTask: 不符预期的可空情况");
+        }
+        if (memory.context.currentTerm == null) {
+            throw new Error("currentTerm: 不符预期的可空情况");
+        }
+        if (memory.context.currentConcept != this) { // ! 不仅非空，而且等于自身
+            throw new Error("currentConcept: 不符预期的可空情况");
+        }
+        if (memory.context.currentBelief != null) {
+            throw new Error("currentBelief: 不符预期的可空情况");
+        }
+        if (memory.context.currentBeliefLink != null) {
+            throw new Error("currentBeliefLink: 不符预期的可空情况");
+        }
+        if (memory.context.currentTaskLink != null) {
+            throw new Error("currentTaskLink: 不符预期的可空情况");
+        }
         final Task task = memory.context.currentTask;
+
         // * 🚩先根据类型分派推理
         switch (task.getSentence().getPunctuation()) {
             case Symbols.JUDGMENT_MARK:

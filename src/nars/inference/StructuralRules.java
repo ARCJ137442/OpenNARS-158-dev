@@ -23,11 +23,11 @@ public final class StructuralRules {
      * {<S --> P>, S@(S&T)} |- <(S&T) --> (P&T)>
      * {<S --> P>, S@(M-S)} |- <(M-P) --> (M-S)>
      *
-     * @param compound       The compound term
-     * @param index          The location of the indicated term in the compound
-     * @param statement      The premise
-     * @param side           The location of the indicated term in the premise
-     * @param context.memory Reference to the context.memory
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
+     * @param statement The premise
+     * @param side      The location of the indicated term in the premise
+     * @param context   Reference to the derivation context
      */
     static void structuralCompose2(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContext context) {
@@ -87,8 +87,8 @@ public final class StructuralRules {
     /**
      * {<(S&T) --> (P&T)>, S@(S&T)} |- <S --> P>
      *
-     * @param statement      The premise
-     * @param context.memory Reference to the context.memory
+     * @param statement The premise
+     * @param context   Reference to the derivation context
      */
     static void structuralDecompose2(Statement statement, int index, DerivationContext context) {
         final Term subj = statement.getSubject();
@@ -144,10 +144,10 @@ public final class StructuralRules {
     /**
      * {<S --> P>, P@(P&Q)} |- <S --> (P&Q)>
      *
-     * @param compound       The compound term
-     * @param index          The location of the indicated term in the compound
-     * @param statement      The premise
-     * @param context.memory Reference to the context.memory
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
+     * @param statement The premise
+     * @param context   Reference to the derivation context
      */
     static void structuralCompose1(CompoundTerm compound, short index, Statement statement, DerivationContext context) {
         if (!context.currentTask.getSentence().isJudgment()) {
@@ -191,10 +191,10 @@ public final class StructuralRules {
     /**
      * {<(S&T) --> P>, S@(S&T)} |- <S --> P>
      *
-     * @param compound       The compound term
-     * @param index          The location of the indicated term in the compound
-     * @param statement      The premise
-     * @param context.memory Reference to the context.memory
+     * @param compound  The compound term
+     * @param index     The location of the indicated term in the compound
+     * @param statement The premise
+     * @param context   Reference to the derivation context
      */
     static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
             DerivationContext context) {
@@ -239,10 +239,10 @@ public final class StructuralRules {
     /**
      * Common final operations of the above two methods
      *
-     * @param subject        The subject of the new task
-     * @param predicate      The predicate of the new task
-     * @param truth          The truth value of the new task
-     * @param context.memory Reference to the context.memory
+     * @param subject   The subject of the new task
+     * @param predicate The predicate of the new task
+     * @param truth     The truth value of the new task
+     * @param context   Reference to the derivation context
      */
     private static void structuralStatement(Term subject, Term predicate, TruthValue truth, DerivationContext context) {
         final Task task = context.currentTask;
@@ -260,10 +260,10 @@ public final class StructuralRules {
     /**
      * {<S --> {P}>} |- <S <-> {P}>
      *
-     * @param compound       The set compound
-     * @param statement      The premise
-     * @param side           The location of the indicated term in the premise
-     * @param context.memory Reference to the context.memory
+     * @param compound  The set compound
+     * @param statement The premise
+     * @param side      The location of the indicated term in the premise
+     * @param context   Reference to the derivation context
      */
     static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
             DerivationContext context) {
@@ -309,11 +309,11 @@ public final class StructuralRules {
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
      * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param inh            An Inheritance statement
-     * @param oldContent     The whole content
-     * @param indices        The indices of the TaskLink
-     * @param task           The task
-     * @param context.memory Reference to the context.memory
+     * @param inh        An Inheritance statement
+     * @param oldContent The whole content
+     * @param indices    The indices of the TaskLink
+     * @param task       The task
+     * @param context    Reference to the derivation context
      */
     static void transformProductImage(Inheritance inh, CompoundTerm oldContent, short[] indices,
             DerivationContext context) {
@@ -406,9 +406,9 @@ public final class StructuralRules {
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
      * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param subject        The subject term
-     * @param predicate      The predicate term
-     * @param context.memory Reference to the context.memory
+     * @param subject   The subject term
+     * @param predicate The predicate term
+     * @param context   Reference to the derivation context
      */
     private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContext context) {
         final TruthValue truth = context.currentTask.getSentence().getTruth();
@@ -461,9 +461,9 @@ public final class StructuralRules {
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
      * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param subject        The subject term
-     * @param predicate      The predicate term
-     * @param context.memory Reference to the context.memory
+     * @param subject   The subject term
+     * @param predicate The predicate term
+     * @param context   Reference to the derivation context
      */
     private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContext context) {
         final TruthValue truth = context.currentTask.getSentence().getTruth();
@@ -514,10 +514,10 @@ public final class StructuralRules {
      * {(&&, A, B), A@(&&, A, B)} |- A, or answer (&&, A, B)? using A
      * {(||, A, B), A@(||, A, B)} |- A, or answer (||, A, B)? using A
      *
-     * @param compound       The premise
-     * @param component      The recognized component in the premise
-     * @param compoundTask   Whether the compound comes from the task
-     * @param context.memory Reference to the context.memory
+     * @param compound     The premise
+     * @param component    The recognized component in the premise
+     * @param compoundTask Whether the compound comes from the task
+     * @param context      Reference to the derivation context
      */
     static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContext context) {
@@ -549,8 +549,8 @@ public final class StructuralRules {
     /**
      * {A, A@(--, A)} |- (--, A)
      *
-     * @param content        The premise
-     * @param context.memory Reference to the context.memory
+     * @param content The premise
+     * @param context Reference to the derivation context
      */
     public static void transformNegation(Term content, DerivationContext context) {
         final Task task = context.currentTask;
@@ -571,8 +571,8 @@ public final class StructuralRules {
     /**
      * {<A ==> B>, A@(--, A)} |- <(--, B) ==> (--, A)>
      *
-     * @param statement      The premise
-     * @param context.memory Reference to the context.memory
+     * @param statement The premise
+     * @param context   Reference to the derivation context
      */
     static void contraposition(Statement statement, Sentence sentence, DerivationContext context) {
         final Term subj = statement.getSubject();

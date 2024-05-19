@@ -328,12 +328,14 @@ public class Memory {
             processConcept(toReasonLinks);
 
         // * 🚩最后收尾 阶段 * //
-        absorbContext();
+        // * 🚩原「清空上下文」已迁移至各「推理」阶段
         novelTasks.refresh();
     }
 
     /**
      * 吸收「推理上下文」
+     * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
+     * * 🎯变量隔离，防止「上下文串线」与「重复使用」
      */
     private void absorbContext() {
         final DerivationContext context = this.context;
@@ -370,14 +372,13 @@ public class Memory {
      * buffer.
      */
     private void processNewTask() {
+        // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
+        final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // don't include new tasks produced in the current workCycle
         for (int counter = newTasks.size(); counter > 0; counter--) {
-            context.currentTask = newTasks.removeFirst(); // new input or existing concept
-            // one of the two places where this variable is set
-            final Task task = context.currentTask;
+            final Task task = newTasks.removeFirst();
             if (task.isInput() || hasConcept(task.getContent())) {
-                // one of the two places where this variable is set
-                immediateProcess();
+                tasksToProcess.add(task); // new input or existing concept
             } else {
                 final Sentence s = task.getSentence();
                 if (s.isJudgment()) {
@@ -390,16 +391,22 @@ public class Memory {
                 }
             }
         }
+        // * 🚩对「被加入、待处理的任务」遍历处理
+        for (final Task task : tasksToProcess) {
+            immediateProcess(task);
+        }
+        tasksToProcess.clear();
     }
 
     /**
      * Select a novel task to process.
      */
     private void processNovelTask() {
-        context.currentTask = novelTasks.takeOut(); // select a task from novelTasks
+        final Task task = novelTasks.takeOut();
+        // select a task from novelTasks
         // one of the two places where this variable is set
-        if (context.currentTask != null) {
-            immediateProcess();
+        if (task != null) {
+            immediateProcess(task);
         }
     }
 
@@ -408,13 +415,19 @@ public class Memory {
      */
     private void processConcept(Iterable<TermLink> toReasonLinks) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
+        // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         for (final TermLink termLink : toReasonLinks) {
             context.currentBeliefLink = termLink;
+            final Concept beliefConcept = context.memory.termToConcept(termLink.getTarget());
+            final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(context.currentTask) : null;
+            context.currentBelief = belief; // ! may be null
             // * 🔥启动概念推理：点火！
-            RuleTables.reason(context.currentTaskLink, termLink, this.context);
+            RuleTables.reason(this.context);
             context.currentConcept.__putTermLinkBack(termLink);
         }
         context.currentConcept.__putTaskLinkBack(context.currentTaskLink);
+        // * 🚩吸收并清空上下文
+        absorbContext();
     }
 
     /* ---------- main loop ---------- */
@@ -431,6 +444,9 @@ public class Memory {
         // * 🚩推理前判断「是否有必要」
         if (!self.noResult()) // necessary?
             return null;
+
+        // * 🚩强制清空旧上下文 | 防止「概念推理后直接推理导致变量遗留」的情况
+        self.context.clear();
 
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
@@ -502,17 +518,46 @@ public class Memory {
      * Immediate processing of a new task, in constant time Local processing, in
      * one concept only
      *
-     * @param task the task to be accepted
+     * @param taskInput the task to be accepted (owned)
      */
-    private void immediateProcess() {
-        final Task task = context.currentTask;
-        this.recorder.append("!!! Insert: " + task + "\n");
-        context.currentConcept = getConceptOrCreate(task.getContent());
-        if (context.currentConcept != null) {
-            context.currentTerm = context.currentConcept.getTerm();
-            activateConcept(context.currentConcept, task.getBudget());
+    private void immediateProcess(Task taskInput) {
+        this.recorder.append("!!! Insert: " + taskInput + "\n");
+
+        // * 🚩准备上下文
+        final boolean okToProcess = prepareDirectProcessContext(taskInput);
+
+        // * 🚩上下文准备完毕⇒开始
+        if (okToProcess) {
+            // * 🚩调整概念的预算值
+            activateConcept(context.currentConcept, taskInput.getBudget());
+            // * 🔥开始「直接处理」
             context.currentConcept.directProcess();
         }
+
+        // * 🚩吸收并清空上下文
+        absorbContext();
+    }
+
+    /**
+     * 🆕准备「直接推理」的推理上下文
+     * * 🚩这其中不对「推理上下文」「记忆区」外的变量进行任何修改
+     * * 📌捕获`taskInput`的所有权
+     *
+     * @param taskInput
+     * @return 是否可以开始「直接推理」
+     */
+    private boolean prepareDirectProcessContext(Task taskInput) {
+        // * 🚩强制清空上下文防串
+        context.clear();
+        // * 🚩准备上下文
+        // one of the two places where this variable is set
+        context.currentTask = taskInput;
+        context.currentConcept = getConceptOrCreate(taskInput.getContent());
+        if (context.currentConcept != null) {
+            context.currentTerm = context.currentConcept.getTerm();
+            return true; // * 📌准备就绪
+        }
+        return false; // * 📌准备失败：没有可供推理的概念
     }
 
     /* ---------- display ---------- */

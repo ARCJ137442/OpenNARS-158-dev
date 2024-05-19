@@ -14,18 +14,37 @@ public class RuleTables {
     /**
      * Entry point of the inference engine
      *
-     * @param tLink          The selected TaskLink, which will provide a task
-     * @param bLink          The selected TermLink, which may provide a belief
-     * @param context.memory Reference to the context.memory
+     * @param tLink   The selected TaskLink, which will provide a task
+     * @param bLink   The selected TermLink, which may provide a belief
+     * @param context Reference to the derivation context
      */
-    public static void reason(TaskLink tLink, TermLink bLink, DerivationContext context) {
+    public static void reason(DerivationContext context) {
+        // * 🚩系列断言与赋值（实际使用中可删）
+        if (context.currentTask == null) {
+            throw new Error("currentTask: 不符预期的可空情况");
+        }
+        if (context.currentTerm == null) {
+            throw new Error("currentTerm: 不符预期的可空情况");
+        }
+        if (context.currentConcept == null) {
+            throw new Error("currentConcept: 不符预期的可空情况");
+        }
+        if (context.currentBelief == null || context.currentBelief != null) { // * 📝可空
+            throw new Error("currentBelief: 不符预期的可空情况");
+        }
+        if (context.currentBeliefLink == null) {
+            throw new Error("currentBeliefLink: 不符预期的可空情况");
+        }
+        if (context.currentTaskLink == null) {
+            throw new Error("currentTaskLink: 不符预期的可空情况");
+        }
+        final TaskLink tLink = context.currentTaskLink;
+        final TermLink bLink = context.currentBeliefLink;
         final Task task = context.currentTask;
         final Sentence taskSentence = task.getSentence();
-        final Term taskTerm = (Term) taskSentence.getContent().clone(); // cloning for substitution
-        final Term beliefTerm = (Term) bLink.getTarget().clone(); // cloning for substitution
-        final Concept beliefConcept = context.memory.termToConcept(beliefTerm);
-        final Sentence belief = beliefConcept != null ? beliefConcept.getBelief(task) : null;
-        context.currentBelief = belief; // ! may be null
+        final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
+        final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
+        final Sentence belief = context.currentBelief;
         if (belief != null) {
             LocalRules.match(context);
         }
@@ -160,11 +179,11 @@ public class RuleTables {
      * Meta-table of syllogistic rules, indexed by the content classes of the
      * taskSentence and the belief
      *
-     * @param tLink          The link to task
-     * @param bLink          The link to belief
-     * @param taskTerm       The content of task
-     * @param beliefTerm     The content of belief
-     * @param context.memory Reference to the context.memory
+     * @param tLink      The link to task
+     * @param bLink      The link to belief
+     * @param taskTerm   The content of task
+     * @param beliefTerm The content of belief
+     * @param context    Reference to the derivation context
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm,
             DerivationContext context) {
@@ -227,10 +246,10 @@ public class RuleTables {
     /**
      * Syllogistic rules whose both premises are on the same asymmetric relation
      *
-     * @param sentence       The taskSentence in the task
-     * @param belief         The judgment in the belief
-     * @param figure         The location of the shared term
-     * @param context.memory Reference to the context.memory
+     * @param sentence The taskSentence in the task
+     * @param belief   The judgment in the belief
+     * @param figure   The location of the shared term
+     * @param context  Reference to the derivation context
      */
     private static void asymmetricAsymmetric(Sentence sentence, Sentence belief, int figure,
             DerivationContext context) {
@@ -300,10 +319,10 @@ public class RuleTables {
      * Syllogistic rules whose first premise is on an asymmetric relation, and
      * the second on a symmetric relation
      *
-     * @param asym           The asymmetric premise
-     * @param sym            The symmetric premise
-     * @param figure         The location of the shared term
-     * @param context.memory Reference to the context.memory
+     * @param asym    The asymmetric premise
+     * @param sym     The symmetric premise
+     * @param figure  The location of the shared term
+     * @param context Reference to the derivation context
      */
     private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, DerivationContext context) {
         final Statement asymSt = (Statement) asym.cloneContent();
@@ -361,10 +380,10 @@ public class RuleTables {
     /**
      * Syllogistic rules whose both premises are on the same symmetric relation
      *
-     * @param belief         The premise that comes from a belief
-     * @param taskSentence   The premise that comes from a task
-     * @param figure         The location of the shared term
-     * @param context.memory Reference to the context.memory
+     * @param belief       The premise that comes from a belief
+     * @param taskSentence The premise that comes from a task
+     * @param figure       The location of the shared term
+     * @param context      Reference to the derivation context
      */
     private static void symmetricSymmetric(Sentence belief, Sentence taskSentence, int figure,
             DerivationContext context) {
@@ -441,12 +460,12 @@ public class RuleTables {
     /**
      * Conditional deduction or induction, with variable unification
      *
-     * @param conditional    The premise that is an Implication with a Conjunction
-     *                       as condition
-     * @param index          The location of the shared term in the condition
-     * @param statement      The second premise that is a statement
-     * @param side           The location of the shared term in the statement
-     * @param context.memory Reference to the context.memory
+     * @param conditional The premise that is an Implication with a Conjunction
+     *                    as condition
+     * @param index       The location of the shared term in the condition
+     * @param statement   The second premise that is a statement
+     * @param side        The location of the shared term in the statement
+     * @param context     Reference to the derivation context
      */
     private static void conditionalDedIndWithVar(Implication conditional, short index, Statement statement, short side,
             DerivationContext context) {
@@ -476,10 +495,10 @@ public class RuleTables {
     /**
      * Inference between a compound term and a component of it
      *
-     * @param compound       The compound term
-     * @param component      The component term
-     * @param compoundTask   Whether the compound comes from the task
-     * @param context.memory Reference to the context.memory
+     * @param compound     The compound term
+     * @param component    The component term
+     * @param compoundTask Whether the compound comes from the task
+     * @param context      Reference to the derivation context
      */
     private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContext context) {
@@ -503,9 +522,9 @@ public class RuleTables {
     /**
      * Inference between two compound terms
      *
-     * @param taskTerm       The compound from the task
-     * @param beliefTerm     The compound from the belief
-     * @param context.memory Reference to the context.memory
+     * @param taskTerm   The compound from the task
+     * @param beliefTerm The compound from the belief
+     * @param context    Reference to the derivation context
      */
     private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm, DerivationContext context) {
         if (taskTerm.getClass() == beliefTerm.getClass()) {
@@ -520,12 +539,12 @@ public class RuleTables {
     /**
      * Inference between a compound term and a statement
      *
-     * @param compound       The compound term
-     * @param index          The location of the current term in the compound
-     * @param statement      The statement
-     * @param side           The location of the current term in the statement
-     * @param beliefTerm     The content of the belief
-     * @param context.memory Reference to the context.memory
+     * @param compound   The compound term
+     * @param index      The location of the current term in the compound
+     * @param statement  The statement
+     * @param side       The location of the current term in the statement
+     * @param beliefTerm The content of the belief
+     * @param context    Reference to the derivation context
      */
     private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             Term beliefTerm, DerivationContext context) {
@@ -560,11 +579,11 @@ public class RuleTables {
     /**
      * Inference between a component term (of the current term) and a statement
      *
-     * @param compound       The compound term
-     * @param index          The location of the current term in the compound
-     * @param statement      The statement
-     * @param side           The location of the current term in the statement
-     * @param context.memory Reference to the context.memory
+     * @param compound  The compound term
+     * @param index     The location of the current term in the compound
+     * @param statement The statement
+     * @param side      The location of the current term in the statement
+     * @param context   Reference to the derivation context
      */
     private static void componentAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContext context) {
@@ -598,8 +617,8 @@ public class RuleTables {
      * The TaskLink is of type TRANSFORM, and the conclusion is an equivalent
      * transformation
      *
-     * @param tLink          The task link
-     * @param context.memory Reference to the context.memory
+     * @param tLink   The task link
+     * @param context Reference to the derivation context
      */
     public static void transformTask(TaskLink tLink, DerivationContext context) {
         final CompoundTerm content = (CompoundTerm) context.currentTask.getContent().clone();

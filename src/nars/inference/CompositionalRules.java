@@ -67,10 +67,10 @@ public final class CompositionalRules {
      * <(S-P) ==> M>, <(P-S) ==> M>
      * }
      *
-     * @param taskSentence   The first premise
-     * @param belief         The second premise
-     * @param index          The location of the shared term
-     * @param context.memory Reference to the context.memory
+     * @param taskSentence The first premise
+     * @param belief       The second premise
+     * @param index        The location of the shared term
+     * @param context      Reference to the derivation context
      */
     static void composeCompound(
             Statement taskContent,
@@ -150,11 +150,11 @@ public final class CompositionalRules {
     /**
      * Finish composing implication term
      *
-     * @param premise1       Type of the contentInd
-     * @param subject        Subject of contentInd
-     * @param predicate      Predicate of contentInd
-     * @param truth          TruthValue of the contentInd
-     * @param context.memory Reference to the context.memory
+     * @param premise1  Type of the contentInd
+     * @param subject   Subject of contentInd
+     * @param predicate Predicate of contentInd
+     * @param truth     TruthValue of the contentInd
+     * @param context   Reference to the derivation context
      */
     private static void processComposed(
             Statement statement,
@@ -343,11 +343,11 @@ public final class CompositionalRules {
     /**
      * Introduce a dependent variable in an outer-layer conjunction
      *
-     * @param taskContent    The first premise <M --> S>
-     * @param beliefContent  The second premise <M --> P>
-     * @param index          The location of the shared term: 0 for subject, 1 for
-     *                       predicate
-     * @param context.memory Reference to the context.memory
+     * @param taskContent   The first premise <M --> S>
+     * @param beliefContent The second premise <M --> P>
+     * @param index         The location of the shared term: 0 for subject, 1 for
+     *                      predicate
+     * @param context       Reference to the derivation context
      */
     private static void introVarOuter(
             Statement taskContent,
@@ -441,13 +441,13 @@ public final class CompositionalRules {
      * {<M --> S>, <C ==> <M --> P>>} |- <(&&, <#x --> S>, C) ==> <#x --> P>>
      * {<M --> S>, (&&, C, <M --> P>)} |- (&&, C, <<#x --> S> ==> <#x --> P>>)
      *
-     * @param taskContent    The first premise directly used in internal induction,
-     *                       <M --> S>
-     * @param beliefContent  The componentCommon to be used as a premise in
-     *                       internal induction, <M --> P>
-     * @param oldCompound    The whole contentInd of the first premise, Implication
-     *                       or Conjunction
-     * @param context.memory Reference to the context.memory
+     * @param taskContent   The first premise directly used in internal induction,
+     *                      <M --> S>
+     * @param beliefContent The componentCommon to be used as a premise in
+     *                      internal induction, <M --> P>
+     * @param oldCompound   The whole contentInd of the first premise, Implication
+     *                      or Conjunction
+     * @param context       Reference to the derivation context
      */
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
             DerivationContext context) {

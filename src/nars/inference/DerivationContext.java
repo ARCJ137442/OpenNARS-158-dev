@@ -85,7 +85,7 @@ public class DerivationContext {
 
     /**
      * 构造函数
-     * * 🚩创建一个空的「推理上下文」
+     * * 🚩创建一个空的「推理上下文」，默认所有参数为空
      *
      * @param memory 所反向引用的「记忆区」对象
      */
