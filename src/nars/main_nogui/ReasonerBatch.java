@@ -146,32 +146,48 @@ public class ReasonerBatch {
     }
 
     public void doTick() {
-        if (DEBUG) {
-            if (running || walkingSteps > 0 || !finishedInputs) {
-                System.out.println("// doTick: "
-                        + "walkingSteps " + walkingSteps
-                        + ", clock " + clock
-                        + ", getTimer " + getTimer()
-                        + "\n//    memory.getExportStrings() " + memory.getExportStrings());
-                System.out.flush();
-            }
+        if (DEBUG)
+            handleDebug();
+
+        handleInput();
+        // forward to output Channels
+        handleOutput();
+        handleWorkCycle();
+    }
+
+    private void handleDebug() {
+        if (running || walkingSteps > 0 || !finishedInputs) {
+            System.out.println("// doTick: "
+                    + "walkingSteps " + walkingSteps
+                    + ", clock " + clock
+                    + ", getTimer " + getTimer()
+                    + "\n//    memory.getExportStrings() " + memory.getExportStrings());
+            System.out.flush();
         }
+    }
+
+    public void handleInput() {
         if (walkingSteps == 0) {
             boolean reasonerShouldRun = false;
-            for (InputChannel channelIn : inputChannels) {
+            for (final InputChannel channelIn : inputChannels) {
                 reasonerShouldRun = reasonerShouldRun
                         || channelIn.nextInput();
             }
             finishedInputs = !reasonerShouldRun;
         }
-        // forward to output Channels
-        ArrayList<String> output = memory.getExportStrings();
+    }
+
+    public void handleOutput() {
+        final ArrayList<String> output = memory.getExportStrings();
         if (!output.isEmpty()) {
-            for (OutputChannel channelOut : outputChannels) {
+            for (final OutputChannel channelOut : outputChannels) {
                 channelOut.nextOutput(output);
             }
             output.clear(); // this will trigger display the current value of timer in Memory.report()
         }
+    }
+
+    public void handleWorkCycle() {
         if (running || walkingSteps > 0) {
             clock++;
             tickTimer();

@@ -80,19 +80,16 @@ public class SimpleShell {
         public boolean nextInput() {
             try {
                 final String line = bufIn.readLine();
-                if (line != null) {
-                    inputLine(shell.reasoner, line);
-                }
+                if (line != null && !line.isEmpty())
+                    inputLine(line);
             } catch (final IOException e) {
                 throw new IllegalStateException("Could not read line.", e);
             }
             return true;
         }
 
-        public void inputLine(final ReasonerBatch reasoner, final String input) {
-            if (input.isEmpty()) {
-                return;
-            }
+        public void inputLine(final String input) {
+            final ReasonerBatch reasoner = shell.reasoner;
             try {
                 // 退出程序
                 // * 🎯【2024-05-09 13:35:47】在其它语言中通过`java -jar`启动OpenNARS时，主动退出不容易——总是有残余进程
@@ -124,6 +121,7 @@ public class SimpleShell {
                 // 输入Narsese
                 else {
                     reasoner.textInputLine(input);
+                    reasoner.handleOutput();
                     // reasoner.tick(); // 输入之后至少先将输出打印出来
                 }
             }

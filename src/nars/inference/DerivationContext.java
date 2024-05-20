@@ -413,32 +413,20 @@ public class DerivationContext {
     }
 
     /**
-     * Display input/output sentence in the output channels. The only place to
-     * add Objects into exportStrings. Currently only Strings are added, though
-     * in the future there can be outgoing Tasks; also if exportStrings is empty
-     * display the current value of timer ( exportStrings is emptied in
-     * {@link ReasonerBatch#doTick()} - TODO fragile mechanism)
-     *
-     * @param sentence the sentence to be displayed
-     * @param input    whether the task is input
+     * 🆕此处「报告」与记忆区的「报告」不同
+     * * 🚩记忆区在「吸收上下文」时产生记忆区的「报告」
+     * * 📌原则：此处不应涉及有关「记忆区」的内容
      */
     public void report(Sentence sentence, ReportType type) {
-        if (ReasonerBatch.DEBUG) {
-            System.out.println("// report( clock " + memory.getTime()
-            // + ", input " + input
-                    + ", timer " + memory.getTimer()
-                    + ", Sentence " + sentence
-                    + ", exportStrings " + exportStrings);
-            System.out.flush();
-        }
-        if (exportStrings.isEmpty()) {
-            long timer = memory.updateTimer();
-            if (timer > 0) {
-                exportStrings.add(String.valueOf(timer));
-            }
-        }
-        String s = type.toString() + ": ";
-        s += sentence.toStringBrief();
+        final String s = generateReportString(sentence, type);
         exportStrings.add(s);
+    }
+
+    /**
+     * 🆕生成「输出报告字符串」
+     * * 🎯在「记忆区」与「推理上下文」中一同使用
+     */
+    public static String generateReportString(Sentence sentence, ReportType type) {
+        return type.toString() + ": " + sentence.toStringBrief();
     }
 }

@@ -301,11 +301,48 @@ public class Memory {
     public void inputTask(Task task) {
         if (task.getBudget().aboveThreshold()) {
             recorder.append("!!! Perceived: " + task + "\n");
-            context.report(task.getSentence(), ReportType.IN); // report input
+            this.report(task.getSentence(), ReportType.IN); // report input
             newTasks.add(task); // wait to be processed in the next workCycle
         } else {
             recorder.append("!!! Neglected: " + task + "\n");
         }
+    }
+
+    /**
+     * Display input/output sentence in the output channels. The only place to
+     * add Objects into exportStrings. Currently only Strings are added, though
+     * in the future there can be outgoing Tasks; also if exportStrings is empty
+     * display the current value of timer ( exportStrings is emptied in
+     * {@link ReasonerBatch#doTick()} - TODO fragile mechanism)
+     *
+     */
+    public void report(Sentence sentence, ReportType type) {
+        report(DerivationContext.generateReportString(sentence, type));
+    }
+
+    /**
+     * 🆕只报告字符串
+     * * 🎯从「吸收上下文」中调用
+     * * 🎯从「直接报告」中转发
+     *
+     * @param output 要输出的字符串
+     */
+    public void report(String output) {
+        if (ReasonerBatch.DEBUG) {
+            System.out.println("// report( clock " + getTime()
+            // + ", input " + input
+                    + ", timer " + getTimer()
+                    + ", output " + output
+                    + ", exportStrings " + exportStrings);
+            System.out.flush();
+        }
+        if (exportStrings.isEmpty()) {
+            long timer = updateTimer();
+            if (timer > 0) {
+                exportStrings.add(String.valueOf(timer));
+            }
+        }
+        exportStrings.add(output);
     }
 
     /* ---------- system working workCycle ---------- */
@@ -349,8 +386,8 @@ public class Memory {
             this.newTasks.add(newTask);
         }
         // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
-        for (final String exportString : context.getExportStrings()) {
-            this.exportStrings.add(exportString);
+        for (final String output : context.getExportStrings()) {
+            this.report(output);
         }
         // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
         context.clear();
