@@ -244,8 +244,8 @@ public class DerivationContext {
         // * 🚩创建新上下文，并随之迁移`final`变量
         final DerivationContext self = this.clone();
         // * 🚩搬迁引用
-        self.currentBeliefLink = this.currentBeliefLink;
-        self.currentBelief = this.currentBelief;
+        self.currentBeliefLink = currentBeliefLink;
+        self.currentBelief = currentBelief;
         self.newStamp = newStamp;
         // * 🚩返回新上下文
         return self;
