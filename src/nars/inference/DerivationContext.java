@@ -34,10 +34,6 @@ public class DerivationContext {
         return memory;
     }
 
-    public void setMemory(Memory memory) {
-        this.memory = memory;
-    }
-
     /**
      * 用于「变量替换」中的「伪随机数生成器」
      */
@@ -68,16 +64,12 @@ public class DerivationContext {
     }
 
     /**
-     * The selected Term
+     * * 📝在所有使用场景中，均为「当前概念要处理的词项」且只读
+     * * 🚩【2024-05-20 09:15:59】故此处仅保留getter，并且不留存多余字段（减少共享引用）
      */
-    private Term currentTerm = null;
-
     public Term getCurrentTerm() {
-        return currentTerm;
-    }
-
-    public void setCurrentTerm(Term currentTerm) {
-        this.currentTerm = currentTerm;
+        // ! 🚩需要假定`this.getCurrentConcept() != null`
+        return this.getCurrentConcept().getTerm();
     }
 
     /**
@@ -102,6 +94,10 @@ public class DerivationContext {
         return currentTaskLink;
     }
 
+    /**
+     * 设置当前任务链
+     * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现
+     */
     public void setCurrentTaskLink(TaskLink currentTaskLink) {
         this.currentTaskLink = currentTaskLink;
     }
@@ -115,6 +111,12 @@ public class DerivationContext {
         return currentTask;
     }
 
+    /**
+     * 设置当前任务
+     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
+     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
+     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
+     */
     public void setCurrentTask(Task currentTask) {
         this.currentTask = currentTask;
     }
@@ -128,6 +130,10 @@ public class DerivationContext {
         return currentBeliefLink;
     }
 
+    /**
+     * 设置当前任务链
+     * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现（构建推理上下文）
+     */
     public void setCurrentBeliefLink(TermLink currentBeliefLink) {
         this.currentBeliefLink = currentBeliefLink;
     }
@@ -141,6 +147,11 @@ public class DerivationContext {
         return currentBelief;
     }
 
+    /**
+     * 设置当前任务
+     * * 📝在「概念推理」仅在准备阶段设置
+     * * 📝在「直接推理」会在推理过程中设置
+     */
     public void setCurrentBelief(Sentence currentBelief) {
         this.currentBelief = currentBelief;
     }
@@ -168,9 +179,9 @@ public class DerivationContext {
         return substitute;
     }
 
-    public void setSubstitute(HashMap<Term, Term> substitute) {
-        this.substitute = substitute;
-    }
+    // public void setSubstitute(HashMap<Term, Term> substitute) {
+    // this.substitute = substitute;
+    // }
 
     /**
      * 构造函数
@@ -211,7 +222,7 @@ public class DerivationContext {
         // * 🚩创建新上下文，并随之迁移`final`变量
         final DerivationContext self = new DerivationContext(this.memory, this.newTasks, this.exportStrings);
         // * 🚩搬迁引用
-        self.currentTerm = this.currentTerm;
+        // self.currentTerm = this.currentTerm;
         self.currentConcept = this.currentConcept;
         self.currentTaskLink = this.currentTaskLink;
         self.currentTask = this.currentTask;
@@ -247,7 +258,7 @@ public class DerivationContext {
      */
     public void clear() {
         // * 🚩清理上下文变量
-        this.currentTerm = null;
+        // this.currentTerm = null;
         this.currentConcept = null;
         this.currentTaskLink = null;
         this.currentTask = null;
@@ -291,7 +302,13 @@ public class DerivationContext {
      * @param task the derived task
      */
     private void derivedTask(Task task) {
-        if (task.getBudget().aboveThreshold()) {
+        // * 🚩判断「导出的新任务」是否有价值
+        if (!task.getBudget().aboveThreshold()) {
+            memory.getRecorder().append("!!! Ignored: " + task + "\n");
+            return;
+        }
+        // * 🚩报告
+        {
             memory.getRecorder().append("!!! Derived: " + task + "\n");
             final float budget = task.getBudget().summary();
             // final float minSilent = memory.getReasoner()
@@ -300,10 +317,9 @@ public class DerivationContext {
             if (budget > minSilent) { // only report significant derived Tasks
                 report(task.getSentence(), ReportType.OUT);
             }
-            newTasks.add(task);
-        } else {
-            memory.getRecorder().append("!!! Ignored: " + task + "\n");
         }
+        // * 🚩将「导出的新任务」添加到「新任务表」中
+        newTasks.add(task);
     }
 
     /* --------------- new task building --------------- */

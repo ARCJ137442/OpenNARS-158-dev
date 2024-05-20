@@ -487,7 +487,8 @@ public class Memory {
         if (self.context.getCurrentConcept() == null) {
             return null;
         }
-        self.context.setCurrentTerm(self.context.getCurrentConcept().getTerm());
+        // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
+        // self.context.setCurrentTerm(self.context.getCurrentConcept().getTerm());
         self.recorder.append(" * Selected Concept: " + self.context.getCurrentTerm() + "\n");
         self.concepts.putBack(self.context.getCurrentConcept()); // current Concept remains in the bag all the time
         // a working workCycle
@@ -586,7 +587,8 @@ public class Memory {
         context.setCurrentTask(taskInput);
         context.setCurrentConcept(getConceptOrCreate(taskInput.getContent()));
         if (context.getCurrentConcept() != null) {
-            context.setCurrentTerm(context.getCurrentConcept().getTerm());
+            // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
+            // context.setCurrentTerm(context.getCurrentConcept().getTerm());
             return true; // * 📌准备就绪
         }
         return false; // * 📌准备失败：没有可供推理的概念
