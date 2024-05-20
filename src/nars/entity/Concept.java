@@ -271,7 +271,6 @@ public final class Concept extends Item {
                 memory.context.setNewStamp(newStamp);
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
-                    // memory.context.setCurrentBelief(null);
                     memory.context.setCurrentBelief(oldBelief);
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
                     LocalRules.revision(judgment, oldBelief, false, memory.context);

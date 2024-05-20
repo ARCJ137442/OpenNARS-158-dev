@@ -14,7 +14,6 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.language.Term;
-import nars.main_nogui.ReasonerBatch;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
 
@@ -245,8 +244,8 @@ public class DerivationContext {
         // * 🚩创建新上下文，并随之迁移`final`变量
         final DerivationContext self = this.clone();
         // * 🚩搬迁引用
-        self.currentBeliefLink = currentBeliefLink;
-        self.currentBelief = currentBelief;
+        self.setCurrentBeliefLink(this.currentBeliefLink);
+        self.setCurrentBelief(this.currentBelief);
         self.newStamp = newStamp;
         // * 🚩返回新上下文
         return self;

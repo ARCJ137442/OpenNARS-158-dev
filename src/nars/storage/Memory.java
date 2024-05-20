@@ -538,6 +538,10 @@ public class Memory {
             return null;
         }
         self.context.setCurrentTaskLink(currentTaskLink);
+        // TODO: 需要明白「到底应不应该删除」，或「直接推理到底要不要用到『当前信念链』」
+        // * 💭直接推理似乎不应该涉及「词项链/信念链」
+        // * ❓这里的「信念链」是否可空
+        // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
         self.context.setCurrentBeliefLink(null);
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
