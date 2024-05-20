@@ -345,11 +345,11 @@ public class Memory {
     private void absorbContext() {
         final DerivationContext context = this.context;
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
-        for (final Task newTask : context.newTasks) {
+        for (final Task newTask : context.getNewTasks()) {
             this.newTasks.add(newTask);
         }
         // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
-        for (final String exportString : context.exportStrings) {
+        for (final String exportString : context.getExportStrings()) {
             this.exportStrings.add(exportString);
         }
         // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
@@ -433,16 +433,16 @@ public class Memory {
             final TermLink newBeliefLink = termLink;
             final Sentence newBelief;
             Stamp newStamp = null;
-            final Concept beliefConcept = context.memory.termToConcept(termLink.getTarget());
+            final Concept beliefConcept = termToConcept(termLink.getTarget());
             if (beliefConcept != null) {
-                newBelief = beliefConcept.getBelief(context.currentTask); // ! may be null
+                newBelief = beliefConcept.getBelief(context.getCurrentTask()); // ! may be null
                 if (newBelief != null) {
                     newStamp = Stamp.uncheckedMerge( // ! may be null
-                            context.currentTask.getSentence().getStamp(),
+                            context.getCurrentTask().getSentence().getStamp(),
                             // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                             // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
                             newBelief.getStamp(),
-                            context.memory.getTime());
+                            getTime());
                 }
             } else {
                 newBelief = null;
@@ -454,9 +454,9 @@ public class Memory {
             this.context = this.context.cloneWithNewBelief(newBeliefLink, newBelief, newStamp);
             // * 🔥启动概念推理：点火！
             RuleTables.reason(this.context);
-            context.currentConcept.__putTermLinkBack(termLink);
+            context.getCurrentConcept().__putTermLinkBack(termLink);
         }
-        context.currentConcept.__putTaskLinkBack(context.currentTaskLink);
+        context.getCurrentConcept().__putTaskLinkBack(context.getCurrentTaskLink());
         // * 🚩吸收并清空上下文
         absorbContext();
     }
@@ -483,43 +483,43 @@ public class Memory {
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        self.context.currentConcept = self.concepts.takeOut();
-        if (self.context.currentConcept == null) {
+        self.context.setCurrentConcept(self.concepts.takeOut());
+        if (self.context.getCurrentConcept() == null) {
             return null;
         }
-        self.context.currentTerm = self.context.currentConcept.getTerm();
-        self.recorder.append(" * Selected Concept: " + self.context.currentTerm + "\n");
-        self.concepts.putBack(self.context.currentConcept); // current Concept remains in the bag all the time
+        self.context.setCurrentTerm(self.context.getCurrentConcept().getTerm());
+        self.recorder.append(" * Selected Concept: " + self.context.getCurrentTerm() + "\n");
+        self.concepts.putBack(self.context.getCurrentConcept()); // current Concept remains in the bag all the time
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
 
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = self.context.currentConcept.__takeOutTaskLink();
+        final TaskLink currentTaskLink = self.context.getCurrentConcept().__takeOutTaskLink();
         if (currentTaskLink == null) {
             return null;
         }
-        self.context.currentTaskLink = currentTaskLink;
-        self.context.currentBeliefLink = null;
+        self.context.setCurrentTaskLink(currentTaskLink);
+        self.context.setCurrentBeliefLink(null);
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
-        self.context.currentTask = task; // one of the two places where this variable is set
+        self.context.setCurrentTask(task); // one of the two places where this variable is set
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
-            self.context.currentBelief = null;
+            self.context.setCurrentBelief(null);
             RuleTables.transformTask(currentTaskLink, self.context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
-            self.context.currentConcept.__putTaskLinkBack(currentTaskLink);
+            self.context.getCurrentConcept().__putTaskLinkBack(currentTaskLink);
             return null;
         }
 
         // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
         return chooseTermLinksToReason(
                 self,
-                self.context.currentConcept,
+                self.context.getCurrentConcept(),
                 currentTaskLink);
     }
 
@@ -561,9 +561,9 @@ public class Memory {
         // * 🚩上下文准备完毕⇒开始
         if (okToProcess) {
             // * 🚩调整概念的预算值
-            activateConcept(context.currentConcept, taskInput.getBudget());
+            activateConcept(context.getCurrentConcept(), taskInput.getBudget());
             // * 🔥开始「直接处理」
-            context.currentConcept.directProcess();
+            context.getCurrentConcept().directProcess();
         }
 
         // * 🚩吸收并清空上下文
@@ -583,10 +583,10 @@ public class Memory {
         context.clear();
         // * 🚩准备上下文
         // one of the two places where this variable is set
-        context.currentTask = taskInput;
-        context.currentConcept = getConceptOrCreate(taskInput.getContent());
-        if (context.currentConcept != null) {
-            context.currentTerm = context.currentConcept.getTerm();
+        context.setCurrentTask(taskInput);
+        context.setCurrentConcept(getConceptOrCreate(taskInput.getContent()));
+        if (context.getCurrentConcept() != null) {
+            context.setCurrentTerm(context.getCurrentConcept().getTerm());
             return true; // * 📌准备就绪
         }
         return false; // * 📌准备失败：没有可供推理的概念
@@ -630,9 +630,9 @@ public class Memory {
                 + toStringLongIfNotNull(novelTasks, "novelTasks")
                 + toStringIfNotNull(newTasks, "newTasks");
         if (context != null) {
-            result += toStringLongIfNotNull(context.currentTask, "currentTask")
-                    + toStringLongIfNotNull(context.currentBeliefLink, "currentBeliefLink")
-                    + toStringIfNotNull(context.currentBelief, "currentBelief");
+            result += toStringLongIfNotNull(context.getCurrentTask(), "currentTask")
+                    + toStringLongIfNotNull(context.getCurrentBeliefLink(), "currentBeliefLink")
+                    + toStringIfNotNull(context.getCurrentBelief(), "currentBelief");
         }
         return result;
     }

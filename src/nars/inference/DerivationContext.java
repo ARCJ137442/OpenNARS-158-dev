@@ -28,7 +28,20 @@ public class DerivationContext {
      * 对「记忆区」的反向引用
      * * 🚩【2024-05-18 17:00:12】目前需要访问其「输出」「概念」等功能
      */
-    public Memory memory;
+    private Memory memory;
+
+    public Memory getMemory() {
+        return memory;
+    }
+
+    public void setMemory(Memory memory) {
+        this.memory = memory;
+    }
+
+    /**
+     * 用于「变量替换」中的「伪随机数生成器」
+     */
+    public static Random randomNumber = new Random(1);
 
     /* ---------- Short-term workspace for a single cycle ---------- */
     /**
@@ -37,51 +50,127 @@ public class DerivationContext {
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
      */
-    public final LinkedList<Task> newTasks;
+    private final LinkedList<Task> newTasks;
+
+    public LinkedList<Task> getNewTasks() {
+        return newTasks;
+    }
+
     /**
      * List of Strings or Tasks to be sent to the output channels
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
      */
-    public final ArrayList<String> exportStrings;
+    private final ArrayList<String> exportStrings;
+
+    public ArrayList<String> getExportStrings() {
+        return exportStrings;
+    }
+
     /**
      * The selected Term
      */
-    public Term currentTerm = null;
+    private Term currentTerm = null;
+
+    public Term getCurrentTerm() {
+        return currentTerm;
+    }
+
+    public void setCurrentTerm(Term currentTerm) {
+        this.currentTerm = currentTerm;
+    }
+
     /**
      * The selected Concept
      */
-    public Concept currentConcept = null;
+    private Concept currentConcept = null;
+
+    public Concept getCurrentConcept() {
+        return currentConcept;
+    }
+
+    public void setCurrentConcept(Concept currentConcept) {
+        this.currentConcept = currentConcept;
+    }
+
     /**
      * The selected TaskLink
      */
-    public TaskLink currentTaskLink = null;
+    private TaskLink currentTaskLink = null;
+
+    public TaskLink getCurrentTaskLink() {
+        return currentTaskLink;
+    }
+
+    public void setCurrentTaskLink(TaskLink currentTaskLink) {
+        this.currentTaskLink = currentTaskLink;
+    }
+
     /**
      * The selected Task
      */
-    public Task currentTask = null;
+    private Task currentTask = null;
+
+    public Task getCurrentTask() {
+        return currentTask;
+    }
+
+    public void setCurrentTask(Task currentTask) {
+        this.currentTask = currentTask;
+    }
+
     /**
      * The selected TermLink
      */
-    public TermLink currentBeliefLink = null;
+    private TermLink currentBeliefLink = null;
+
+    public TermLink getCurrentBeliefLink() {
+        return currentBeliefLink;
+    }
+
+    public void setCurrentBeliefLink(TermLink currentBeliefLink) {
+        this.currentBeliefLink = currentBeliefLink;
+    }
+
     /**
      * The selected belief
      */
-    public Sentence currentBelief = null;
+    private Sentence currentBelief = null;
+
+    public Sentence getCurrentBelief() {
+        return currentBelief;
+    }
+
+    public void setCurrentBelief(Sentence currentBelief) {
+        this.currentBelief = currentBelief;
+    }
+
     /**
      * The new Stamp
      */
-    public Stamp newStamp = null;
+    private Stamp newStamp = null;
+
+    public Stamp getNewStamp() {
+        return newStamp;
+    }
+
+    public void setNewStamp(Stamp newStamp) {
+        this.newStamp = newStamp;
+    }
+
     /**
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
      */
-    public HashMap<Term, Term> substitute = null;
+    private HashMap<Term, Term> substitute = null;
 
-    /**
-     * 用于「变量替换」中的「伪随机数生成器」
-     */
-    public static Random randomNumber = new Random(1);
+    public HashMap<Term, Term> getSubstitute() {
+        return substitute;
+    }
+
+    public void setSubstitute(HashMap<Term, Term> substitute) {
+        this.substitute = substitute;
+    }
 
     /**
      * 构造函数
@@ -99,7 +188,7 @@ public class DerivationContext {
      *
      * @param memory
      */
-    protected DerivationContext(final Memory memory,
+    private DerivationContext(final Memory memory,
             final LinkedList<Task> newTasks,
             final ArrayList<String> exportStrings) {
         this.memory = memory;

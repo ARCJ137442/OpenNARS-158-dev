@@ -30,42 +30,42 @@ public class RuleTables {
          * currentTaskLink
          * }
          */
-        if (context.currentTask == null) {
+        if (context.getCurrentTask() == null) {
             throw new Error("currentTask: 不符预期的可空情况");
         }
-        if (context.currentTerm == null) {
+        if (context.getCurrentTerm() == null) {
             throw new Error("currentTerm: 不符预期的可空情况");
         }
-        if (context.currentConcept == null) {
+        if (context.getCurrentConcept() == null) {
             throw new Error("currentConcept: 不符预期的可空情况");
         }
-        if (context.currentBelief == null && context.currentBelief != null) { // * 📝可空
+        if (context.getCurrentBelief() == null && context.getCurrentBelief() != null) { // * 📝可空
             throw new Error("currentBelief: 不符预期的可空情况");
         }
-        if (context.currentBeliefLink == null) {
+        if (context.getCurrentBeliefLink() == null) {
             throw new Error("currentBeliefLink: 不符预期的可空情况");
         }
-        if (context.currentTaskLink == null) {
+        if (context.getCurrentTaskLink() == null) {
             throw new Error("currentTaskLink: 不符预期的可空情况");
         }
-        if (context.newStamp != null && context.newStamp == null) {
+        if (context.getNewStamp() != null && context.getNewStamp() == null) {
             // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
             throw new Error("newStamp: 不符预期的可空情况");
         }
-        if (context.substitute != null) {
+        if (context.getSubstitute() != null) {
             throw new Error("substitute: 不符预期的可空情况");
         }
-        final TaskLink tLink = context.currentTaskLink;
-        final TermLink bLink = context.currentBeliefLink;
-        final Task task = context.currentTask;
+        final TaskLink tLink = context.getCurrentTaskLink();
+        final TermLink bLink = context.getCurrentBeliefLink();
+        final Task task = context.getCurrentTask();
         final Sentence taskSentence = task.getSentence();
         final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
-        final Sentence belief = context.currentBelief;
+        final Sentence belief = context.getCurrentBelief();
         if (belief != null) {
             LocalRules.match(context);
         }
-        if (!context.memory.noResult() && task.getSentence().isJudgment()) {
+        if (!context.getMemory().noResult() && task.getSentence().isJudgment()) {
             return;
         }
         final short tIndex = tLink.getIndex(0);
@@ -135,7 +135,7 @@ public class RuleTables {
             case TermLink.COMPOUND_STATEMENT:
                 switch (bLink.getType()) {
                     case TermLink.COMPONENT:
-                        componentAndStatement((CompoundTerm) context.currentTerm, bIndex, (Statement) taskTerm,
+                        componentAndStatement((CompoundTerm) context.getCurrentTerm(), bIndex, (Statement) taskTerm,
                                 tIndex,
                                 context);
                         break;
@@ -204,8 +204,8 @@ public class RuleTables {
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm,
             DerivationContext context) {
-        final Sentence taskSentence = context.currentTask.getSentence();
-        final Sentence belief = context.currentBelief;
+        final Sentence taskSentence = context.getCurrentTask().getSentence();
+        final Sentence belief = context.getCurrentBelief();
         final int figure;
         if (taskTerm instanceof Inheritance) {
             if (beliefTerm instanceof Inheritance) {
@@ -444,7 +444,7 @@ public class RuleTables {
      *                             the
      *                             first one
      * @param index                The location of the second premise in the first
-     * @param context.memory       Reference to the context.memory
+     * @param context.getMemory()  Reference to the context.getMemory()
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
             DerivationContext context) {
@@ -453,13 +453,13 @@ public class RuleTables {
         final Term component = statement.componentAt(index);
         final CompoundTerm content = (CompoundTerm) subSentence.getContent();
         if (((component instanceof Inheritance) || (component instanceof Negation))
-                && (context.currentBelief != null)) {
+                && (context.getCurrentBelief() != null)) {
             if (component.isConstant()) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             } else if (Variable.unify(Symbols.VAR_INDEPENDENT, component, content, statement, content)) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
-                    && (context.currentTask.getSentence().isJudgment())) {
+                    && (context.getCurrentTask().getSentence().isJudgment())) {
                 final Statement s2 = (Statement) statement.getPredicate();
                 if (s2.getSubject().equals(((Statement) content).getSubject())) {
                     CompositionalRules.introVarInner((Statement) content, s2, statement, context);
@@ -467,7 +467,7 @@ public class RuleTables {
                 CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
                         index, context);
             } else if ((statement instanceof Equivalence) && (statement.getPredicate() instanceof Statement)
-                    && (context.currentTask.getSentence().isJudgment())) {
+                    && (context.getCurrentTask().getSentence().isJudgment())) {
                 CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
                         index, context);
             }
@@ -520,13 +520,13 @@ public class RuleTables {
     private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContext context) {
         if ((compound instanceof Conjunction) || (compound instanceof Disjunction)) {
-            if (context.currentBelief != null) {
+            if (context.getCurrentBelief() != null) {
                 CompositionalRules.decomposeStatement(compound, component, compoundTask, context);
             } else if (compound.containComponent(component)) {
                 StructuralRules.structuralCompound(compound, component, compoundTask, context);
             }
             // } else if ((compound instanceof Negation) &&
-            // !context.currentTask.isStructural()) {
+            // !context.getCurrentTask().isStructural()) {
         } else if (compound instanceof Negation) {
             if (compoundTask) {
                 StructuralRules.transformNegation(((Negation) compound).componentAt(0), context);
@@ -566,9 +566,9 @@ public class RuleTables {
     private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             Term beliefTerm, DerivationContext context) {
         final Term component = compound.componentAt(index);
-        final Task task = context.currentTask;
+        final Task task = context.getCurrentTask();
         if (component.getClass() == statement.getClass()) {
-            if ((compound instanceof Conjunction) && (context.currentBelief != null)) {
+            if ((compound instanceof Conjunction) && (context.getCurrentBelief() != null)) {
                 if (Variable.unify(Symbols.VAR_DEPENDENT, component, statement, compound, statement)) {
                     SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), context);
                 } else if (task.getSentence().isJudgment()) { // && !compound.containComponent(component)) {
@@ -604,7 +604,7 @@ public class RuleTables {
      */
     private static void componentAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContext context) {
-        // if (!context.currentTask.isStructural()) {
+        // if (!context.getCurrentTask().isStructural()) {
         if (statement instanceof Inheritance) {
             StructuralRules.structuralDecompose1(compound, index, statement, context);
             if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
@@ -621,9 +621,9 @@ public class RuleTables {
             }
         } else if ((statement instanceof Implication) && (compound instanceof Negation)) {
             if (index == 0) {
-                StructuralRules.contraposition(statement, context.currentTask.getSentence(), context);
+                StructuralRules.contraposition(statement, context.getCurrentTask().getSentence(), context);
             } else {
-                StructuralRules.contraposition(statement, context.currentBelief, context);
+                StructuralRules.contraposition(statement, context.getCurrentBelief(), context);
             }
         }
         // }
@@ -638,7 +638,7 @@ public class RuleTables {
      * @param context Reference to the derivation context
      */
     public static void transformTask(TaskLink tLink, DerivationContext context) {
-        final CompoundTerm content = (CompoundTerm) context.currentTask.getContent().clone();
+        final CompoundTerm content = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();
         final Term inh;
         if ((indices.length == 2) || (content instanceof Inheritance)) { // <(*, term, #) --> #>

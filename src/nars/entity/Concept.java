@@ -195,31 +195,31 @@ public final class Concept extends Item {
          * }
          */
         // * 🚩系列断言与赋值（实际使用中可删）
-        if (memory.context.currentTask == null) {
+        if (memory.context.getCurrentTask() == null) {
             throw new Error("currentTask: 不符预期的可空情况");
         }
-        if (memory.context.currentTerm == null) {
+        if (memory.context.getCurrentTerm() == null) {
             throw new Error("currentTerm: 不符预期的可空情况");
         }
-        if (memory.context.currentConcept != this) { // ! 不仅非空，而且等于自身
+        if (memory.context.getCurrentConcept() != this) { // ! 不仅非空，而且等于自身
             throw new Error("currentConcept: 不符预期的可空情况");
         }
-        if (memory.context.currentBelief != null) {
+        if (memory.context.getCurrentBelief() != null) {
             throw new Error("currentBelief: 不符预期的可空情况");
         }
-        if (memory.context.currentBeliefLink != null) {
+        if (memory.context.getCurrentBeliefLink() != null) {
             throw new Error("currentBeliefLink: 不符预期的可空情况");
         }
-        if (memory.context.currentTaskLink != null) {
+        if (memory.context.getCurrentTaskLink() != null) {
             throw new Error("currentTaskLink: 不符预期的可空情况");
         }
-        if (memory.context.newStamp != null) {
+        if (memory.context.getNewStamp() != null) {
             throw new Error("newStamp: 不符预期的可空情况");
         }
-        if (memory.context.substitute != null) {
+        if (memory.context.getSubstitute() != null) {
             throw new Error("substitute: 不符预期的可空情况");
         }
-        final Task task = memory.context.currentTask;
+        final Task task = memory.context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
         switch (task.getSentence().getPunctuation()) {
@@ -249,14 +249,14 @@ public final class Concept extends Item {
      */
     private void processJudgment() {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
-        final Task task = memory.context.currentTask;
+        final Task task = memory.context.getCurrentTask();
         final Sentence judgment = task.getSentence();
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, beliefs);
         if (oldBelief != null) {
-            final Stamp newStamp = judgment.getStamp();
+            final Stamp currentStamp = judgment.getStamp();
             final Stamp oldStamp = oldBelief.getStamp();
-            if (newStamp.equals(oldStamp)) {
+            if (currentStamp.equals(oldStamp)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().getSentence().isJudgment()) {
                     task.getBudget().decPriority(0); // duplicated task
@@ -267,10 +267,11 @@ public final class Concept extends Item {
             else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
-                memory.context.newStamp = Stamp.make(newStamp, oldStamp, memory.getTime());
-                if (memory.context.newStamp != null) {
+                final Stamp newStamp = Stamp.make(currentStamp, oldStamp, memory.getTime());
+                memory.context.setNewStamp(newStamp);
+                if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
-                    memory.context.currentBelief = oldBelief;
+                    memory.context.setCurrentBelief(oldBelief);
                     LocalRules.revision(judgment, oldBelief, false, memory.context);
                 }
             }
@@ -297,7 +298,7 @@ public final class Concept extends Item {
      */
     private void processQuestion() {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
-        final Task task = memory.context.currentTask;
+        final Task task = memory.context.getCurrentTask();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
         final Sentence existedQuestion = findExistedQuestion();
@@ -330,7 +331,7 @@ public final class Concept extends Item {
      * @return 已有的问题，或为空
      */
     private Sentence findExistedQuestion(/* final Task questionTask */) {
-        final Task questionTask = memory.context.currentTask;
+        final Task questionTask = memory.context.getCurrentTask();
         final Sentence taskSentence = questionTask.getSentence();
         if (this.questions != null) {
             for (final Task existedQuestion : this.questions) {

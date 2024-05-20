@@ -35,27 +35,27 @@ public final class CompositionalRules {
                     && !(((Statement) component).getPredicate() instanceof Variable)) {
                 final Variable V = new Variable("#depIndVar1");
                 final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
-                final CompoundTerm zw2 = (CompoundTerm) CompoundTerm.setComponent(zw, 1, V, context.memory);
-                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 1, V, context.memory);
+                final CompoundTerm zw2 = (CompoundTerm) CompoundTerm.setComponent(zw, 1, V, context.getMemory());
+                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 1, V, context.getMemory());
                 if (zw2 == null || T2 == null || zw2.equals(T2)) {
                     return;
                 }
-                final Conjunction res = (Conjunction) Conjunction.make(zw, T2, context.memory);
-                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, context.memory);
+                final Conjunction res = (Conjunction) Conjunction.make(zw, T2, context.getMemory());
+                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, context.getMemory());
             } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
                     && !(((Statement) component).getSubject() instanceof Variable)) {
                 final Variable V = new Variable("#depIndVar2");
                 final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
-                final CompoundTerm zw2 = (CompoundTerm) CompoundTerm.setComponent(zw, 0, V, context.memory);
-                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 0, V, context.memory);
+                final CompoundTerm zw2 = (CompoundTerm) CompoundTerm.setComponent(zw, 0, V, context.getMemory());
+                T2 = (CompoundTerm) CompoundTerm.setComponent(T2, 0, V, context.getMemory());
                 if (zw2 == null || T2 == null || zw2.equals(T2)) {
                     return;
                 }
-                final Conjunction res = (Conjunction) Conjunction.make(zw2, T2, context.memory);
-                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, context.memory);
+                final Conjunction res = (Conjunction) Conjunction.make(zw2, T2, context.getMemory());
+                T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, context.getMemory());
             }
             final TruthValue truth = TruthFunctions.induction(originalMainSentence.getTruth(), subSentence.getTruth());
-            final BudgetValue budget = BudgetFunctions.compoundForward(truth, T, context.memory);
+            final BudgetValue budget = BudgetFunctions.compoundForward(truth, T, context.getMemory());
             context.doublePremiseTask(T, truth, budget);
         }
     }
@@ -77,7 +77,7 @@ public final class CompositionalRules {
             Statement beliefContent,
             int index,
             DerivationContext context) {
-        if ((!context.currentTask.getSentence().isJudgment())
+        if ((!context.getCurrentTask().getSentence().isJudgment())
                 || (taskContent.getClass() != beliefContent.getClass())) {
             return;
         }
@@ -92,8 +92,8 @@ public final class CompositionalRules {
             decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, index, false, context);
             return;
         }
-        final TruthValue truthT = context.currentTask.getSentence().getTruth();
-        final TruthValue truthB = context.currentBelief.getTruth();
+        final TruthValue truthT = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truthB = context.getCurrentBelief().getTruth();
         final TruthValue truthOr = TruthFunctions.union(truthT, truthB);
         final TruthValue truthAnd = TruthFunctions.intersection(truthT, truthB);
         TruthValue truthDif = null;
@@ -102,40 +102,40 @@ public final class CompositionalRules {
         Term termDif = null;
         if (index == 0) {
             if (taskContent instanceof Inheritance) {
-                termOr = IntersectionInt.make(componentT, componentB, context.memory);
-                termAnd = IntersectionExt.make(componentT, componentB, context.memory);
+                termOr = IntersectionInt.make(componentT, componentB, context.getMemory());
+                termAnd = IntersectionExt.make(componentT, componentB, context.getMemory());
                 if (truthB.isNegative()) {
                     if (!truthT.isNegative()) {
-                        termDif = DifferenceExt.make(componentT, componentB, context.memory);
+                        termDif = DifferenceExt.make(componentT, componentB, context.getMemory());
                         truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
                     }
                 } else if (truthT.isNegative()) {
-                    termDif = DifferenceExt.make(componentB, componentT, context.memory);
+                    termDif = DifferenceExt.make(componentB, componentT, context.getMemory());
                     truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
                 }
             } else if (taskContent instanceof Implication) {
-                termOr = Disjunction.make(componentT, componentB, context.memory);
-                termAnd = Conjunction.make(componentT, componentB, context.memory);
+                termOr = Disjunction.make(componentT, componentB, context.getMemory());
+                termAnd = Conjunction.make(componentT, componentB, context.getMemory());
             }
             processComposed(taskContent, componentCommon.clone(), termOr, truthOr, context);
             processComposed(taskContent, componentCommon.clone(), termAnd, truthAnd, context);
             processComposed(taskContent, componentCommon.clone(), termDif, truthDif, context);
         } else { // index == 1
             if (taskContent instanceof Inheritance) {
-                termOr = IntersectionExt.make(componentT, componentB, context.memory);
-                termAnd = IntersectionInt.make(componentT, componentB, context.memory);
+                termOr = IntersectionExt.make(componentT, componentB, context.getMemory());
+                termAnd = IntersectionInt.make(componentT, componentB, context.getMemory());
                 if (truthB.isNegative()) {
                     if (!truthT.isNegative()) {
-                        termDif = DifferenceInt.make(componentT, componentB, context.memory);
+                        termDif = DifferenceInt.make(componentT, componentB, context.getMemory());
                         truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
                     }
                 } else if (truthT.isNegative()) {
-                    termDif = DifferenceInt.make(componentB, componentT, context.memory);
+                    termDif = DifferenceInt.make(componentB, componentT, context.getMemory());
                     truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
                 }
             } else if (taskContent instanceof Implication) {
-                termOr = Conjunction.make(componentT, componentB, context.memory);
-                termAnd = Disjunction.make(componentT, componentB, context.memory);
+                termOr = Conjunction.make(componentT, componentB, context.getMemory());
+                termAnd = Disjunction.make(componentT, componentB, context.getMemory());
             }
             processComposed(taskContent, termOr, componentCommon.clone(), truthOr, context);
             processComposed(taskContent, termAnd, componentCommon.clone(), truthAnd, context);
@@ -143,7 +143,7 @@ public final class CompositionalRules {
         }
         if (taskContent instanceof Inheritance) {
             introVarOuter(taskContent, beliefContent, index, context);
-            // introVarImage(taskContent, beliefContent, index, context.memory);
+            // introVarImage(taskContent, beliefContent, index, context.getMemory());
         }
     }
 
@@ -163,12 +163,12 @@ public final class CompositionalRules {
         if ((subject == null) || (predicate == null)) {
             return;
         }
-        final Term content = Statement.make(statement, subject, predicate, context.memory);
+        final Term content = Statement.make(statement, subject, predicate, context.getMemory());
         if ((content == null) || content.equals(statement)
-                || content.equals(context.currentBelief.getContent())) {
+                || content.equals(context.getCurrentBelief().getContent())) {
             return;
         }
-        final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+        final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -178,10 +178,11 @@ public final class CompositionalRules {
      * @param implication     The implication term to be decomposed
      * @param componentCommon The part of the implication to be removed
      * @param term1           The other term in the contentInd
-     * @param index           The location of the shared term: 0 for subject, 1 for
+     * @param index           The location of the shared term: 0 for subject, 1
+     *                        for
      *                        predicate
      * @param compoundTask    Whether the implication comes from the task
-     * @param context.memory  Reference to the context.memory
+     * @param context         Reference to the derivation context
      */
     private static void decomposeCompound(
             CompoundTerm compound, Term component,
@@ -190,13 +191,13 @@ public final class CompositionalRules {
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
         }
-        final Term term2 = CompoundTerm.reduceComponents(compound, component, context.memory);
+        final Term term2 = CompoundTerm.reduceComponents(compound, component, context.getMemory());
         if (term2 == null) {
             return;
         }
-        final Task task = context.currentTask;
+        final Task task = context.getCurrentTask();
         final Sentence sentence = task.getSentence();
-        final Sentence belief = context.currentBelief;
+        final Sentence belief = context.getCurrentBelief();
         final Statement oldContent = (Statement) task.getContent();
         final TruthValue v1, v2;
         if (compoundTask) {
@@ -209,7 +210,7 @@ public final class CompositionalRules {
         TruthValue truth = null;
         final Term content;
         if (index == 0) {
-            content = Statement.make(oldContent, term1, term2, context.memory);
+            content = Statement.make(oldContent, term1, term2, context.getMemory());
             if (content == null) {
                 return;
             }
@@ -237,7 +238,7 @@ public final class CompositionalRules {
                 }
             }
         } else {
-            content = Statement.make(oldContent, term2, term1, context.memory);
+            content = Statement.make(oldContent, term2, term1, context.getMemory());
             if (content == null) {
                 return;
             }
@@ -266,7 +267,7 @@ public final class CompositionalRules {
             }
         }
         if (truth != null) {
-            final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+            final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
             context.doublePremiseTask(content, truth, budget);
         }
     }
@@ -278,26 +279,26 @@ public final class CompositionalRules {
      * @param implication     The implication term to be decomposed
      * @param componentCommon The part of the implication to be removed
      * @param compoundTask    Whether the implication comes from the task
-     * @param context.memory  Reference to the context.memory
+     * @param context         Reference to the derivation context
      */
     static void decomposeStatement(
             CompoundTerm compound, Term component,
             boolean compoundTask, DerivationContext context) {
-        final Task task = context.currentTask;
+        final Task task = context.getCurrentTask();
         final Sentence sentence = task.getSentence();
-        final Sentence belief = context.currentBelief;
-        final Term content = CompoundTerm.reduceComponents(compound, component, context.memory);
+        final Sentence belief = context.getCurrentBelief();
+        final Term content = CompoundTerm.reduceComponents(compound, component, context.getMemory());
         if (content == null) {
             return;
         }
         TruthValue truth = null;
         BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.memory);
+            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
             context.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
             if (Variable.containVarQ(sentence.getContent().getName())) {
-                final Concept contentConcept = context.memory.termToConcept(content);
+                final Concept contentConcept = context.getMemory().termToConcept(content);
                 if (contentConcept == null) {
                     return;
                 }
@@ -307,19 +308,20 @@ public final class CompositionalRules {
                     return;
                 }
                 // * 💭【2024-05-19 20:48:50】实质上是借助「元素陈述」的内容来修正
-                context.newStamp = Stamp.uncheckedMerge(
+                final Stamp newStamp = Stamp.uncheckedMerge(
                         task.getSentence().getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
-                        context.memory.getTime());
+                        context.getMemory().getTime());
+                context.setNewStamp(newStamp);
                 final Task contentTask = new Task(contentBelief, task.getBudget());
-                // context.currentTask = contentTask;
+                // context.getCurrentTask() = contentTask;
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
-                final Term conj = Conjunction.make(component, content, context.memory);
-                // * ↓不会用到`context.currentTask`、`newStamp`
+                final Term conj = Conjunction.make(component, content, context.getMemory());
+                // * ↓不会用到`context.getCurrentTask()`、`newStamp`
                 truth = TruthFunctions.intersection(contentBelief.getTruth(), belief.getTruth());
-                // * ↓不会用到`context.currentTask`、`newStamp`
-                budget = BudgetFunctions.compoundForward(truth, conj, context.memory);
-                // ! ⚠️↓会用到`context.currentTask`、`newStamp`：构建新结论时要用到
+                // * ↓不会用到`context.getCurrentTask()`、`newStamp`
+                budget = BudgetFunctions.compoundForward(truth, conj, context.getMemory());
+                // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
                 context.doublePremiseTask(contentTask, conj, truth, budget);
             }
         } else {
@@ -342,7 +344,7 @@ public final class CompositionalRules {
             } else {
                 return;
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
             context.doublePremiseTask(content, truth, budget);
         }
     }
@@ -361,8 +363,8 @@ public final class CompositionalRules {
             Statement taskContent,
             Statement beliefContent,
             int index, DerivationContext context) {
-        final TruthValue truthT = context.currentTask.getSentence().getTruth();
-        final TruthValue truthB = context.currentBelief.getTruth();
+        final TruthValue truthT = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truthB = context.getCurrentBelief().getTruth();
         final Variable varInd = new Variable("$varInd1");
         final Variable varInd2 = new Variable("$varInd2");
         final Term term11, term12, term21, term22;
@@ -408,40 +410,40 @@ public final class CompositionalRules {
             }
         }
 
-        final Statement state1 = Inheritance.make(term11, term12, context.memory);
-        final Statement state2 = Inheritance.make(term21, term22, context.memory);
-        Term content = Implication.make(state1, state2, context.memory);
+        final Statement state1 = Inheritance.make(term11, term12, context.getMemory());
+        final Statement state2 = Inheritance.make(term21, term22, context.getMemory());
+        Term content = Implication.make(state1, state2, context.getMemory());
         if (content == null) {
             return;
         }
         TruthValue truth;
         BudgetValue budget;
         truth = TruthFunctions.induction(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
 
-        content = Implication.make(state2, state1, context.memory);
+        content = Implication.make(state2, state1, context.getMemory());
         truth = TruthFunctions.induction(truthB, truthT);
-        budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
 
-        content = Equivalence.make(state1, state2, context.memory);
+        content = Equivalence.make(state1, state2, context.getMemory());
         truth = TruthFunctions.comparison(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
 
         final Variable varDep = new Variable("#varDep");
         final Statement newState1, newState2;
         if (index == 0) {
-            newState1 = Inheritance.make(varDep, taskContent.getPredicate(), context.memory);
-            newState2 = Inheritance.make(varDep, beliefContent.getPredicate(), context.memory);
+            newState1 = Inheritance.make(varDep, taskContent.getPredicate(), context.getMemory());
+            newState2 = Inheritance.make(varDep, beliefContent.getPredicate(), context.getMemory());
         } else {
-            newState1 = Inheritance.make(taskContent.getSubject(), varDep, context.memory);
-            newState2 = Inheritance.make(beliefContent.getSubject(), varDep, context.memory);
+            newState1 = Inheritance.make(taskContent.getSubject(), varDep, context.getMemory());
+            newState2 = Inheritance.make(beliefContent.getSubject(), varDep, context.getMemory());
         }
-        content = Conjunction.make(newState1, newState2, context.memory);
+        content = Conjunction.make(newState1, newState2, context.getMemory());
         truth = TruthFunctions.intersection(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.memory);
+        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
         context.doublePremiseTask(content, truth, budget, false);
     }
 
@@ -459,7 +461,7 @@ public final class CompositionalRules {
      */
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
             DerivationContext context) {
-        final Task task = context.currentTask;
+        final Task task = context.getCurrentTask();
         final Sentence taskSentence = task.getSentence();
         if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())
                 || oldCompound.containComponent(premise1)) {
@@ -479,20 +481,20 @@ public final class CompositionalRules {
         } else {
             return;
         }
-        final Sentence belief = context.currentBelief;
+        final Sentence belief = context.getCurrentBelief();
         final HashMap<Term, Term> substitute = new HashMap<>();
         substitute.put(commonTerm1, new Variable("#varDep2"));
-        CompoundTerm content = (CompoundTerm) Conjunction.make(premise1, oldCompound, context.memory);
+        CompoundTerm content = (CompoundTerm) Conjunction.make(premise1, oldCompound, context.getMemory());
         content.applySubstitute(substitute);
         TruthValue truth = TruthFunctions.intersection(taskSentence.getTruth(), belief.getTruth());
-        BudgetValue budget = BudgetFunctions.forward(truth, context.memory);
+        BudgetValue budget = BudgetFunctions.forward(truth, context.getMemory());
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
         substitute.put(commonTerm1, new Variable("$varInd1"));
         if (commonTerm2 != null) {
             substitute.put(commonTerm2, new Variable("$varInd2"));
         }
-        content = Implication.make(premise1, oldCompound, context.memory);
+        content = Implication.make(premise1, oldCompound, context.getMemory());
         if (content == null) {
             return;
         }
@@ -502,7 +504,7 @@ public final class CompositionalRules {
         } else {
             truth = TruthFunctions.induction(taskSentence.getTruth(), belief.getTruth());
         }
-        budget = BudgetFunctions.forward(truth, context.memory);
+        budget = BudgetFunctions.forward(truth, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
     }
 
