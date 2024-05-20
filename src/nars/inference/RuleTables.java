@@ -633,22 +633,25 @@ public class RuleTables {
     /**
      * The TaskLink is of type TRANSFORM, and the conclusion is an equivalent
      * transformation
+     * * 📝【2024-05-20 11:46:32】仅「直接推理」使用
      *
      * @param tLink   The task link
      * @param context Reference to the derivation context
      */
     public static void transformTask(TaskLink tLink, DerivationContext context) {
-        final CompoundTerm content = (CompoundTerm) context.getCurrentTask().getContent().clone();
+        // * 🚩预处理
+        final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();
         final Term inh;
-        if ((indices.length == 2) || (content instanceof Inheritance)) { // <(*, term, #) --> #>
-            inh = content;
+        if ((indices.length == 2) || (clonedContent instanceof Inheritance)) { // <(*, term, #) --> #>
+            inh = clonedContent;
         } else if (indices.length == 3) { // <<(*, term, #) --> #> ==> #>
-            inh = content.componentAt(indices[0]);
+            inh = clonedContent.componentAt(indices[0]);
         } else if (indices.length == 4) { // <(&&, <(*, term, #) --> #>, #) ==> #>
-            Term component = content.componentAt(indices[0]);
+            Term component = clonedContent.componentAt(indices[0]);
             if ((component instanceof Conjunction)
-                    && (((content instanceof Implication) && (indices[0] == 0)) || (content instanceof Equivalence))) {
+                    && (((clonedContent instanceof Implication) && (indices[0] == 0))
+                            || (clonedContent instanceof Equivalence))) {
                 inh = ((CompoundTerm) component).componentAt(indices[1]);
             } else {
                 return;
@@ -657,7 +660,7 @@ public class RuleTables {
             inh = null;
         }
         if (inh instanceof Inheritance) {
-            StructuralRules.transformProductImage((Inheritance) inh, content, indices, context);
+            StructuralRules.transformProductImage((Inheritance) inh, clonedContent, indices, context);
         }
     }
 }

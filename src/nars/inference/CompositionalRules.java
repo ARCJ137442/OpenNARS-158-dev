@@ -55,7 +55,7 @@ public final class CompositionalRules {
                 T = (CompoundTerm) CompoundTerm.setComponent(T, index, res, context.getMemory());
             }
             final TruthValue truth = TruthFunctions.induction(originalMainSentence.getTruth(), subSentence.getTruth());
-            final BudgetValue budget = BudgetFunctions.compoundForward(truth, T, context.getMemory());
+            final BudgetValue budget = BudgetFunctions.compoundForward(truth, T, context);
             context.doublePremiseTask(T, truth, budget);
         }
     }
@@ -168,7 +168,7 @@ public final class CompositionalRules {
                 || content.equals(context.getCurrentBelief().getContent())) {
             return;
         }
-        final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+        final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -267,7 +267,7 @@ public final class CompositionalRules {
             }
         }
         if (truth != null) {
-            final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context);
             context.doublePremiseTask(content, truth, budget);
         }
     }
@@ -294,7 +294,7 @@ public final class CompositionalRules {
         TruthValue truth = null;
         BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
             context.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
             if (Variable.containVarQ(sentence.getContent().getName())) {
@@ -320,7 +320,7 @@ public final class CompositionalRules {
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
                 truth = TruthFunctions.intersection(contentBelief.getTruth(), belief.getTruth());
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                budget = BudgetFunctions.compoundForward(truth, conj, context.getMemory());
+                budget = BudgetFunctions.compoundForward(truth, conj, context);
                 // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
                 context.doublePremiseTask(contentTask, conj, truth, budget);
             }
@@ -344,7 +344,7 @@ public final class CompositionalRules {
             } else {
                 return;
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
             context.doublePremiseTask(content, truth, budget);
         }
     }
@@ -419,17 +419,17 @@ public final class CompositionalRules {
         TruthValue truth;
         BudgetValue budget;
         truth = TruthFunctions.induction(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+        budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         content = Implication.make(state2, state1, context.getMemory());
         truth = TruthFunctions.induction(truthB, truthT);
-        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+        budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         content = Equivalence.make(state1, state2, context.getMemory());
         truth = TruthFunctions.comparison(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+        budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         final Variable varDep = new Variable("#varDep");
@@ -443,7 +443,7 @@ public final class CompositionalRules {
         }
         content = Conjunction.make(newState1, newState2, context.getMemory());
         truth = TruthFunctions.intersection(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+        budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget, false);
     }
 
@@ -487,7 +487,7 @@ public final class CompositionalRules {
         CompoundTerm content = (CompoundTerm) Conjunction.make(premise1, oldCompound, context.getMemory());
         content.applySubstitute(substitute);
         TruthValue truth = TruthFunctions.intersection(taskSentence.getTruth(), belief.getTruth());
-        BudgetValue budget = BudgetFunctions.forward(truth, context.getMemory());
+        BudgetValue budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
         substitute.put(commonTerm1, new Variable("$varInd1"));
@@ -504,7 +504,7 @@ public final class CompositionalRules {
         } else {
             truth = TruthFunctions.induction(taskSentence.getTruth(), belief.getTruth());
         }
-        budget = BudgetFunctions.forward(truth, context.getMemory());
+        budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
     }
 

@@ -70,7 +70,7 @@ public final class StructuralRules {
         TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackwardWeak(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackwardWeak(content, context);
         } else {
             if (compound.size() > 1) {
                 if (sentence.isJudgment()) {
@@ -79,7 +79,7 @@ public final class StructuralRules {
                     return;
                 }
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -117,12 +117,12 @@ public final class StructuralRules {
         final TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
         } else {
             if (!(sub instanceof Product) && (sub.size() > 1) && (sentence.isJudgment())) {
                 return;
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -250,7 +250,7 @@ public final class StructuralRules {
         if (oldContent instanceof Statement) {
             final Term content = Statement.make((Statement) oldContent, subject, predicate, context.getMemory());
             if (content != null) {
-                final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+                final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context);
                 context.singlePremiseTask(content, truth, budget);
             }
         }
@@ -295,9 +295,9 @@ public final class StructuralRules {
         final TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -392,9 +392,9 @@ public final class StructuralRules {
         final TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -423,9 +423,9 @@ public final class StructuralRules {
                 inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
-                        budget = BudgetFunctions.compoundBackward(inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, truth, budget);
                 }
@@ -444,9 +444,9 @@ public final class StructuralRules {
                 inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
-                        budget = BudgetFunctions.compoundBackward(inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, truth, budget);
                 }
@@ -478,9 +478,9 @@ public final class StructuralRules {
                 inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
-                        budget = BudgetFunctions.compoundBackward(inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, truth, budget);
                 }
@@ -499,9 +499,9 @@ public final class StructuralRules {
                 inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
                 if (inheritance != null) { // jmv <<<<<
                     if (truth == null) {
-                        budget = BudgetFunctions.compoundBackward(inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context.getMemory());
+                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, truth, budget);
                 }
@@ -530,7 +530,7 @@ public final class StructuralRules {
         TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
         } else {
             if ((sentence.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
                 truth = TruthFunctions.deduction(truth, RELIANCE);
@@ -540,7 +540,7 @@ public final class StructuralRules {
                 v2 = TruthFunctions.deduction(v1, RELIANCE);
                 truth = TruthFunctions.negation(v2);
             }
-            budget = BudgetFunctions.forward(truth, context.getMemory());
+            budget = BudgetFunctions.forward(truth, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -561,9 +561,9 @@ public final class StructuralRules {
         }
         final BudgetValue budget;
         if (sentence.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+            budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -584,16 +584,16 @@ public final class StructuralRules {
         final BudgetValue budget;
         if (sentence.isQuestion()) {
             if (content instanceof Implication) {
-                budget = BudgetFunctions.compoundBackwardWeak(content, context.getMemory());
+                budget = BudgetFunctions.compoundBackwardWeak(content, context);
             } else {
-                budget = BudgetFunctions.compoundBackward(content, context.getMemory());
+                budget = BudgetFunctions.compoundBackward(content, context);
             }
             context.singlePremiseTask(content, Symbols.QUESTION_MARK, truth, budget);
         } else {
             if (content instanceof Implication) {
                 truth = TruthFunctions.contraposition(truth);
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context.getMemory());
+            budget = BudgetFunctions.compoundForward(truth, content, context);
             context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, truth, budget);
         }
     }

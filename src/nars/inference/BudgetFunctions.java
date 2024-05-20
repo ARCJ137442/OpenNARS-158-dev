@@ -48,11 +48,11 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget for the new task which is the belief activated, if
      *         necessary
      */
-    static BudgetValue solutionEval(Sentence problem, Sentence solution, Task task, Memory memory) {
+    static BudgetValue solutionEval(Sentence problem, Sentence solution, Task task, DerivationContext context) {
         final BudgetValue budget;
         final boolean feedbackToLinks;
         if (task == null) { // called in continued processing
-            task = memory.context.getCurrentTask();
+            task = context.getCurrentTask();
             feedbackToLinks = true;
         } else {
             feedbackToLinks = false;
@@ -69,9 +69,9 @@ public final class BudgetFunctions extends UtilityFunctions {
             task.setPriority(Math.min(1 - quality, taskPriority));
         }
         if (feedbackToLinks) {
-            final TaskLink tLink = memory.context.getCurrentTaskLink();
+            final TaskLink tLink = context.getCurrentTaskLink();
             tLink.setPriority(Math.min(1 - quality, tLink.getPriority()));
-            final TermLink bLink = memory.context.getCurrentBeliefLink();
+            final TermLink bLink = context.getCurrentBeliefLink();
             bLink.incPriority(quality);
         }
         return budget;
@@ -86,16 +86,16 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget for the new task
      */
     static BudgetValue revise(TruthValue tTruth, TruthValue bTruth, TruthValue truth, boolean feedbackToLinks,
-            Memory memory) {
+            DerivationContext context) {
         final float difT = truth.getExpDifAbs(tTruth);
-        final Task task = memory.context.getCurrentTask();
+        final Task task = context.getCurrentTask();
         task.decPriority(1 - difT);
         task.decDurability(1 - difT);
         if (feedbackToLinks) {
-            final TaskLink tLink = memory.context.getCurrentTaskLink();
+            final TaskLink tLink = context.getCurrentTaskLink();
             tLink.decPriority(1 - difT);
             tLink.decDurability(1 - difT);
-            final TermLink bLink = memory.context.getCurrentBeliefLink();
+            final TermLink bLink = context.getCurrentBeliefLink();
             final float difB = truth.getExpDifAbs(bTruth);
             bLink.decPriority(1 - difB);
             bLink.decDurability(1 - difB);
@@ -196,8 +196,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion
      * @return The budget value of the conclusion
      */
-    static BudgetValue forward(TruthValue truth, Memory memory) {
-        return budgetInference(truthToQuality(truth), 1, memory);
+    static BudgetValue forward(TruthValue truth, DerivationContext context) {
+        return budgetInference(truthToQuality(truth), 1, context);
     }
 
     /**
@@ -207,8 +207,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backward(TruthValue truth, Memory memory) {
-        return budgetInference(truthToQuality(truth), 1, memory);
+    public static BudgetValue backward(TruthValue truth, DerivationContext context) {
+        return budgetInference(truthToQuality(truth), 1, context);
     }
 
     /**
@@ -218,8 +218,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backwardWeak(TruthValue truth, Memory memory) {
-        return budgetInference(w2c(1) * truthToQuality(truth), 1, memory);
+    public static BudgetValue backwardWeak(TruthValue truth, DerivationContext context) {
+        return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
     /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
@@ -231,8 +231,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundForward(TruthValue truth, Term content, Memory memory) {
-        return budgetInference(truthToQuality(truth), content.getComplexity(), memory);
+    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContext context) {
+        return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
     /**
@@ -242,8 +242,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackward(Term content, Memory memory) {
-        return budgetInference(1, content.getComplexity(), memory);
+    public static BudgetValue compoundBackward(Term content, DerivationContext context) {
+        return budgetInference(1, content.getComplexity(), context);
     }
 
     /**
@@ -253,8 +253,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackwardWeak(Term content, Memory memory) {
-        return budgetInference(w2c(1), content.getComplexity(), memory);
+    public static BudgetValue compoundBackwardWeak(Term content, DerivationContext context) {
+        return budgetInference(w2c(1), content.getComplexity(), context);
     }
 
     /**
@@ -265,11 +265,11 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory     Reference to the memory
      * @return Budget of the conclusion task
      */
-    private static BudgetValue budgetInference(float qual, int complexity, Memory memory) {
-        final Item t = memory.context.getCurrentTaskLink();
+    private static BudgetValue budgetInference(float qual, int complexity, DerivationContext context) {
+        final Item t = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         // if (t == null) {
-        // t = memory.context.getCurrentTask();
+        // t = context.getCurrentTask();
         // }
         if (t == null) {
             throw new NullPointerException("t shouldn't be `null`!");
@@ -277,11 +277,11 @@ public final class BudgetFunctions extends UtilityFunctions {
         float priority = t.getPriority();
         float durability = t.getDurability() / complexity;
         final float quality = qual / complexity;
-        final TermLink bLink = memory.context.getCurrentBeliefLink();
+        final TermLink bLink = context.getCurrentBeliefLink();
         if (bLink != null) {
             priority = or(priority, bLink.getPriority());
             durability = and(durability, bLink.getDurability());
-            final float targetActivation = memory.getConceptActivation(bLink.getTarget());
+            final float targetActivation = context.getMemory().getConceptActivation(bLink.getTarget());
             bLink.incPriority(or(quality, targetActivation));
             bLink.incDurability(quality);
         }
