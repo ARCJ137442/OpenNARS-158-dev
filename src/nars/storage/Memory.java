@@ -542,6 +542,9 @@ public class Memory {
         // * 💭直接推理似乎不应该涉及「词项链/信念链」
         // * ❓这里的「信念链」是否可空
         // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
+        if (self.context.getCurrentBeliefLink() != null) {
+            throw new Error("currentBeliefLink: 非预期的变量存在性情况（概念推理之前，直接推理不应有信念链）");
+        }
         self.context.setCurrentBeliefLink(null);
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
@@ -549,6 +552,9 @@ public class Memory {
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
+            if (self.context.getCurrentBelief() != null) {
+                throw new Error("currentBelief: 非预期的变量存在性情况（概念推理之前，直接推理不应有信念链）");
+            }
             self.context.setCurrentBelief(null);
             RuleTables.transformTask(currentTaskLink, self.context);
             // to turn this into structural inference as below?
