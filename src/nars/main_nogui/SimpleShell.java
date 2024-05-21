@@ -33,12 +33,35 @@ public class SimpleShell {
         shell.main();
     }
 
-    public SimpleShell(final InputStream in, final PrintStream out) {
-        this.reasoner = new ReasonerBatch();
-        // ! ❓此处的「输入通道」存在一些机制上的问题：需要「获取输入字符串组」而非其它的
+    public SimpleShell() {
+        this(System.out);
+    }
+
+    public SimpleShell(final PrintStream out) {
         this.out = out;
-        this.reasoner.addInputChannel(new ShellInput(this, in));
-        this.reasoner.addOutputChannel(new ShellOutput(out));
+        this.reasoner = new ReasonerBatch();
+    }
+
+    public SimpleShell(final InputStream in, final PrintStream out) {
+        this(out);
+        this.setIOChannel(in, out);
+    }
+
+    public SimpleShell setIOChannel(final InputStream in, final PrintStream out) {
+        return this.setIOChannel(new ShellInput(this, in), new ShellOutput(out));
+    }
+
+    /**
+     * 🎯用于在「测试代码」中提供自定义输入流
+     */
+    public SimpleShell setIOChannel(final InputChannel inChannel, final PrintStream out) {
+        return this.setIOChannel(inChannel, new ShellOutput(out));
+    }
+
+    public SimpleShell setIOChannel(final InputChannel inChannel, final OutputChannel outChannel) {
+        this.reasoner.addInputChannel(inChannel);
+        this.reasoner.addOutputChannel(outChannel);
+        return this;
     }
 
     /** 欢迎信息 */
@@ -62,7 +85,7 @@ public class SimpleShell {
     /**
      * 终端输入通道
      */
-    public static final class ShellInput implements InputChannel {
+    public static class ShellInput implements InputChannel {
         /**
          * 🆕需要持有对「交互终端」的引用
          * * 🎯回显信息
@@ -150,7 +173,7 @@ public class SimpleShell {
     /**
      * 终端输出通道
      */
-    public static final class ShellOutput implements OutputChannel {
+    public static class ShellOutput implements OutputChannel {
 
         /** 🆕要指定的输出流 */
         private final PrintStream out;
