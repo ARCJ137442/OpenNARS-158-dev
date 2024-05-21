@@ -18,16 +18,17 @@ public class RuleTables {
      * @param bLink   The selected TermLink, which may provide a belief
      * @param context Reference to the derivation context
      */
-    public static void reason(DerivationContext context) {
+    public static void reason(DerivationContextReason context) {
         // * 🚩系列断言与赋值（实际使用中可删）
         /*
          * 📝有效字段：{
-         * currentTask
          * currentTerm
          * currentConcept
+         * currentTask
+         * currentTaskLink
          * currentBelief?
          * currentBeliefLink
-         * currentTaskLink
+         * newStamp?
          * }
          */
         if (context.getCurrentTask() == null) {
@@ -203,7 +204,7 @@ public class RuleTables {
      * @param context    Reference to the derivation context
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final Sentence taskSentence = context.getCurrentTask().getSentence();
         final Sentence belief = context.getCurrentBelief();
         final int figure;
@@ -269,7 +270,7 @@ public class RuleTables {
      * @param context  Reference to the derivation context
      */
     private static void asymmetricAsymmetric(Sentence sentence, Sentence belief, int figure,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final Statement s1 = (Statement) sentence.cloneContent();
         final Statement s2 = (Statement) belief.cloneContent();
         final Term t1, t2;
@@ -341,7 +342,7 @@ public class RuleTables {
      * @param figure  The location of the shared term
      * @param context Reference to the derivation context
      */
-    private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, DerivationContext context) {
+    private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
         final Statement asymSt = (Statement) asym.cloneContent();
         final Statement symSt = (Statement) sym.cloneContent();
         final Term t1, t2;
@@ -403,7 +404,7 @@ public class RuleTables {
      * @param context      Reference to the derivation context
      */
     private static void symmetricSymmetric(Sentence belief, Sentence taskSentence, int figure,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final Statement s1 = (Statement) belief.cloneContent();
         final Statement s2 = (Statement) taskSentence.cloneContent();
         switch (figure) {
@@ -447,7 +448,7 @@ public class RuleTables {
      * @param context.getMemory()  Reference to the context.getMemory()
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final Sentence mainSentence = originalMainSentence.clone(); // for substitution
         final Statement statement = (Statement) mainSentence.getContent();
         final Term component = statement.componentAt(index);
@@ -485,7 +486,7 @@ public class RuleTables {
      * @param context     Reference to the derivation context
      */
     private static void conditionalDedIndWithVar(Implication conditional, short index, Statement statement, short side,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final CompoundTerm condition = (CompoundTerm) conditional.getSubject();
         final Term component = condition.componentAt(index);
         final Term component2;
@@ -518,7 +519,7 @@ public class RuleTables {
      * @param context      Reference to the derivation context
      */
     private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if ((compound instanceof Conjunction) || (compound instanceof Disjunction)) {
             if (context.getCurrentBelief() != null) {
                 CompositionalRules.decomposeStatement(compound, component, compoundTask, context);
@@ -543,7 +544,8 @@ public class RuleTables {
      * @param beliefTerm The compound from the belief
      * @param context    Reference to the derivation context
      */
-    private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm, DerivationContext context) {
+    private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm,
+            DerivationContextReason context) {
         if (taskTerm.getClass() == beliefTerm.getClass()) {
             if (taskTerm.size() > beliefTerm.size()) {
                 compoundAndSelf(taskTerm, beliefTerm, true, context);
@@ -564,7 +566,7 @@ public class RuleTables {
      * @param context    Reference to the derivation context
      */
     private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
-            Term beliefTerm, DerivationContext context) {
+            Term beliefTerm, DerivationContextReason context) {
         final Term component = compound.componentAt(index);
         final Task task = context.getCurrentTask();
         if (component.getClass() == statement.getClass()) {
@@ -603,7 +605,7 @@ public class RuleTables {
      * @param context   Reference to the derivation context
      */
     private static void componentAndStatement(CompoundTerm compound, short index, Statement statement, short side,
-            DerivationContext context) {
+            DerivationContextReason context) {
         // if (!context.getCurrentTask().isStructural()) {
         if (statement instanceof Inheritance) {
             StructuralRules.structuralDecompose1(compound, index, statement, context);
@@ -638,7 +640,7 @@ public class RuleTables {
      * @param tLink   The task link
      * @param context Reference to the derivation context
      */
-    public static void transformTask(TaskLink tLink, DerivationContext context) {
+    public static void transformTask(TaskLink tLink, DerivationContextReason context) {
         // * 🚩预处理
         final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();

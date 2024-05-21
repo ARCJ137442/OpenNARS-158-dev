@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
-import nars.entity.Item;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
@@ -13,6 +12,8 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.BudgetFunctions;
 import nars.inference.DerivationContext;
+import nars.inference.DerivationContextDirect;
+import nars.inference.DerivationContextReason;
 import nars.inference.RuleTables;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
@@ -91,11 +92,11 @@ public class Memory {
      */
     private final ArrayList<String> exportStrings;
 
-    /**
-     * 🆕新的「推理上下文」对象
-     * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
-     */
-    public DerivationContext context = new DerivationContext(this);
+    // /**
+    // * 🆕新的「推理上下文」对象
+    // * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
+    // */
+    // public DerivationContext context = new DerivationContext(this);
 
     /* ---------- Constructor ---------- */
     /**
@@ -362,12 +363,13 @@ public class Memory {
 
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
-        final Iterable<TermLink> toReasonLinks = preprocessConcept(this);
+        final DerivationContextReason context = new DerivationContextReason(this);
+        final Iterable<TermLink> toReasonLinks = preprocessConcept(this, context);
 
         // * 🚩内部概念高级推理 阶段 * //
         if (toReasonLinks != null)
             // * 🚩都选好了⇒开始
-            processConcept(toReasonLinks);
+            processConcept(toReasonLinks, context);
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段
@@ -379,8 +381,8 @@ public class Memory {
      * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
      * * 🎯变量隔离，防止「上下文串线」与「重复使用」
      */
-    private void absorbContext() {
-        final DerivationContext context = this.context;
+    private void absorbContext(DerivationContext context) {
+        // final DerivationContext context = this.context;
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
         for (final Task newTask : context.getNewTasks()) {
             this.newTasks.add(newTask);
@@ -462,14 +464,16 @@ public class Memory {
     /**
      * Select a concept to fire.
      */
-    private void processConcept(Iterable<TermLink> toReasonLinks) {
+    private void processConcept(
+            final Iterable<TermLink> toReasonLinks,
+            final DerivationContextReason context) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         for (final TermLink termLink : toReasonLinks) {
             // * 🚩每次「概念推理」只更改「当前信念」与「当前信念链」
             final TermLink newBeliefLink = termLink;
             final Sentence newBelief;
-            Stamp newStamp = null;
+            final Stamp newStamp;
             final Concept beliefConcept = termToConcept(termLink.getTarget());
             if (beliefConcept != null) {
                 newBelief = beliefConcept.getBelief(context.getCurrentTask()); // ! may be null
@@ -480,22 +484,25 @@ public class Memory {
                             // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
                             newBelief.getStamp(),
                             getTime());
+                } else {
+                    newStamp = null;
                 }
             } else {
                 newBelief = null;
+                newStamp = null;
             }
             // * 🚩实际上就是「当前信念」「当前信念链」更改后的「新上下文」
             // this.context.currentBelief = newBelief;
             // this.context.currentBeliefLink = newBeliefLink;
             // this.context.newStamp = newStamp;
-            this.context = this.context.cloneWithNewBelief(newBeliefLink, newBelief, newStamp);
+            context.switchToNewBelief(newBeliefLink, newBelief, newStamp);
             // * 🔥启动概念推理：点火！
-            RuleTables.reason(this.context);
+            RuleTables.reason(context);
             context.getCurrentConcept().__putTermLinkBack(termLink);
         }
         context.getCurrentConcept().__putTaskLinkBack(context.getCurrentTaskLink());
         // * 🚩吸收并清空上下文
-        absorbContext();
+        absorbContext(context);
     }
 
     /* ---------- main loop ---------- */
@@ -509,65 +516,59 @@ public class Memory {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private static Iterable<TermLink> preprocessConcept(Memory self) {
+    private static Iterable<TermLink> preprocessConcept(
+            final Memory self,
+            final DerivationContextReason context) {
         // * 🚩推理前判断「是否有必要」
         if (!self.noResult()) // necessary?
             return null;
 
         // * 🚩强制清空旧上下文 | 防止「概念推理后直接推理导致变量遗留」的情况
-        self.context.clear();
+        context.clear();
 
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        self.context.setCurrentConcept(self.concepts.takeOut());
-        if (self.context.getCurrentConcept() == null) {
+        context.setCurrentConcept(self.concepts.takeOut());
+        if (context.getCurrentConcept() == null) {
             return null;
         }
         // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
-        // self.context.setCurrentTerm(self.context.getCurrentConcept().getTerm());
-        self.recorder.append(" * Selected Concept: " + self.context.getCurrentTerm() + "\n");
-        self.concepts.putBack(self.context.getCurrentConcept()); // current Concept remains in the bag all the time
+        // context.setCurrentTerm(context.getCurrentConcept().getTerm());
+        self.recorder.append(" * Selected Concept: " + context.getCurrentTerm() + "\n");
+        self.concepts.putBack(context.getCurrentConcept()); // current Concept remains in the bag all the time
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
 
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = self.context.getCurrentConcept().__takeOutTaskLink();
+        final TaskLink currentTaskLink = context.getCurrentConcept().__takeOutTaskLink();
         if (currentTaskLink == null) {
             return null;
         }
-        self.context.setCurrentTaskLink(currentTaskLink);
+        context.setCurrentTaskLink(currentTaskLink);
         // TODO: 需要明白「到底应不应该删除」，或「直接推理到底要不要用到『当前信念链』」
         // * 💭直接推理似乎不应该涉及「词项链/信念链」
         // * ❓这里的「信念链」是否可空
         // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
-        if (self.context.getCurrentBeliefLink() != null) {
-            throw new Error("currentBeliefLink: 非预期的变量存在性情况（概念推理之前，直接推理不应有信念链）");
-        }
-        self.context.setCurrentBeliefLink(null);
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
         final Task task = currentTaskLink.getTargetTask();
-        self.context.setCurrentTask(task); // one of the two places where this variable is set
+        context.setCurrentTask(task); // one of the two places where this variable is set
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
-            if (self.context.getCurrentBelief() != null) {
-                throw new Error("currentBelief: 非预期的变量存在性情况（概念推理之前，直接推理不应有信念链）");
-            }
-            self.context.setCurrentBelief(null);
-            RuleTables.transformTask(currentTaskLink, self.context);
+            RuleTables.transformTask(currentTaskLink, context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
-            self.context.getCurrentConcept().__putTaskLinkBack(currentTaskLink);
+            context.getCurrentConcept().__putTaskLinkBack(currentTaskLink);
             return null;
         }
 
         // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
         return chooseTermLinksToReason(
                 self,
-                self.context.getCurrentConcept(),
+                context.getCurrentConcept(),
                 currentTaskLink);
     }
 
@@ -604,18 +605,18 @@ public class Memory {
         this.recorder.append("!!! Insert: " + taskInput + "\n");
 
         // * 🚩准备上下文
-        final boolean okToProcess = prepareDirectProcessContext(taskInput);
+        final DerivationContextDirect context = prepareDirectProcessContext(taskInput);
 
         // * 🚩上下文准备完毕⇒开始
-        if (okToProcess) {
+        if (context != null) {
             // * 🚩调整概念的预算值
             activateConcept(context.getCurrentConcept(), taskInput.getBudget());
             // * 🔥开始「直接处理」
-            context.getCurrentConcept().directProcess();
+            context.getCurrentConcept().directProcess(context);
         }
 
         // * 🚩吸收并清空上下文
-        absorbContext();
+        absorbContext(context);
     }
 
     /**
@@ -624,11 +625,11 @@ public class Memory {
      * * 📌捕获`taskInput`的所有权
      *
      * @param taskInput
-     * @return 是否可以开始「直接推理」
+     * @return 直接推理上下文 / 空
      */
-    private boolean prepareDirectProcessContext(Task taskInput) {
+    private DerivationContextDirect prepareDirectProcessContext(Task taskInput) {
         // * 🚩强制清空上下文防串
-        context.clear();
+        final DerivationContextDirect context = new DerivationContextDirect(this);
         // * 🚩准备上下文
         // one of the two places where this variable is set
         context.setCurrentTask(taskInput);
@@ -636,9 +637,9 @@ public class Memory {
         if (context.getCurrentConcept() != null) {
             // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
             // context.setCurrentTerm(context.getCurrentConcept().getTerm());
-            return true; // * 📌准备就绪
+            return context; // * 📌准备就绪
         }
-        return false; // * 📌准备失败：没有可供推理的概念
+        return null; // * 📌准备失败：没有可供推理的概念
     }
 
     /* ---------- display ---------- */
@@ -678,11 +679,12 @@ public class Memory {
         String result = toStringLongIfNotNull(concepts, "concepts")
                 + toStringLongIfNotNull(novelTasks, "novelTasks")
                 + toStringIfNotNull(newTasks, "newTasks");
-        if (context != null) {
-            result += toStringLongIfNotNull(context.getCurrentTask(), "currentTask")
-                    + toStringLongIfNotNull(context.getCurrentBeliefLink(), "currentBeliefLink")
-                    + toStringIfNotNull(context.getCurrentBelief(), "currentBelief");
-        }
+        // ! ❌【2024-05-21 10:52:53】因为现在「推理上下文」仅为临时变量，故不再提供其信息
+        // if (context != null) {
+        // result += toStringLongIfNotNull(context.getCurrentTask(), "currentTask")
+        // + toStringLongIfNotNull(context.getCurrentBeliefLink(), "currentBeliefLink")
+        // + toStringIfNotNull(context.getCurrentBelief(), "currentBelief");
+        // }
         return result;
     }
 
@@ -692,11 +694,11 @@ public class Memory {
                         + item.toStringLong();
     }
 
-    private String toStringLongIfNotNull(Item item, String title) {
-        return item == null ? ""
-                : "\n " + title + ":\n"
-                        + item.toStringLong();
-    }
+    // private String toStringLongIfNotNull(Item item, String title) {
+    // return item == null ? ""
+    // : "\n " + title + ":\n"
+    // + item.toStringLong();
+    // }
 
     private String toStringIfNotNull(Object item, String title) {
         return item == null ? ""

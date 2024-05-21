@@ -15,7 +15,8 @@ public final class CompositionalRules {
     static void IntroVarSameSubjectOrPredicate(
             Sentence originalMainSentence,
             Sentence subSentence, Term component,
-            CompoundTerm content, int index, DerivationContext context) {
+            CompoundTerm content, int index,
+            DerivationContextReason context) {
         final Sentence cloned = originalMainSentence.clone();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
@@ -76,7 +77,7 @@ public final class CompositionalRules {
             Statement taskContent,
             Statement beliefContent,
             int index,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if ((!context.getCurrentTask().getSentence().isJudgment())
                 || (taskContent.getClass() != beliefContent.getClass())) {
             return;
@@ -159,7 +160,7 @@ public final class CompositionalRules {
     private static void processComposed(
             Statement statement,
             Term subject, Term predicate, TruthValue truth,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if ((subject == null) || (predicate == null)) {
             return;
         }
@@ -187,7 +188,7 @@ public final class CompositionalRules {
     private static void decomposeCompound(
             CompoundTerm compound, Term component,
             Term term1, int index,
-            boolean compoundTask, DerivationContext context) {
+            boolean compoundTask, DerivationContextReason context) {
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
         }
@@ -283,7 +284,7 @@ public final class CompositionalRules {
      */
     static void decomposeStatement(
             CompoundTerm compound, Term component,
-            boolean compoundTask, DerivationContext context) {
+            boolean compoundTask, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Sentence sentence = task.getSentence();
         final Sentence belief = context.getCurrentBelief();
@@ -362,7 +363,7 @@ public final class CompositionalRules {
     private static void introVarOuter(
             Statement taskContent,
             Statement beliefContent,
-            int index, DerivationContext context) {
+            int index, DerivationContextReason context) {
         final TruthValue truthT = context.getCurrentTask().getSentence().getTruth();
         final TruthValue truthB = context.getCurrentBelief().getTruth();
         final Variable varInd = new Variable("$varInd1");
@@ -460,7 +461,7 @@ public final class CompositionalRules {
      * @param context       Reference to the derivation context
      */
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
-            DerivationContext context) {
+            DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Sentence taskSentence = task.getSentence();
         if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())

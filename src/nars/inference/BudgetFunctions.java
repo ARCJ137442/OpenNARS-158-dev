@@ -2,7 +2,6 @@ package nars.inference;
 
 import nars.entity.*;
 import nars.language.*;
-import nars.storage.Memory;
 
 /**
  * Budget functions for resources allocation
@@ -68,10 +67,11 @@ public final class BudgetFunctions extends UtilityFunctions {
                     truthToQuality(solution.getTruth()));
             task.setPriority(Math.min(1 - quality, taskPriority));
         }
-        if (feedbackToLinks) {
-            final TaskLink tLink = context.getCurrentTaskLink();
+        if (feedbackToLinks && context instanceof DerivationContextReason) {
+            final DerivationContextReason contextReason = (DerivationContextReason) context;
+            final TaskLink tLink = contextReason.getCurrentTaskLink();
             tLink.setPriority(Math.min(1 - quality, tLink.getPriority()));
-            final TermLink bLink = context.getCurrentBeliefLink();
+            final TermLink bLink = contextReason.getCurrentBeliefLink();
             bLink.incPriority(quality);
         }
         return budget;
@@ -85,13 +85,43 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth  The truth value of the conclusion of revision
      * @return The budget for the new task
      */
-    static BudgetValue revise(TruthValue tTruth, TruthValue bTruth, TruthValue truth, boolean feedbackToLinks,
-            DerivationContext context) {
+    static BudgetValue revise(
+            final TruthValue tTruth,
+            final TruthValue bTruth,
+            final TruthValue truth,
+            // boolean feedbackToLinks = false,
+            final DerivationContext context) {
+        // * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
         final float difT = truth.getExpDifAbs(tTruth);
         final Task task = context.getCurrentTask();
         task.decPriority(1 - difT);
         task.decDurability(1 - difT);
-        if (feedbackToLinks) {
+        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
+        final float priority = or(dif, task.getPriority());
+        final float durability = aveAri(dif, task.getDurability());
+        final float quality = truthToQuality(truth);
+        return new BudgetValue(priority, durability, quality);
+    }
+
+    /**
+     * 🆕同{@link BudgetFunctions#revise}，但是「概念推理」专用
+     * * 🚩在「共用逻辑」后，将预算值反馈回「词项链」「任务链」
+     * 
+     * @param tTruth
+     * @param bTruth
+     * @param truth
+     * @param context
+     * @return
+     */
+    static BudgetValue revise(
+            final TruthValue tTruth,
+            final TruthValue bTruth,
+            final TruthValue truth,
+            // final boolean feedbackToLinks = true,
+            final DerivationContextReason context) {
+        final float difT = truth.getExpDifAbs(tTruth); // * 🚩【2024-05-21 10:43:44】此处暂且需要重算一次
+        final BudgetValue revised = revise(tTruth, bTruth, truth, (DerivationContext) context);
+        { // * 🚩独有逻辑：反馈到任务链、信念链
             final TaskLink tLink = context.getCurrentTaskLink();
             tLink.decPriority(1 - difT);
             tLink.decDurability(1 - difT);
@@ -100,11 +130,7 @@ public final class BudgetFunctions extends UtilityFunctions {
             bLink.decPriority(1 - difB);
             bLink.decDurability(1 - difB);
         }
-        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
-        final float priority = or(dif, task.getPriority());
-        final float durability = aveAri(dif, task.getDurability());
-        final float quality = truthToQuality(truth);
-        return new BudgetValue(priority, durability, quality);
+        return revised;
     }
 
     /**
@@ -196,7 +222,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion
      * @return The budget value of the conclusion
      */
-    static BudgetValue forward(TruthValue truth, DerivationContext context) {
+    static BudgetValue forward(TruthValue truth, DerivationContextReason context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -207,7 +233,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backward(TruthValue truth, DerivationContext context) {
+    public static BudgetValue backward(TruthValue truth, DerivationContextReason context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -218,7 +244,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backwardWeak(TruthValue truth, DerivationContext context) {
+    public static BudgetValue backwardWeak(TruthValue truth, DerivationContextReason context) {
         return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
@@ -231,7 +257,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContext context) {
+    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContextReason context) {
         return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
@@ -242,7 +268,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackward(Term content, DerivationContext context) {
+    public static BudgetValue compoundBackward(Term content, DerivationContextReason context) {
         return budgetInference(1, content.getComplexity(), context);
     }
 
@@ -253,7 +279,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackwardWeak(Term content, DerivationContext context) {
+    public static BudgetValue compoundBackwardWeak(Term content, DerivationContextReason context) {
         return budgetInference(w2c(1), content.getComplexity(), context);
     }
 
@@ -265,7 +291,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory     Reference to the memory
      * @return Budget of the conclusion task
      */
-    private static BudgetValue budgetInference(float qual, int complexity, DerivationContext context) {
+    private static BudgetValue budgetInference(float qual, int complexity, DerivationContextReason context) {
         final Item t = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         // if (t == null) {

@@ -3,6 +3,7 @@ package nars.entity;
 import java.util.ArrayList;
 
 import nars.inference.BudgetFunctions;
+import nars.inference.DerivationContextDirect;
 import nars.inference.LocalRules;
 import nars.inference.UtilityFunctions;
 import nars.language.CompoundTerm;
@@ -184,50 +185,54 @@ public final class Concept extends Item {
      *
      * @param task The task to be processed
      */
-    public void directProcess() {
+    public void directProcess(final DerivationContextDirect context) {
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
+        // * 📝相比于「概念推理」仅少了「当前词项链」与「当前任务链」，其它基本通用
         /*
          * 📝有效字段：{
-         * currentTask
          * currentTerm
          * currentConcept
+         * currentTask
+         *
+         * currentBelief? | 用于中途推理
+         * newStamp? | 用于中途推理
          * }
          */
         // * 🚩系列断言与赋值（实际使用中可删）
-        if (memory.context.getCurrentTask() == null) {
+        if (context.getCurrentTask() == null) {
             throw new Error("currentTask: 不符预期的可空情况");
         }
-        if (memory.context.getCurrentTerm() == null) {
+        if (context.getCurrentTerm() == null) {
             throw new Error("currentTerm: 不符预期的可空情况");
         }
-        if (memory.context.getCurrentConcept() != this) { // ! 不仅非空，而且等于自身
+        if (context.getCurrentConcept() != this) { // ! 不仅非空，而且等于自身
             throw new Error("currentConcept: 不符预期的可空情况");
         }
-        if (memory.context.getCurrentBelief() != null) {
+        if (context.getCurrentBelief() != null) {
             throw new Error("currentBelief: 不符预期的可空情况");
         }
-        if (memory.context.getCurrentBeliefLink() != null) {
-            throw new Error("currentBeliefLink: 不符预期的可空情况");
-        }
-        if (memory.context.getCurrentTaskLink() != null) {
-            throw new Error("currentTaskLink: 不符预期的可空情况");
-        }
-        if (memory.context.getNewStamp() != null) {
+        // if (context.getCurrentBeliefLink() != null) {
+        // throw new Error("currentBeliefLink: 不符预期的可空情况");
+        // }
+        // if (context.getCurrentTaskLink() != null) {
+        // throw new Error("currentTaskLink: 不符预期的可空情况");
+        // }
+        if (context.getNewStamp() != null) {
             throw new Error("newStamp: 不符预期的可空情况");
         }
-        if (memory.context.getSubstitute() != null) {
+        if (context.getSubstitute() != null) {
             throw new Error("substitute: 不符预期的可空情况");
         }
-        final Task task = memory.context.getCurrentTask();
+        final Task task = context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
         switch (task.getSentence().getPunctuation()) {
             case Symbols.JUDGMENT_MARK:
-                processJudgment();
+                processJudgment(context);
                 break;
             case Symbols.QUESTION_MARK:
-                processQuestion();
+                processQuestion(context);
                 break;
             default:
                 throw new Error("Unknown punctuation of task: " + task.toStringLong());
@@ -247,9 +252,9 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private void processJudgment() {
-        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
-        final Task task = memory.context.getCurrentTask();
+    private void processJudgment(final DerivationContextDirect context) {
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
+        final Task task = context.getCurrentTask();
         final Sentence judgment = task.getSentence();
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, beliefs);
@@ -268,12 +273,14 @@ public final class Concept extends Item {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
                 final Stamp newStamp = Stamp.make(currentStamp, oldStamp, memory.getTime());
-                memory.context.setNewStamp(newStamp);
+                context.setNewStamp(newStamp);
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
-                    memory.context.setCurrentBelief(oldBelief);
+                    context.setCurrentBelief(oldBelief);
+                    // TODO: 后续要将此处「修正」分开成「概念推理用修正」与「直接推理用修正」
+                    // TODO: 🎯去掉上边的`setCurrentBelief`，断言「『直接推理』不会使用『当前信念』」
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
-                    LocalRules.revision(judgment, oldBelief, false, memory.context);
+                    LocalRules.revision(judgment, oldBelief, context);
                 }
             }
         }
@@ -282,7 +289,7 @@ public final class Concept extends Item {
         if (task.getBudget().aboveThreshold()) {
             for (final Task existedQuestion : this.questions) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
-                LocalRules.trySolution(judgment, existedQuestion, memory.context);
+                LocalRules.trySolution(judgment, existedQuestion, context);
             }
             addBeliefToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
         }
@@ -297,20 +304,20 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private void processQuestion() {
-        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`memory.context.currentTask`
-        final Task task = memory.context.getCurrentTask();
+    private void processQuestion(final DerivationContextDirect context) {
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
+        final Task task = context.getCurrentTask();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Sentence existedQuestion = findExistedQuestion();
+        final Task existedQuestion = findExistedQuestion(task.getContent());
         final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? task.getSentence() : existedQuestion;
+        final Sentence question = newQuestion ? task.getSentence() : existedQuestion.getSentence();
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Sentence newAnswer = evaluation(question, beliefs);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
-            LocalRules.trySolution(newAnswer, task, memory.context);
+            LocalRules.trySolution(newAnswer, task, context);
         }
 
         if (newQuestion) {
@@ -328,17 +335,15 @@ public final class Concept extends Item {
      * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
      * * 🚩经上游确认，此处的`task`只可能是`memory.context.currentTask`
      *
-     * @param taskSentence 要在「自身所有问题」中查找相似的「问题」任务
+     * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
      * @return 已有的问题，或为空
      */
-    private Sentence findExistedQuestion(/* final Task questionTask */) {
-        final Task questionTask = memory.context.getCurrentTask();
-        final Sentence taskSentence = questionTask.getSentence();
+    private Task findExistedQuestion(final Term taskContent) {
         if (this.questions != null) {
             for (final Task existedQuestion : this.questions) {
-                final Sentence question = existedQuestion.getSentence();
-                if (question.getContent().equals(taskSentence.getContent())) {
-                    return question;
+                final Term questionTerm = existedQuestion.getContent();
+                if (questionTerm.equals(taskContent)) {
+                    return existedQuestion;
                 }
             }
         }

@@ -10,8 +10,6 @@ import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.entity.TaskLink;
-import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.language.Term;
 import nars.storage.Memory;
@@ -85,23 +83,6 @@ public class DerivationContext {
     }
 
     /**
-     * The selected TaskLink
-     */
-    private TaskLink currentTaskLink = null;
-
-    public TaskLink getCurrentTaskLink() {
-        return currentTaskLink;
-    }
-
-    /**
-     * 设置当前任务链
-     * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现
-     */
-    public void setCurrentTaskLink(TaskLink currentTaskLink) {
-        this.currentTaskLink = currentTaskLink;
-    }
-
-    /**
      * The selected Task
      */
     private Task currentTask = null;
@@ -118,23 +99,6 @@ public class DerivationContext {
      */
     public void setCurrentTask(Task currentTask) {
         this.currentTask = currentTask;
-    }
-
-    /**
-     * The selected TermLink
-     */
-    private TermLink currentBeliefLink = null;
-
-    public TermLink getCurrentBeliefLink() {
-        return currentBeliefLink;
-    }
-
-    /**
-     * 设置当前任务链
-     * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现（构建推理上下文）
-     */
-    public void setCurrentBeliefLink(TermLink currentBeliefLink) {
-        this.currentBeliefLink = currentBeliefLink;
     }
 
     /**
@@ -198,7 +162,7 @@ public class DerivationContext {
      *
      * @param memory
      */
-    private DerivationContext(final Memory memory,
+    protected DerivationContext(final Memory memory,
             final LinkedList<Task> newTasks,
             final ArrayList<String> exportStrings) {
         this.memory = memory;
@@ -223,30 +187,12 @@ public class DerivationContext {
         // * 🚩搬迁引用
         // self.currentTerm = this.currentTerm;
         self.currentConcept = this.currentConcept;
-        self.currentTaskLink = this.currentTaskLink;
+        // self.currentTaskLink = this.currentTaskLink;
         self.currentTask = this.currentTask;
-        self.currentBeliefLink = this.currentBeliefLink;
+        // self.currentBeliefLink = this.currentBeliefLink;
         self.currentBelief = this.currentBelief;
         self.newStamp = this.newStamp;
         self.substitute = this.substitute;
-        // * 🚩返回新上下文
-        return self;
-    }
-
-    /**
-     * 「复制」推导上下文
-     * * 🚩只搬迁引用，并不更改所有权
-     */
-    public DerivationContext cloneWithNewBelief(
-            TermLink currentBeliefLink,
-            Sentence currentBelief,
-            Stamp newStamp) {
-        // * 🚩创建新上下文，并随之迁移`final`变量
-        final DerivationContext self = this.clone();
-        // * 🚩搬迁引用
-        self.currentBeliefLink = currentBeliefLink;
-        self.currentBelief = currentBelief;
-        self.newStamp = newStamp;
         // * 🚩返回新上下文
         return self;
     }
@@ -259,9 +205,9 @@ public class DerivationContext {
         // * 🚩清理上下文变量
         // this.currentTerm = null;
         this.currentConcept = null;
-        this.currentTaskLink = null;
+        // this.currentTaskLink = null;
         this.currentTask = null;
-        this.currentBeliefLink = null;
+        // this.currentBeliefLink = null;
         this.currentBelief = null;
         this.newStamp = null;
         this.substitute = null;

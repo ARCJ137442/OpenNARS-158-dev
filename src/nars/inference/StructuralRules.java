@@ -30,7 +30,7 @@ public final class StructuralRules {
      * @param context   Reference to the derivation context
      */
     static void structuralCompose2(CompoundTerm compound, short index, Statement statement, short side,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if (compound.equals(statement.componentAt(side))) {
             return;
         }
@@ -90,7 +90,7 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralDecompose2(Statement statement, int index, DerivationContext context) {
+    static void structuralDecompose2(Statement statement, int index, DerivationContextReason context) {
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (subj.getClass() != pred.getClass()) {
@@ -149,7 +149,8 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralCompose1(CompoundTerm compound, short index, Statement statement, DerivationContext context) {
+    static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
+            DerivationContextReason context) {
         if (!context.getCurrentTask().getSentence().isJudgment()) {
             return;
         }
@@ -197,7 +198,7 @@ public final class StructuralRules {
      * @param context   Reference to the derivation context
      */
     static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if (!context.getCurrentTask().getSentence().isJudgment()) {
             return;
         }
@@ -244,7 +245,8 @@ public final class StructuralRules {
      * @param truth     The truth value of the new task
      * @param context   Reference to the derivation context
      */
-    private static void structuralStatement(Term subject, Term predicate, TruthValue truth, DerivationContext context) {
+    private static void structuralStatement(Term subject, Term predicate, TruthValue truth,
+            DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Term oldContent = task.getContent();
         if (oldContent instanceof Statement) {
@@ -266,7 +268,7 @@ public final class StructuralRules {
      * @param context   Reference to the derivation context
      */
     static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if (compound.size() > 1) {
             return;
         }
@@ -316,7 +318,7 @@ public final class StructuralRules {
      * @param context    Reference to the derivation context
      */
     static void transformProductImage(Inheritance inh, CompoundTerm oldContent, short[] indices,
-            DerivationContext context) {
+            DerivationContextReason context) {
         Term subject = inh.getSubject();
         Term predicate = inh.getPredicate();
         if (inh.equals(oldContent)) {
@@ -410,7 +412,7 @@ public final class StructuralRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContext context) {
+    private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContextReason context) {
         final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
@@ -465,7 +467,7 @@ public final class StructuralRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContext context) {
+    private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContextReason context) {
         final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
@@ -520,7 +522,7 @@ public final class StructuralRules {
      * @param context      Reference to the derivation context
      */
     static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
-            DerivationContext context) {
+            DerivationContextReason context) {
         if (!component.isConstant()) {
             return;
         }
@@ -552,7 +554,7 @@ public final class StructuralRules {
      * @param content The premise
      * @param context Reference to the derivation context
      */
-    public static void transformNegation(Term content, DerivationContext context) {
+    public static void transformNegation(Term content, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Sentence sentence = task.getSentence();
         TruthValue truth = sentence.getTruth();
@@ -574,7 +576,7 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void contraposition(Statement statement, Sentence sentence, DerivationContext context) {
+    static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         final Term content = Statement.make(statement, Negation.make(pred, context.getMemory()),

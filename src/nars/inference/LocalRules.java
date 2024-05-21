@@ -27,7 +27,7 @@ public class LocalRules {
      * @param belief  The belief
      * @param context Reference to the derivation context
      */
-    public static void match(DerivationContext context) {
+    public static void match(DerivationContextReason context) {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
         final Task task = context.getCurrentTask();
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
@@ -36,7 +36,7 @@ public class LocalRules {
         final Sentence sentence = task.getSentence().clone();
         if (sentence.isJudgment()) {
             if (revisable(sentence, belief)) {
-                revision(sentence, belief, true, context);
+                revision(sentence, belief, context);
             }
         } else if (Variable.unify(Symbols.VAR_QUERY, sentence.getContent(), belief.getContent().clone())) {
             trySolution(belief, task, context);
@@ -69,12 +69,11 @@ public class LocalRules {
      * @param feedbackToLinks Whether to send feedback to the links
      * @param context         Reference to the derivation context
      */
-    public static void revision(Sentence newBelief, Sentence oldBelief, boolean feedbackToLinks,
-            DerivationContext context) {
+    public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
         final TruthValue newTruth = newBelief.getTruth();
         final TruthValue oldTruth = oldBelief.getTruth();
         final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
-        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, feedbackToLinks, context);
+        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
         final Term content = newBelief.getContent();
         context.doublePremiseTask(content, truth, budget);
     }
@@ -136,7 +135,7 @@ public class LocalRules {
      *
      * @param context Reference to the derivation context
      */
-    public static void matchReverse(DerivationContext context) {
+    public static void matchReverse(DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
         final Sentence sentence = task.getSentence();
@@ -155,7 +154,7 @@ public class LocalRules {
      * @param figure  location of the shared term
      * @param context Reference to the derivation context
      */
-    public static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContext context) {
+    public static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
         if (context.getCurrentTask().getSentence().isJudgment()) {
             inferToAsym((Sentence) asym, (Sentence) sym, context);
         } else {
@@ -173,7 +172,7 @@ public class LocalRules {
      * @param judgment2 The second premise
      * @param context   Reference to the derivation context
      */
-    private static void inferToSym(Sentence judgment1, Sentence judgment2, DerivationContext context) {
+    private static void inferToSym(Sentence judgment1, Sentence judgment2, DerivationContextReason context) {
         final Statement s1 = (Statement) judgment1.getContent();
         final Term t1 = s1.getSubject();
         final Term t2 = s1.getPredicate();
@@ -198,7 +197,7 @@ public class LocalRules {
      * @param sym     The symmetric premise
      * @param context Reference to the derivation context
      */
-    private static void inferToAsym(Sentence asym, Sentence sym, DerivationContext context) {
+    private static void inferToAsym(Sentence asym, Sentence sym, DerivationContextReason context) {
         final Statement statement = (Statement) asym.getContent();
         final Term sub = statement.getPredicate();
         final Term pre = statement.getSubject();
@@ -215,7 +214,7 @@ public class LocalRules {
      *
      * @param context Reference to the derivation context
      */
-    private static void conversion(DerivationContext context) {
+    private static void conversion(DerivationContextReason context) {
         final TruthValue truth = TruthFunctions.conversion(context.getCurrentBelief().getTruth());
         final BudgetValue budget = BudgetFunctions.forward(truth, context);
         convertedJudgment(truth, budget, context);
@@ -227,7 +226,7 @@ public class LocalRules {
      *
      * @param context Reference to the derivation context
      */
-    private static void convertRelation(DerivationContext context) {
+    private static void convertRelation(DerivationContextReason context) {
         final TruthValue truth = context.getCurrentBelief().getTruth();
         final TruthValue newTruth;
         if (((Statement) context.getCurrentTask().getContent()).isCommutative()) {
