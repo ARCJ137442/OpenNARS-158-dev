@@ -307,7 +307,7 @@ public final class CompositionalRules {
                     return;
                 }
                 // * ⚠️↓又会在此修改`newStamp`
-                final Sentence contentBelief = contentConcept.getBelief(task);
+                final Sentence contentBelief = contentConcept.getBelief(task.getSentence());
                 if (contentBelief == null) {
                     return;
                 }

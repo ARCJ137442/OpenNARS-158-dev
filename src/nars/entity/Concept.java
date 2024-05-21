@@ -440,11 +440,10 @@ public final class Concept extends Item {
      * * 📄在「组合规则」的「回答带变量合取」时用到
      * * 🚩改：去除其中「设置当前时间戳」的副作用，将其迁移到调用者处
      *
-     * @param task The selected task
+     * @param taskSentence The selected task
      * @return The selected isBelief
      */
-    public Sentence getBelief(Task task) {
-        final Sentence taskSentence = task.getSentence();
+    public Sentence getBelief(Sentence taskSentence) {
         for (final Sentence belief : beliefs) {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：

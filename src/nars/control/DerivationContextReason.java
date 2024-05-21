@@ -9,6 +9,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.RuleTables;
+import nars.language.Term;
 import nars.storage.Memory;
 
 /**
@@ -73,22 +74,72 @@ public class DerivationContextReason extends DerivationContextTransform {
         // * 🚩赋值
         this.setCurrentBeliefLink(currentBeliefLink);
         this.termLinksToReason = toReasonLinks;
+        // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
+        updateCurrentBeliefAndNewStamp();
         // * 🚩检验
         verify(this);
     }
 
     /**
      * 切换到新的信念（与信念链）
-     * * 🚩只搬迁引用，并不更改所有权
      * * 📌【2024-05-21 10:26:59】现在是「概念推理上下文」独有
+     * * 🚩【2024-05-21 22:51:09】只在自身内部搬迁所有权：从「待推理词项链表」中取出一个「词项链」替代原有词项链
+     * * 🚩能取出⇒返回旧词项链，已空⇒返回`null`
+     * * ✅【2024-05-21 23:13:10】内存安全：整个过程中`currentBeliefLink`不可能为空
+     * * ✅每行代码后加`verify`都不会有事
      */
-    public void switchToNewBelief(
-            TermLink currentBeliefLink,
-            Sentence currentBelief,
-            Stamp newStamp) {
-        // * 🚩搬迁引用
-        this.currentBeliefLink = currentBeliefLink;
-        this.setCurrentBelief(currentBelief);
+    public TermLink nextBelief() {
+        // * ♻️回收旧词项链 | 有可能存在「所有权问题」：回收之后所有权应该归「当前概念」
+        final TermLink oldTermLink = this.getCurrentBeliefLink();
+        this.getCurrentConcept().__putTermLinkBack(oldTermLink);
+
+        // * 🚩先尝试拿出下一个词项链，若拿不出则返回空值
+        final TermLink currentBeliefLink = this.termLinksToReason.poll();
+
+        // * 🚩若没有更多词项链了⇒返回空表示「已结束」
+        if (currentBeliefLink == null)
+            return null;
+
+        // * 🚩更新「当前信念链」 | 此举保证「信念链」永不为空
+        this.setCurrentBeliefLink(currentBeliefLink);
+
+        // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
+        updateCurrentBeliefAndNewStamp();
+
+        // * 🚩收尾：返回被替换下来的「旧词项链」
+        return oldTermLink;
+    }
+
+    /**
+     * 通过设置好的（非空的）「当前信念链」更新「当前信念」与「新时间戳」
+     * * ❓是否要考虑「归还信念链」？此处使用的是值还是引用？所有权如何变更？
+     */
+    protected void updateCurrentBeliefAndNewStamp() {
+        // * 🚩背景变量
+        final TermLink newBeliefLink = this.currentBeliefLink;
+        final Sentence newBelief;
+        final Stamp newStamp;
+        // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
+        final Term beliefTerm = newBeliefLink.getTarget();
+        final Concept beliefConcept = this.getMemory().termToConcept(beliefTerm);
+        if (beliefConcept != null) {
+            newBelief = beliefConcept.getBelief(this.getCurrentTask().getSentence()); // ! may be null
+            if (newBelief != null) {
+                newStamp = Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
+                        this.getCurrentTask().getSentence().getStamp(),
+                        // * 📌此处的「时间戳」一定是「当前信念」的时间戳
+                        // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
+                        newBelief.getStamp(),
+                        this.getTime());
+            } else {
+                newStamp = null;
+            }
+        } else {
+            newBelief = null;
+            newStamp = null;
+        }
+        // * 🚩最后设置二者的值（可空性相对独立）
+        this.setCurrentBelief(newBelief);
         this.setNewStamp(newStamp);
     }
 

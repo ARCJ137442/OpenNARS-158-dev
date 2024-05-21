@@ -3,8 +3,6 @@ package nars.control;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
-import nars.entity.Sentence;
-import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
@@ -39,42 +37,17 @@ public abstract class ProcessReason {
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
         for (;;) {
-            final TermLink termLink = context.getCurrentBeliefLink();
-            // * 🚩每次「概念推理」只更改「当前信念」与「当前信念链」
-            final TermLink newBeliefLink = termLink;
-            final Sentence newBelief;
-            final Stamp newStamp;
-            final Concept beliefConcept = context.getMemory().termToConcept(termLink.getTarget());
-            if (beliefConcept != null) {
-                newBelief = beliefConcept.getBelief(context.getCurrentTask()); // ! may be null
-                if (newBelief != null) {
-                    newStamp = Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
-                            context.getCurrentTask().getSentence().getStamp(),
-                            // * 📌此处的「时间戳」一定是「当前信念」的时间戳
-                            // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
-                            newBelief.getStamp(),
-                            context.getTime());
-                } else {
-                    newStamp = null;
-                }
-            } else {
-                newBelief = null;
-                newStamp = null;
-            }
             // * 🚩实际上就是「当前信念」「当前信念链」更改后的「新上下文」
             // this.context.currentBelief = newBelief;
             // this.context.currentBeliefLink = newBeliefLink;
             // this.context.newStamp = newStamp;
-            context.switchToNewBelief(newBeliefLink, newBelief, newStamp);
-            // * 🔥启动概念推理：点火！
+            // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
             RuleTables.reason(context);
-            // * ♻️回收词项链
-            context.getCurrentConcept().__putTermLinkBack(termLink);
-            // * 🚩尝试从「待推理词项链列表」中拿取（并替换）词项链
-            if (context.getTermLinksToReason().isEmpty())
+            // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
+            final boolean hasNext = context.nextBelief() != null;
+            if (!hasNext)
+                // * 🚩没有更多词项链⇒结束
                 break;
-            else
-                context.setCurrentBeliefLink(context.getTermLinksToReason().poll());
         }
         context.getCurrentConcept().__putTaskLinkBack(context.getCurrentTaskLink());
         // * 🚩吸收并清空上下文
