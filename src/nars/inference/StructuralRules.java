@@ -318,22 +318,26 @@ public final class StructuralRules {
      * @param task       The task
      * @param context    Reference to the derivation context
      */
-    static void transformProductImage(Inheritance inh, CompoundTerm oldContent, short[] indices,
-            DerivationContextReason context) {
-        Term subject = inh.getSubject();
-        Term predicate = inh.getPredicate();
+    static void transformProductImage(
+            Inheritance inh, CompoundTerm oldContent,
+            short[] indices,
+            DerivationContextTransform context) {
+        Term inhSubject = inh.getSubject();
+        Term inhPredicate = inh.getPredicate();
         if (inh.equals(oldContent)) {
-            if (subject instanceof CompoundTerm) {
-                transformSubjectPI((CompoundTerm) subject, predicate, context);
+            if (inhSubject instanceof CompoundTerm) {
+                transformSubjectPI((CompoundTerm) inhSubject, inhPredicate, context);
             }
-            if (predicate instanceof CompoundTerm) {
-                transformPredicatePI(subject, (CompoundTerm) predicate, context);
+            if (inhPredicate instanceof CompoundTerm) {
+                transformPredicatePI(inhSubject, (CompoundTerm) inhPredicate, context);
             }
             return;
         }
         final short index = indices[indices.length - 1];
         final short side = indices[indices.length - 2];
         final CompoundTerm comp = (CompoundTerm) inh.componentAt(side);
+        final Term subject;
+        final Term predicate;
         if (comp instanceof Product) {
             if (side == 0) {
                 subject = comp.componentAt(index);
@@ -413,7 +417,7 @@ public final class StructuralRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContextReason context) {
+    private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContextTransform context) {
         final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
@@ -468,7 +472,7 @@ public final class StructuralRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContextReason context) {
+    private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContextTransform context) {
         final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
         BudgetValue budget;
         Inheritance inheritance;

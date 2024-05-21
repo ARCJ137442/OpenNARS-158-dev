@@ -9,6 +9,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.DerivationContextReason;
+import nars.inference.DerivationContextTransform;
 import nars.inference.RuleTables;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
@@ -20,14 +21,12 @@ public abstract class ProcessReason {
      */
     public static void processReason(final Memory self, final boolean noResult) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
-        // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
-        // TODO: 是否要合并这俩返回值？比如，将`toReasonLinks`内置到「概念推理上下文」作为字段
-        final DerivationContextReason.IBuilder contextBuilder = ProcessReason.preprocessConcept(self, noResult);
-        if (contextBuilder == null)
+        // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）⇒构建「概念推理上下文」
+        final DerivationContextReason context = ProcessReason.preprocessConcept(
+                self,
+                noResult);
+        if (context == null)
             return;
-
-        // * 🚩构建「概念推理上下文」
-        final DerivationContextReason context = contextBuilder.build();
 
         // * 🚩内部概念高级推理 阶段 * //
         ProcessReason.processConcept(context);
@@ -94,72 +93,76 @@ public abstract class ProcessReason {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private static DerivationContextReason.IBuilder preprocessConcept(
+    private static DerivationContextReason preprocessConcept(
             final Memory self,
             final boolean noResult) {
-        final DerivationContextReason.Builder context = new DerivationContextReason.Builder(self);
         // * 🚩推理前判断「是否有必要」
         if (!noResult) // necessary?
             return null;
 
-        // * 🚩强制清空旧上下文 | 防止「概念推理后直接推理导致变量遗留」的情况
-        context.clear();
-
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        context.setCurrentConcept(self.takeOutConcept());
-        if (context.getCurrentConcept() == null) {
+        final Concept currentConcept = self.takeOutConcept();
+        if (currentConcept == null) {
             return null;
         }
-        // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
-        // context.setCurrentTerm(context.getCurrentConcept().getTerm());
-        self.getRecorder().append(" * Selected Concept: " + context.getCurrentTerm() + "\n");
+        self.getRecorder().append(" * Selected Concept: " + currentConcept.getTerm() + "\n");
         // current Concept remains in the bag all the time
-        self.putBackConcept(context.getCurrentConcept());
+        self.putBackConcept(currentConcept);
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
 
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = context.getCurrentConcept().__takeOutTaskLink();
+        final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             return null;
         }
-        context.setCurrentTaskLink(currentTaskLink);
         // * 📝【2024-05-21 11:54:04】断言：直接推理不会涉及「词项链/信念链」
         // * ❓这里的「信念链」是否可空
         // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
-        final Task task = currentTaskLink.getTargetTask();
-        context.setCurrentTask(task); // one of the two places where this variable is set
+        final Task currentTask = currentTaskLink.getTargetTask();
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TermLink.TRANSFORM) {
+            // * 🚩创建「转换推理上下文」
+            // * ⚠️此处「当前信念链」为空，可空情况不一致，可能需要一个专门的「推理上下文」类型
+            final DerivationContextTransform context = new DerivationContextTransform(
+                    self,
+                    currentConcept,
+                    currentTask,
+                    currentTaskLink);
             RuleTables.transformTask(currentTaskLink, context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
-            context.getCurrentConcept().__putTaskLinkBack(currentTaskLink);
+            currentConcept.__putTaskLinkBack(currentTaskLink);
             return null;
         }
 
         // * 🚩从选取的「任务链」获取要（分别）参与推理的「词项链」
+        final TermLink currentBeliefLink;
         final LinkedList<TermLink> toReasonLinks = chooseTermLinksToReason(
                 self,
-                context.getCurrentConcept(),
+                currentConcept,
                 currentTaskLink);
         if (toReasonLinks.isEmpty()) {
             return null;
         } else {
             // 先将首个元素作为「当前信念链」
-            final TermLink currentBeliefLink = toReasonLinks.poll();
-            context.setCurrentBeliefLink(currentBeliefLink);
+            currentBeliefLink = toReasonLinks.poll();
         }
-        // 再将其余元素添加进「待推理词项链表」
-        for (final TermLink termLink : toReasonLinks) {
-            context.getTermLinksToReason().add(termLink);
-        }
+
+        // * 🚩在最后构造并返回
+        final DerivationContextReason context = new DerivationContextReason(
+                self,
+                currentConcept,
+                currentTask,
+                currentTaskLink,
+                currentBeliefLink,
+                toReasonLinks);
         // * 🚩终于要轮到「点火」
         return context;
     }

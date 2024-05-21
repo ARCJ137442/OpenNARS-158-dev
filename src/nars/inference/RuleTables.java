@@ -604,14 +604,15 @@ public class RuleTables {
 
     /* ----- inference with one TaskLink only ----- */
     /**
-     * The TaskLink is of type TRANSFORM, and the conclusion is an equivalent
-     * transformation
-     * * 📝【2024-05-20 11:46:32】仅「直接推理」使用
+     * The TaskLink is of type TRANSFORM,
+     * and the conclusion is an equivalent transformation
+     * * 📝【2024-05-20 11:46:32】在「直接推理」之后、「概念推理」之前使用
+     * * 📌非空变量：
      *
      * @param tLink   The task link
      * @param context Reference to the derivation context
      */
-    public static void transformTask(TaskLink tLink, DerivationContextReason context) {
+    public static void transformTask(TaskLink tLink, DerivationContextTransform context) {
         // * 🚩预处理
         final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();

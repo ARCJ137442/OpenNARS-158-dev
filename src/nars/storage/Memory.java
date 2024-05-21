@@ -363,6 +363,7 @@ public class Memory {
      * 吸收「推理上下文」
      * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
      * * 🎯变量隔离，防止「上下文串线」与「重复使用」
+     * * 📌传入所有权而非引用
      */
     public void absorbContext(final DerivationContext context) {
         // final DerivationContext context = this.context;
@@ -375,7 +376,9 @@ public class Memory {
             this.report(output);
         }
         // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
-        context.clear();
+        context.getNewTasks().clear();
+        context.getExportStrings().clear();
+        // * 🚩在此处应该销毁上下文
     }
 
     /**

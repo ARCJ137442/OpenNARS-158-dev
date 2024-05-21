@@ -1,8 +1,8 @@
 package nars.inference;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
+import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
@@ -15,82 +15,83 @@ import nars.storage.Memory;
  * * 📄从「推理上下文」中派生，用于「概念-任务链-信念链」的「概念推理」
  * * 📌类名源自入口函数{@link RuleTables#reason}
  */
-public class DerivationContextReason extends DerivationContext {
-
-    public static interface IBuilder {
-        public DerivationContextReason build();
-    }
+public class DerivationContextReason extends DerivationContextTransform {
 
     /**
      * 用于构建「直接推理上下文」对象
      */
-    public static class Builder extends DerivationContextReason implements IBuilder {
-        public Builder(Memory memory) {
-            super(memory);
-        }
+    public static final void verify(DerivationContextReason self) {
+        // * 🚩系列断言与赋值（实际使用中可删）
+        /*
+         * 📝有效字段：{
+         * currentTerm
+         * currentConcept
+         * currentTask
+         * currentTaskLink
+         * currentBelief?
+         * currentBeliefLink
+         * newStamp?
+         * }
+         */
+        if (self.getCurrentTask() == null)
+            throw new Error("currentTask: 不符预期的可空情况");
+        if (self.getCurrentTerm() == null)
+            throw new Error("currentTerm: 不符预期的可空情况");
+        if (self.getCurrentConcept() == null)
+            throw new Error("currentConcept: 不符预期的可空情况");
+        if (self.getCurrentBelief() == null && self.getCurrentBelief() != null) // * 📝可空
+            throw new Error("currentBelief: 不符预期的可空情况");
+        if (self.getCurrentBeliefLink() == null)
+            throw new Error("currentBeliefLink: 不符预期的可空情况");
+        if (self.getCurrentTaskLink() == null)
+            throw new Error("currentTaskLink: 不符预期的可空情况");
+        if (self.getNewStamp() != null && self.getNewStamp() == null)
+            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
+            throw new Error("newStamp: 不符预期的可空情况");
+        if (self.getSubstitute() != null)
+            throw new Error("substitute: 不符预期的可空情况");
+        if (self.getTermLinksToReason().isEmpty() && !self.getTermLinksToReason().isEmpty()) // * 📝可空：有可能只有一个词项链
+            throw new Error("termLinksToReason: 不符预期的可空情况");
+    }
 
-        public DerivationContextReason build() {
-            // * 🚩系列断言与赋值（实际使用中可删）
-            /*
-             * 📝有效字段：{
-             * currentTerm
-             * currentConcept
-             * currentTask
-             * currentTaskLink
-             * currentBelief?
-             * currentBeliefLink
-             * newStamp?
-             * }
-             */
-            if (this.getCurrentTask() == null) {
-                throw new Error("currentTask: 不符预期的可空情况");
-            }
-            if (this.getCurrentTerm() == null) {
-                throw new Error("currentTerm: 不符预期的可空情况");
-            }
-            if (this.getCurrentConcept() == null) {
-                throw new Error("currentConcept: 不符预期的可空情况");
-            }
-            if (this.getCurrentBelief() == null && this.getCurrentBelief() != null) { // * 📝可空
-                throw new Error("currentBelief: 不符预期的可空情况");
-            }
-            if (this.getCurrentBeliefLink() == null) {
-                throw new Error("currentBeliefLink: 不符预期的可空情况");
-            }
-            if (this.getCurrentTaskLink() == null) {
-                throw new Error("currentTaskLink: 不符预期的可空情况");
-            }
-            if (this.getNewStamp() != null && this.getNewStamp() == null) {
-                // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
-                throw new Error("newStamp: 不符预期的可空情况");
-            }
-            if (this.getSubstitute() != null) {
-                throw new Error("substitute: 不符预期的可空情况");
-            }
-            if (this.getTermLinksToReason().isEmpty() && !this.getTermLinksToReason().isEmpty()) { // * 📝可空：有可能只有一个词项链
-                throw new Error("termLinksToReason: 不符预期的可空情况");
-            }
-            return (DerivationContextReason) this;
-        }
+    /**
+     * 🆕带参初始化
+     * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
+     *
+     * @param memory
+     */
+    public DerivationContextReason(
+            final Memory memory,
+            final Concept currentConcept,
+            final Task currentTask,
+            final TaskLink currentTaskLink,
+            final TermLink currentBeliefLink,
+            final LinkedList<TermLink> toReasonLinks) {
+        // * 🚩从基类构造，并预先检验
+        super(memory, currentConcept, currentTask, currentTaskLink);
+        // * 🚩赋值
+        this.setCurrentBeliefLink(currentBeliefLink);
+        this.termLinksToReason = toReasonLinks;
+        // * 🚩检验
+        verify(this);
+    }
+
+    /**
+     * 切换到新的信念（与信念链）
+     * * 🚩只搬迁引用，并不更改所有权
+     * * 📌【2024-05-21 10:26:59】现在是「概念推理上下文」独有
+     */
+    public void switchToNewBelief(
+            TermLink currentBeliefLink,
+            Sentence currentBelief,
+            Stamp newStamp) {
+        // * 🚩搬迁引用
+        this.currentBeliefLink = currentBeliefLink;
+        this.setCurrentBelief(currentBelief);
+        this.setNewStamp(newStamp);
     }
 
     /* ---------- Short-term workspace for a single cycle ---------- */
-    /**
-     * The selected TaskLink
-     */
-    private TaskLink currentTaskLink = null;
-
-    public TaskLink getCurrentTaskLink() {
-        return currentTaskLink;
-    }
-
-    /**
-     * 设置当前任务链
-     * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现
-     */
-    public void setCurrentTaskLink(TaskLink currentTaskLink) {
-        this.currentTaskLink = currentTaskLink;
-    }
 
     /**
      * The selected TermLink
@@ -120,81 +121,5 @@ public class DerivationContextReason extends DerivationContext {
      */
     public void setCurrentBeliefLink(TermLink currentBeliefLink) {
         this.currentBeliefLink = currentBeliefLink;
-    }
-
-    /**
-     * 构造函数
-     * * 🚩创建一个空的「概念推理上下文」，默认所有参数为空
-     *
-     * @param memory 所反向引用的「记忆区」对象
-     */
-    protected DerivationContextReason(final Memory memory) {
-        super(memory);
-    }
-
-    /**
-     * 🆕带参初始化
-     * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
-     *
-     * @param memory
-     */
-    protected DerivationContextReason(final Memory memory,
-            final LinkedList<Task> newTasks,
-            final ArrayList<String> exportStrings) {
-        super(memory, newTasks, exportStrings);
-    }
-
-    /**
-     * 「复制」推导上下文
-     * * 🚩只搬迁引用，并不更改所有权
-     */
-    public DerivationContextReason clone() {
-        // * 🚩创建新上下文，并随之迁移`final`变量
-        final DerivationContextReason self = new DerivationContextReason(
-                this.getMemory(),
-                this.getNewTasks(),
-                this.getExportStrings());
-        // * 🚩搬迁引用
-        // self.currentTerm = this.currentTerm;
-        // self.currentConcept = this.currentConcept;
-        self.currentTaskLink = this.currentTaskLink;
-        // self.currentTask = this.currentTask;
-        self.currentBeliefLink = this.currentBeliefLink;
-        // self.currentBelief = this.currentBelief;
-        // self.newStamp = this.newStamp;
-        // self.substitute = this.substitute;
-        // * 🚩返回新上下文
-        return self;
-    }
-
-    /**
-     * 切换到新的信念（与信念链）
-     * * 🚩只搬迁引用，并不更改所有权
-     * * 📌【2024-05-21 10:26:59】现在是「概念推理上下文」独有
-     */
-    public void switchToNewBelief(
-            TermLink currentBeliefLink,
-            Sentence currentBelief,
-            Stamp newStamp) {
-        // * 🚩搬迁引用
-        this.currentBeliefLink = currentBeliefLink;
-        this.setCurrentBelief(currentBelief);
-        this.setNewStamp(newStamp);
-    }
-
-    /**
-     * 清理概念推导上下文
-     */
-    public void clear() {
-        super.clear();
-        // * 🚩清理独有变量
-        // this.currentTerm = null;
-        // this.currentConcept = null;
-        this.currentTaskLink = null;
-        // this.currentTask = null;
-        this.currentBeliefLink = null;
-        // this.currentBelief = null;
-        // this.newStamp = null;
-        // this.substitute = null;
     }
 }

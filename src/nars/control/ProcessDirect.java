@@ -114,10 +114,10 @@ public abstract class ProcessDirect {
     private static boolean immediateProcess(final Memory self, final Task taskInput) {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
-        // * 🚩准备上下文
-        final DerivationContextDirect.IBuilder contextBuilder = prepareDirectProcessContext(self, taskInput);
         // * 🚩构建「实际上下文」并断言可空性
-        final DerivationContextDirect context = contextBuilder.build();
+        final DerivationContextDirect context = prepareDirectProcessContext(
+                self,
+                taskInput);
 
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
@@ -158,18 +158,15 @@ public abstract class ProcessDirect {
      * @param taskInput
      * @return 直接推理上下文 / 空
      */
-    private static DerivationContextDirect.IBuilder prepareDirectProcessContext(
+    private static DerivationContextDirect prepareDirectProcessContext(
             final Memory self,
             final Task taskInput) {
         // * 🚩准备上下文
-        final DerivationContextDirect.Builder context = new DerivationContextDirect.Builder(self);
         // one of the two places where this variable is set
-        context.setCurrentTask(taskInput);
-        context.setCurrentConcept(self.getConceptOrCreate(taskInput.getContent()));
-        if (context.getCurrentConcept() != null) {
-            // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
-            // context.setCurrentTerm(context.getCurrentConcept().getTerm());
-            return context; // * 📌准备就绪
+        final Task currentTask = taskInput;
+        final Concept currentConcept = self.getConceptOrCreate(taskInput.getContent());
+        if (currentConcept != null) {
+            return new DerivationContextDirect(self, currentTask, currentConcept); // * 📌准备就绪
         }
         return null; // * 📌准备失败：没有可供推理的概念
     }
@@ -246,9 +243,9 @@ public abstract class ProcessDirect {
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
                     context.setCurrentBelief(oldBelief);
-                    // TODO: 后续要将此处「修正」分开成「概念推理用修正」与「直接推理用修正」
                     // TODO: 🎯去掉上边的`setCurrentBelief`，断言「『直接推理』不会使用『当前信念』」
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
+                    // * 📝↑用法仅限于「父信念」
                     LocalRules.revision(judgment, oldBelief, context);
                 }
             }
@@ -256,10 +253,12 @@ public abstract class ProcessDirect {
         // * 🚩尝试用新的信念解决旧有问题
         // * 📄如：先输入`A?`再输入`A.`
         if (task.getBudget().aboveThreshold()) {
+            // * 🚩开始尝试解决「问题表」中的所有问题
             for (final Task existedQuestion : self.getQuestions()) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
+            // * 🚩将信念追加至「信念表」
             Concept.addBeliefToTable(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }

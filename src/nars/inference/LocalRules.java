@@ -71,11 +71,13 @@ public class LocalRules {
      * @param context         Reference to the derivation context
      */
     public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
+        // * 🚩计算真值/预算值
         final TruthValue newTruth = newBelief.getTruth();
         final TruthValue oldTruth = oldBelief.getTruth();
         final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
         final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
         final Term content = newBelief.getContent();
+        // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         context.doublePremiseTask(content, truth, budget);
     }
 

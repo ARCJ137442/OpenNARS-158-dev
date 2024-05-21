@@ -19,7 +19,7 @@ import nars.storage.Memory.ReportType;
  * 🆕新的「推理上下文」对象
  * * 📄仿自OpenNARS 3.1.0
  */
-public class DerivationContext {
+public abstract class DerivationContext {
 
     /**
      * 对「记忆区」的反向引用
@@ -205,45 +205,6 @@ public class DerivationContext {
      */
     public static void init() {
         randomNumber = new Random(1);
-    }
-
-    /**
-     * 「复制」推导上下文
-     * * 🚩只搬迁引用，并不更改所有权
-     */
-    public DerivationContext clone() {
-        // * 🚩创建新上下文，并随之迁移`final`变量
-        final DerivationContext self = new DerivationContext(this.memory, this.newTasks, this.exportStrings);
-        // * 🚩搬迁引用
-        // self.currentTerm = this.currentTerm;
-        self.currentConcept = this.currentConcept;
-        // self.currentTaskLink = this.currentTaskLink;
-        self.currentTask = this.currentTask;
-        // self.currentBeliefLink = this.currentBeliefLink;
-        self.currentBelief = this.currentBelief;
-        self.newStamp = this.newStamp;
-        self.substitute = this.substitute;
-        // * 🚩返回新上下文
-        return self;
-    }
-
-    /**
-     * 清理推导上下文
-     * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
-     */
-    public void clear() {
-        // * 🚩清理上下文变量
-        // this.currentTerm = null;
-        this.currentConcept = null;
-        // this.currentTaskLink = null;
-        this.currentTask = null;
-        // this.currentBeliefLink = null;
-        this.currentBelief = null;
-        this.newStamp = null;
-        this.substitute = null;
-        // * 🚩清理推理结果
-        this.newTasks.clear();
-        this.exportStrings.clear();
     }
 
     /**
