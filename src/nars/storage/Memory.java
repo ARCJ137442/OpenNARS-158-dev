@@ -3,6 +3,7 @@ package nars.storage;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nars.control.DerivationContext;
 import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
 import nars.entity.BudgetValue;
@@ -10,7 +11,6 @@ import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
 import nars.inference.BudgetFunctions;
-import nars.inference.DerivationContext;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
 import nars.main_nogui.Parameters;

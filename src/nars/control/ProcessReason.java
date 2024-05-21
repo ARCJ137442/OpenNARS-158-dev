@@ -8,8 +8,6 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
-import nars.inference.DerivationContextReason;
-import nars.inference.DerivationContextTransform;
 import nars.inference.RuleTables;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;

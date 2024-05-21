@@ -1,5 +1,7 @@
 package nars.inference;
 
+import nars.control.DerivationContextReason;
+import nars.control.DerivationContextTransform;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;

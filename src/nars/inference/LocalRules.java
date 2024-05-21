@@ -6,6 +6,9 @@ import nars.language.*;
 import nars.io.Symbols;
 import static nars.control.MakeTerm.*;
 
+import nars.control.DerivationContext;
+import nars.control.DerivationContextReason;
+
 /**
  * Directly process a task by a oldBelief, with only two Terms in both. In
  * matching, the new task is compared with all existing direct Tasks in that

@@ -1,5 +1,8 @@
 package nars.inference;
 
+import nars.control.DerivationContext;
+import nars.control.DerivationContextReason;
+import nars.control.DerivationContextTransform;
 import nars.entity.*;
 import nars.language.*;
 

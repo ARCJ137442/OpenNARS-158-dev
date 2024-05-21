@@ -6,7 +6,6 @@ import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.inference.DerivationContextDirect;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;

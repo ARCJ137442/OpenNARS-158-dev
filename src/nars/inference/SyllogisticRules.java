@@ -5,6 +5,8 @@ import nars.language.*;
 import nars.io.Symbols;
 import static nars.control.MakeTerm.*;
 
+import nars.control.DerivationContextReason;
+
 /**
  * Syllogisms: Inference rules based on the transitivity of the relation.
  */

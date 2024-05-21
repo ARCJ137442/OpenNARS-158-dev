@@ -2,6 +2,7 @@ package nars.inference;
 
 import java.util.*;
 
+import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.language.*;
 import static nars.control.MakeTerm.*;

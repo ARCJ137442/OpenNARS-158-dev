@@ -1,4 +1,4 @@
-package nars.inference;
+package nars.control;
 
 import nars.entity.Concept;
 import nars.entity.Task;

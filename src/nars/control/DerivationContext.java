@@ -1,4 +1,4 @@
-package nars.inference;
+package nars.control;
 
 import java.util.ArrayList;
 import java.util.HashMap;
