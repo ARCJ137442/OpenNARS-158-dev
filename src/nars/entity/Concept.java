@@ -185,10 +185,13 @@ public final class Concept extends Item {
      *
      * @param task The task to be processed
      */
-    public void directProcess(final DerivationContextDirect context) {
+    public static void directProcess(final DerivationContextDirect context) {
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
-        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`memory.context.currentTask`
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentTask`
+        // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         // * 📝相比于「概念推理」仅少了「当前词项链」与「当前任务链」，其它基本通用
+        final Concept self = context.getCurrentConcept();
         /*
          * 📝有效字段：{
          * currentTerm
@@ -206,7 +209,7 @@ public final class Concept extends Item {
         if (context.getCurrentTerm() == null) {
             throw new Error("currentTerm: 不符预期的可空情况");
         }
-        if (context.getCurrentConcept() != this) { // ! 不仅非空，而且等于自身
+        if (context.getCurrentConcept() != self) { // ! 不仅非空，而且等于自身
             throw new Error("currentConcept: 不符预期的可空情况");
         }
         if (context.getCurrentBelief() != null) {
@@ -239,9 +242,9 @@ public final class Concept extends Item {
         }
         // * 🚩在推理后做链接
         if (task.getBudget().aboveThreshold()) { // still need to be processed
-            linkToTask(task);
+            self.linkToTask(task);
         }
-        entityObserver.refresh(displayContent());
+        self.entityObserver.refresh(self.displayContent());
     }
 
     /**
@@ -252,12 +255,15 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private void processJudgment(final DerivationContextDirect context) {
+    private static void processJudgment(final DerivationContextDirect context) {
+        // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
+        final Concept self = context.getCurrentConcept();
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
         final Sentence judgment = task.getSentence();
         // * 🚩找到旧信念，并尝试修正
-        final Sentence oldBelief = evaluation(judgment, beliefs);
+        final Sentence oldBelief = evaluation(judgment, self.beliefs);
         if (oldBelief != null) {
             final Stamp currentStamp = judgment.getStamp();
             final Stamp oldStamp = oldBelief.getStamp();
@@ -272,7 +278,7 @@ public final class Concept extends Item {
             else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
-                final Stamp newStamp = Stamp.make(currentStamp, oldStamp, memory.getTime());
+                final Stamp newStamp = Stamp.make(currentStamp, oldStamp, context.getTime());
                 context.setNewStamp(newStamp);
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
@@ -287,11 +293,11 @@ public final class Concept extends Item {
         // * 🚩尝试用新的信念解决旧有问题
         // * 📄如：先输入`A?`再输入`A.`
         if (task.getBudget().aboveThreshold()) {
-            for (final Task existedQuestion : this.questions) {
+            for (final Task existedQuestion : self.questions) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
-            addBeliefToTable(judgment, beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
+            addBeliefToTable(judgment, self.beliefs, Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
 
@@ -304,17 +310,20 @@ public final class Concept extends Item {
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
      */
-    private void processQuestion(final DerivationContextDirect context) {
+    private static void processQuestion(final DerivationContextDirect context) {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
+        // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
+        final Concept self = context.getCurrentConcept();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Task existedQuestion = findExistedQuestion(task.getContent());
+        final Task existedQuestion = self.findExistedQuestion(task.getContent());
         final boolean newQuestion = existedQuestion == null;
         final Sentence question = newQuestion ? task.getSentence() : existedQuestion.getSentence();
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
-        final Sentence newAnswer = evaluation(question, beliefs);
+        final Sentence newAnswer = evaluation(question, self.beliefs);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, task, context);
@@ -322,10 +331,10 @@ public final class Concept extends Item {
 
         if (newQuestion) {
             // * 🚩不会添加重复的问题
-            questions.add(task);
+            self.questions.add(task);
             // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
-            if (questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-                questions.remove(0); // FIFO
+            if (self.questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
+                self.questions.remove(0); // FIFO
             }
         }
     }
@@ -333,7 +342,7 @@ public final class Concept extends Item {
     /**
      * 🆕根据输入的任务，寻找并尝试返回已有的问题
      * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
-     * * 🚩经上游确认，此处的`task`只可能是`memory.context.currentTask`
+     * * 🚩经上游确认，此处的`task`只可能是`context.currentTask`
      *
      * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
      * @return 已有的问题，或为空
@@ -586,7 +595,7 @@ public final class Concept extends Item {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
-            // memory.context.newStamp = Stamp.make(taskSentence.getStamp(),
+            // context.newStamp = Stamp.make(taskSentence.getStamp(),
             // belief.getStamp(), memory.getTime());
             if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
                 final Sentence belief2 = belief.clone(); // will this mess up priority adjustment?

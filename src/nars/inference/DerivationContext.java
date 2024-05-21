@@ -32,6 +32,14 @@ public class DerivationContext {
     }
 
     /**
+     * 🆕访问「当前时间」
+     * * 🎯用于在推理过程中构建「新时间戳」
+     */
+    public long getTime() {
+        return memory.getTime();
+    }
+
+    /**
      * 用于「变量替换」中的「伪随机数生成器」
      */
     public static Random randomNumber = new Random(1);
