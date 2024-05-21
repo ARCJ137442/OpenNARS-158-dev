@@ -318,7 +318,7 @@ public final class CompositionalRules {
                         context.getMemory().getTime());
                 context.setNewStamp(newStamp);
                 final Task contentTask = new Task(contentBelief, task.getBudget());
-                // context.getCurrentTask() = contentTask;
+                // context.currentTask = contentTask;
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
                 final Term conj = makeConjunction(component, content, context.getMemory());
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
@@ -326,6 +326,7 @@ public final class CompositionalRules {
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
                 budget = BudgetFunctions.compoundForward(truth, conj, context);
                 // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
+                // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
                 context.doublePremiseTask(contentTask, conj, truth, budget);
             }
         } else {

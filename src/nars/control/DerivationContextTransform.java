@@ -63,13 +63,22 @@ public class DerivationContextTransform extends DerivationContext {
         super(memory);
         // * 🚩赋值
         this.setCurrentConcept(currentConcept);
-        this.setCurrentTask(currentTask);
+        // this.setCurrentTask(currentTask);
         this.setCurrentTaskLink(currentTaskLink);
         // * 🚩检验
         verify(this);
     }
 
     /* ---------- Short-term workspace for a single cycle ---------- */
+
+    /**
+     * * 📄「直接推理上下文」将其作为字段
+     */
+    @Override
+    public Task getCurrentTask() {
+        return this.getCurrentTaskLink().getTargetTask();
+    }
+
     /**
      * The selected TaskLink
      * * 📌【2024-05-21 20:26:30】不可空！

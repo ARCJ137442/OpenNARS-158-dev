@@ -55,4 +55,27 @@ public class DerivationContextDirect extends DerivationContext {
         setCurrentConcept(currentConcept);
         verify(this);
     }
+
+    /**
+     * The selected Task
+     */
+    private Task currentTask = null;
+
+    /**
+     * * 📄「直接推理上下文」将其作为字段
+     */
+    @Override
+    public Task getCurrentTask() {
+        return currentTask;
+    }
+
+    /**
+     * 设置当前任务
+     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
+     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
+     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
+     */
+    public void setCurrentTask(Task currentTask) {
+        this.currentTask = currentTask;
+    }
 }

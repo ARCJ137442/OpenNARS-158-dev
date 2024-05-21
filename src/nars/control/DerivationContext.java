@@ -113,23 +113,11 @@ public abstract class DerivationContext {
     }
 
     /**
-     * The selected Task
+     * The selected task
+     * * 🚩【2024-05-21 22:40:21】现在改为抽象方法：不同实现有不同的用法
+     * * 📄「直接推理上下文」将其作为字段，而「转换推理上下文」「概念推理上下文」均只用作「当前任务链的目标」
      */
-    private Task currentTask = null;
-
-    public Task getCurrentTask() {
-        return currentTask;
-    }
-
-    /**
-     * 设置当前任务
-     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
-     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
-     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
-     */
-    public void setCurrentTask(Task currentTask) {
-        this.currentTask = currentTask;
-    }
+    public abstract Task getCurrentTask();
 
     /**
      * The selected belief
@@ -218,7 +206,7 @@ public abstract class DerivationContext {
      *                        forward/backward correspondence
      */
     public void activatedTask(BudgetValue budget, Sentence sentence, Sentence candidateBelief) {
-        Task task = new Task(sentence, budget, this.currentTask, sentence, candidateBelief);
+        Task task = new Task(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         if (sentence.isQuestion()) {
             float s = task.getBudget().summary();
@@ -269,7 +257,7 @@ public abstract class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        doublePremiseTask(this.currentTask, newContent, newTruth, newBudget);
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget);
     }
 
     /**
@@ -285,7 +273,7 @@ public abstract class DerivationContext {
         if (newContent != null) {
             final char newPunctuation = currentTask.getSentence().getPunctuation();
             final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, this.newStamp, true);
-            final Task newTask = new Task(newSentence, newBudget, this.currentTask, this.currentBelief);
+            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
             derivedTask(newTask);
         }
     }
@@ -301,10 +289,10 @@ public abstract class DerivationContext {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
         if (newContent != null) {
-            final Sentence taskSentence = currentTask.getSentence();
+            final Sentence taskSentence = this.getCurrentTask().getSentence();
             final char newPunctuation = taskSentence.getPunctuation();
             final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
-            final Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
+            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
             derivedTask(newTask);
         }
     }
@@ -318,7 +306,7 @@ public abstract class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void singlePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        singlePremiseTask(newContent, currentTask.getSentence().getPunctuation(), newTruth, newBudget);
+        singlePremiseTask(newContent, this.getCurrentTask().getSentence().getPunctuation(), newTruth, newBudget);
     }
 
     /**
@@ -331,11 +319,11 @@ public abstract class DerivationContext {
      * @param newBudget   The budget value in task
      */
     public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
-        final Task parentTask = currentTask.getParentTask();
+        final Task parentTask = this.getCurrentTask().getParentTask();
         if (parentTask != null && newContent.equals(parentTask.getContent())) { // circular structural inference
             return;
         }
-        final Sentence taskSentence = currentTask.getSentence();
+        final Sentence taskSentence = this.getCurrentTask().getSentence();
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
             this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
@@ -344,7 +332,7 @@ public abstract class DerivationContext {
         }
         final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
-        final Task newTask = new Task(newSentence, newBudget, currentTask, null);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
         derivedTask(newTask);
     }
 
