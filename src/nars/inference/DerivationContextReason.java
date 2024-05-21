@@ -17,6 +17,63 @@ import nars.storage.Memory;
  */
 public class DerivationContextReason extends DerivationContext {
 
+    public static interface IBuilder {
+        public DerivationContextReason build();
+    }
+
+    /**
+     * 用于构建「直接推理上下文」对象
+     */
+    public static class Builder extends DerivationContextReason implements IBuilder {
+        public Builder(Memory memory) {
+            super(memory);
+        }
+
+        public DerivationContextReason build() {
+            // * 🚩系列断言与赋值（实际使用中可删）
+            /*
+             * 📝有效字段：{
+             * currentTerm
+             * currentConcept
+             * currentTask
+             * currentTaskLink
+             * currentBelief?
+             * currentBeliefLink
+             * newStamp?
+             * }
+             */
+            if (this.getCurrentTask() == null) {
+                throw new Error("currentTask: 不符预期的可空情况");
+            }
+            if (this.getCurrentTerm() == null) {
+                throw new Error("currentTerm: 不符预期的可空情况");
+            }
+            if (this.getCurrentConcept() == null) {
+                throw new Error("currentConcept: 不符预期的可空情况");
+            }
+            if (this.getCurrentBelief() == null && this.getCurrentBelief() != null) { // * 📝可空
+                throw new Error("currentBelief: 不符预期的可空情况");
+            }
+            if (this.getCurrentBeliefLink() == null) {
+                throw new Error("currentBeliefLink: 不符预期的可空情况");
+            }
+            if (this.getCurrentTaskLink() == null) {
+                throw new Error("currentTaskLink: 不符预期的可空情况");
+            }
+            if (this.getNewStamp() != null && this.getNewStamp() == null) {
+                // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
+                throw new Error("newStamp: 不符预期的可空情况");
+            }
+            if (this.getSubstitute() != null) {
+                throw new Error("substitute: 不符预期的可空情况");
+            }
+            if (this.getTermLinksToReason().isEmpty() && !this.getTermLinksToReason().isEmpty()) { // * 📝可空：有可能只有一个词项链
+                throw new Error("termLinksToReason: 不符预期的可空情况");
+            }
+            return (DerivationContextReason) this;
+        }
+    }
+
     /* ---------- Short-term workspace for a single cycle ---------- */
     /**
      * The selected TaskLink
@@ -45,6 +102,19 @@ public class DerivationContextReason extends DerivationContext {
     }
 
     /**
+     * 🆕所有要参与「概念推理」的词项链（信念链）
+     * * 🎯装载「准备好的词项链（信念链）」，简化「概念推理准备阶段」的传参
+     * * 📌Java没有像元组那样方便的「规范化临时结构」类型，对函数返回值的灵活性限制颇多
+     * * 🚩目前对于「第一个要准备的词项链」会直接存储在「当前词项链（信念链）」中
+     * * 📌类似Rust所有权规则：始终只有一处持有「完全独占引用（所有权）」
+     */
+    private LinkedList<TermLink> termLinksToReason = new LinkedList<>();
+
+    public LinkedList<TermLink> getTermLinksToReason() {
+        return termLinksToReason;
+    }
+
+    /**
      * 设置当前任务链
      * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现（构建推理上下文）
      */
@@ -58,7 +128,7 @@ public class DerivationContextReason extends DerivationContext {
      *
      * @param memory 所反向引用的「记忆区」对象
      */
-    public DerivationContextReason(final Memory memory) {
+    protected DerivationContextReason(final Memory memory) {
         super(memory);
     }
 

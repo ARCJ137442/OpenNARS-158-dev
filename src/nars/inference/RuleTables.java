@@ -19,43 +19,6 @@ public class RuleTables {
      * @param context Reference to the derivation context
      */
     public static void reason(DerivationContextReason context) {
-        // * 🚩系列断言与赋值（实际使用中可删）
-        /*
-         * 📝有效字段：{
-         * currentTerm
-         * currentConcept
-         * currentTask
-         * currentTaskLink
-         * currentBelief?
-         * currentBeliefLink
-         * newStamp?
-         * }
-         */
-        if (context.getCurrentTask() == null) {
-            throw new Error("currentTask: 不符预期的可空情况");
-        }
-        if (context.getCurrentTerm() == null) {
-            throw new Error("currentTerm: 不符预期的可空情况");
-        }
-        if (context.getCurrentConcept() == null) {
-            throw new Error("currentConcept: 不符预期的可空情况");
-        }
-        if (context.getCurrentBelief() == null && context.getCurrentBelief() != null) { // * 📝可空
-            throw new Error("currentBelief: 不符预期的可空情况");
-        }
-        if (context.getCurrentBeliefLink() == null) {
-            throw new Error("currentBeliefLink: 不符预期的可空情况");
-        }
-        if (context.getCurrentTaskLink() == null) {
-            throw new Error("currentTaskLink: 不符预期的可空情况");
-        }
-        if (context.getNewStamp() != null && context.getNewStamp() == null) {
-            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
-            throw new Error("newStamp: 不符预期的可空情况");
-        }
-        if (context.getSubstitute() != null) {
-            throw new Error("substitute: 不符预期的可空情况");
-        }
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
@@ -63,6 +26,7 @@ public class RuleTables {
         final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Sentence belief = context.getCurrentBelief();
+        // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
         if (belief != null) {
             LocalRules.match(context);
         }

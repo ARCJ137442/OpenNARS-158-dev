@@ -12,6 +12,59 @@ import nars.storage.Memory;
  */
 public class DerivationContextDirect extends DerivationContext {
 
+    public static interface IBuilder {
+        public DerivationContextDirect build();
+    }
+
+    /**
+     * 用于构建「直接推理上下文」对象
+     */
+    public static class Builder extends DerivationContextDirect implements IBuilder {
+        public Builder(Memory memory) {
+            super(memory);
+        }
+
+        public DerivationContextDirect build() {
+            /*
+             * 📝有效字段：{
+             * currentTerm
+             * currentConcept
+             * currentTask
+             *
+             * currentBelief? | 用于中途推理
+             * newStamp? | 用于中途推理
+             * }
+             */
+
+            // * 🚩系列断言与赋值（实际使用中可删）
+            if (this.getCurrentTask() == null) {
+                throw new Error("currentTask: 不符预期的可空情况");
+            }
+            if (this.getCurrentTerm() == null) {
+                throw new Error("currentTerm: 不符预期的可空情况");
+            }
+            if (this.getCurrentConcept() == null) {
+                throw new Error("currentConcept: 不符预期的可空情况");
+            }
+            if (this.getCurrentBelief() != null) {
+                throw new Error("currentBelief: 不符预期的可空情况");
+            }
+            // if (this.getCurrentBeliefLink() != null) {
+            // throw new Error("currentBeliefLink: 不符预期的可空情况");
+            // }
+            // if (this.getCurrentTaskLink() != null) {
+            // throw new Error("currentTaskLink: 不符预期的可空情况");
+            // }
+            if (this.getNewStamp() != null) {
+                throw new Error("newStamp: 不符预期的可空情况");
+            }
+            if (this.getSubstitute() != null) {
+                throw new Error("substitute: 不符预期的可空情况");
+            }
+            return (DerivationContextDirect) this;
+        }
+    }
+
     /* ---------- Short-term workspace for a single cycle ---------- */
 
     /**
@@ -20,7 +73,7 @@ public class DerivationContextDirect extends DerivationContext {
      *
      * @param memory 所反向引用的「记忆区」对象
      */
-    public DerivationContextDirect(final Memory memory) {
+    protected DerivationContextDirect(final Memory memory) {
         super(memory);
     }
 

@@ -1,6 +1,6 @@
 package nars.control;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Sentence;
@@ -21,24 +21,27 @@ public abstract class ProcessReason {
     public static void processReason(final Memory self, final boolean noResult) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
-        final DerivationContextReason context = new DerivationContextReason(self);
-        final Iterable<TermLink> toReasonLinks = ProcessReason.preprocessConcept(self, noResult, context);
+        // TODO: 是否要合并这俩返回值？比如，将`toReasonLinks`内置到「概念推理上下文」作为字段
+        final DerivationContextReason.IBuilder contextBuilder = ProcessReason.preprocessConcept(self, noResult);
+        if (contextBuilder == null)
+            return;
+
+        // * 🚩构建「概念推理上下文」
+        final DerivationContextReason context = contextBuilder.build();
 
         // * 🚩内部概念高级推理 阶段 * //
-        if (toReasonLinks != null)
-            // * 🚩都选好了⇒开始
-            ProcessReason.processConcept(toReasonLinks, context);
+        ProcessReason.processConcept(context);
     }
 
     /**
      * Select a concept to fire.
      */
-    public static void processConcept(
-            final Iterable<TermLink> toReasonLinks,
-            final DerivationContextReason context) {
+    public static void processConcept(final DerivationContextReason context) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
-        for (final TermLink termLink : toReasonLinks) {
+        // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
+        for (;;) {
+            final TermLink termLink = context.getCurrentBeliefLink();
             // * 🚩每次「概念推理」只更改「当前信念」与「当前信念链」
             final TermLink newBeliefLink = termLink;
             final Sentence newBelief;
@@ -47,7 +50,7 @@ public abstract class ProcessReason {
             if (beliefConcept != null) {
                 newBelief = beliefConcept.getBelief(context.getCurrentTask()); // ! may be null
                 if (newBelief != null) {
-                    newStamp = Stamp.uncheckedMerge( // ! may be null
+                    newStamp = Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
                             context.getCurrentTask().getSentence().getStamp(),
                             // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                             // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
@@ -67,7 +70,13 @@ public abstract class ProcessReason {
             context.switchToNewBelief(newBeliefLink, newBelief, newStamp);
             // * 🔥启动概念推理：点火！
             RuleTables.reason(context);
+            // * ♻️回收词项链
             context.getCurrentConcept().__putTermLinkBack(termLink);
+            // * 🚩尝试从「待推理词项链列表」中拿取（并替换）词项链
+            if (context.getTermLinksToReason().isEmpty())
+                break;
+            else
+                context.setCurrentBeliefLink(context.getTermLinksToReason().poll());
         }
         context.getCurrentConcept().__putTaskLinkBack(context.getCurrentTaskLink());
         // * 🚩吸收并清空上下文
@@ -85,10 +94,10 @@ public abstract class ProcessReason {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private static Iterable<TermLink> preprocessConcept(
+    private static DerivationContextReason.IBuilder preprocessConcept(
             final Memory self,
-            final boolean noResult,
-            final DerivationContextReason context) {
+            final boolean noResult) {
+        final DerivationContextReason.Builder context = new DerivationContextReason.Builder(self);
         // * 🚩推理前判断「是否有必要」
         if (!noResult) // necessary?
             return null;
@@ -135,11 +144,24 @@ public abstract class ProcessReason {
             return null;
         }
 
-        // * 🚩终于要轮到「点火」：从选取的「任务链」获取要（分别）参与推理的「词项链」
-        return chooseTermLinksToReason(
+        // * 🚩从选取的「任务链」获取要（分别）参与推理的「词项链」
+        final LinkedList<TermLink> toReasonLinks = chooseTermLinksToReason(
                 self,
                 context.getCurrentConcept(),
                 currentTaskLink);
+        if (toReasonLinks.isEmpty()) {
+            return null;
+        } else {
+            // 先将首个元素作为「当前信念链」
+            final TermLink currentBeliefLink = toReasonLinks.poll();
+            context.setCurrentBeliefLink(currentBeliefLink);
+        }
+        // 再将其余元素添加进「待推理词项链表」
+        for (final TermLink termLink : toReasonLinks) {
+            context.getTermLinksToReason().add(termLink);
+        }
+        // * 🚩终于要轮到「点火」
+        return context;
     }
 
     /**
@@ -148,9 +170,9 @@ public abstract class ProcessReason {
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
      */
-    private static ArrayList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
+    private static LinkedList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
             TaskLink currentTaskLink) {
-        final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
+        final LinkedList<TermLink> toReasonLinks = new LinkedList<>();
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
         // while (self.noResult() && (termLinkCount > 0)) {
         while (termLinkCount > 0) {

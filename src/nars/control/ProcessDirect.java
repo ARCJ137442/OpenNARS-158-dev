@@ -115,7 +115,9 @@ public abstract class ProcessDirect {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
         // * 🚩准备上下文
-        final DerivationContextDirect context = prepareDirectProcessContext(self, taskInput);
+        final DerivationContextDirect.IBuilder contextBuilder = prepareDirectProcessContext(self, taskInput);
+        // * 🚩构建「实际上下文」并断言可空性
+        final DerivationContextDirect context = contextBuilder.build();
 
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
@@ -156,10 +158,11 @@ public abstract class ProcessDirect {
      * @param taskInput
      * @return 直接推理上下文 / 空
      */
-    private static DerivationContextDirect prepareDirectProcessContext(final Memory self, final Task taskInput) {
-        // * 🚩强制清空上下文防串
-        final DerivationContextDirect context = new DerivationContextDirect(self);
+    private static DerivationContextDirect.IBuilder prepareDirectProcessContext(
+            final Memory self,
+            final Task taskInput) {
         // * 🚩准备上下文
+        final DerivationContextDirect.Builder context = new DerivationContextDirect.Builder(self);
         // one of the two places where this variable is set
         context.setCurrentTask(taskInput);
         context.setCurrentConcept(self.getConceptOrCreate(taskInput.getContent()));
@@ -188,41 +191,6 @@ public abstract class ProcessDirect {
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         // * 📝相比于「概念推理」仅少了「当前词项链」与「当前任务链」，其它基本通用
         final Concept self = context.getCurrentConcept();
-        /*
-         * 📝有效字段：{
-         * currentTerm
-         * currentConcept
-         * currentTask
-         *
-         * currentBelief? | 用于中途推理
-         * newStamp? | 用于中途推理
-         * }
-         */
-        // * 🚩系列断言与赋值（实际使用中可删）
-        if (context.getCurrentTask() == null) {
-            throw new Error("currentTask: 不符预期的可空情况");
-        }
-        if (context.getCurrentTerm() == null) {
-            throw new Error("currentTerm: 不符预期的可空情况");
-        }
-        if (context.getCurrentConcept() != self) { // ! 不仅非空，而且等于自身
-            throw new Error("currentConcept: 不符预期的可空情况");
-        }
-        if (context.getCurrentBelief() != null) {
-            throw new Error("currentBelief: 不符预期的可空情况");
-        }
-        // if (context.getCurrentBeliefLink() != null) {
-        // throw new Error("currentBeliefLink: 不符预期的可空情况");
-        // }
-        // if (context.getCurrentTaskLink() != null) {
-        // throw new Error("currentTaskLink: 不符预期的可空情况");
-        // }
-        if (context.getNewStamp() != null) {
-            throw new Error("newStamp: 不符预期的可空情况");
-        }
-        if (context.getSubstitute() != null) {
-            throw new Error("substitute: 不符预期的可空情况");
-        }
         final Task task = context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
