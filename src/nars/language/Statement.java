@@ -3,7 +3,6 @@ package nars.language;
 import java.util.ArrayList;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A statement is a compound term, consisting of a subject, a predicate, and a
@@ -36,88 +35,6 @@ public abstract class Statement extends CompoundTerm {
      */
     protected Statement(String n, ArrayList<Term> cs, boolean con, short i) {
         super(n, cs, con, i);
-    }
-
-    /**
-     * Make a Statement from String, called by StringParser
-     *
-     * @param relation  The relation String
-     * @param subject   The first component
-     * @param predicate The second component
-     * @param memory    Reference to the memory
-     * @return The Statement built
-     */
-    public static Statement make(String relation, Term subject, Term predicate, Memory memory) {
-        if (invalidStatement(subject, predicate)) {
-            return null;
-        }
-        if (relation.equals(Symbols.INHERITANCE_RELATION)) {
-            return Inheritance.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.SIMILARITY_RELATION)) {
-            return Similarity.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.INSTANCE_RELATION)) {
-            return Instance.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.PROPERTY_RELATION)) {
-            return Property.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.INSTANCE_PROPERTY_RELATION)) {
-            return InstanceProperty.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.IMPLICATION_RELATION)) {
-            return Implication.make(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.EQUIVALENCE_RELATION)) {
-            return Equivalence.make(subject, predicate, memory);
-        }
-        return null;
-    }
-
-    /**
-     * Make a Statement from given components, called by the rules
-     *
-     * @return The Statement built
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param statement A sample statement providing the class type
-     * @param memory    Reference to the memory
-     */
-    public static Statement make(Statement statement, Term subj, Term pred, Memory memory) {
-        if (statement instanceof Inheritance) {
-            return Inheritance.make(subj, pred, memory);
-        }
-        if (statement instanceof Similarity) {
-            return Similarity.make(subj, pred, memory);
-        }
-        if (statement instanceof Implication) {
-            return Implication.make(subj, pred, memory);
-        }
-        if (statement instanceof Equivalence) {
-            return Equivalence.make(subj, pred, memory);
-        }
-        return null;
-    }
-
-    /**
-     * Make a symmetric Statement from given components and temporal
-     * information, called by the rules
-     *
-     * @param statement A sample asymmetric statement providing the class type
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param memory    Reference to the memory
-     * @return The Statement built
-     */
-    public static Statement makeSym(Statement statement, Term subj, Term pred, Memory memory) {
-        if (statement instanceof Inheritance) {
-            return Similarity.make(subj, pred, memory);
-        }
-        if (statement instanceof Implication) {
-            return Equivalence.make(subj, pred, memory);
-        }
-        return null;
     }
 
     /**
@@ -159,7 +76,7 @@ public abstract class Statement extends CompoundTerm {
      * @param relation  The relation operator
      * @return The nameStr of the term
      */
-    protected static String makeStatementName(Term subject, String relation, Term predicate) {
+    public static String makeStatementName(Term subject, String relation, Term predicate) {
         StringBuilder nameStr = new StringBuilder();
         nameStr.append(Symbols.STATEMENT_OPENER);
         nameStr.append(subject.getName());

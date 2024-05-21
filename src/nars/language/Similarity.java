@@ -3,7 +3,6 @@ package nars.language;
 import java.util.ArrayList;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A Statement about a Similarity relation.
@@ -16,7 +15,7 @@ public class Similarity extends Statement {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private Similarity(ArrayList<Term> arg) {
+    public Similarity(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -40,31 +39,6 @@ public class Similarity extends Statement {
     @Override
     public Similarity clone() {
         return new Similarity(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @param memory    Reference to the memory
-     * @return A compound generated or null
-     */
-    public static Similarity make(Term subject, Term predicate, Memory memory) {
-        if (invalidStatement(subject, predicate)) {
-            return null;
-        }
-        if (subject.compareTo(predicate) > 0) {
-            return make(predicate, subject, memory);
-        }
-        String name = makeStatementName(subject, Symbols.SIMILARITY_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
-        if (t != null) {
-            return (Similarity) t;
-        }
-        ArrayList<Term> argument = argumentsToList(subject, predicate);
-        return new Similarity(argument);
     }
 
     /**

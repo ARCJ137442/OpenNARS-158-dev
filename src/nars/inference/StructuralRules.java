@@ -6,6 +6,7 @@ import nars.entity.*;
 import nars.io.Symbols;
 import nars.language.*;
 import nars.main_nogui.Parameters;
+import static nars.control.MakeTerm.*;
 
 /**
  * Single-premise inference rules involving compound terms. Input are one
@@ -44,12 +45,12 @@ public final class StructuralRules {
             if (components.contains(sub)) {
                 sub = compound;
                 components.set(index, pred);
-                pred = CompoundTerm.make(compound, components, context.getMemory());
+                pred = makeCompoundTerm(compound, components, context.getMemory());
             }
         } else {
             if (components.contains(pred)) {
                 components.set(index, sub);
-                sub = CompoundTerm.make(compound, components, context.getMemory());
+                sub = makeCompoundTerm(compound, components, context.getMemory());
                 pred = compound;
             }
         }
@@ -58,9 +59,9 @@ public final class StructuralRules {
         }
         final Term content;
         if (switchOrder(compound, index)) {
-            content = Statement.make(statement, pred, sub, context.getMemory());
+            content = makeStatement(statement, pred, sub, context.getMemory());
         } else {
-            content = Statement.make(statement, sub, pred, context.getMemory());
+            content = makeStatement(statement, sub, pred, context.getMemory());
         }
         if (content == null) {
             return;
@@ -105,9 +106,9 @@ public final class StructuralRules {
         final Term t2 = pre.componentAt(index);
         final Term content;
         if (switchOrder(sub, (short) index)) {
-            content = Statement.make(statement, t2, t1, context.getMemory());
+            content = makeStatement(statement, t2, t1, context.getMemory());
         } else {
-            content = Statement.make(statement, t1, t2, context.getMemory());
+            content = makeStatement(statement, t1, t2, context.getMemory());
         }
         if (content == null) {
             return;
@@ -214,7 +215,7 @@ public final class StructuralRules {
             if (compound instanceof IntersectionInt) {
                 structuralStatement(component, pred, truthDed, context);
             } else if ((compound instanceof SetExt) && (compound.size() > 1)) {
-                structuralStatement(SetExt.make(component, context.getMemory()), pred, truthDed, context);
+                structuralStatement(makeSetExt(component, context.getMemory()), pred, truthDed, context);
             } else if (compound instanceof DifferenceInt) {
                 if (index == 0) {
                     structuralStatement(component, pred, truthDed, context);
@@ -226,7 +227,7 @@ public final class StructuralRules {
             if (compound instanceof IntersectionExt) {
                 structuralStatement(subj, component, truthDed, context);
             } else if ((compound instanceof SetInt) && (compound.size() > 1)) {
-                structuralStatement(subj, SetInt.make(component, context.getMemory()), truthDed, context);
+                structuralStatement(subj, makeSetInt(component, context.getMemory()), truthDed, context);
             } else if (compound instanceof DifferenceExt) {
                 if (index == 0) {
                     structuralStatement(subj, component, truthDed, context);
@@ -250,7 +251,7 @@ public final class StructuralRules {
         final Task task = context.getCurrentTask();
         final Term oldContent = task.getContent();
         if (oldContent instanceof Statement) {
-            final Term content = Statement.make((Statement) oldContent, subject, predicate, context.getMemory());
+            final Term content = makeStatement((Statement) oldContent, subject, predicate, context.getMemory());
             if (content != null) {
                 final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context);
                 context.singlePremiseTask(content, truth, budget);
@@ -281,12 +282,12 @@ public final class StructuralRules {
         final Term pre = statement.getPredicate();
         final Term content;
         if (statement instanceof Inheritance) {
-            content = Similarity.make(sub, pre, context.getMemory());
+            content = makeSimilarity(sub, pre, context.getMemory());
         } else {
             if (((compound instanceof SetExt) && (side == 0)) || ((compound instanceof SetInt) && (side == 1))) {
-                content = Inheritance.make(pre, sub, context.getMemory());
+                content = makeInheritance(pre, sub, context.getMemory());
             } else {
-                content = Inheritance.make(sub, pre, context.getMemory());
+                content = makeInheritance(sub, pre, context.getMemory());
             }
         }
         if (content == null) {
@@ -336,36 +337,36 @@ public final class StructuralRules {
         if (comp instanceof Product) {
             if (side == 0) {
                 subject = comp.componentAt(index);
-                predicate = ImageExt.make((Product) comp, inh.getPredicate(), index, context.getMemory());
+                predicate = makeImageExt((Product) comp, inh.getPredicate(), index, context.getMemory());
             } else {
-                subject = ImageInt.make((Product) comp, inh.getSubject(), index, context.getMemory());
+                subject = makeImageInt((Product) comp, inh.getSubject(), index, context.getMemory());
                 predicate = comp.componentAt(index);
             }
         } else if ((comp instanceof ImageExt) && (side == 1)) {
             if (index == ((ImageExt) comp).getRelationIndex()) {
-                subject = Product.make(comp, inh.getSubject(), index, context.getMemory());
+                subject = makeProduct(comp, inh.getSubject(), index, context.getMemory());
                 predicate = comp.componentAt(index);
             } else {
                 subject = comp.componentAt(index);
-                predicate = ImageExt.make((ImageExt) comp, inh.getSubject(), index, context.getMemory());
+                predicate = makeImageExt((ImageExt) comp, inh.getSubject(), index, context.getMemory());
             }
         } else if ((comp instanceof ImageInt) && (side == 0)) {
             if (index == ((ImageInt) comp).getRelationIndex()) {
                 subject = comp.componentAt(index);
-                predicate = Product.make(comp, inh.getPredicate(), index, context.getMemory());
+                predicate = makeProduct(comp, inh.getPredicate(), index, context.getMemory());
             } else {
-                subject = ImageInt.make((ImageInt) comp, inh.getPredicate(), index, context.getMemory());
+                subject = makeImageInt((ImageInt) comp, inh.getPredicate(), index, context.getMemory());
                 predicate = comp.componentAt(index);
             }
         } else {
             return;
         }
-        final Inheritance newInh = Inheritance.make(subject, predicate, context.getMemory());
+        final Inheritance newInh = makeInheritance(subject, predicate, context.getMemory());
         Term content = null;
         if (indices.length == 2) {
             content = newInh;
         } else if ((oldContent instanceof Statement) && (indices[0] == 1)) {
-            content = Statement.make((Statement) oldContent, oldContent.componentAt(0), newInh, context.getMemory());
+            content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh, context.getMemory());
         } else {
             ArrayList<Term> componentList;
             Term condition = oldContent.componentAt(0);
@@ -373,16 +374,16 @@ public final class StructuralRules {
                     && (condition instanceof Conjunction)) {
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
-                Term newCond = CompoundTerm.make((CompoundTerm) condition, componentList, context.getMemory());
-                content = Statement.make((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate(),
+                Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList, context.getMemory());
+                content = makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate(),
                         context.getMemory());
             } else {
                 componentList = oldContent.cloneComponents();
                 componentList.set(indices[0], newInh);
                 if (oldContent instanceof Conjunction) {
-                    content = CompoundTerm.make(oldContent, componentList, context.getMemory());
+                    content = makeCompoundTerm(oldContent, componentList, context.getMemory());
                 } else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence)) {
-                    content = Statement.make((Statement) oldContent, componentList.get(0), componentList.get(1),
+                    content = makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1),
                             context.getMemory());
                 }
             }
@@ -421,8 +422,8 @@ public final class StructuralRules {
             Product product = (Product) subject;
             for (short i = 0; i < product.size(); i++) {
                 newSubj = product.componentAt(i);
-                newPred = ImageExt.make(product, predicate, i, context.getMemory());
-                inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
+                newPred = makeImageExt(product, predicate, i, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -438,12 +439,12 @@ public final class StructuralRules {
             for (short i = 0; i < image.size(); i++) {
                 if (i == relationIndex) {
                     newSubj = image.componentAt(relationIndex);
-                    newPred = Product.make(image, predicate, relationIndex, context.getMemory());
+                    newPred = makeProduct(image, predicate, relationIndex, context.getMemory());
                 } else {
-                    newSubj = ImageInt.make((ImageInt) image, predicate, i, context.getMemory());
+                    newSubj = makeImageInt((ImageInt) image, predicate, i, context.getMemory());
                     newPred = image.componentAt(i);
                 }
-                inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -475,9 +476,9 @@ public final class StructuralRules {
         if (predicate instanceof Product) {
             final Product product = (Product) predicate;
             for (short i = 0; i < product.size(); i++) {
-                newSubj = ImageInt.make(product, subject, i, context.getMemory());
+                newSubj = makeImageInt(product, subject, i, context.getMemory());
                 newPred = product.componentAt(i);
-                inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -492,13 +493,13 @@ public final class StructuralRules {
             final int relationIndex = image.getRelationIndex();
             for (short i = 0; i < image.size(); i++) {
                 if (i == relationIndex) {
-                    newSubj = Product.make(image, subject, relationIndex, context.getMemory());
+                    newSubj = makeProduct(image, subject, relationIndex, context.getMemory());
                     newPred = image.componentAt(relationIndex);
                 } else {
                     newSubj = image.componentAt(i);
-                    newPred = ImageExt.make((ImageExt) image, subject, i, context.getMemory());
+                    newPred = makeImageExt((ImageExt) image, subject, i, context.getMemory());
                 }
-                inheritance = Inheritance.make(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
                 if (inheritance != null) { // jmv <<<<<
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -579,8 +580,8 @@ public final class StructuralRules {
     static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
-        final Term content = Statement.make(statement, Negation.make(pred, context.getMemory()),
-                Negation.make(subj, context.getMemory()),
+        final Term content = makeStatement(statement, makeNegation(pred, context.getMemory()),
+                makeNegation(subj, context.getMemory()),
                 context.getMemory());
         TruthValue truth = sentence.getTruth();
         final BudgetValue budget;

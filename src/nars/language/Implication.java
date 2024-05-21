@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A Statement about an Inheritance relation.
@@ -15,7 +14,7 @@ public class Implication extends Statement {
      *
      * @param arg The component list of the term
      */
-    protected Implication(ArrayList<Term> arg) {
+    public Implication(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -38,47 +37,6 @@ public class Implication extends Statement {
      */
     public Implication clone() {
         return new Implication(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @param memory    Reference to the memory
-     * @return A compound generated or a term it reduced to
-     */
-    public static Implication make(Term subject, Term predicate, Memory memory) {
-        if ((subject == null) || (predicate == null)) {
-            return null;
-        }
-        if ((subject == null) || (predicate == null)) {
-            return null;
-        }
-        if ((subject instanceof Implication) || (subject instanceof Equivalence)
-                || (predicate instanceof Equivalence)) {
-            return null;
-        }
-        if (invalidStatement(subject, predicate)) {
-            return null;
-        }
-        String name = makeStatementName(subject, Symbols.IMPLICATION_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
-        if (t != null) {
-            return (Implication) t;
-        }
-        if (predicate instanceof Implication) {
-            Term oldCondition = ((Implication) predicate).getSubject();
-            if ((oldCondition instanceof Conjunction) && ((Conjunction) oldCondition).containComponent(subject)) {
-                return null;
-            }
-            Term newCondition = Conjunction.make(subject, oldCondition, memory);
-            return make(newCondition, ((Implication) predicate).getPredicate(), memory);
-        } else {
-            ArrayList<Term> argument = argumentsToList(subject, predicate);
-            return new Implication(argument);
-        }
     }
 
     /**

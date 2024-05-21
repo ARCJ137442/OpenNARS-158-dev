@@ -2,7 +2,6 @@ package nars.language;
 
 import java.util.*;
 
-import nars.storage.*;
 import nars.io.Symbols;
 
 /**
@@ -152,79 +151,6 @@ public abstract class CompoundTerm extends Term {
         return 0;
     }
 
-    /* static methods making new compounds, which may return null */
-    /**
-     * Try to make a compound term from a template and a list of components
-     *
-     * @param compound   The template
-     * @param components The components
-     * @param memory     Reference to the memory
-     * @return A compound term or null
-     */
-    public static Term make(CompoundTerm compound, ArrayList<Term> components, Memory memory) {
-        if (compound instanceof ImageExt) {
-            return ImageExt.make(components, ((ImageExt) compound).getRelationIndex(), memory);
-        } else if (compound instanceof ImageInt) {
-            return ImageInt.make(components, ((ImageInt) compound).getRelationIndex(), memory);
-        } else {
-            return make(compound.operator(), components, memory);
-        }
-    }
-
-    /**
-     * Try to make a compound term from an operator and a list of components
-     * <p>
-     * Called from StringParser
-     *
-     * @param op     Term operator
-     * @param arg    Component list
-     * @param memory Reference to the memory
-     * @return A compound term or null
-     */
-    public static Term make(String op, ArrayList<Term> arg, Memory memory) {
-        if (op.length() == 1) {
-            if (op.charAt(0) == Symbols.SET_EXT_OPENER) {
-                return SetExt.make(arg, memory);
-            }
-            if (op.charAt(0) == Symbols.SET_INT_OPENER) {
-                return SetInt.make(arg, memory);
-            }
-            if (op.equals(Symbols.INTERSECTION_EXT_OPERATOR)) {
-                return IntersectionExt.make(arg, memory);
-            }
-            if (op.equals(Symbols.INTERSECTION_INT_OPERATOR)) {
-                return IntersectionInt.make(arg, memory);
-            }
-            if (op.equals(Symbols.DIFFERENCE_EXT_OPERATOR)) {
-                return DifferenceExt.make(arg, memory);
-            }
-            if (op.equals(Symbols.DIFFERENCE_INT_OPERATOR)) {
-                return DifferenceInt.make(arg, memory);
-            }
-            if (op.equals(Symbols.PRODUCT_OPERATOR)) {
-                return Product.make(arg, memory);
-            }
-            if (op.equals(Symbols.IMAGE_EXT_OPERATOR)) {
-                return ImageExt.make(arg, memory);
-            }
-            if (op.equals(Symbols.IMAGE_INT_OPERATOR)) {
-                return ImageInt.make(arg, memory);
-            }
-        }
-        if (op.length() == 2) {
-            if (op.equals(Symbols.NEGATION_OPERATOR)) {
-                return Negation.make(arg, memory);
-            }
-            if (op.equals(Symbols.DISJUNCTION_OPERATOR)) {
-                return Disjunction.make(arg, memory);
-            }
-            if (op.equals(Symbols.CONJUNCTION_OPERATOR)) {
-                return Conjunction.make(arg, memory);
-            }
-        }
-        return null;
-    }
-
     /**
      * Check CompoundTerm operator symbol
      *
@@ -256,7 +182,7 @@ public abstract class CompoundTerm extends Term {
      * @param t2 the second component
      * @return the component list
      */
-    protected static ArrayList<Term> argumentsToList(Term t1, Term t2) {
+    public static ArrayList<Term> argumentsToList(Term t1, Term t2) {
         ArrayList<Term> list = new ArrayList<>(2);
         list.add(t1);
         list.add(t2);
@@ -281,7 +207,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg the list of components
      * @return the oldName of the term
      */
-    protected static String makeCompoundName(String op, ArrayList<Term> arg) {
+    public static String makeCompoundName(String op, ArrayList<Term> arg) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);
@@ -304,7 +230,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg    the list of components
      * @return the oldName of the term
      */
-    protected static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
+    public static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
         StringBuilder name = new StringBuilder();
         name.append(opener);
         name.append(arg.get(0).getName());
@@ -324,7 +250,7 @@ public abstract class CompoundTerm extends Term {
      * @param relationIndex the location of the place holder
      * @return the oldName of the term
      */
-    protected static String makeImageName(String op, ArrayList<Term> arg, int relationIndex) {
+    public static String makeImageName(String op, ArrayList<Term> arg, int relationIndex) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);
@@ -480,84 +406,6 @@ public abstract class CompoundTerm extends Term {
         } else {
             return components.contains(t);
         }
-    }
-
-    /**
-     * Try to add a component into a compound
-     *
-     * @param t1     The compound
-     * @param t2     The component
-     * @param memory Reference to the memory
-     * @return The new compound
-     */
-    public static Term addComponents(CompoundTerm t1, Term t2, Memory memory) {
-        if (t2 == null) {
-            return t1;
-        }
-        boolean success;
-        ArrayList<Term> list = t1.cloneComponents();
-        if (t1.getClass() == t2.getClass()) {
-            success = list.addAll(((CompoundTerm) t2).getComponents());
-        } else {
-            success = list.add(t2);
-        }
-        return (success ? make(t1, list, memory) : null);
-    }
-
-    /**
-     * Try to remove a component from a compound
-     *
-     * @param t1     The compound
-     * @param t2     The component
-     * @param memory Reference to the memory
-     * @return The new compound
-     */
-    public static Term reduceComponents(CompoundTerm t1, Term t2, Memory memory) {
-        boolean success;
-        ArrayList<Term> list = t1.cloneComponents();
-        if (t1.getClass() == t2.getClass()) {
-            success = list.removeAll(((CompoundTerm) t2).getComponents());
-        } else {
-            success = list.remove(t2);
-        }
-        if (success) {
-            if (list.size() > 1) {
-                return make(t1, list, memory);
-            }
-            if (list.size() == 1) {
-                if ((t1 instanceof Conjunction) || (t1 instanceof Disjunction)
-                        || (t1 instanceof IntersectionExt) || (t1 instanceof IntersectionInt)
-                        || (t1 instanceof DifferenceExt) || (t1 instanceof DifferenceInt)) {
-                    return list.get(0);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Try to replace a component in a compound at a given index by another one
-     *
-     * @param compound The compound
-     * @param index    The location of replacement
-     * @param t        The new component
-     * @param memory   Reference to the memory
-     * @return The new compound
-     */
-    public static Term setComponent(CompoundTerm compound, int index, Term t, Memory memory) {
-        ArrayList<Term> list = compound.cloneComponents();
-        list.remove(index);
-        if (t != null) {
-            if (compound.getClass() != t.getClass()) {
-                list.add(index, t);
-            } else {
-                ArrayList<Term> list2 = ((CompoundTerm) t).cloneComponents();
-                for (int i = 0; i < list2.size(); i++) {
-                    list.add(index + i, list2.get(i));
-                }
-            }
-        }
-        return make(compound, list, memory);
     }
 
     /* ----- variable-related utilities ----- */

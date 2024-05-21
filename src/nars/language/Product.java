@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A Product is a sequence of terms.
@@ -16,7 +15,7 @@ public class Product extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private Product(ArrayList<Term> arg) {
+    public Product(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -39,36 +38,6 @@ public class Product extends CompoundTerm {
      */
     public Product clone() {
         return new Product(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new compound. Called by StringParser.
-     *
-     * @return the Term generated from the arguments
-     * @param argument The list of components
-     * @param memory   Reference to the memory
-     */
-    public static Term make(ArrayList<Term> argument, Memory memory) {
-        String name = makeCompoundName(Symbols.PRODUCT_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
-        return (t != null) ? t : new Product(argument);
-    }
-
-    /**
-     * Try to make a Product from an ImageExt/ImageInt and a component. Called by
-     * the inference rules.
-     *
-     * @param image     The existing Image
-     * @param component The component to be added into the component list
-     * @param index     The index of the place-holder in the new Image -- optional
-     *                  parameter
-     * @param memory    Reference to the memory
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term make(CompoundTerm image, Term component, int index, Memory memory) {
-        ArrayList<Term> argument = image.cloneComponents();
-        argument.set(index, component);
-        return make(argument, memory);
     }
 
     /**

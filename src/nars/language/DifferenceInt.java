@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A compound term whose extension is the difference of the intensions of its
@@ -17,7 +16,7 @@ public class DifferenceInt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private DifferenceInt(ArrayList<Term> arg) {
+    public DifferenceInt(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -40,47 +39,6 @@ public class DifferenceInt extends CompoundTerm {
      */
     public DifferenceInt clone() {
         return new DifferenceInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new DifferenceExt. Called by StringParser.
-     *
-     * @return the Term generated from the arguments
-     * @param argList The list of components
-     * @param memory  Reference to the memory
-     */
-    public static Term make(ArrayList<Term> argList, Memory memory) {
-        if (argList.size() == 1) { // special case from CompoundTerm.reduceComponent
-            return argList.get(0);
-        }
-        if (argList.size() != 2) {
-            return null;
-        }
-        if ((argList.get(0) instanceof SetInt) && (argList.get(1) instanceof SetInt)) {
-            TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
-            set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
-            return SetInt.make(set, memory);
-        }
-        String name = makeCompoundName(Symbols.DIFFERENCE_INT_OPERATOR, argList);
-        Term t = memory.nameToListedTerm(name);
-        return (t != null) ? t : new DifferenceInt(argList);
-    }
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param t1     The first component
-     * @param t2     The second component
-     * @param memory Reference to the memory
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term make(Term t1, Term t2, Memory memory) {
-        if (t1.equals(t2)) {
-            return null;
-        }
-        ArrayList<Term> list = argumentsToList(t1, t2);
-        return make(list, memory);
     }
 
     /**

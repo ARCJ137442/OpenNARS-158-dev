@@ -4,6 +4,7 @@ import nars.storage.Memory;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
+import static nars.control.MakeTerm.*;
 
 /**
  * Directly process a task by a oldBelief, with only two Terms in both. In
@@ -178,9 +179,9 @@ public class LocalRules {
         final Term t2 = s1.getPredicate();
         final Term content;
         if (s1 instanceof Inheritance) {
-            content = Similarity.make(t1, t2, context.getMemory());
+            content = makeSimilarity(t1, t2, context.getMemory());
         } else {
-            content = Equivalence.make(t1, t2, context.getMemory());
+            content = makeEquivalence(t1, t2, context.getMemory());
         }
         final TruthValue value1 = judgment1.getTruth();
         final TruthValue value2 = judgment2.getTruth();
@@ -201,7 +202,7 @@ public class LocalRules {
         final Statement statement = (Statement) asym.getContent();
         final Term sub = statement.getPredicate();
         final Term pre = statement.getSubject();
-        final Statement content = Statement.make(statement, sub, pre, context.getMemory());
+        final Statement content = makeStatement(statement, sub, pre, context.getMemory());
         final TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
         final BudgetValue budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
@@ -257,11 +258,11 @@ public class LocalRules {
         Term otherTerm;
         if (Variable.containVarQ(subjT.getName())) {
             otherTerm = (predT.equals(subjB)) ? predB : subjB;
-            content = Statement.make(content, otherTerm, predT, context.getMemory());
+            content = makeStatement(content, otherTerm, predT, context.getMemory());
         }
         if (Variable.containVarQ(predT.getName())) {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
-            content = Statement.make(content, subjT, otherTerm, context.getMemory());
+            content = makeStatement(content, subjT, otherTerm, context.getMemory());
         }
         context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }

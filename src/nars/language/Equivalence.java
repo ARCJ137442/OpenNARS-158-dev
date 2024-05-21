@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A Statement about an Equivalence relation.
@@ -15,7 +14,7 @@ public class Equivalence extends Statement {
      *
      * @param components The component list of the term
      */
-    protected Equivalence(ArrayList<Term> components) {
+    public Equivalence(ArrayList<Term> components) {
         super(components);
     }
 
@@ -39,40 +38,6 @@ public class Equivalence extends Statement {
     @Override
     public Equivalence clone() {
         return new Equivalence(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @param memory    Reference to the memory
-     * @return A compound generated or null
-     */
-    public static Equivalence make(Term subject, Term predicate, Memory memory) { // to be extended to check if subject
-                                                                                  // is Conjunction
-        if ((subject instanceof Implication) || (subject instanceof Equivalence)) {
-            return null;
-        }
-        if ((predicate instanceof Implication) || (predicate instanceof Equivalence)) {
-            return null;
-        }
-        if (invalidStatement(subject, predicate)) {
-            return null;
-        }
-        if (subject.compareTo(predicate) > 0) {
-            Term inner = subject;
-            subject = predicate;
-            predicate = inner;
-        }
-        String name = makeStatementName(subject, Symbols.EQUIVALENCE_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
-        if (t != null) {
-            return (Equivalence) t;
-        }
-        ArrayList<Term> argument = argumentsToList(subject, predicate);
-        return new Equivalence(argument);
     }
 
     /**

@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * A disjunction of Statements.
@@ -16,7 +15,7 @@ public class Disjunction extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private Disjunction(ArrayList<Term> arg) {
+    public Disjunction(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -40,66 +39,6 @@ public class Disjunction extends CompoundTerm {
     @Override
     public Disjunction clone() {
         return new Disjunction(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
-    }
-
-    /**
-     * Try to make a new Disjunction from two components. Called by the inference
-     * rules.
-     *
-     * @param term1  The first component
-     * @param term2  The first component
-     * @param memory Reference to the memory
-     * @return A Disjunction generated or a Term it reduced to
-     */
-    public static Term make(Term term1, Term term2, Memory memory) {
-        TreeSet<Term> set;
-        if (term1 instanceof Disjunction) {
-            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
-            if (term2 instanceof Disjunction) {
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
-            else {
-                set.add(term2.clone());
-            } // (&,(&,P,Q),R) = (&,P,Q,R)
-        } else if (term2 instanceof Disjunction) {
-            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
-        } else {
-            set = new TreeSet<>();
-            set.add(term1.clone());
-            set.add(term2.clone());
-        }
-        return make(set, memory);
-    }
-
-    /**
-     * Try to make a new IntersectionExt. Called by StringParser.
-     *
-     * @param argList a list of Term as components
-     * @param memory  Reference to the memory
-     * @return the Term generated from the arguments
-     */
-    public static Term make(ArrayList<Term> argList, Memory memory) {
-        TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return make(set, memory);
-    }
-
-    /**
-     * Try to make a new Disjunction from a set of components. Called by the public
-     * make methods.
-     *
-     * @param set    a set of Term as components
-     * @param memory Reference to the memory
-     * @return the Term generated from the arguments
-     */
-    public static Term make(TreeSet<Term> set, Memory memory) {
-        if (set.size() == 1) {
-            return set.first();
-        } // special case: single component
-        ArrayList<Term> argument = new ArrayList<>(set);
-        String name = makeCompoundName(Symbols.DISJUNCTION_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
-        return (t != null) ? t : new Disjunction(argument);
     }
 
     /**

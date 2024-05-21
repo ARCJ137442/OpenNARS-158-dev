@@ -3,7 +3,6 @@ package nars.language;
 import java.util.*;
 
 import nars.io.Symbols;
-import nars.storage.Memory;
 
 /**
  * Conjunction of statements
@@ -15,7 +14,7 @@ public class Conjunction extends CompoundTerm {
      *
      * @param arg The component list of the term
      */
-    protected Conjunction(ArrayList<Term> arg) {
+    public Conjunction(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -59,70 +58,5 @@ public class Conjunction extends CompoundTerm {
     @Override
     public boolean isCommutative() {
         return true;
-    }
-
-    /**
-     * Try to make a new compound from a list of components. Called by
-     * StringParser.
-     *
-     * @return the Term generated from the arguments
-     * @param argList the list of arguments
-     * @param memory  Reference to the memory
-     */
-    public static Term make(ArrayList<Term> argList, Memory memory) {
-        TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return make(set, memory);
-    }
-
-    /**
-     * Try to make a new Disjunction from a set of components. Called by the
-     * public make methods.
-     *
-     * @param set    a set of Term as components
-     * @param memory Reference to the memory
-     * @return the Term generated from the arguments
-     */
-    private static Term make(TreeSet<Term> set, Memory memory) {
-        if (set.isEmpty()) {
-            return null;
-        } // special case: single component
-        if (set.size() == 1) {
-            return set.first();
-        } // special case: single component
-        ArrayList<Term> argument = new ArrayList<>(set);
-        String name = makeCompoundName(Symbols.CONJUNCTION_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
-        return (t != null) ? t : new Conjunction(argument);
-    }
-
-    // overload this method by term type?
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param term1  The first component
-     * @param term2  The second component
-     * @param memory Reference to the memory
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term make(Term term1, Term term2, Memory memory) {
-        TreeSet<Term> set;
-        if (term1 instanceof Conjunction) {
-            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
-            if (term2 instanceof Conjunction) {
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
-            else {
-                set.add(term2.clone());
-            } // (&,(&,P,Q),R) = (&,P,Q,R)
-        } else if (term2 instanceof Conjunction) {
-            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
-        } else {
-            set = new TreeSet<>();
-            set.add(term1.clone());
-            set.add(term2.clone());
-        }
-        return make(set, memory);
     }
 }

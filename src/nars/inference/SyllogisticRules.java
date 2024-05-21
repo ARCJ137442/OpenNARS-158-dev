@@ -3,6 +3,7 @@ package nars.inference;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
+import static nars.control.MakeTerm.*;
 
 /**
  * Syllogisms: Inference rules based on the transitivity of the relation.
@@ -44,8 +45,8 @@ public final class SyllogisticRules {
             budget2 = BudgetFunctions.forward(truth2, context);
         }
         final Statement content = (Statement) sentence.getContent();
-        final Statement content1 = Statement.make(content, term1, term2, context.getMemory());
-        final Statement content2 = Statement.make(content, term2, term1, context.getMemory());
+        final Statement content1 = makeStatement(content, term1, term2, context.getMemory());
+        final Statement content2 = makeStatement(content, term2, term1, context.getMemory());
         context.doublePremiseTask(content1, truth1, budget1);
         context.doublePremiseTask(content2, truth2, budget2);
     }
@@ -84,9 +85,9 @@ public final class SyllogisticRules {
             budget2 = BudgetFunctions.forward(truth2, context);
             budget3 = BudgetFunctions.forward(truth3, context);
         }
-        final Statement statement1 = Statement.make(taskContent, term1, term2, context.getMemory());
-        final Statement statement2 = Statement.make(taskContent, term2, term1, context.getMemory());
-        final Statement statement3 = Statement.makeSym(taskContent, term1, term2, context.getMemory());
+        final Statement statement1 = makeStatement(taskContent, term1, term2, context.getMemory());
+        final Statement statement2 = makeStatement(taskContent, term2, term1, context.getMemory());
+        final Statement statement3 = makeStatementSym(taskContent, term1, term2, context.getMemory());
         context.doublePremiseTask(statement1, truth1, budget1);
         context.doublePremiseTask(statement2, truth2, budget2);
         context.doublePremiseTask(statement3, truth3, budget3);
@@ -123,7 +124,7 @@ public final class SyllogisticRules {
             truth = TruthFunctions.analogy(asymmetric.getTruth(), symmetric.getTruth());
             budget = BudgetFunctions.forward(truth, context);
         }
-        Term content = Statement.make(st, subj, pred, context.getMemory());
+        Term content = makeStatement(st, subj, pred, context.getMemory());
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -152,7 +153,7 @@ public final class SyllogisticRules {
             truth = TruthFunctions.resemblance(belief.getTruth(), sentence.getTruth());
             budget = BudgetFunctions.forward(truth, context);
         }
-        final Term statement = Statement.make(st, term1, term2, context.getMemory());
+        final Term statement = makeStatement(st, term1, term2, context.getMemory());
         context.doublePremiseTask(statement, truth, budget);
     }
 
@@ -273,11 +274,11 @@ public final class SyllogisticRules {
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
-            newCondition = CompoundTerm.setComponent(oldCondition, index, newComponent, context.getMemory());
+            newCondition = setComponent(oldCondition, index, newComponent, context.getMemory());
         }
         final Term content;
         if (newCondition != null) {
-            content = Statement.make(premise1, newCondition, premise1.getPredicate(), context.getMemory());
+            content = makeStatement(premise1, newCondition, premise1.getPredicate(), context.getMemory());
         } else {
             content = premise1.getPredicate();
         }
@@ -352,11 +353,11 @@ public final class SyllogisticRules {
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
-            newCondition = CompoundTerm.setComponent(oldCondition, index, newComponent, context.getMemory());
+            newCondition = setComponent(oldCondition, index, newComponent, context.getMemory());
         }
         final Term content;
         if (newCondition != null) {
-            content = Statement.make(premise1, newCondition, premise1.getPredicate(), context.getMemory());
+            content = makeStatement(premise1, newCondition, premise1.getPredicate(), context.getMemory());
         } else {
             content = premise1.getPredicate();
         }
@@ -404,14 +405,14 @@ public final class SyllogisticRules {
         // if ((cond1 instanceof Conjunction) &&
         // !Variable.containVarDep(cond1.getName())) {
         if (cond1 instanceof Conjunction) {
-            term1 = CompoundTerm.reduceComponents((Conjunction) cond1, cond2, context.getMemory());
+            term1 = reduceComponents((Conjunction) cond1, cond2, context.getMemory());
         } else {
             term1 = null;
         }
         // if ((cond2 instanceof Conjunction) &&
         // !Variable.containVarDep(cond2.getName())) {
         if (cond2 instanceof Conjunction) {
-            term2 = CompoundTerm.reduceComponents((Conjunction) cond2, cond1, context.getMemory());
+            term2 = reduceComponents((Conjunction) cond2, cond1, context.getMemory());
         } else {
             term2 = null;
         }
@@ -428,7 +429,7 @@ public final class SyllogisticRules {
             final TruthValue truth;
             final BudgetValue budget;
             if (term2 != null) {
-                content = Statement.make(st2, term2, term1, context.getMemory());
+                content = makeStatement(st2, term2, term1, context.getMemory());
             } else {
                 content = term1;
             }
@@ -446,7 +447,7 @@ public final class SyllogisticRules {
             final TruthValue truth2;
             final BudgetValue budget2;
             if (term1 != null) {
-                content2 = Statement.make(st1, term1, term2, context.getMemory());
+                content2 = makeStatement(st1, term1, term2, context.getMemory());
             } else {
                 content2 = term2;
             }
@@ -472,7 +473,7 @@ public final class SyllogisticRules {
      */
     static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
-        final Term content = CompoundTerm.reduceComponents(compound, component, context.getMemory());
+        final Term content = reduceComponents(compound, component, context.getMemory());
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
         final Task task = context.getCurrentTask();

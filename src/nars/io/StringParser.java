@@ -9,6 +9,7 @@ import nars.inference.*;
 import nars.language.*;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
+import static nars.control.MakeTerm.*;
 
 /**
  * Parse input String into Task or Term. Abstract class with static methods
@@ -259,13 +260,13 @@ public abstract class StringParser extends Symbols {
                     }
                 case SET_EXT_OPENER:
                     if (last == SET_EXT_CLOSER) {
-                        return SetExt.make(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory), memory);
+                        return makeSetExt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory), memory);
                     } else {
                         throw new InvalidInputException("missing ExtensionSet closer");
                     }
                 case SET_INT_OPENER:
                     if (last == SET_INT_CLOSER) {
-                        return SetInt.make(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory), memory);
+                        return makeSetInt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory), memory);
                     } else {
                         throw new InvalidInputException("missing IntensionSet closer");
                     }
@@ -334,7 +335,7 @@ public abstract class StringParser extends Symbols {
         String relation = s.substring(i, i + 3);
         Term subject = parseTerm(s.substring(0, i), memory);
         Term predicate = parseTerm(s.substring(i + 3), memory);
-        Statement t = Statement.make(relation, subject, predicate, memory);
+        Statement t = makeStatement(relation, subject, predicate, memory);
         if (t == null) {
             throw new InvalidInputException("invalid statement");
         }
@@ -357,7 +358,7 @@ public abstract class StringParser extends Symbols {
             throw new InvalidInputException("unknown operator: " + op);
         }
         ArrayList<Term> arg = parseArguments(s.substring(firstSeparator + 1) + ARGUMENT_SEPARATOR, memory);
-        Term t = CompoundTerm.make(op, arg, memory);
+        Term t = makeCompoundTerm(op, arg, memory);
         if (t == null) {
             throw new InvalidInputException("invalid compound term");
         }
