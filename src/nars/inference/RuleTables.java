@@ -30,6 +30,12 @@ public class RuleTables {
         if (belief != null) {
             LocalRules.match(context);
         }
+        // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
+        // * 📌依据：`long_term_stability.nal`
+        // * 📄ONA中的结果有两个：
+        // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
+        // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
+        // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
         if (!context.getMemory().noResult() && task.getSentence().isJudgment()) {
             return;
         }
