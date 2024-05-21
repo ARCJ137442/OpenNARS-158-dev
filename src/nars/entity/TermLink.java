@@ -54,8 +54,9 @@ public class TermLink extends Item {
     /** The type of link, one of the above */
     protected final short type;
     /**
-     * The index of the component in the component list of the compound, may have up
-     * to 4 levels
+     * The index of the component in the component list of the compound,
+     * may have up to 4 levels
+     * * 📝「复合条件」+「NAL-4 转换」
      */
     protected final short[] index;
 
@@ -64,14 +65,14 @@ public class TermLink extends Item {
      * <p>
      * called in CompoundTerm.prepareComponentLinks only
      *
-     * @param t       Target Term
-     * @param p       Link type
+     * @param target  Target Term
+     * @param type    Link type
      * @param indices Component indices in compound, may be 1 to 4
      */
-    public TermLink(Term t, short p, int... indices) {
+    public TermLink(final Term target, final short type, final int[] indices) {
         super(null);
-        target = t;
-        type = p;
+        this.target = target;
+        this.type = type;
         assert (type % 2 == 0); // template types all point to compound, though the target is component
         if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
             index = new short[indices.length + 1];
@@ -85,6 +86,10 @@ public class TermLink extends Item {
                 index[i] = (short) indices[i];
             }
         }
+    }
+
+    public static TermLink from(Term t, short p, int... indices) {
+        return new TermLink(t, p, indices);
     }
 
     /**

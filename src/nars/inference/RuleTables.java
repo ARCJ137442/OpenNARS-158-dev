@@ -33,6 +33,7 @@ public class RuleTables {
         if (!context.getMemory().noResult() && task.getSentence().isJudgment()) {
             return;
         }
+        // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);
         final short bIndex = bLink.getIndex(0);
         switch (tLink.getType()) { // dispatch first by TaskLink type
