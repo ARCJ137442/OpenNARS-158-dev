@@ -343,10 +343,10 @@ public class Memory {
      * <p>
      * Called from Reasoner.tick only
      *
-     * @param clock The current time to be displayed
+     * * ✅省掉`clock`参数：本身通过`getTime`方法，仍然能获取到这个参数
      */
-    public void workCycle(long clock) {
-        recorder.append(" --- " + clock + " ---\n");
+    public void workCycle() {
+        recorder.append(" --- " + this.getTime() + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
         final boolean noResult = ProcessDirect.processDirect(this);

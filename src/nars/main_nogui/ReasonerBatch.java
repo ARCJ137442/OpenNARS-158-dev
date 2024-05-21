@@ -191,7 +191,7 @@ public class ReasonerBatch {
         if (running || walkingSteps > 0) {
             clock++;
             tickTimer();
-            memory.workCycle(clock);
+            memory.workCycle();
             if (walkingSteps > 0) {
                 walkingSteps--;
             }
