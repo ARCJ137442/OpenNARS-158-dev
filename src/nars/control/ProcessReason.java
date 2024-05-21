@@ -49,9 +49,9 @@ public abstract class ProcessReason {
                 // * 🚩没有更多词项链⇒结束
                 break;
         }
-        context.getCurrentConcept().__putTaskLinkBack(context.getCurrentTaskLink());
+        // * ✅归还「当前任务链/当前信念链」的工作已经在「吸收上下文」中被执行
         // * 🚩吸收并清空上下文
-        context.getMemory().absorbContext(context);
+        context.absorbedByMemory(context.getMemory());
     }
 
     /* ---------- main loop ---------- */
@@ -109,8 +109,8 @@ public abstract class ProcessReason {
             TransformRules.transformTask(currentTaskLink, context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
-            // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要
-            currentConcept.__putTaskLinkBack(currentTaskLink);
+            // * 🚩独立吸收上下文
+            self.absorbContext(context);
             return null;
         }
 

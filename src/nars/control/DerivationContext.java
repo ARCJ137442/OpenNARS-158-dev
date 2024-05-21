@@ -353,4 +353,39 @@ public abstract class DerivationContext {
     public static String generateReportString(Sentence sentence, ReportType type) {
         return type.toString() + ": " + sentence.toStringBrief();
     }
+
+    /**
+     * 让「记忆区」吸收「推理上下文」
+     * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
+     * * 🎯变量隔离，防止「上下文串线」与「重复使用」
+     * * 📌传入所有权而非引用
+     * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
+     */
+    public void absorbedByMemory(Memory memory) {
+        // TODO: 销毁「当前概念」「当前信念」「新时间戳」等（要考虑更多问题）
+        // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
+        for (final Task newTask : this.getNewTasks()) {
+            memory.mut_newTasks().add(newTask);
+        }
+        // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
+        for (final String output : this.getExportStrings()) {
+            memory.report(output);
+        }
+        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+        this.getNewTasks().clear();
+        this.getExportStrings().clear();
+        // * 🚩销毁自身：在此处销毁相应变量
+        drop(this.getNewTasks());
+        drop(this.getExportStrings());
+    }
+
+    /**
+     * 默认就是被「自身所属记忆区」吸收
+     */
+    public void absorbedByMemory() {
+        absorbedByMemory(this.getMemory());
+    }
+
+    protected void drop(Object any) {
+    }
 }

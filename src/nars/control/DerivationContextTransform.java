@@ -96,4 +96,12 @@ public class DerivationContextTransform extends DerivationContext {
     public void setCurrentTaskLink(TaskLink currentTaskLink) {
         this.currentTaskLink = currentTaskLink;
     }
+
+    @Override
+    public void absorbedByMemory(Memory memory) {
+        // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
+        this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
+        // * 🚩从基类方法继续
+        super.absorbedByMemory(memory);
+    }
 }

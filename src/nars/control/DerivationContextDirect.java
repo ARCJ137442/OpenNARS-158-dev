@@ -59,7 +59,7 @@ public class DerivationContextDirect extends DerivationContext {
     /**
      * The selected Task
      */
-    private Task currentTask = null;
+    private Task currentTask;
 
     /**
      * * 📄「直接推理上下文」将其作为字段
@@ -77,5 +77,13 @@ public class DerivationContextDirect extends DerivationContext {
      */
     public void setCurrentTask(Task currentTask) {
         this.currentTask = currentTask;
+    }
+
+    @Override
+    public void absorbedByMemory(Memory memory) {
+        // * 🚩销毁「当前任务」
+        drop(this.currentTask);
+        // * 🚩从基类方法继续
+        super.absorbedByMemory(memory);
     }
 }

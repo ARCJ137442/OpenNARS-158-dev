@@ -361,24 +361,10 @@ public class Memory {
 
     /**
      * 吸收「推理上下文」
-     * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
-     * * 🎯变量隔离，防止「上下文串线」与「重复使用」
-     * * 📌传入所有权而非引用
+     * * 🚩【2024-05-21 23:18:55】现在直接调用「推理上下文」的对应方法，以便享受多分派
      */
     public void absorbContext(final DerivationContext context) {
-        // final DerivationContext context = this.context;
-        // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
-        for (final Task newTask : context.getNewTasks()) {
-            this.newTasks.add(newTask);
-        }
-        // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
-        for (final String output : context.getExportStrings()) {
-            this.report(output);
-        }
-        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
-        context.getNewTasks().clear();
-        context.getExportStrings().clear();
-        // * 🚩在此处应该销毁上下文
+        context.absorbedByMemory(this);
     }
 
     /**

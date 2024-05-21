@@ -89,11 +89,8 @@ public class DerivationContextReason extends DerivationContextTransform {
      * * ✅每行代码后加`verify`都不会有事
      */
     public TermLink nextBelief() {
-        // * ♻️回收旧词项链 | 有可能存在「所有权问题」：回收之后所有权应该归「当前概念」
-        final TermLink oldTermLink = this.getCurrentBeliefLink();
-        this.getCurrentConcept().__putTermLinkBack(oldTermLink);
-
         // * 🚩先尝试拿出下一个词项链，若拿不出则返回空值
+        final TermLink oldTermLink = this.getCurrentBeliefLink();
         final TermLink currentBeliefLink = this.termLinksToReason.poll();
 
         // * 🚩若没有更多词项链了⇒返回空表示「已结束」
@@ -105,6 +102,9 @@ public class DerivationContextReason extends DerivationContextTransform {
 
         // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
         updateCurrentBeliefAndNewStamp();
+
+        // * ♻️回收弹出的旧词项链（所有权转移）
+        this.getCurrentConcept().__putTermLinkBack(oldTermLink);
 
         // * 🚩收尾：返回被替换下来的「旧词项链」
         return oldTermLink;
@@ -173,5 +173,13 @@ public class DerivationContextReason extends DerivationContextTransform {
      */
     public void setCurrentBeliefLink(TermLink currentBeliefLink) {
         this.currentBeliefLink = currentBeliefLink;
+    }
+
+    @Override
+    public void absorbedByMemory(Memory memory) {
+        // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
+        this.getCurrentConcept().__putTermLinkBack(currentBeliefLink);
+        // * 🚩从基类方法继续
+        super.absorbedByMemory(memory);
     }
 }
