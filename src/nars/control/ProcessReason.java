@@ -9,6 +9,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.RuleTables;
+import nars.inference.TransformRules;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
 
@@ -132,7 +133,7 @@ public abstract class ProcessReason {
                     currentConcept,
                     currentTask,
                     currentTaskLink);
-            RuleTables.transformTask(currentTaskLink, context);
+            TransformRules.transformTask(currentTaskLink, context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // ! 🚩放回并结束 | 虽然导致代码重复，但以此让`switch`不再必要

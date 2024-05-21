@@ -3,6 +3,7 @@ package nars.control;
 import nars.entity.Concept;
 import nars.entity.Task;
 import nars.entity.TaskLink;
+import nars.inference.RuleTables;
 import nars.storage.Memory;
 
 /**
@@ -10,6 +11,8 @@ import nars.storage.Memory;
  * * 📄从「推理上下文」中派生，用于在「直接推理」「概念推理」之间的「转换推理」
  * * 📌唯一的理由仅仅只是「此时没有『当前信念』『当前信念链』与『待推理词项链表』」
  * * 📌类名源自「预备函数」{@link ProcessReason#preprocessConcept}
+ * * 📝以{@link RuleTables#transformTask}
+ * * 🚩此处的`currentBelief`总是`null`，实际上不使用（以免产生更复杂的类型）
  */
 public class DerivationContextTransform extends DerivationContext {
 
@@ -25,7 +28,6 @@ public class DerivationContextTransform extends DerivationContext {
          * currentTask
          * currentTaskLink
          * currentBelief?
-         * currentBeliefLink
          * newStamp?
          * }
          */
