@@ -40,6 +40,28 @@ public class DerivationContext {
     }
 
     /**
+     * 获取「静默值」
+     * * 🎯在「推理上下文」中无需获取「推理器」`getReasoner`
+     *
+     * @return 静默值
+     */
+    public int getSilenceValue() {
+        return memory.getSilenceValue().get();
+    }
+
+    // public MainWindow getMainWindow() {
+    // return reasoner.getMainWindow();
+    // }
+    /**
+     * Actually means that there are no new Tasks
+     * * 🚩【2024-05-21 11:50:51】现在从「记忆区」迁移而来
+     * * ❓【2024-05-21 12:04:35】尚未实装：若靠「局部是否有结果」则会改变推理结果
+     */
+    public boolean noResult() {
+        return newTasks.isEmpty();
+    }
+
+    /**
      * 用于「变量替换」中的「伪随机数生成器」
      */
     public static Random randomNumber = new Random(1);
