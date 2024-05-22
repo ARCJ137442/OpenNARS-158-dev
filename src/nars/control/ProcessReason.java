@@ -11,6 +11,25 @@ import nars.inference.TransformRules;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
 
+/**
+ * 并行化推理 魔改版本
+ * * 🚩主要魔改：尝试无视资源竞争，一次性选取记忆区内所有概念进行推理（模拟记忆区「多线程」的情况）
+ * * ❌【2024-05-23 01:26:41】结果上失败：
+ * * 📄原先能在`long_term_stability.nal`中推得出的结论，现在无法推理出来
+ *
+ * <pre>
+ * <{tim} --> (/,livingIn,_,{graz})>. %0%
+ * 100
+ * <<(*,$1,sunglasses) --> own> ==> <$1 --> [aggressive]>>.
+ * <(*,{tom},sunglasses) --> own>.
+ * <<$1 --> [aggressive]> ==> <$1 --> murder>>.
+ * <<$1 --> (/,livingIn,_,{graz})> ==> <$1 --> murder>>.
+ * <{?who} --> murder>?
+ * 2000
+ * </pre>
+ *
+ * * 📝以上代码在正常版本中能推理出"ANSWER: <{tom} --> murder>."，但该版本做不到
+ */
 public abstract class ProcessReason {
 
     /**
@@ -19,14 +38,15 @@ public abstract class ProcessReason {
     public static void processReason(final Memory self, final boolean noResult) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）⇒构建「概念推理上下文」
-        final DerivationContextReason context = ProcessReason.preprocessConcept(
+        final Iterable<DerivationContextReason> contexts = ProcessReason.preprocessConcept(
                 self,
                 noResult);
-        if (context == null)
+        if (contexts == null)
             return;
 
-        // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processConcept(context);
+        for (final DerivationContextReason context : contexts)
+            // * 🚩内部概念高级推理 阶段 * //
+            ProcessReason.processConcept(context);
     }
 
     /**
@@ -65,23 +85,47 @@ public abstract class ProcessReason {
      *
      * @return 预点火结果 {@link PreFireResult}
      */
-    private static DerivationContextReason preprocessConcept(
+    private static Iterable<DerivationContextReason> preprocessConcept(
             final Memory self,
             final boolean noResult) {
+        final LinkedList<DerivationContextReason> contexts = new LinkedList<>();
+        final LinkedList<Concept> takenConcepts = new LinkedList<>();
         // * 🚩推理前判断「是否有必要」
         if (!noResult) // necessary?
             return null;
 
-        // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
+        // * 🚩从「记忆区」逐个取出所有概念
+        for (;;) {
+            // * 🚩拿出一个概念
+            final Concept currentConcept = self.takeOutConcept();
 
-        // * 🚩拿出一个概念，准备点火
-        final Concept currentConcept = self.takeOutConcept();
-        if (currentConcept == null) {
-            return null;
+            if (currentConcept == null)
+                // * 🚩拿完了
+                break;
+            takenConcepts.add(currentConcept);
+
         }
-        self.getRecorder().append(" * Selected Concept: " + currentConcept.getTerm() + "\n");
-        // current Concept remains in the bag all the time
-        self.putBackConcept(currentConcept);
+        // * 🚩归还所有拿出的「概念」
+        for (final Concept concept : takenConcepts) {
+
+            // * 🚩继续
+            self.getRecorder().append(" * Selected Concept: " + concept.getTerm() + "\n");
+
+            // current Concept remains in the bag all the time
+            self.putBackConcept(concept);
+
+            final DerivationContextReason context = preprocessConcept(self, concept, noResult);
+            if (context != null)
+                contexts.add(context);
+        }
+
+        return contexts;
+    }
+
+    private static DerivationContextReason preprocessConcept(
+            final Memory self,
+            final Concept currentConcept,
+            final boolean noResult) {
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
