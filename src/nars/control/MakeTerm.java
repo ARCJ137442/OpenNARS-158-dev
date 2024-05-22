@@ -25,7 +25,28 @@ import nars.language.Similarity;
 import nars.language.Term;
 import nars.storage.Memory;
 
+/**
+ * 所有原`nars.language`包的{@link Term}子类中有关`make`的静态方法
+ * * 🎯解耦`nars.language`与`nars.storage`
+ * * 📝实际上主要有两种功能：
+ * * 1. 在创建前简化词项内容：如`(&&, A, (&&, B, C))` => `(&&, A, B, C)`
+ * * 2. 根据「名称」在记忆区中寻找已有缓存，记忆区已有缓存⇒直接使用
+ */
 public abstract class MakeTerm {
+
+    /**
+     * Try to get a term from its name in the memory
+     *
+     * @param <T>    The type of the term
+     * @param name   The name of the term
+     * @param memory The memory
+     * @return The existing term or null
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends Term> T getFromNameOrNull(String name, Memory memory) {
+        final Term t = memory.nameToListedTerm(name);
+        return t == null ? null : (T) t;
+    }
 
     /* CompoundTerm */
 
@@ -39,13 +60,12 @@ public abstract class MakeTerm {
      * @return A compound term or null
      */
     public static Term makeCompoundTerm(CompoundTerm compound, ArrayList<Term> components, Memory memory) {
-        if (compound instanceof ImageExt) {
+        if (compound instanceof ImageExt)
             return makeImageExt(components, ((ImageExt) compound).getRelationIndex(), memory);
-        } else if (compound instanceof ImageInt) {
+        else if (compound instanceof ImageInt)
             return makeImageInt(components, ((ImageInt) compound).getRelationIndex(), memory);
-        } else {
+        else
             return makeCompoundTerm(compound.operator(), components, memory);
-        }
     }
 
     /**
@@ -59,47 +79,44 @@ public abstract class MakeTerm {
      * @return A compound term or null
      */
     public static Term makeCompoundTerm(String op, ArrayList<Term> arg, Memory memory) {
-        if (op.length() == 1) {
-            if (op.charAt(0) == Symbols.SET_EXT_OPENER) {
-                return makeSetExt(arg, memory);
-            }
-            if (op.charAt(0) == Symbols.SET_INT_OPENER) {
-                return makeSetInt(arg, memory);
-            }
-            if (op.equals(Symbols.INTERSECTION_EXT_OPERATOR)) {
-                return makeIntersectionExt(arg, memory);
-            }
-            if (op.equals(Symbols.INTERSECTION_INT_OPERATOR)) {
-                return makeIntersectionInt(arg, memory);
-            }
-            if (op.equals(Symbols.DIFFERENCE_EXT_OPERATOR)) {
-                return makeDifferenceExt(arg, memory);
-            }
-            if (op.equals(Symbols.DIFFERENCE_INT_OPERATOR)) {
-                return makeDifferenceInt(arg, memory);
-            }
-            if (op.equals(Symbols.PRODUCT_OPERATOR)) {
-                return makeProduct(arg, memory);
-            }
-            if (op.equals(Symbols.IMAGE_EXT_OPERATOR)) {
-                return makeImageExt(arg, memory);
-            }
-            if (op.equals(Symbols.IMAGE_INT_OPERATOR)) {
-                return makeImageInt(arg, memory);
-            }
+        switch (op.length()) {
+            case 1:
+                if (op.charAt(0) == Symbols.SET_EXT_OPENER)
+                    return makeSetExt(arg, memory);
+                if (op.charAt(0) == Symbols.SET_INT_OPENER)
+                    return makeSetInt(arg, memory);
+                switch (op) {
+                    case Symbols.INTERSECTION_EXT_OPERATOR:
+                        return makeIntersectionExt(arg, memory);
+                    case Symbols.INTERSECTION_INT_OPERATOR:
+                        return makeIntersectionInt(arg, memory);
+                    case Symbols.DIFFERENCE_EXT_OPERATOR:
+                        return makeDifferenceExt(arg, memory);
+                    case Symbols.DIFFERENCE_INT_OPERATOR:
+                        return makeDifferenceInt(arg, memory);
+                    case Symbols.PRODUCT_OPERATOR:
+                        return makeProduct(arg, memory);
+                    case Symbols.IMAGE_EXT_OPERATOR:
+                        return makeImageExt(arg, memory);
+                    case Symbols.IMAGE_INT_OPERATOR:
+                        return makeImageInt(arg, memory);
+                    default:
+                        return null;
+                }
+            case 2:
+                switch (op) {
+                    case Symbols.NEGATION_OPERATOR:
+                        return makeNegation(arg, memory);
+                    case Symbols.DISJUNCTION_OPERATOR:
+                        return makeDisjunction(arg, memory);
+                    case Symbols.CONJUNCTION_OPERATOR:
+                        return makeConjunction(arg, memory);
+                    default:
+                        return null;
+                }
+            default:
+                return null;
         }
-        if (op.length() == 2) {
-            if (op.equals(Symbols.NEGATION_OPERATOR)) {
-                return makeNegation(arg, memory);
-            }
-            if (op.equals(Symbols.DISJUNCTION_OPERATOR)) {
-                return makeDisjunction(arg, memory);
-            }
-            if (op.equals(Symbols.CONJUNCTION_OPERATOR)) {
-                return makeConjunction(arg, memory);
-            }
-        }
-        return null;
     }
 
     /**
@@ -111,11 +128,10 @@ public abstract class MakeTerm {
      * @return The new compound
      */
     public static Term addComponents(CompoundTerm t1, Term t2, Memory memory) {
-        if (t2 == null) {
+        if (t2 == null)
             return t1;
-        }
-        boolean success;
         ArrayList<Term> list = t1.cloneComponents();
+        boolean success;
         if (t1.getClass() == t2.getClass()) {
             success = list.addAll(((CompoundTerm) t2).getComponents());
         } else {
@@ -180,6 +196,79 @@ public abstract class MakeTerm {
         return makeCompoundTerm(compound, list, memory);
     }
 
+    /* Statement */
+
+    /**
+     * Make a Statement from String, called by StringParser
+     *
+     * @param relation  The relation String
+     * @param subject   The first component
+     * @param predicate The second component
+     * @param memory    Reference to the memory
+     * @return The Statement built
+     */
+    public static Statement makeStatement(String relation, Term subject, Term predicate, Memory memory) {
+        if (Statement.invalidStatement(subject, predicate))
+            return null;
+        switch (relation) {
+            case Symbols.INHERITANCE_RELATION:
+                return makeInheritance(subject, predicate, memory);
+            case Symbols.SIMILARITY_RELATION:
+                return makeSimilarity(subject, predicate, memory);
+            case Symbols.INSTANCE_RELATION:
+                return makeInstance(subject, predicate, memory);
+            case Symbols.PROPERTY_RELATION:
+                return makeProperty(subject, predicate, memory);
+            case Symbols.INSTANCE_PROPERTY_RELATION:
+                return makeInstanceProperty(subject, predicate, memory);
+            case Symbols.IMPLICATION_RELATION:
+                return makeImplication(subject, predicate, memory);
+            case Symbols.EQUIVALENCE_RELATION:
+                return makeEquivalence(subject, predicate, memory);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Make a Statement from given components, called by the rules
+     *
+     * @return The Statement built
+     * @param subj      The first component
+     * @param pred      The second component
+     * @param statement A sample statement providing the class type
+     * @param memory    Reference to the memory
+     */
+    public static Statement makeStatement(Statement statement, Term subj, Term pred, Memory memory) {
+        if (statement instanceof Inheritance)
+            return makeInheritance(subj, pred, memory);
+        if (statement instanceof Similarity)
+            return makeSimilarity(subj, pred, memory);
+        if (statement instanceof Implication)
+            return makeImplication(subj, pred, memory);
+        if (statement instanceof Equivalence)
+            return makeEquivalence(subj, pred, memory);
+        return null;
+    }
+
+    /**
+     * Make a symmetric Statement from given components and temporal
+     * information, called by the rules
+     *
+     * @param statement A sample asymmetric statement providing the class type
+     * @param subj      The first component
+     * @param pred      The second component
+     * @param memory    Reference to the memory
+     * @return The Statement built
+     */
+    public static Statement makeStatementSym(Statement statement, Term subj, Term pred, Memory memory) {
+        if (statement instanceof Inheritance)
+            return makeSimilarity(subj, pred, memory);
+        if (statement instanceof Implication)
+            return makeEquivalence(subj, pred, memory);
+        return null;
+    }
+
     /* Conjunction */
 
     /**
@@ -212,7 +301,7 @@ public abstract class MakeTerm {
         } // special case: single component
         ArrayList<Term> argument = new ArrayList<>(set);
         String name = CompoundTerm.makeCompoundName(Symbols.CONJUNCTION_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new Conjunction(argument);
     }
 
@@ -269,7 +358,7 @@ public abstract class MakeTerm {
             return makeSetExt(set, memory);
         }
         String name = CompoundTerm.makeCompoundName(Symbols.DIFFERENCE_EXT_OPERATOR, argList);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new DifferenceExt(argList);
     }
 
@@ -312,7 +401,7 @@ public abstract class MakeTerm {
             return makeSetInt(set, memory);
         }
         String name = CompoundTerm.makeCompoundName(Symbols.DIFFERENCE_INT_OPERATOR, argList);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new DifferenceInt(argList);
     }
 
@@ -391,7 +480,7 @@ public abstract class MakeTerm {
         } // special case: single component
         ArrayList<Term> argument = new ArrayList<>(set);
         String name = CompoundTerm.makeCompoundName(Symbols.DISJUNCTION_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new Disjunction(argument);
     }
 
@@ -421,7 +510,7 @@ public abstract class MakeTerm {
             predicate = inner;
         }
         String name = Equivalence.makeStatementName(subject, Symbols.EQUIVALENCE_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         if (t != null) {
             return (Equivalence) t;
         }
@@ -512,7 +601,7 @@ public abstract class MakeTerm {
      */
     public static Term makeImageExt(ArrayList<Term> argument, short index, Memory memory) {
         String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, index);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new ImageExt(name, argument, index);
     }
 
@@ -602,7 +691,7 @@ public abstract class MakeTerm {
      */
     public static Term makeImageInt(ArrayList<Term> argument, short index, Memory memory) {
         String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, index);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new ImageInt(name, argument, index);
     }
 
@@ -618,24 +707,17 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Implication makeImplication(Term subject, Term predicate, Memory memory) {
-        if ((subject == null) || (predicate == null)) {
+        if (subject == null || predicate == null)
             return null;
-        }
-        if ((subject == null) || (predicate == null)) {
+        if (subject instanceof Implication || subject instanceof Equivalence
+                || predicate instanceof Equivalence)
             return null;
-        }
-        if ((subject instanceof Implication) || (subject instanceof Equivalence)
-                || (predicate instanceof Equivalence)) {
+        if (Implication.invalidStatement(subject, predicate))
             return null;
-        }
-        if (Implication.invalidStatement(subject, predicate)) {
-            return null;
-        }
         String name = Implication.makeStatementName(subject, Symbols.IMPLICATION_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
-        if (t != null) {
+        Term t = getFromNameOrNull(name, memory);
+        if (t != null)
             return (Implication) t;
-        }
         if (predicate instanceof Implication) {
             Term oldCondition = ((Implication) predicate).getSubject();
             if ((oldCondition instanceof Conjunction) && ((Conjunction) oldCondition).containComponent(subject)) {
@@ -661,14 +743,12 @@ public abstract class MakeTerm {
      * @return A compound generated or null
      */
     public static Inheritance makeInheritance(Term subject, Term predicate, Memory memory) {
-        if (Inheritance.invalidStatement(subject, predicate)) {
+        if (Inheritance.invalidStatement(subject, predicate))
             return null;
-        }
         String name = Inheritance.makeStatementName(subject, Symbols.INHERITANCE_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
-        if (t != null) {
-            return (Inheritance) t;
-        }
+        Inheritance t = getFromNameOrNull(name, memory);
+        if (t != null)
+            return t;
         ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
         return new Inheritance(argument);
     }
@@ -786,7 +866,7 @@ public abstract class MakeTerm {
         } // special case: single component
         ArrayList<Term> argument = new ArrayList<Term>(set);
         String name = CompoundTerm.makeCompoundName(Symbols.INTERSECTION_EXT_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new IntersectionExt(argument);
     }
 
@@ -857,7 +937,7 @@ public abstract class MakeTerm {
         } // special case: single component
         ArrayList<Term> argument = new ArrayList<Term>(set);
         String name = CompoundTerm.makeCompoundName(Symbols.INTERSECTION_INT_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new IntersectionInt(argument);
     }
 
@@ -891,7 +971,7 @@ public abstract class MakeTerm {
             return null;
         }
         String name = CompoundTerm.makeCompoundName(Symbols.NEGATION_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new Negation(argument);
     }
 
@@ -906,7 +986,7 @@ public abstract class MakeTerm {
      */
     public static Term makeProduct(ArrayList<Term> argument, Memory memory) {
         String name = CompoundTerm.makeCompoundName(Symbols.PRODUCT_OPERATOR, argument);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new Product(argument);
     }
 
@@ -989,7 +1069,7 @@ public abstract class MakeTerm {
         }
         ArrayList<Term> argument = new ArrayList<Term>(set);
         String name = CompoundTerm.makeSetName(Symbols.SET_EXT_OPENER, argument, Symbols.SET_EXT_CLOSER);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new SetExt(argument);
     }
 
@@ -1034,7 +1114,7 @@ public abstract class MakeTerm {
         }
         ArrayList<Term> argument = new ArrayList<Term>(set);
         String name = CompoundTerm.makeSetName(Symbols.SET_INT_OPENER, argument, Symbols.SET_INT_CLOSER);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         return (t != null) ? t : new SetInt(argument);
     }
 
@@ -1057,95 +1137,11 @@ public abstract class MakeTerm {
             return makeSimilarity(predicate, subject, memory);
         }
         String name = Similarity.makeStatementName(subject, Symbols.SIMILARITY_RELATION, predicate);
-        Term t = memory.nameToListedTerm(name);
+        Term t = getFromNameOrNull(name, memory);
         if (t != null) {
             return (Similarity) t;
         }
         ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
         return new Similarity(argument);
-    }
-
-    /* Statement */
-
-    /**
-     * Make a Statement from String, called by StringParser
-     *
-     * @param relation  The relation String
-     * @param subject   The first component
-     * @param predicate The second component
-     * @param memory    Reference to the memory
-     * @return The Statement built
-     */
-    public static Statement makeStatement(String relation, Term subject, Term predicate, Memory memory) {
-        if (Statement.invalidStatement(subject, predicate)) {
-            return null;
-        }
-        if (relation.equals(Symbols.INHERITANCE_RELATION)) {
-            return makeInheritance(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.SIMILARITY_RELATION)) {
-            return makeSimilarity(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.INSTANCE_RELATION)) {
-            return makeInstance(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.PROPERTY_RELATION)) {
-            return makeProperty(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.INSTANCE_PROPERTY_RELATION)) {
-            return makeInstanceProperty(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.IMPLICATION_RELATION)) {
-            return makeImplication(subject, predicate, memory);
-        }
-        if (relation.equals(Symbols.EQUIVALENCE_RELATION)) {
-            return makeEquivalence(subject, predicate, memory);
-        }
-        return null;
-    }
-
-    /**
-     * Make a Statement from given components, called by the rules
-     *
-     * @return The Statement built
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param statement A sample statement providing the class type
-     * @param memory    Reference to the memory
-     */
-    public static Statement makeStatement(Statement statement, Term subj, Term pred, Memory memory) {
-        if (statement instanceof Inheritance) {
-            return makeInheritance(subj, pred, memory);
-        }
-        if (statement instanceof Similarity) {
-            return makeSimilarity(subj, pred, memory);
-        }
-        if (statement instanceof Implication) {
-            return makeImplication(subj, pred, memory);
-        }
-        if (statement instanceof Equivalence) {
-            return makeEquivalence(subj, pred, memory);
-        }
-        return null;
-    }
-
-    /**
-     * Make a symmetric Statement from given components and temporal
-     * information, called by the rules
-     *
-     * @param statement A sample asymmetric statement providing the class type
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param memory    Reference to the memory
-     * @return The Statement built
-     */
-    public static Statement makeStatementSym(Statement statement, Term subj, Term pred, Memory memory) {
-        if (statement instanceof Inheritance) {
-            return makeSimilarity(subj, pred, memory);
-        }
-        if (statement instanceof Implication) {
-            return makeEquivalence(subj, pred, memory);
-        }
-        return null;
     }
 }
