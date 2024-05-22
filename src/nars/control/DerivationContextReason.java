@@ -70,7 +70,7 @@ public class DerivationContextReason extends DerivationContextTransform {
             final TermLink currentBeliefLink,
             final LinkedList<TermLink> toReasonLinks) {
         // * 🚩从基类构造，并预先检验
-        super(memory, currentConcept, currentTask, currentTaskLink);
+        super(memory, currentConcept, currentTaskLink);
         // * 🚩赋值
         this.setCurrentBeliefLink(currentBeliefLink);
         this.termLinksToReason = toReasonLinks;

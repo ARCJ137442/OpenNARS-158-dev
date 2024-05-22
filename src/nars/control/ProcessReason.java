@@ -104,7 +104,6 @@ public abstract class ProcessReason {
             final DerivationContextTransform context = new DerivationContextTransform(
                     self,
                     currentConcept,
-                    currentTask,
                     currentTaskLink);
             TransformRules.transformTask(currentTaskLink, context);
             // to turn this into structural inference as below?

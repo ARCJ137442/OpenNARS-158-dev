@@ -57,7 +57,6 @@ public class DerivationContextTransform extends DerivationContext {
     public DerivationContextTransform(
             final Memory memory,
             final Concept currentConcept,
-            final Task currentTask,
             final TaskLink currentTaskLink) {
         // * 🚩从基类构造
         super(memory);

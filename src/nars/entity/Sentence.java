@@ -8,6 +8,8 @@ import nars.language.Term;
  * a Stamp.
  * <p>
  * It is used as the premises and conclusions of all inference rules.
+ * <p>
+ * * 📝【2024-05-22 16:45:08】其中所有字段基本为只读——静态数据，可自由复制
  */
 public class Sentence implements Cloneable {
 
