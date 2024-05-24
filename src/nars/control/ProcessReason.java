@@ -80,17 +80,17 @@ public abstract class ProcessReason {
             return null;
         }
         self.getRecorder().append(" * Selected Concept: " + currentConcept.getTerm() + "\n");
-        // current Concept remains in the bag all the time
-        self.putBackConcept(currentConcept);
+        // // current Concept remains in the bag all the time
+        // ! ❌【2024-05-24 22:13:23】↓不再是这样了：概念现在就将所有权保存在「推理上下文」中
+        // self.putBackConcept(currentConcept);
         // a working workCycle
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
-
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
         final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             // * 🚩中途返回时要回收
-            // self.putBackConcept(currentConcept);
+            self.putBackConcept(currentConcept);
             return null;
         }
         // * 📝【2024-05-21 11:54:04】断言：直接推理不会涉及「词项链/信念链」
@@ -123,9 +123,10 @@ public abstract class ProcessReason {
                 currentTaskLink);
         if (toReasonLinks.isEmpty()) {
             // * 🚩中途返回时要回收
-            // self.putBackConcept(currentConcept);
+            // ! ❓↓这个「当前任务链」不知为何，按理应该放回，但若放回则推不出结果
+            // * 🚩【2024-05-24 22:53:16】目前「维持原判」不放回「当前任务链」
             // currentConcept.__putTaskLinkBack(currentTaskLink);
-            // ! ❓这个不知为何，按理应该放回，但若放回则推不出结果
+            self.putBackConcept(currentConcept);
             return null;
         } else {
             // 先将首个元素作为「当前信念链」
