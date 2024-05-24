@@ -302,7 +302,7 @@ public final class CompositionalRules {
             context.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
             if (Variable.containVarQ(sentence.getContent().getName())) {
-                final Concept contentConcept = context.getMemory().termToConcept(content);
+                final Concept contentConcept = context.termToConcept(content);
                 if (contentConcept == null) {
                     return;
                 }
@@ -315,7 +315,7 @@ public final class CompositionalRules {
                 final Stamp newStamp = Stamp.uncheckedMerge(
                         task.getSentence().getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
-                        context.getMemory().getTime());
+                        context.getTime());
                 context.setNewStamp(newStamp);
                 final Task contentTask = new Task(contentBelief, task.getBudget());
                 // context.currentTask = contentTask;

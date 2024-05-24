@@ -388,4 +388,17 @@ public abstract class DerivationContext {
 
     protected void drop(Object any) {
     }
+
+    /**
+     * 获取「已存在的概念」
+     * * 🎯让「概念推理」可以在「拿出概念」的时候运行，同时不影响具体推理过程
+     * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
+     * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
+     */
+    public Concept termToConcept(Term term) {
+        if (term.equals(this.getCurrentTerm()))
+            return this.getCurrentConcept();
+        else
+            return this.memory.termToConcept(term);
+    }
 }

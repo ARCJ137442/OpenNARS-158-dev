@@ -121,7 +121,7 @@ public class DerivationContextReason extends DerivationContextTransform {
         final Stamp newStamp;
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
         final Term beliefTerm = newBeliefLink.getTarget();
-        final Concept beliefConcept = this.getMemory().termToConcept(beliefTerm);
+        final Concept beliefConcept = this.termToConcept(beliefTerm);
         if (beliefConcept != null) {
             newBelief = beliefConcept.getBelief(this.getCurrentTask().getSentence()); // ! may be null
             if (newBelief != null) {

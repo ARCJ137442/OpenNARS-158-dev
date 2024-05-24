@@ -171,8 +171,7 @@ public class Memory {
     /**
      * Get an existing Concept for a given name
      * <p>
-     * called from Term and
-     * ConceptWindow.
+     * called from Term and ConceptWindow.
      *
      * @param name the name of a concept
      * @return a Concept or null
@@ -184,18 +183,14 @@ public class Memory {
     /**
      * Get a Term for a given name of a Concept or Operator
      * <p>
-     * called in
-     * StringParser and the make methods of compound terms.
+     * called in StringParser and the make methods of compound terms.
      *
      * @param name the name of a concept or operator
      * @return a Term or null (if no Concept/Operator has this name)
      */
     public Term nameToListedTerm(String name) {
-        Concept concept = concepts.get(name);
-        if (concept != null) {
-            return concept.getTerm();
-        }
-        return null;
+        final Concept concept = concepts.get(name);
+        return concept == null ? null : concept.getTerm();
     }
 
     /**
@@ -205,6 +200,7 @@ public class Memory {
      * @return a Concept or null
      */
     public Concept termToConcept(Term term) {
+        // * ✅【2024-05-24 22:09:35】现在不会在推理规则中被调用了
         return nameToConcept(term.getName());
     }
 
@@ -226,10 +222,9 @@ public class Memory {
      * @return an existing Concept, or a new one, or null ( TODO bad smell )
      */
     public Concept getConceptOrCreate(Term term) {
-        // * 🚩不给「非常量词项」新建概念
-        if (!term.isConstant()) {
+        // * 🚩不给「非常量词项」新建概念 | 「非常量词项」也不可能作为一个「概念」被放进「记忆区」中
+        if (!term.isConstant())
             return null;
-        }
         // * 🚩尝试从概念袋中获取「已有概念」，否则创建概念
         final Concept concept = termToConcept(term);
         return concept == null ? makeNewConcept(term) : concept;
@@ -255,7 +250,7 @@ public class Memory {
      * @return the priority value of the concept
      */
     public float getConceptActivation(Term t) {
-        Concept c = termToConcept(t);
+        final Concept c = termToConcept(t);
         return (c == null) ? 0f : c.getPriority();
     }
 
