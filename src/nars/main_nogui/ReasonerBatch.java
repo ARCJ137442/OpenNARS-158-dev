@@ -3,6 +3,8 @@ package nars.main_nogui;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nars.control.ProcessDirect;
+import nars.control.ProcessReason;
 import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.gui.MainWindow;
@@ -191,11 +193,35 @@ public class ReasonerBatch {
         if (running || walkingSteps > 0) {
             clock++;
             tickTimer();
-            memory.workCycle();
+            workCycle();
             if (walkingSteps > 0) {
                 walkingSteps--;
             }
         }
+    }
+
+    /* ---------- system working workCycle ---------- */
+    /**
+     * An atomic working cycle of the system: process new Tasks, then fire a
+     * concept
+     * <p>
+     * Called from Reasoner.tick only
+     *
+     * * 🚩【2024-05-24 22:58:06】现在将「推理周期」从「记忆区」迁移到「推理器」中
+     * * ✅省掉`clock`参数：本身通过`getTime`方法，仍然能获取到这个参数
+     */
+    public void workCycle() {
+        this.memory.getRecorder().append(" --- " + this.getTime() + " ---\n");
+
+        // * 🚩本地任务直接处理 阶段 * //
+        final boolean noResult = ProcessDirect.processDirect(this.memory);
+
+        // * 🚩内部概念高级推理 阶段 * //
+        ProcessReason.processReason(this.memory, noResult);
+
+        // * 🚩最后收尾 阶段 * //
+        // * 🚩原「清空上下文」已迁移至各「推理」阶段
+        this.memory.mut_novelTasks().refresh();
     }
 
     /**

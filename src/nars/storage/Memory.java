@@ -331,29 +331,6 @@ public class Memory {
         exportStrings.add(output);
     }
 
-    /* ---------- system working workCycle ---------- */
-    /**
-     * An atomic working cycle of the system: process new Tasks, then fire a
-     * concept
-     * <p>
-     * Called from Reasoner.tick only
-     *
-     * * ✅省掉`clock`参数：本身通过`getTime`方法，仍然能获取到这个参数
-     */
-    public void workCycle() {
-        recorder.append(" --- " + this.getTime() + " ---\n");
-
-        // * 🚩本地任务直接处理 阶段 * //
-        final boolean noResult = ProcessDirect.processDirect(this);
-
-        // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processReason(this, noResult);
-
-        // * 🚩最后收尾 阶段 * //
-        // * 🚩原「清空上下文」已迁移至各「推理」阶段
-        novelTasks.refresh();
-    }
-
     /**
      * 吸收「推理上下文」
      * * 🚩【2024-05-21 23:18:55】现在直接调用「推理上下文」的对应方法，以便享受多分派
