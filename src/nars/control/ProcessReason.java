@@ -89,6 +89,8 @@ public abstract class ProcessReason {
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
         final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
+            // * 🚩中途返回时要回收
+            // self.putBackConcept(currentConcept);
             return null;
         }
         // * 📝【2024-05-21 11:54:04】断言：直接推理不会涉及「词项链/信念链」
@@ -120,6 +122,10 @@ public abstract class ProcessReason {
                 currentConcept,
                 currentTaskLink);
         if (toReasonLinks.isEmpty()) {
+            // * 🚩中途返回时要回收
+            // self.putBackConcept(currentConcept);
+            // currentConcept.__putTaskLinkBack(currentTaskLink);
+            // ! ❓这个不知为何，按理应该放回，但若放回则推不出结果
             return null;
         } else {
             // 先将首个元素作为「当前信念链」

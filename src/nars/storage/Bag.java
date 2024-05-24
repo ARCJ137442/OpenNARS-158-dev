@@ -156,6 +156,16 @@ public abstract class Bag<E extends Item> {
     }
 
     /**
+     * 🆕获取一个Key是否在一个袋内
+     *
+     * @param it
+     * @return
+     */
+    public boolean has(String key) {
+        return nameTable.containsKey(key);
+    }
+
+    /**
      * Get an Item by key
      *
      * @param key The key of the Item
@@ -166,12 +176,42 @@ public abstract class Bag<E extends Item> {
     }
 
     /**
+     * 检查要放入的Item是否合法
+     * * 🚩非空检查：`null`⇒NPE报错
+     * * 🚩已有检查：已有⇒重复置入⇒报错
+     *
+     * @param in
+     */
+    public void validateIn(E in) {
+        if (in == null)
+            throw new NullPointerException("尝试放进null");
+        if (this.contains(in))
+            throw new IllegalArgumentException("尝试放进重复的项 " + in);
+    }
+
+    /**
+     * 检查要放出的Item是否合法
+     * // * 🚩非空检查：`null`⇒NPE报错 | `null`在此属正常情况
+     * * 🚩已有检查：已有⇒虚空放出⇒报错
+     *
+     * @param in
+     */
+    public E validateOut(E out) {
+        // if (out == null)
+        // throw new NullPointerException("尝试放出null");
+        if (!this.has(out.getKey()))
+            throw new IllegalArgumentException("尝试放出没有的项" + out);
+        return out;
+    }
+
+    /**
      * Add a new Item into the Bag
      *
      * @param newItem The new Item
      * @return Whether the new Item is added into the Bag
      */
     public boolean putIn(E newItem) {
+        validateIn(newItem);
         String newKey = newItem.getKey();
         E oldItem = nameTable.put(newKey, newItem);
         if (oldItem != null) { // merge duplications
@@ -197,6 +237,7 @@ public abstract class Bag<E extends Item> {
      * @return Whether the new Item is added into the Bag
      */
     public boolean putBack(E oldItem) {
+        validateIn(oldItem);
         BudgetFunctions.forget(oldItem.getBudget(), forgetRate(), RELATIVE_THRESHOLD);
         return putIn(oldItem);
     }
@@ -226,6 +267,7 @@ public abstract class Bag<E extends Item> {
         }
         E selected = takeOutFirst(currentLevel); // take out the first item in the level
         currentCounter--;
+        validateOut(selected);
         nameTable.remove(selected.getKey());
         refresh();
         return selected;
@@ -241,6 +283,7 @@ public abstract class Bag<E extends Item> {
         E picked = nameTable.get(key);
         if (picked != null) {
             outOfBase(picked);
+            validateOut(picked);
             nameTable.remove(key);
         }
         return picked;

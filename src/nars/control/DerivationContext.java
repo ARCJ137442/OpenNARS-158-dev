@@ -101,8 +101,9 @@ public abstract class DerivationContext {
 
     /**
      * The selected Concept
+     * * 📌【2024-05-24 22:28:29】目前还是个可变借用，有待变成所有权
      */
-    private Concept currentConcept = null;
+    private Concept currentConcept;
 
     public Concept getCurrentConcept() {
         return currentConcept;
@@ -122,7 +123,7 @@ public abstract class DerivationContext {
     /**
      * The selected belief
      */
-    private Sentence currentBelief = null;
+    private Sentence currentBelief;
 
     public Sentence getCurrentBelief() {
         return currentBelief;
@@ -140,7 +141,7 @@ public abstract class DerivationContext {
     /**
      * The new Stamp
      */
-    private Stamp newStamp = null;
+    private Stamp newStamp;
 
     public Stamp getNewStamp() {
         return newStamp;
@@ -154,7 +155,7 @@ public abstract class DerivationContext {
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
      */
-    private HashMap<Term, Term> substitute = null;
+    private HashMap<Term, Term> substitute;
 
     public HashMap<Term, Term> getSubstitute() {
         return substitute;
@@ -363,6 +364,7 @@ public abstract class DerivationContext {
      */
     public void absorbedByMemory(Memory memory) {
         // TODO: 销毁「当前概念」「当前信念」「新时间戳」等（要考虑更多问题）
+        // memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
         for (final Task newTask : this.getNewTasks()) {
             memory.mut_newTasks().add(newTask);

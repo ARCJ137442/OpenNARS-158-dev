@@ -147,8 +147,9 @@ public class DerivationContextReason extends DerivationContextTransform {
 
     /**
      * The selected TermLink
+     * * 📝相比「转换推理上下文」仅多了个可查的「当前信念链」
      */
-    private TermLink currentBeliefLink = null;
+    private TermLink currentBeliefLink;
 
     public TermLink getCurrentBeliefLink() {
         return currentBeliefLink;
