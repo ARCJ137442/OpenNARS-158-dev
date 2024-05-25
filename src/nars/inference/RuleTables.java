@@ -229,7 +229,7 @@ public class RuleTables {
      * @param link2 The link to the second premise
      * @return The figure of the syllogism, one of the four: 11, 12, 21, or 22
      */
-    private static int indexToFigure(TermLink link1, TermLink link2) {
+    private static <U, V> int indexToFigure(TLink<U> link1, TLink<V> link2) {
         return (link1.getIndex(0) + 1) * 10 + (link2.getIndex(0) + 1);
     }
 

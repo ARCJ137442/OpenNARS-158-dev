@@ -9,12 +9,8 @@ import nars.main_nogui.Parameters;
  * The reason to separate a Task and a TaskLink is that the same Task can be
  * linked from multiple Concepts, with different BudgetValue.
  */
-public class TaskLink extends TermLink {
+public class TaskLink extends TLink<Task> {
 
-    /**
-     * The Task linked. The "target" field in TermLink is not used here.
-     */
-    private final Task targetTask;
     /**
      * Remember the TermLinks that has been used recently with this TaskLink
      */
@@ -38,23 +34,13 @@ public class TaskLink extends TermLink {
      * @param v        The budget
      */
     public TaskLink(Task t, TermLink template, BudgetValue v) {
-        super("", v, template == null ? TermLink.SELF : template.getType(),
+        super(t, "", v, template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());
-        targetTask = t;
         recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         counter = 0;
         super.setKey(); // as defined in TermLink
         key += t.getKey();
-    }
-
-    /**
-     * Get the target Task
-     *
-     * @return The linked Task
-     */
-    public Task getTargetTask() {
-        return targetTask;
     }
 
     /**
@@ -69,7 +55,7 @@ public class TaskLink extends TermLink {
      */
     public boolean novel(TermLink termLink, long currentTime) {
         Term bTerm = termLink.getTarget();
-        if (bTerm.equals(targetTask.getSentence().getContent())) {
+        if (bTerm.equals(target.getSentence().getContent())) {
             return false;
         }
         String linkKey = termLink.getKey();
@@ -96,6 +82,6 @@ public class TaskLink extends TermLink {
 
     @Override
     public String toString() {
-        return super.toString() + " " + getTargetTask().getSentence().getStamp();
+        return super.toString() + " " + getTarget().getSentence().getStamp();
     }
 }

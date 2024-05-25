@@ -75,7 +75,7 @@ public class DerivationContextTransform extends DerivationContext {
      */
     @Override
     public Task getCurrentTask() {
-        return this.getCurrentTaskLink().getTargetTask();
+        return this.getCurrentTaskLink().getTarget();
     }
 
     /**
