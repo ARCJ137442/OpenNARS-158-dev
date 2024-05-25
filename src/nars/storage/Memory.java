@@ -4,8 +4,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.DerivationContext;
-import nars.control.ProcessDirect;
-import nars.control.ProcessReason;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Sentence;
@@ -258,16 +256,27 @@ public class Memory {
     /**
      * Adjust the activation level of a Concept
      * <p>
-     * called in
-     * Concept.insertTaskLink only
+     * called in Concept.insertTaskLink only
+     * * 🚩实际上也被「直接推理」调用
      *
      * @param c the concept to be adjusted
      * @param b the new BudgetValue
      */
     public void activateConcept(Concept c, BudgetValue b) {
-        concepts.pickOut(c.getKey());
-        BudgetFunctions.activate(c, b);
-        concepts.putBack(c);
+        // * 🚩存在性检查
+        final boolean hasC = concepts.contains(c);
+        // * 🚩若已有⇒拿出→放回
+        if (hasC) {
+            concepts.pickOut(c.getKey());
+            BudgetFunctions.activate(c, b);
+            concepts.putBack(c);
+        }
+        // * 🚩若没有⇒放回→拿出
+        else {
+            BudgetFunctions.activate(c, b);
+            concepts.putBack(c); // * 📝此方法将改变「概念」的预算值，需要保证顺序一致
+            concepts.pickOut(c.getKey());
+        }
     }
 
     /* ---------- new task entries ---------- */
@@ -364,6 +373,16 @@ public class Memory {
      */
     public final Concept takeOutConcept() {
         return this.concepts.takeOut();
+    }
+
+    /**
+     * 🆕对外接口：从「概念袋」中挑出一个概念
+     * * 🚩用于「直接推理」中的「拿出概念」
+     *
+     * @return 拿出的一个概念 / 空
+     */
+    public final Concept pickOutConcept(String key) {
+        return concepts.pickOut(key);
     }
 
     /**

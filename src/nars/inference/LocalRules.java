@@ -97,10 +97,9 @@ public class LocalRules {
         // * 🚩验证这个信念是否为「解决问题的最优解」
         final float newQ = solutionQuality(problem, belief);
         if (oldBest != null) {
-            float oldQ = solutionQuality(problem, oldBest);
-            if (oldQ >= newQ) {
+            final float oldQ = solutionQuality(problem, oldBest);
+            if (oldQ >= newQ)
                 return;
-            }
         }
         // * 🚩若比先前「最优解」还优，那就确立新的「最优解」
         task.setBestSolution(belief);
