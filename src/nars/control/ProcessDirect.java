@@ -121,7 +121,9 @@ public abstract class ProcessDirect {
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
             // * 🚩调整概念的预算值
+            // self.pickOutConcept(context.getCurrentConcept().getKey());
             self.activateConcept(context.getCurrentConcept(), taskInput.getBudget());
+            // self.putBackConcept(context.getCurrentConcept());
             // * 🔥开始「直接处理」
             directProcess(context);
         }
@@ -153,6 +155,8 @@ public abstract class ProcessDirect {
      * 🆕准备「直接推理」的推理上下文
      * * 🚩这其中不对「推理上下文」「记忆区」外的变量进行任何修改
      * * 📌捕获`taskInput`的所有权
+     * * 📌捕获`currentConcept`的所有权
+     * * ⚠️不在其中修改实体（预算值 等）
      *
      * @param taskInput
      * @return 直接推理上下文 / 空
@@ -163,8 +167,10 @@ public abstract class ProcessDirect {
         // * 🚩准备上下文
         // one of the two places where this variable is set
         final Task currentTask = taskInput;
-        final Concept currentConcept = self.getConceptOrCreate(taskInput.getContent());
-        if (currentConcept != null) {
+        final Concept taskConcept = self.getConceptOrCreate(taskInput.getContent());
+        if (taskConcept != null) {
+            // final Concept currentConcept = taskConcept;
+            final Concept currentConcept = self.pickOutConcept(taskConcept.getKey());
             return new DerivationContextDirect(self, currentTask, currentConcept); // * 📌准备就绪
         }
         return null; // * 📌准备失败：没有可供推理的概念

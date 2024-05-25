@@ -98,7 +98,6 @@ public class DerivationContextTransform extends DerivationContext {
 
     @Override
     public void absorbedByMemory(Memory memory) {
-        memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续

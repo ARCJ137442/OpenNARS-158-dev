@@ -101,7 +101,7 @@ public abstract class DerivationContext {
 
     /**
      * The selected Concept
-     * * 📌【2024-05-24 22:28:29】目前还是个可变借用，有待变成所有权
+     * * 🚩【2024-05-25 16:19:51】现在已经具备所有权
      */
     private Concept currentConcept;
 
@@ -364,7 +364,8 @@ public abstract class DerivationContext {
      */
     public void absorbedByMemory(Memory memory) {
         // TODO: 销毁「当前概念」「当前信念」「新时间戳」等（要考虑更多问题）
-        // memory.putBackConcept(this.getCurrentConcept());
+        // * 🚩将「当前概念」归还到「记忆区」中
+        memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
         for (final Task newTask : this.getNewTasks()) {
             memory.mut_newTasks().add(newTask);

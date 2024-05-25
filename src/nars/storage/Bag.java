@@ -238,8 +238,12 @@ public abstract class Bag<E extends Item> {
      */
     public boolean putBack(E oldItem) {
         validateIn(oldItem);
-        BudgetFunctions.forget(oldItem.getBudget(), forgetRate(), RELATIVE_THRESHOLD);
+        forget(oldItem);
         return putIn(oldItem);
+    }
+
+    public void forget(E oldItem) {
+        BudgetFunctions.forget(oldItem.getBudget(), forgetRate(), RELATIVE_THRESHOLD);
     }
 
     /**

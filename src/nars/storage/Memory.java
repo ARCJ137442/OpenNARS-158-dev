@@ -274,8 +274,7 @@ public class Memory {
         // * 🚩若没有⇒放回→拿出
         else {
             BudgetFunctions.activate(c, b);
-            concepts.putBack(c); // * 📝此方法将改变「概念」的预算值，需要保证顺序一致
-            concepts.pickOut(c.getKey());
+            concepts.forget(c); // * 📝此方法将改变「概念」的预算值，需要保证顺序一致
         }
     }
 
