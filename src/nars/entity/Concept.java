@@ -251,27 +251,27 @@ public final class Concept extends Item {
      * @param task    The task to be linked
      * @param content The content of the task
      */
-    public void linkToTask(Task task) {
+    public static void linkToTask(final Concept self, final Task task) {
         final BudgetValue taskBudget = task.getBudget();
         final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
-        insertTaskLink(taskLink);
-        if (!(term instanceof CompoundTerm && termLinkTemplates.size() > 0)) {
+        insertTaskLink(self, taskLink);
+        if (!(self.term instanceof CompoundTerm && self.termLinkTemplates.size() > 0)) {
             return;
         }
-        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, termLinkTemplates.size());
+        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, self.termLinkTemplates.size());
         if (subBudget.aboveThreshold()) {
-            for (TermLink termLink : termLinkTemplates) {
+            for (final TermLink termLink : self.termLinkTemplates) {
                 // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
                 // // avoid circular transform
                 final TaskLink tLink = new TaskLink(task, termLink, subBudget);
                 final Term componentTerm = termLink.getTarget();
-                final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
+                final Concept componentConcept = self.memory.getConceptOrCreate(componentTerm);
                 if (componentConcept != null) {
-                    componentConcept.insertTaskLink(tLink);
+                    insertTaskLink(componentConcept, tLink);
                 }
                 // }
             }
-            buildTermLinks(taskBudget); // recursively insert TermLink
+            buildTermLinks(self, taskBudget); // recursively insert TermLink
         }
     }
 
@@ -314,10 +314,10 @@ public final class Concept extends Item {
      *
      * @param taskLink The termLink to be inserted
      */
-    private void insertTaskLink(TaskLink taskLink) {
+    private static void insertTaskLink(final Concept self, final TaskLink taskLink) {
         final BudgetValue taskBudget = taskLink.getBudget();
-        taskLinks.putIn(taskLink);
-        memory.activateConcept(this, taskBudget);
+        self.taskLinks.putIn(taskLink);
+        self.memory.activateConcept(self, taskBudget);
     }
 
     /**
@@ -327,24 +327,21 @@ public final class Concept extends Item {
      *
      * @param taskBudget The BudgetValue of the task
      */
-    private void buildTermLinks(BudgetValue taskBudget) {
-        Term t;
-        Concept concept;
-        TermLink termLink1, termLink2;
-        if (termLinkTemplates.size() > 0) {
-            BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, termLinkTemplates.size());
+    private static void buildTermLinks(final Concept self, final BudgetValue taskBudget) {
+        if (self.termLinkTemplates.size() > 0) {
+            BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, self.termLinkTemplates.size());
             if (subBudget.aboveThreshold()) {
-                for (TermLink template : termLinkTemplates) {
+                for (final TermLink template : self.termLinkTemplates) {
                     if (template.getType() != TermLink.TRANSFORM) {
-                        t = template.getTarget();
-                        concept = memory.getConceptOrCreate(t);
+                        final Term t = template.getTarget();
+                        final Concept concept = self.memory.getConceptOrCreate(t);
                         if (concept != null) {
-                            termLink1 = new TermLink(t, template, subBudget);
-                            insertTermLink(termLink1); // this termLink to that
-                            termLink2 = new TermLink(term, template, subBudget);
-                            concept.insertTermLink(termLink2); // that termLink to this
+                            final TermLink termLink1 = new TermLink(t, template, subBudget);
+                            insertTermLink(self, termLink1); // this termLink to that
+                            final TermLink termLink2 = new TermLink(self.term, template, subBudget);
+                            insertTermLink(concept, termLink2); // that termLink to this
                             if (t instanceof CompoundTerm) {
-                                concept.buildTermLinks(subBudget);
+                                buildTermLinks(concept, subBudget);
                             }
                         }
                     }
@@ -360,8 +357,8 @@ public final class Concept extends Item {
      *
      * @param termLink The termLink to be inserted
      */
-    private void insertTermLink(TermLink termLink) {
-        termLinks.putIn(termLink);
+    private static void insertTermLink(final Concept self, final TermLink termLink) {
+        self.termLinks.putIn(termLink);
     }
 
     /* ---------- access local information ---------- */
