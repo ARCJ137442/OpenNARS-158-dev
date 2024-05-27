@@ -34,12 +34,16 @@ public class TaskLink extends TLink<Task> {
      * @param v        The budget
      */
     public TaskLink(Task t, TermLink template, BudgetValue v) {
-        super(t, "", v, template == null ? TermLink.SELF : template.getType(),
+        super(t, "", v,
+                template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());
         recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         counter = 0;
-        super.setKey(); // as defined in TermLink
+        setKey(); // as defined in TermLink
+        if (target != null) {
+            key += target.getContent();
+        }
         key += t.getKey();
     }
 

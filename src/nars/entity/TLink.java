@@ -97,7 +97,6 @@ public abstract class TLink<Target> extends Item {
         }
         this.type = type;
         index = template.getIndices();
-        setKey();
     }
 
     /**
@@ -119,9 +118,6 @@ public abstract class TLink<Target> extends Item {
             }
         }
         key = at1 + in + at2;
-        if (target != null) {
-            key += target;
-        }
     }
 
     /**
