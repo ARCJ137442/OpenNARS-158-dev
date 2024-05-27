@@ -112,6 +112,7 @@ public final class Concept extends Item {
      * Collect TermLink templates into a list, go down one level except in
      * special cases
      * <p>
+     * * ❗重要逻辑：词项链的构造
      *
      * @param self           The CompoundTerm for which the links are built
      * @param componentLinks The list of TermLink templates built so far
@@ -126,10 +127,10 @@ public final class Concept extends Item {
         // * 🚩从目标第一层元素出发
         for (int i = 0; i < term.size(); i++) { // first level components
             /** 第一层元素 */
-            final Term inner1 = term.componentAt(i);
+            final Term t1 = term.componentAt(i);
             // * 🚩「常量」词项⇒直接链接
-            if (inner1.isConstant()) {
-                componentLinks.add(TermLink.from(inner1, type, i));
+            if (t1.isConstant()) {
+                componentLinks.add(new TermLink(t1, type, new int[] { i }));
                 // * 📝【2024-05-15 18:21:25】案例笔记 概念="<(&&,A,B) ==> D>"：
                 // * 📄self="<(&&,A,B) ==> D>" ~> "(&&,A,B)" [i=0]
                 // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
@@ -147,53 +148,55 @@ public final class Concept extends Item {
             // * 🚩条件类链接⇒递归
             final boolean isConditionalCompound =
                     // * 📌自身和索引必须先是「蕴含の主词」或「等价」，如 <# ==> C> 或 <# <=> #>
-                    (self instanceof Equivalence || (self instanceof Implication && i == 0));
+                    self instanceof Equivalence || (self instanceof Implication && i == 0);
             final boolean isConditionalComponent =
                     // * 🚩然后「内部词项」必须是「合取」或「否定」
-                    (inner1 instanceof Conjunction || inner1 instanceof Negation);
-            if (isConditionalCompound && isConditionalComponent)
+                    t1 instanceof Conjunction || t1 instanceof Negation;
+            final boolean isConditional = isConditionalCompound && isConditionalComponent;
+            if (isConditional)
                 // * 📝递归深入，将作为「入口」的「自身向自身建立链接」缩小到「组分」区域
                 prepareComponentLinks(
-                        (CompoundTerm) inner1,
+                        (CompoundTerm) t1,
                         componentLinks,
                         TermLink.COMPOUND_CONDITION, // * 🚩改变「默认类型」为「复合条件」
-                        (CompoundTerm) inner1);
+                        (CompoundTerm) t1);
             // * 🚩其它情况⇒若元素为复合词项，再度深入
-            else if (inner1 instanceof CompoundTerm) {
-                for (int j = 0; j < ((CompoundTerm) inner1).size(); j++) { // second level components
+            else if (t1 instanceof CompoundTerm) {
+                for (int j = 0; j < ((CompoundTerm) t1).size(); j++) { // second level components
                     /** 第二层元素 */
-                    final Term inner2 = ((CompoundTerm) inner1).componentAt(j);
-                    // * 🚩NAL-4「转换」相关：第二层
-                    if (inner2.isConstant()) {
-                        final int[] indexes = type == TermLink.COMPOUND_CONDITION
-                                // * 📝若背景的「链接类型」已经是「复合条件」⇒已经深入了一层，并且一定在「主项」位置
-                                ? new int[] { 0, i, j }
-                                // * 📝否则就还是第二层
-                                : new int[] { i, j };
-                        final short linkType =
-                                // * 🚩内部是「乘积」「外延像」「内涵像」
-                                inner1 instanceof Product
-                                        || inner1 instanceof ImageExt
-                                        || inner1 instanceof ImageInt
-                                                // * 🚩⇒安排「转换」关系
-                                                ? TermLink.TRANSFORM
-                                                // * 🚩否则⇒按原有类型执行
-                                                : type;
-                        componentLinks.add(new TermLink(inner2, linkType, indexes));
+                    final Term t2 = ((CompoundTerm) t1).componentAt(j);
+                    // * 🚩直接处理 @ 第二层
+                    if (t2.isConstant()) {
+                        // * 📌【2024-05-27 21:24:32】先前就是此处尝试「正交化」导致语义改变
+                        final boolean transformT1 = t1 instanceof Product || t1 instanceof ImageExt
+                                || t1 instanceof ImageInt;
+                        if (transformT1) {
+                            // * 🚩NAL-4「转换」相关
+                            final int[] indexes = type == TermLink.COMPOUND_CONDITION
+                                    // * 📝若背景的「链接类型」已经是「复合条件」⇒已经深入了一层，并且一定在「主项」位置
+                                    ? new int[] { 0, i, j }
+                                    // * 📝否则就还是第二层
+                                    : new int[] { i, j };
+                            componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, indexes));
+                        } else {
+                            // * 🚩非「转换」相关：直接按类型添加
+                            componentLinks.add(new TermLink(t2, type, new int[] { i, j }));
+                        }
                     }
-                    // * 🚩NAL-4「转换」相关：第三层
-                    if (inner2 instanceof Product
-                            || inner2 instanceof ImageExt
-                            || inner2 instanceof ImageInt) {
-                        for (int k = 0; k < ((CompoundTerm) inner2).size(); k++) {
-                            final Term inner3 = ((CompoundTerm) inner2).componentAt(k);
-                            if (inner3.isConstant()) { // third level
+                    // * 🚩直接处理 @ 第三层
+                    final boolean transformT2 = t2 instanceof Product || t2 instanceof ImageExt
+                            || t2 instanceof ImageInt;
+                    if (transformT2) {
+                        // * 🚩NAL-4「转换」相关
+                        for (int k = 0; k < ((CompoundTerm) t2).size(); k++) {
+                            final Term t3 = ((CompoundTerm) t2).componentAt(k);
+                            if (t3.isConstant()) { // third level
                                 final int[] indexes = type == TermLink.COMPOUND_CONDITION
                                         // * 📝此处若是「复合条件」即为最深第四层
                                         ? new int[] { 0, i, j, k }
                                         // * 📝否则仅第三层
                                         : new int[] { i, j, k };
-                                componentLinks.add(new TermLink(inner3, TermLink.TRANSFORM, indexes));
+                                componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, indexes));
                             }
                         }
                     }
