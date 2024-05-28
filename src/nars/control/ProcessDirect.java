@@ -1,11 +1,13 @@
 package nars.control;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
+import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
@@ -264,7 +266,7 @@ public abstract class ProcessDirect {
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」
-            Concept.addBeliefToTable(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
+            addBeliefToTable(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
 
@@ -298,6 +300,40 @@ public abstract class ProcessDirect {
         // * 🚩新增问题
         if (newQuestion) {
             self.addQuestion(task);
+        }
+    }
+
+    /**
+     * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
+     * and remove redundant or low rank one
+     *
+     * @param newSentence The judgment to be processed
+     * @param table       The table to be revised
+     * @param capacity    The capacity of the table
+     */
+    public static void addBeliefToTable(
+            final Sentence newSentence,
+            final ArrayList<Sentence> table,
+            final int capacity) {
+        final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
+        int i;
+        for (i = 0; i < table.size(); i++) {
+            final Sentence judgment2 = table.get(i);
+            final float rank2 = BudgetFunctions.rankBelief(judgment2);
+            if (rank1 >= rank2) {
+                if (newSentence.equivalentTo(judgment2)) {
+                    return;
+                }
+                table.add(i, newSentence);
+                break;
+            }
+        }
+        if (table.size() >= capacity) {
+            while (table.size() > capacity) {
+                table.remove(table.size() - 1);
+            }
+        } else if (i == table.size()) {
+            table.add(newSentence);
         }
     }
 

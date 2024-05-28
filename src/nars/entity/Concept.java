@@ -275,37 +275,6 @@ public final class Concept extends Item {
         }
     }
 
-    /**
-     * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
-     * and remove redundant or low rank one
-     *
-     * @param newSentence The judgment to be processed
-     * @param table       The table to be revised
-     * @param capacity    The capacity of the table
-     */
-    public static void addBeliefToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
-        final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
-        int i;
-        for (i = 0; i < table.size(); i++) {
-            final Sentence judgment2 = table.get(i);
-            final float rank2 = BudgetFunctions.rankBelief(judgment2);
-            if (rank1 >= rank2) {
-                if (newSentence.equivalentTo(judgment2)) {
-                    return;
-                }
-                table.add(i, newSentence);
-                break;
-            }
-        }
-        if (table.size() >= capacity) {
-            while (table.size() > capacity) {
-                table.remove(table.size() - 1);
-            }
-        } else if (i == table.size()) {
-            table.add(newSentence);
-        }
-    }
-
     /* ---------- insert Links for indirect processing ---------- */
     /**
      * Insert a TaskLink into the TaskLink bag
