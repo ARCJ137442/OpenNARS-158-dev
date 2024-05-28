@@ -5,6 +5,7 @@ import java.util.*;
 import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.language.*;
+import static nars.control.MakeTerm.*;
 
 /**
  * Compound term composition and decomposition rules, with two premises.
@@ -105,40 +106,41 @@ public final class CompositionalRules {
         Term termDif = null;
         if (index == 0) {
             if (taskContent instanceof Inheritance) {
+                // * 就是此处
                 termOr = IntersectionInt.make(componentT, componentB, context.getMemory());
-                termAnd = IntersectionExt.make(componentT, componentB, context.getMemory());
+                termAnd = makeIntersectionExt(componentT, componentB, context.getMemory()); // * 就是此处
                 if (truthB.isNegative()) {
                     if (!truthT.isNegative()) {
-                        termDif = DifferenceExt.make(componentT, componentB, context.getMemory());
+                        termDif = makeDifferenceExt(componentT, componentB, context.getMemory());
                         truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
                     }
                 } else if (truthT.isNegative()) {
-                    termDif = DifferenceExt.make(componentB, componentT, context.getMemory());
+                    termDif = makeDifferenceExt(componentB, componentT, context.getMemory());
                     truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
                 }
             } else if (taskContent instanceof Implication) {
-                termOr = Disjunction.make(componentT, componentB, context.getMemory());
-                termAnd = Conjunction.make(componentT, componentB, context.getMemory());
+                termOr = makeDisjunction(componentT, componentB, context.getMemory());
+                termAnd = makeConjunction(componentT, componentB, context.getMemory());
             }
             processComposed(taskContent, componentCommon.clone(), termOr, truthOr, context);
             processComposed(taskContent, componentCommon.clone(), termAnd, truthAnd, context);
             processComposed(taskContent, componentCommon.clone(), termDif, truthDif, context);
         } else { // index == 1
             if (taskContent instanceof Inheritance) {
-                termOr = IntersectionExt.make(componentT, componentB, context.getMemory());
-                termAnd = IntersectionInt.make(componentT, componentB, context.getMemory());
+                termOr = makeIntersectionExt(componentT, componentB, context.getMemory());
+                termAnd = makeIntersectionInt(componentT, componentB, context.getMemory());
                 if (truthB.isNegative()) {
                     if (!truthT.isNegative()) {
-                        termDif = DifferenceInt.make(componentT, componentB, context.getMemory());
+                        termDif = makeDifferenceInt(componentT, componentB, context.getMemory());
                         truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
                     }
                 } else if (truthT.isNegative()) {
-                    termDif = DifferenceInt.make(componentB, componentT, context.getMemory());
+                    termDif = makeDifferenceInt(componentB, componentT, context.getMemory());
                     truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
                 }
             } else if (taskContent instanceof Implication) {
-                termOr = Conjunction.make(componentT, componentB, context.getMemory());
-                termAnd = Disjunction.make(componentT, componentB, context.getMemory());
+                termOr = makeConjunction(componentT, componentB, context.getMemory());
+                termAnd = makeDisjunction(componentT, componentB, context.getMemory());
             }
             processComposed(taskContent, termOr, componentCommon.clone(), truthOr, context);
             processComposed(taskContent, termAnd, componentCommon.clone(), truthAnd, context);

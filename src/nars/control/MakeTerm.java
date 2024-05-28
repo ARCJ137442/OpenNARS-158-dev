@@ -804,12 +804,12 @@ public abstract class MakeTerm {
         if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
-            return makeIntersectionExt(set, memory);
+            return makeSetInt(set, memory);
         }
         if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
-            return makeIntersectionExt(set, memory);
+            return makeSetExt(set, memory);
         }
         if (term1 instanceof IntersectionExt) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
