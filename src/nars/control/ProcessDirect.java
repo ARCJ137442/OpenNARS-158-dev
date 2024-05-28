@@ -7,6 +7,7 @@ import nars.entity.*;
 import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
+import nars.language.Term;
 import nars.main_nogui.*;
 import nars.storage.*;
 
@@ -38,7 +39,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNewTask(final Memory self) {
         // * 🚩获取新任务
-        final LinkedList<Task> tasksToProcess = Memory.getNewTasks(self);
+        final LinkedList<Task> tasksToProcess = getNewTasks(self);
         // * 🚩处理新任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -51,12 +52,53 @@ public abstract class ProcessDirect {
      */
     private static boolean processNovelTask(final Memory self) {
         // * 🚩获取新近任务
-        final LinkedList<Task> tasksToProcess = self.getNovelTasks();
+        final LinkedList<Task> tasksToProcess = getNovelTasks(self);
         // * 🚩处理新近任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
         tasksToProcess.clear();
         return noResult;
+    }
+
+    /**
+     * 🆕获取「要处理的新任务」列表
+     */
+    public static LinkedList<Task> getNewTasks(final Memory self) {
+        // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
+        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        final LinkedList<Task> mut_newTasks = self.mut_newTasks();
+        final NovelTaskBag mut_novelTasks = self.mut_novelTasks();
+        // don't include new tasks produced in the current workCycle
+        for (int counter = mut_newTasks.size(); counter > 0; counter--) {
+            final Task task = mut_newTasks.removeFirst();
+            if (task.isInput() || self.hasConcept(task.getContent())) {
+                tasksToProcess.add(task); // new input or existing concept
+            } else {
+                final Sentence s = task.getSentence();
+                if (s.isJudgment()) {
+                    final double d = s.getTruth().getExpectation();
+                    if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
+                        mut_novelTasks.putIn(task); // new concept formation
+                    } else {
+                        self.getRecorder().append("!!! Neglected: " + task + "\n");
+                    }
+                }
+            }
+        }
+        return tasksToProcess;
+    }
+
+    /**
+     * 🆕获取「要处理的新近任务」列表
+     */
+    public static LinkedList<Task> getNovelTasks(final Memory self) {
+        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        // select a task from novelTasks
+        // one of the two places where this variable is set
+        final Task task = self.mut_novelTasks().takeOut();
+        if (task != null)
+            tasksToProcess.add(task);
+        return tasksToProcess;
     }
 
     /* ---------- task processing ---------- */
@@ -255,6 +297,44 @@ public abstract class ProcessDirect {
     }
 
     /**
+     * To answer a question by existing beliefs
+     * * 🚩【2024-05-18 15:39:46】根据OpenNARS 3.1.0、3.1.2 与 PyNARS，均不会返回浮点数
+     * * 📄其它OpenNARS版本中均不返回值，或返回的值并不使用
+     * * 📄PyNARS在`Memory._solve_question`
+     *
+     * @param task The task to be processed
+     * @return Whether to continue the processing of the task
+     */
+    private static void processQuestion(final DerivationContextDirect context) {
+        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
+        final Task task = context.getCurrentTask();
+        // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
+        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
+        final Concept self = context.getCurrentConcept();
+
+        // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
+        final Task existedQuestion = findExistedQuestion(self, task.getContent());
+        final boolean newQuestion = existedQuestion == null;
+        final Sentence question = newQuestion ? task.getSentence() : existedQuestion.getSentence();
+
+        // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
+        final Sentence newAnswer = evaluation(question, self.getBeliefs());
+        if (newAnswer != null) {
+            // LocalRules.trySolution(ques, newAnswer, task, memory);
+            LocalRules.trySolution(newAnswer, task, context);
+        }
+
+        if (newQuestion) {
+            // * 🚩不会添加重复的问题
+            self.getQuestions().add(task);
+            // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
+            if (self.getQuestions().size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
+                self.getQuestions().remove(0); // FIFO
+            }
+        }
+    }
+
+    /**
      * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
      * and remove redundant or low rank one
      *
@@ -262,7 +342,10 @@ public abstract class ProcessDirect {
      * @param table       The table to be revised
      * @param capacity    The capacity of the table
      */
-    public static void addBeliefToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
+    public static void addBeliefToTable(
+            final Sentence newSentence,
+            final ArrayList<Sentence> table,
+            final int capacity) {
         final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         int i;
         for (i = 0; i < table.size(); i++) {
@@ -286,41 +369,23 @@ public abstract class ProcessDirect {
     }
 
     /**
-     * To answer a question by existing beliefs
-     * * 🚩【2024-05-18 15:39:46】根据OpenNARS 3.1.0、3.1.2 与 PyNARS，均不会返回浮点数
-     * * 📄其它OpenNARS版本中均不返回值，或返回的值并不使用
-     * * 📄PyNARS在`Memory._solve_question`
+     * 🆕根据输入的任务，寻找并尝试返回已有的问题
+     * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
+     * * 🚩经上游确认，此处的`task`只可能是`context.currentTask`
      *
-     * @param task The task to be processed
-     * @return Whether to continue the processing of the task
+     * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
+     * @return 已有的问题，或为空
      */
-    private static void processQuestion(final DerivationContextDirect context) {
-        // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
-        final Task task = context.getCurrentTask();
-        // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
-        // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
-        final Concept self = context.getCurrentConcept();
-
-        // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Task existedQuestion = self.findExistedQuestion(task.getContent());
-        final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? task.getSentence() : existedQuestion.getSentence();
-
-        // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
-        final Sentence newAnswer = evaluation(question, self.getBeliefs());
-        if (newAnswer != null) {
-            // LocalRules.trySolution(ques, newAnswer, task, memory);
-            LocalRules.trySolution(newAnswer, task, context);
-        }
-
-        if (newQuestion) {
-            // * 🚩不会添加重复的问题
-            self.getQuestions().add(task);
-            // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
-            if (self.getQuestions().size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-                self.getQuestions().remove(0); // FIFO
+    public static Task findExistedQuestion(final Concept self, final Term taskContent) {
+        if (self.getQuestions() != null) {
+            for (final Task existedQuestion : self.getQuestions()) {
+                final Term questionTerm = existedQuestion.getContent();
+                if (questionTerm.equals(taskContent)) {
+                    return existedQuestion;
+                }
             }
         }
+        return null;
     }
 
     /**

@@ -227,26 +227,6 @@ public final class Concept extends Item {
         }
     }
 
-    /**
-     * 🆕根据输入的任务，寻找并尝试返回已有的问题
-     * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
-     * * 🚩经上游确认，此处的`task`只可能是`context.currentTask`
-     *
-     * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
-     * @return 已有的问题，或为空
-     */
-    public Task findExistedQuestion(final Term taskContent) {
-        if (this.questions != null) {
-            for (final Task existedQuestion : this.questions) {
-                final Term questionTerm = existedQuestion.getContent();
-                if (questionTerm.equals(taskContent)) {
-                    return existedQuestion;
-                }
-            }
-        }
-        return null;
-    }
-
     /* ---------- insert Links for indirect processing ---------- */
     /**
      * Insert a TaskLink into the TaskLink bag

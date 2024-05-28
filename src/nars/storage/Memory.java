@@ -388,34 +388,6 @@ public class Memory {
     }
 
     /**
-     * 🆕获取「要处理的新任务」列表
-     */
-    public static LinkedList<Task> getNewTasks(final Memory self) {
-        // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
-        final LinkedList<Task> mut_newTasks = self.mut_newTasks();
-        final NovelTaskBag mut_novelTasks = self.mut_novelTasks();
-        // don't include new tasks produced in the current workCycle
-        for (int counter = mut_newTasks.size(); counter > 0; counter--) {
-            final Task task = mut_newTasks.removeFirst();
-            if (task.isInput() || self.hasConcept(task.getContent())) {
-                tasksToProcess.add(task); // new input or existing concept
-            } else {
-                final Sentence s = task.getSentence();
-                if (s.isJudgment()) {
-                    final double d = s.getTruth().getExpectation();
-                    if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
-                        mut_novelTasks.putIn(task); // new concept formation
-                    } else {
-                        self.getRecorder().append("!!! Neglected: " + task + "\n");
-                    }
-                }
-            }
-        }
-        return tasksToProcess;
-    }
-
-    /**
      * 🆕对外接口：获取可变的「新任务」列表
      * * 🚩获取的「新任务」可变
      * * 🎯用于「直接推理」
@@ -431,19 +403,6 @@ public class Memory {
      */
     public final NovelTaskBag mut_novelTasks() {
         return novelTasks;
-    }
-
-    /**
-     * 🆕获取「要处理的新近任务」列表
-     */
-    public static LinkedList<Task> getNovelTasks(final Memory self) {
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
-        // select a task from novelTasks
-        // one of the two places where this variable is set
-        final Task task = self.mut_novelTasks().takeOut();
-        if (task != null)
-            tasksToProcess.add(task);
-        return tasksToProcess;
     }
 
     /**
