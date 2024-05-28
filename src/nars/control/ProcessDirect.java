@@ -38,7 +38,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNewTask(final Memory self) {
         // * 🚩获取新任务
-        final LinkedList<Task> tasksToProcess = self.getNewTasks();
+        final LinkedList<Task> tasksToProcess = Memory.getNewTasks(self);
         // * 🚩处理新任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -87,7 +87,6 @@ public abstract class ProcessDirect {
         return noResult;
     }
 
-   
     private static boolean immediateProcess(final Memory self, final Iterable<Task> tasksToProcess) {
         boolean noResult = true;
         for (final Task task : tasksToProcess) {

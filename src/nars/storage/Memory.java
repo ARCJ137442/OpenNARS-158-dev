@@ -390,22 +390,24 @@ public class Memory {
     /**
      * 🆕获取「要处理的新任务」列表
      */
-    public LinkedList<Task> getNewTasks() {
+    public static LinkedList<Task> getNewTasks(final Memory self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        final LinkedList<Task> mut_newTasks = self.mut_newTasks();
+        final NovelTaskBag mut_novelTasks = self.mut_novelTasks();
         // don't include new tasks produced in the current workCycle
-        for (int counter = newTasks.size(); counter > 0; counter--) {
-            final Task task = newTasks.removeFirst();
-            if (task.isInput() || hasConcept(task.getContent())) {
+        for (int counter = mut_newTasks.size(); counter > 0; counter--) {
+            final Task task = mut_newTasks.removeFirst();
+            if (task.isInput() || self.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
             } else {
                 final Sentence s = task.getSentence();
                 if (s.isJudgment()) {
                     final double d = s.getTruth().getExpectation();
                     if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
-                        novelTasks.putIn(task); // new concept formation
+                        mut_novelTasks.putIn(task); // new concept formation
                     } else {
-                        recorder.append("!!! Neglected: " + task + "\n");
+                        self.getRecorder().append("!!! Neglected: " + task + "\n");
                     }
                 }
             }
@@ -414,13 +416,31 @@ public class Memory {
     }
 
     /**
+     * 🆕对外接口：获取可变的「新任务」列表
+     * * 🚩获取的「新任务」可变
+     * * 🎯用于「直接推理」
+     */
+    public final LinkedList<Task> mut_newTasks() {
+        return newTasks;
+    }
+
+    /**
+     * 🆕对外接口：获取可变的「新任务」列表
+     * * 🚩获取的「新任务」可变
+     * * 🎯用于「直接推理」
+     */
+    public final NovelTaskBag mut_novelTasks() {
+        return novelTasks;
+    }
+
+    /**
      * 🆕获取「要处理的新近任务」列表
      */
-    public LinkedList<Task> getNovelTasks() {
+    public static LinkedList<Task> getNovelTasks(final Memory self) {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
-        final Task task = this.novelTasks.takeOut();
+        final Task task = self.mut_novelTasks().takeOut();
         if (task != null)
             tasksToProcess.add(task);
         return tasksToProcess;
