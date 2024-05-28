@@ -20,43 +20,6 @@ public class RuleTables {
      * @param context Reference to the derivation context
      */
     public static void reason(DerivationContextReason context) {
-        // * 🚩系列断言与赋值（实际使用中可删）
-        /*
-         * 📝有效字段：{
-         * currentTerm
-         * currentConcept
-         * currentTask
-         * currentTaskLink
-         * currentBelief?
-         * currentBeliefLink
-         * newStamp?
-         * }
-         */
-        if (context.getCurrentTask() == null) {
-            throw new Error("currentTask: 不符预期的可空情况");
-        }
-        if (context.getCurrentTerm() == null) {
-            throw new Error("currentTerm: 不符预期的可空情况");
-        }
-        if (context.getCurrentConcept() == null) {
-            throw new Error("currentConcept: 不符预期的可空情况");
-        }
-        if (context.getCurrentBelief() == null && context.getCurrentBelief() != null) { // * 📝可空
-            throw new Error("currentBelief: 不符预期的可空情况");
-        }
-        if (context.getCurrentBeliefLink() == null) {
-            throw new Error("currentBeliefLink: 不符预期的可空情况");
-        }
-        if (context.getCurrentTaskLink() == null) {
-            throw new Error("currentTaskLink: 不符预期的可空情况");
-        }
-        if (context.getNewStamp() != null && context.getNewStamp() == null) {
-            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
-            throw new Error("newStamp: 不符预期的可空情况");
-        }
-        if (context.getSubstitute() != null) {
-            throw new Error("substitute: 不符预期的可空情况");
-        }
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
@@ -64,12 +27,20 @@ public class RuleTables {
         final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Sentence belief = context.getCurrentBelief();
+        // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
         if (belief != null) {
             LocalRules.match(context);
         }
+        // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
+        // * 📌依据：`long_term_stability.nal`
+        // * 📄ONA中的结果有两个：
+        // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
+        // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
+        // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
         if (!context.getMemory().noResult() && task.getSentence().isJudgment()) {
             return;
         }
+        // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);
         final short bIndex = bLink.getIndex(0);
         switch (tLink.getType()) { // dispatch first by TaskLink type
@@ -632,38 +603,4 @@ public class RuleTables {
         // }
     }
 
-    /* ----- inference with one TaskLink only ----- */
-    /**
-     * The TaskLink is of type TRANSFORM, and the conclusion is an equivalent
-     * transformation
-     * * 📝【2024-05-20 11:46:32】仅「直接推理」使用
-     *
-     * @param tLink   The task link
-     * @param context Reference to the derivation context
-     */
-    public static void transformTask(TaskLink tLink, DerivationContextReason context) {
-        // * 🚩预处理
-        final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
-        final short[] indices = tLink.getIndices();
-        final Term inh;
-        if ((indices.length == 2) || (clonedContent instanceof Inheritance)) { // <(*, term, #) --> #>
-            inh = clonedContent;
-        } else if (indices.length == 3) { // <<(*, term, #) --> #> ==> #>
-            inh = clonedContent.componentAt(indices[0]);
-        } else if (indices.length == 4) { // <(&&, <(*, term, #) --> #>, #) ==> #>
-            Term component = clonedContent.componentAt(indices[0]);
-            if ((component instanceof Conjunction)
-                    && (((clonedContent instanceof Implication) && (indices[0] == 0))
-                            || (clonedContent instanceof Equivalence))) {
-                inh = ((CompoundTerm) component).componentAt(indices[1]);
-            } else {
-                return;
-            }
-        } else {
-            inh = null;
-        }
-        if (inh instanceof Inheritance) {
-            StructuralRules.transformProductImage((Inheritance) inh, clonedContent, indices, context);
-        }
-    }
 }

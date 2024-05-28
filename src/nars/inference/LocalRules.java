@@ -1,11 +1,13 @@
 package nars.inference;
 
 import nars.storage.Memory;
-import nars.control.DerivationContext;
-import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
+import static nars.control.MakeTerm.*;
+
+import nars.control.DerivationContext;
+import nars.control.DerivationContextReason;
 
 /**
  * Directly process a task by a oldBelief, with only two Terms in both. In
@@ -72,11 +74,13 @@ public class LocalRules {
      * @param context         Reference to the derivation context
      */
     public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
+        // * 🚩计算真值/预算值
         final TruthValue newTruth = newBelief.getTruth();
         final TruthValue oldTruth = oldBelief.getTruth();
         final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
         final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
         final Term content = newBelief.getContent();
+        // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -93,10 +97,9 @@ public class LocalRules {
         // * 🚩验证这个信念是否为「解决问题的最优解」
         final float newQ = solutionQuality(problem, belief);
         if (oldBest != null) {
-            float oldQ = solutionQuality(problem, oldBest);
-            if (oldQ >= newQ) {
+            final float oldQ = solutionQuality(problem, oldBest);
+            if (oldQ >= newQ)
                 return;
-            }
         }
         // * 🚩若比先前「最优解」还优，那就确立新的「最优解」
         task.setBestSolution(belief);
@@ -180,9 +183,9 @@ public class LocalRules {
         final Term t2 = s1.getPredicate();
         final Term content;
         if (s1 instanceof Inheritance) {
-            content = Similarity.make(t1, t2, context.getMemory());
+            content = makeSimilarity(t1, t2, context.getMemory());
         } else {
-            content = Equivalence.make(t1, t2, context.getMemory());
+            content = makeEquivalence(t1, t2, context.getMemory());
         }
         final TruthValue value1 = judgment1.getTruth();
         final TruthValue value2 = judgment2.getTruth();
@@ -203,7 +206,7 @@ public class LocalRules {
         final Statement statement = (Statement) asym.getContent();
         final Term sub = statement.getPredicate();
         final Term pre = statement.getSubject();
-        final Statement content = Statement.make(statement, sub, pre, context.getMemory());
+        final Statement content = makeStatement(statement, sub, pre, context.getMemory());
         final TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
         final BudgetValue budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
@@ -259,11 +262,11 @@ public class LocalRules {
         Term otherTerm;
         if (Variable.containVarQ(subjT.getName())) {
             otherTerm = (predT.equals(subjB)) ? predB : subjB;
-            content = Statement.make(content, otherTerm, predT, context.getMemory());
+            content = makeStatement(content, otherTerm, predT, context.getMemory());
         }
         if (Variable.containVarQ(predT.getName())) {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
-            content = Statement.make(content, subjT, otherTerm, context.getMemory());
+            content = makeStatement(content, subjT, otherTerm, context.getMemory());
         }
         context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
