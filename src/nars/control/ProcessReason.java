@@ -8,6 +8,22 @@ import nars.storage.*;
 import nars.inference.*;
 
 public abstract class ProcessReason {
+
+    /**
+     * 🆕「概念推理」控制机制的入口函数
+     */
+    public static void processReason(final Memory self, final boolean noResult) {
+        // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
+        // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
+        final DerivationContextReason context = new DerivationContextReason(self);
+        final Iterable<TermLink> toReasonLinks = ProcessReason.preprocessConcept(self, noResult, context);
+
+        // * 🚩内部概念高级推理 阶段 * //
+        if (toReasonLinks != null)
+            // * 🚩都选好了⇒开始
+            ProcessReason.processConcept(toReasonLinks, context);
+    }
+
     /**
      * Select a concept to fire.
      */

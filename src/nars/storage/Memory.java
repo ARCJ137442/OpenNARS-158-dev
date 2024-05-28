@@ -4,14 +4,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.DerivationContext;
-import nars.control.DerivationContextReason;
 import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
-import nars.entity.TermLink;
 import nars.inference.BudgetFunctions;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
@@ -353,15 +351,8 @@ public class Memory {
         // * 🚩本地任务直接处理 阶段 * //
         final boolean noResult = ProcessDirect.processDirect(this);
 
-        // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
-        // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）
-        final DerivationContextReason context = new DerivationContextReason(this);
-        final Iterable<TermLink> toReasonLinks = ProcessReason.preprocessConcept(this, noResult, context);
-
         // * 🚩内部概念高级推理 阶段 * //
-        if (toReasonLinks != null)
-            // * 🚩都选好了⇒开始
-            ProcessReason.processConcept(toReasonLinks, context);
+        ProcessReason.processReason(this, noResult);
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段
