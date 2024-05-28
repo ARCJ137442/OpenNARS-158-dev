@@ -184,7 +184,7 @@ public final class Concept extends Item {
      * called in Memory.immediateProcess only
      *
      * @param task The task to be processed
-     */
+     */ // TODO: 待迁移
     public static void directProcess(final DerivationContextDirect context) {
         // * 🚩断言原先传入的「任务」就是「推理上下文」的「当前任务」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentTask`
@@ -254,7 +254,7 @@ public final class Concept extends Item {
      * @param task The judgment to be accepted
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
-     */
+     */ // TODO: 待迁移
     private static void processJudgment(final DerivationContextDirect context) {
         // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
@@ -309,7 +309,7 @@ public final class Concept extends Item {
      *
      * @param task The task to be processed
      * @return Whether to continue the processing of the task
-     */
+     */ // TODO: 待迁移
     private static void processQuestion(final DerivationContextDirect context) {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
@@ -346,8 +346,8 @@ public final class Concept extends Item {
      *
      * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
      * @return 已有的问题，或为空
-     */
-    private Task findExistedQuestion(final Term taskContent) {
+     */ // TODO: 待迁移
+    public Task findExistedQuestion(final Term taskContent) {
         if (this.questions != null) {
             for (final Task existedQuestion : this.questions) {
                 final Term questionTerm = existedQuestion.getContent();
@@ -368,7 +368,7 @@ public final class Concept extends Item {
      * @param task    The task to be linked
      * @param content The content of the task
      */
-    private void linkToTask(Task task) {
+    public void linkToTask(Task task) {
         final BudgetValue taskBudget = task.getBudget();
         final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
         insertTaskLink(taskLink);
@@ -402,7 +402,7 @@ public final class Concept extends Item {
      * @param table       The table to be revised
      * @param capacity    The capacity of the table
      */
-    private static void addBeliefToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
+    public static void addBeliefToTable(Sentence newSentence, ArrayList<Sentence> table, int capacity) {
         final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         int i;
         for (i = 0; i < table.size(); i++) {

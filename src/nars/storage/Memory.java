@@ -392,7 +392,7 @@ public class Memory {
     /**
      * 🆕本地直接推理
      * * 🚩最终只和「本地规则」与{@link Concept#directProcess}有关
-     */
+     */ // TODO: 待迁移
     private static boolean processDirect(final Memory self) {
         // * 🚩处理已有任务（新任务/新近任务）
         boolean noResult = processNewTask(self);
@@ -412,7 +412,7 @@ public class Memory {
      * Process the newTasks accumulated in the previous workCycle, accept input
      * ones and those that corresponding to existing concepts, plus one from the
      * buffer.
-     */
+     */ // TODO: 待迁移
     private static boolean processNewTask(final Memory self) {
         // * 🚩获取新任务
         final LinkedList<Task> tasksToProcess = self.getNewTasks();
@@ -451,7 +451,7 @@ public class Memory {
 
     /**
      * Select a novel task to process.
-     */
+     */ // TODO: 待迁移
     private static boolean processNovelTask(final Memory self) {
         // * 🚩获取新近任务
         final LinkedList<Task> tasksToProcess = self.getNovelTasks();
@@ -481,7 +481,7 @@ public class Memory {
      * one concept only
      *
      * @param taskInput the task to be accepted (owned)
-     */
+     */ // TODO: 待迁移
     private static boolean immediateProcess(final Memory self, final Task taskInput) {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
@@ -503,6 +503,7 @@ public class Memory {
         return noResult;
     }
 
+    // TODO: 待迁移
     private static boolean immediateProcess(final Memory self, final Iterable<Task> tasksToProcess) {
         boolean noResult = true;
         for (final Task task : tasksToProcess) {
@@ -526,7 +527,7 @@ public class Memory {
      *
      * @param taskInput
      * @return 直接推理上下文 / 空
-     */
+     */ // TODO: 待迁移
     private static DerivationContextDirect prepareDirectProcessContext(final Memory self, final Task taskInput) {
         // * 🚩强制清空上下文防串
         final DerivationContextDirect context = new DerivationContextDirect(self);
@@ -544,7 +545,7 @@ public class Memory {
 
     /**
      * Select a concept to fire.
-     */
+     */ // TODO: 待迁移
     private static void processConcept(
             final Iterable<TermLink> toReasonLinks,
             final DerivationContextReason context) {
@@ -596,7 +597,7 @@ public class Memory {
      * * 🎯从「记忆区」拿出「概念」并从其中拿出「任务链」：若都有，则进入「概念推理」阶段
      *
      * @return 预点火结果 {@link PreFireResult}
-     */
+     */ // TODO: 待迁移
     private static Iterable<TermLink> preprocessConcept(
             final Memory self,
             final boolean noResult,
@@ -658,7 +659,7 @@ public class Memory {
      *
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
-     */
+     */ // TODO: 待迁移
     private static ArrayList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
             TaskLink currentTaskLink) {
         final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
