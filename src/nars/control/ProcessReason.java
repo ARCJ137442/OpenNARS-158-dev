@@ -10,7 +10,7 @@ import nars.inference.*;
 public abstract class ProcessReason {
     /**
      * Select a concept to fire.
-     */ // TODO: 待迁移
+     */
     public static void processConcept(
             final Iterable<TermLink> toReasonLinks,
             final DerivationContextReason context) {
@@ -62,7 +62,7 @@ public abstract class ProcessReason {
      * * 🎯从「记忆区」拿出「概念」并从其中拿出「任务链」：若都有，则进入「概念推理」阶段
      *
      * @return 预点火结果 {@link PreFireResult}
-     */ // TODO: 待迁移
+     */
     public static Iterable<TermLink> preprocessConcept(
             final Memory self,
             final boolean noResult,
@@ -124,7 +124,7 @@ public abstract class ProcessReason {
      *
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
-     */ // TODO: 待迁移
+     */
     private static ArrayList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
             TaskLink currentTaskLink) {
         final ArrayList<TermLink> toReasonLinks = new ArrayList<>();
