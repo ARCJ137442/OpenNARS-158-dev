@@ -3,13 +3,17 @@ package nars.control;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import nars.entity.*;
+import nars.entity.Concept;
+import nars.entity.Sentence;
+import nars.entity.Stamp;
+import nars.entity.Task;
 import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
-import nars.main_nogui.*;
-import nars.storage.*;
+import nars.main_nogui.Parameters;
+import nars.storage.Memory;
+import nars.storage.NovelTaskBag;
 
 public abstract class ProcessDirect {
 
@@ -63,7 +67,7 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新任务」列表
      */
-    public static LinkedList<Task> getNewTasks(final Memory self) {
+    private static LinkedList<Task> getNewTasks(final Memory self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final LinkedList<Task> mut_newTasks = self.mut_newTasks();
@@ -91,7 +95,7 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新近任务」列表
      */
-    public static LinkedList<Task> getNovelTasks(final Memory self) {
+    private static LinkedList<Task> getNovelTasks(final Memory self) {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
@@ -111,13 +115,17 @@ public abstract class ProcessDirect {
     private static boolean immediateProcess(final Memory self, final Task taskInput) {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
-        // * 🚩准备上下文
-        final DerivationContextDirect context = prepareDirectProcessContext(self, taskInput);
+        // * 🚩构建「实际上下文」并断言可空性
+        final DerivationContextDirect context = prepareDirectProcessContext(
+                self,
+                taskInput);
 
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
             // * 🚩调整概念的预算值
+            // self.pickOutConcept(context.getCurrentConcept().getKey());
             self.activateConcept(context.getCurrentConcept(), taskInput.getBudget());
+            // self.putBackConcept(context.getCurrentConcept());
             // * 🔥开始「直接处理」
             directProcess(context);
         }
@@ -149,26 +157,26 @@ public abstract class ProcessDirect {
      * 🆕准备「直接推理」的推理上下文
      * * 🚩这其中不对「推理上下文」「记忆区」外的变量进行任何修改
      * * 📌捕获`taskInput`的所有权
+     * * 📌捕获`currentConcept`的所有权
+     * * ⚠️不在其中修改实体（预算值 等）
      *
      * @param taskInput
      * @return 直接推理上下文 / 空
      */
-    private static DerivationContextDirect prepareDirectProcessContext(final Memory self, final Task taskInput) {
-        // * 🚩强制清空上下文防串
-        final DerivationContextDirect context = new DerivationContextDirect(self);
+    private static DerivationContextDirect prepareDirectProcessContext(
+            final Memory self,
+            final Task taskInput) {
         // * 🚩准备上下文
         // one of the two places where this variable is set
-        context.setCurrentTask(taskInput);
-        context.setCurrentConcept(self.getConceptOrCreate(taskInput.getContent()));
-        if (context.getCurrentConcept() != null) {
-            // * ✅【2024-05-20 08:52:34】↓不再需要：自始至终都是「当前概念」所对应的词项
-            // context.setCurrentTerm(context.getCurrentConcept().getTerm());
-            return context; // * 📌准备就绪
+        final Task currentTask = taskInput;
+        final Concept taskConcept = self.getConceptOrCreate(taskInput.getContent());
+        if (taskConcept != null) {
+            // final Concept currentConcept = taskConcept;
+            final Concept currentConcept = self.pickOutConcept(taskConcept.getKey());
+            return new DerivationContextDirect(self, currentTask, currentConcept); // * 📌准备就绪
         }
         return null; // * 📌准备失败：没有可供推理的概念
     }
-
-    // from Concept
 
     /* ---------- direct processing of tasks ---------- */
     /**
@@ -187,41 +195,6 @@ public abstract class ProcessDirect {
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         // * 📝相比于「概念推理」仅少了「当前词项链」与「当前任务链」，其它基本通用
         final Concept self = context.getCurrentConcept();
-        /*
-         * 📝有效字段：{
-         * currentTerm
-         * currentConcept
-         * currentTask
-         *
-         * currentBelief? | 用于中途推理
-         * newStamp? | 用于中途推理
-         * }
-         */
-        // * 🚩系列断言与赋值（实际使用中可删）
-        if (context.getCurrentTask() == null) {
-            throw new Error("currentTask: 不符预期的可空情况");
-        }
-        if (context.getCurrentTerm() == null) {
-            throw new Error("currentTerm: 不符预期的可空情况");
-        }
-        if (context.getCurrentConcept() != self) { // ! 不仅非空，而且等于自身
-            throw new Error("currentConcept: 不符预期的可空情况");
-        }
-        if (context.getCurrentBelief() != null) {
-            throw new Error("currentBelief: 不符预期的可空情况");
-        }
-        // if (context.getCurrentBeliefLink() != null) {
-        // throw new Error("currentBeliefLink: 不符预期的可空情况");
-        // }
-        // if (context.getCurrentTaskLink() != null) {
-        // throw new Error("currentTaskLink: 不符预期的可空情况");
-        // }
-        if (context.getNewStamp() != null) {
-            throw new Error("newStamp: 不符预期的可空情况");
-        }
-        if (context.getSubstitute() != null) {
-            throw new Error("substitute: 不符预期的可空情况");
-        }
         final Task task = context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
@@ -239,7 +212,6 @@ public abstract class ProcessDirect {
         if (task.getBudget().aboveThreshold()) { // still need to be processed
             self.linkToTask(task);
         }
-        self.refreshObserver();
     }
 
     /**
@@ -278,9 +250,9 @@ public abstract class ProcessDirect {
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
                     context.setCurrentBelief(oldBelief);
-                    // TODO: 后续要将此处「修正」分开成「概念推理用修正」与「直接推理用修正」
                     // TODO: 🎯去掉上边的`setCurrentBelief`，断言「『直接推理』不会使用『当前信念』」
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
+                    // * 📝↑用法仅限于「父信念」
                     LocalRules.revision(judgment, oldBelief, context);
                 }
             }
@@ -288,10 +260,12 @@ public abstract class ProcessDirect {
         // * 🚩尝试用新的信念解决旧有问题
         // * 📄如：先输入`A?`再输入`A.`
         if (task.getBudget().aboveThreshold()) {
+            // * 🚩开始尝试解决「问题表」中的所有问题
             for (final Task existedQuestion : self.getQuestions()) {
                 // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
+            // * 🚩将信念追加至「信念表」
             addBeliefToTable(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
@@ -323,14 +297,9 @@ public abstract class ProcessDirect {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, task, context);
         }
-
+        // * 🚩新增问题
         if (newQuestion) {
-            // * 🚩不会添加重复的问题
-            self.getQuestions().add(task);
-            // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
-            if (self.getQuestions().size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-                self.getQuestions().remove(0); // FIFO
-            }
+            self.addQuestion(task);
         }
     }
 
@@ -376,14 +345,14 @@ public abstract class ProcessDirect {
      * @param taskContent 要在「自身所有问题」中查找相似的「问题」任务
      * @return 已有的问题，或为空
      */
-    public static Task findExistedQuestion(final Concept self, final Term taskContent) {
-        if (self.getQuestions() != null) {
-            for (final Task existedQuestion : self.getQuestions()) {
-                final Term questionTerm = existedQuestion.getContent();
-                if (questionTerm.equals(taskContent)) {
-                    return existedQuestion;
-                }
-            }
+    private static Task findExistedQuestion(final Concept self, final Term taskContent) {
+        final Iterable<Task> questions = self.getQuestions();
+        if (questions == null)
+            return null;
+        for (final Task existedQuestion : questions) {
+            final Term questionTerm = existedQuestion.getContent();
+            if (questionTerm.equals(taskContent))
+                return existedQuestion;
         }
         return null;
     }
@@ -395,14 +364,13 @@ public abstract class ProcessDirect {
      * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
-    private static Sentence evaluation(Sentence query, ArrayList<Sentence> list) {
-        if (list == null) {
+    private static Sentence evaluation(final Sentence query, final Iterable<Sentence> list) {
+        if (list == null)
             return null;
-        }
         float currentBest = 0;
         float beliefQuality;
         Sentence candidate = null;
-        for (Sentence judgment : list) {
+        for (final Sentence judgment : list) {
             beliefQuality = LocalRules.solutionQuality(query, judgment);
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;

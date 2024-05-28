@@ -15,6 +15,7 @@ import nars.language.Product;
 import nars.language.Statement;
 import nars.language.Term;
 import nars.main_nogui.NARSBatch;
+import nars.main_nogui.Parameters;
 import nars.storage.BagObserver;
 import nars.storage.Memory;
 import nars.storage.NullBagObserver;
@@ -190,6 +191,19 @@ public final class Concept extends Item {
      */
     public ArrayList<Task> getQuestions() {
         return this.questions;
+    }
+
+    /**
+     * 🆕对外接口：添加问题到「问题集」
+     * * 🚩除了「添加」以外，还会实行「任务缓冲区」机制
+     */
+    public void addQuestion(final Task task) {
+        // * 🚩不会添加重复的问题
+        this.questions.add(task);
+        // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
+        if (this.questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
+            this.questions.remove(0); // FIFO
+        }
     }
 
     /**

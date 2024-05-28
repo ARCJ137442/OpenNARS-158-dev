@@ -416,6 +416,16 @@ public class Memory {
         return this.concepts.takeOut();
     }
 
+    /**
+     * 🆕对外接口：从「概念袋」中挑出一个概念
+     * * 🚩用于「直接推理」中的「拿出概念」
+     *
+     * @return 拿出的一个概念 / 空
+     */
+    public final Concept pickOutConcept(String key) {
+        return concepts.pickOut(key);
+    }
+
     public void putBackConcept(Concept concept) {
         this.concepts.putBack(concept);
     }
