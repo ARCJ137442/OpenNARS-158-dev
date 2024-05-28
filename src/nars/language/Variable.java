@@ -2,7 +2,7 @@ package nars.language;
 
 import java.util.*;
 
-import nars.inference.DerivationContext;
+import nars.control.DerivationContext;
 import nars.io.Symbols;
 
 /**

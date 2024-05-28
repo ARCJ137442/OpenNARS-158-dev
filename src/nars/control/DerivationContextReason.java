@@ -1,4 +1,4 @@
-package nars.inference;
+package nars.control;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -8,6 +8,7 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
+import nars.inference.RuleTables;
 import nars.storage.Memory;
 
 /**

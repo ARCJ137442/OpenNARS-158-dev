@@ -1,6 +1,8 @@
 package nars.inference;
 
 import nars.storage.Memory;
+import nars.control.DerivationContext;
+import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;

@@ -2,8 +2,8 @@ package nars.entity;
 
 import java.util.ArrayList;
 
+import nars.control.DerivationContextDirect;
 import nars.inference.BudgetFunctions;
-import nars.inference.DerivationContextDirect;
 import nars.inference.LocalRules;
 import nars.inference.UtilityFunctions;
 import nars.language.CompoundTerm;

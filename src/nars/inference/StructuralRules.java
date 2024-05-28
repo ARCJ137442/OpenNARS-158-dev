@@ -2,6 +2,7 @@ package nars.inference;
 
 import java.util.ArrayList;
 
+import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.io.Symbols;
 import nars.language.*;
