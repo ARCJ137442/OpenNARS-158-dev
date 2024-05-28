@@ -123,9 +123,7 @@ public abstract class ProcessDirect {
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
             // * 🚩调整概念的预算值
-            // self.pickOutConcept(context.getCurrentConcept().getKey());
             self.activateConcept(context.getCurrentConcept(), taskInput.getBudget());
-            // self.putBackConcept(context.getCurrentConcept());
             // * 🔥开始「直接处理」
             directProcess(context);
         }
