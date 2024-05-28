@@ -82,6 +82,8 @@ public final class Concept extends Item {
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
         if (tm instanceof CompoundTerm) {
+            // * 🚩只有「复合词项→其内元素」的链接
+            // * 📝「复合词项→其内元素」是有限的，而「元素→复合词项」是无限的
             this.termLinkTemplates = prepareComponentLinks(((CompoundTerm) tm));
         } else {
             this.termLinkTemplates = null;
@@ -98,8 +100,10 @@ public final class Concept extends Item {
      * @return A list of TermLink templates
      */
     private static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
-        ArrayList<TermLink> componentLinks = new ArrayList<>();
-        short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
+        final ArrayList<TermLink> componentLinks = new ArrayList<>();
+        // * 🚩预备「默认类型」：自身为陈述⇒陈述，自身为复合⇒复合
+        final short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
+        // * 🚩建立连接：从自身到自身开始
         prepareComponentLinks(self, componentLinks, type, self);
         return componentLinks;
     }
@@ -108,6 +112,7 @@ public final class Concept extends Item {
      * Collect TermLink templates into a list, go down one level except in
      * special cases
      * <p>
+     * * ❗重要逻辑：词项链的构造
      *
      * @param self           The CompoundTerm for which the links are built
      * @param componentLinks The list of TermLink templates built so far
@@ -119,10 +124,13 @@ public final class Concept extends Item {
             final ArrayList<TermLink> componentLinks,
             final short type,
             final CompoundTerm term) {
+        // * 🚩从目标第一层元素出发
         for (int i = 0; i < term.size(); i++) { // first level components
+            /** 第一层元素 */
             final Term t1 = term.componentAt(i);
+            // * 🚩「常量」词项⇒直接链接
             if (t1.isConstant()) {
-                componentLinks.add(new TermLink(t1, type, i));
+                componentLinks.add(new TermLink(t1, type, new int[] { i }));
                 // * 📝【2024-05-15 18:21:25】案例笔记 概念="<(&&,A,B) ==> D>"：
                 // * 📄self="<(&&,A,B) ==> D>" ~> "(&&,A,B)" [i=0]
                 // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
@@ -137,33 +145,58 @@ public final class Concept extends Item {
                 // * 📄self="(&&,A,B)" ~> "B" [i=1]
                 // * @ 2=COMPOUND "At C, point to (&&, A, C)"
             }
-            if (((self instanceof Equivalence) || ((self instanceof Implication) && (i == 0)))
-                    && ((t1 instanceof Conjunction) || (t1 instanceof Negation))) {
-                prepareComponentLinks(((CompoundTerm) t1), componentLinks, TermLink.COMPOUND_CONDITION,
+            // * 🚩条件类链接⇒递归
+            final boolean isConditionalCompound =
+                    // * 📌自身和索引必须先是「蕴含の主词」或「等价」，如 <# ==> C> 或 <# <=> #>
+                    self instanceof Equivalence || (self instanceof Implication && i == 0);
+            final boolean isConditionalComponent =
+                    // * 🚩然后「内部词项」必须是「合取」或「否定」
+                    t1 instanceof Conjunction || t1 instanceof Negation;
+            final boolean isConditional = isConditionalCompound && isConditionalComponent;
+            if (isConditional)
+                // * 📝递归深入，将作为「入口」的「自身向自身建立链接」缩小到「组分」区域
+                prepareComponentLinks(
+                        (CompoundTerm) t1,
+                        componentLinks,
+                        TermLink.COMPOUND_CONDITION, // * 🚩改变「默认类型」为「复合条件」
                         (CompoundTerm) t1);
-            } else if (t1 instanceof CompoundTerm) {
+            // * 🚩其它情况⇒若元素为复合词项，再度深入
+            else if (t1 instanceof CompoundTerm) {
                 for (int j = 0; j < ((CompoundTerm) t1).size(); j++) { // second level components
+                    /** 第二层元素 */
                     final Term t2 = ((CompoundTerm) t1).componentAt(j);
+                    // * 🚩直接处理 @ 第二层
                     if (t2.isConstant()) {
-                        if ((t1 instanceof Product) || (t1 instanceof ImageExt) || (t1 instanceof ImageInt)) {
-                            if (type == TermLink.COMPOUND_CONDITION) {
-                                componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, 0, i, j));
-                            } else {
-                                componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, i, j));
-                            }
+                        // * 📌【2024-05-27 21:24:32】先前就是此处尝试「正交化」导致语义改变
+                        final boolean transformT1 = t1 instanceof Product || t1 instanceof ImageExt
+                                || t1 instanceof ImageInt;
+                        if (transformT1) {
+                            // * 🚩NAL-4「转换」相关
+                            final int[] indexes = type == TermLink.COMPOUND_CONDITION
+                                    // * 📝若背景的「链接类型」已经是「复合条件」⇒已经深入了一层，并且一定在「主项」位置
+                                    ? new int[] { 0, i, j }
+                                    // * 📝否则就还是第二层
+                                    : new int[] { i, j };
+                            componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, indexes));
                         } else {
-                            componentLinks.add(new TermLink(t2, type, i, j));
+                            // * 🚩非「转换」相关：直接按类型添加
+                            componentLinks.add(new TermLink(t2, type, new int[] { i, j }));
                         }
                     }
-                    if ((t2 instanceof Product) || (t2 instanceof ImageExt) || (t2 instanceof ImageInt)) {
+                    // * 🚩直接处理 @ 第三层
+                    final boolean transformT2 = t2 instanceof Product || t2 instanceof ImageExt
+                            || t2 instanceof ImageInt;
+                    if (transformT2) {
+                        // * 🚩NAL-4「转换」相关
                         for (int k = 0; k < ((CompoundTerm) t2).size(); k++) {
                             final Term t3 = ((CompoundTerm) t2).componentAt(k);
                             if (t3.isConstant()) { // third level
-                                if (type == TermLink.COMPOUND_CONDITION) {
-                                    componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, 0, i, j, k));
-                                } else {
-                                    componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, i, j, k));
-                                }
+                                final int[] indexes = type == TermLink.COMPOUND_CONDITION
+                                        // * 📝此处若是「复合条件」即为最深第四层
+                                        ? new int[] { 0, i, j, k }
+                                        // * 📝否则仅第三层
+                                        : new int[] { i, j, k };
+                                componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, indexes));
                             }
                         }
                     }
@@ -173,23 +206,26 @@ public final class Concept extends Item {
     }
 
     /**
-     * 🆕控制机制 接口函数
+     * 🆕对外接口：刷新「实体观察者」
+     * * 🎯从「直接推理」而来
      */
     public void refreshObserver() {
         this.entityObserver.refresh(this.displayContent());
     }
 
     /**
-     * 🆕控制机制 接口函数
+     * 🆕对外接口：获取「当前信念表」
+     * * 🎯从「直接推理」而来
      */
     public ArrayList<Sentence> getBeliefs() {
         return this.beliefs;
     }
 
     /**
-     * 🆕控制机制 接口函数
+     * 🆕对外接口：获取「当前信念表」
+     * * 🎯从「直接推理」而来
      */
-    public ArrayList<Task> getQuestions() {
+    public Iterable<Task> getQuestions() {
         return this.questions;
     }
 
@@ -215,30 +251,36 @@ public final class Concept extends Item {
      * @param task    The task to be linked
      * @param content The content of the task
      */
-    public void linkToTask(Task task) {
+    public static void linkToTask(final Concept self, final Task task) {
         final BudgetValue taskBudget = task.getBudget();
         final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
-        insertTaskLink(taskLink);
-        if (term instanceof CompoundTerm) {
-            if (termLinkTemplates.size() > 0) {
-                final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget,
-                        termLinkTemplates.size());
-                if (subBudget.aboveThreshold()) {
-                    for (TermLink termLink : termLinkTemplates) {
-                        // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
-                        // // avoid circular transform
-                        final TaskLink tLink = new TaskLink(task, termLink, subBudget);
-                        final Term componentTerm = termLink.getTarget();
-                        final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
-                        if (componentConcept != null) {
-                            componentConcept.insertTaskLink(tLink);
-                        }
-                        // }
-                    }
-                    buildTermLinks(taskBudget); // recursively insert TermLink
-                }
-            }
+        insertTaskLink(self, taskLink);
+        if (!(self.term instanceof CompoundTerm && self.termLinkTemplates.size() > 0)) {
+            return;
         }
+        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, self.termLinkTemplates.size());
+        if (subBudget.aboveThreshold()) {
+            for (final TermLink termLink : self.termLinkTemplates) {
+                // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
+                // // avoid circular transform
+                final TaskLink tLink = new TaskLink(task, termLink, subBudget);
+                final Term componentTerm = termLink.getTarget();
+                final Concept componentConcept = self.memory.getConceptOrCreate(componentTerm);
+                if (componentConcept != null) {
+                    insertTaskLink(componentConcept, tLink);
+                }
+                // }
+            }
+            buildTermLinks(self, taskBudget); // recursively insert TermLink
+        }
+    }
+
+    /**
+     * 静态方法的「点方法」重载
+     * * 🚩重定向到静态方法
+     */
+    public void linkToTask(final Task task) {
+        Concept.linkToTask(this, task);
     }
 
     /* ---------- insert Links for indirect processing ---------- */
@@ -249,10 +291,10 @@ public final class Concept extends Item {
      *
      * @param taskLink The termLink to be inserted
      */
-    private void insertTaskLink(TaskLink taskLink) {
+    private static void insertTaskLink(final Concept self, final TaskLink taskLink) {
         final BudgetValue taskBudget = taskLink.getBudget();
-        taskLinks.putIn(taskLink);
-        memory.activateConcept(this, taskBudget);
+        self.taskLinks.putIn(taskLink);
+        self.memory.activateConcept(self, taskBudget);
     }
 
     /**
@@ -262,24 +304,21 @@ public final class Concept extends Item {
      *
      * @param taskBudget The BudgetValue of the task
      */
-    private void buildTermLinks(BudgetValue taskBudget) {
-        Term t;
-        Concept concept;
-        TermLink termLink1, termLink2;
-        if (termLinkTemplates.size() > 0) {
-            BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, termLinkTemplates.size());
+    private static void buildTermLinks(final Concept self, final BudgetValue taskBudget) {
+        if (self.termLinkTemplates.size() > 0) {
+            BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget, self.termLinkTemplates.size());
             if (subBudget.aboveThreshold()) {
-                for (TermLink template : termLinkTemplates) {
+                for (final TermLink template : self.termLinkTemplates) {
                     if (template.getType() != TermLink.TRANSFORM) {
-                        t = template.getTarget();
-                        concept = memory.getConceptOrCreate(t);
+                        final Term t = template.getTarget();
+                        final Concept concept = self.memory.getConceptOrCreate(t);
                         if (concept != null) {
-                            termLink1 = new TermLink(t, template, subBudget);
-                            insertTermLink(termLink1); // this termLink to that
-                            termLink2 = new TermLink(term, template, subBudget);
-                            concept.insertTermLink(termLink2); // that termLink to this
+                            final TermLink termLink1 = new TermLink(t, template, subBudget);
+                            insertTermLink(self, termLink1); // this termLink to that
+                            final TermLink termLink2 = new TermLink(self.term, template, subBudget);
+                            insertTermLink(concept, termLink2); // that termLink to this
                             if (t instanceof CompoundTerm) {
-                                concept.buildTermLinks(subBudget);
+                                buildTermLinks(concept, subBudget);
                             }
                         }
                     }
@@ -295,8 +334,8 @@ public final class Concept extends Item {
      *
      * @param termLink The termLink to be inserted
      */
-    private void insertTermLink(TermLink termLink) {
-        termLinks.putIn(termLink);
+    private static void insertTermLink(final Concept self, final TermLink termLink) {
+        self.termLinks.putIn(termLink);
     }
 
     /* ---------- access local information ---------- */
@@ -378,11 +417,14 @@ public final class Concept extends Item {
      * * 📄在「组合规则」的「回答带变量合取」时用到
      * * 🚩改：去除其中「设置当前时间戳」的副作用，将其迁移到调用者处
      *
-     * @param task The selected task
+     * @param taskSentence The selected task
      * @return The selected isBelief
      */
-    public Sentence getBelief(Task task) {
-        final Sentence taskSentence = task.getSentence();
+    public Sentence getBelief(final Task task) {
+        return this.getBelief(task.getSentence());
+    }
+
+    public Sentence getBelief(final Sentence taskSentence) {
         for (final Sentence belief : beliefs) {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：
