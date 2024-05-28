@@ -1,6 +1,5 @@
 package nars.control;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,7 +19,7 @@ import nars.storage.Memory.ReportType;
  * 🆕新的「推理上下文」对象
  * * 📄仿自OpenNARS 3.1.0
  */
-public class DerivationContext {
+public abstract class DerivationContext {
 
     /**
      * 对「记忆区」的反向引用
@@ -102,8 +101,9 @@ public class DerivationContext {
 
     /**
      * The selected Concept
+     * * 🚩【2024-05-25 16:19:51】现在已经具备所有权
      */
-    private Concept currentConcept = null;
+    private Concept currentConcept;
 
     public Concept getCurrentConcept() {
         return currentConcept;
@@ -114,28 +114,16 @@ public class DerivationContext {
     }
 
     /**
-     * The selected Task
+     * The selected task
+     * * 🚩【2024-05-21 22:40:21】现在改为抽象方法：不同实现有不同的用法
+     * * 📄「直接推理上下文」将其作为字段，而「转换推理上下文」「概念推理上下文」均只用作「当前任务链的目标」
      */
-    private Task currentTask = null;
-
-    public Task getCurrentTask() {
-        return currentTask;
-    }
-
-    /**
-     * 设置当前任务
-     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
-     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
-     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
-     */
-    public void setCurrentTask(Task currentTask) {
-        this.currentTask = currentTask;
-    }
+    public abstract Task getCurrentTask();
 
     /**
      * The selected belief
      */
-    private Sentence currentBelief = null;
+    private Sentence currentBelief;
 
     public Sentence getCurrentBelief() {
         return currentBelief;
@@ -153,7 +141,7 @@ public class DerivationContext {
     /**
      * The new Stamp
      */
-    private Stamp newStamp = null;
+    private Stamp newStamp;
 
     public Stamp getNewStamp() {
         return newStamp;
@@ -167,7 +155,7 @@ public class DerivationContext {
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
      */
-    private HashMap<Term, Term> substitute = null;
+    private HashMap<Term, Term> substitute;
 
     public HashMap<Term, Term> getSubstitute() {
         return substitute;
@@ -209,45 +197,6 @@ public class DerivationContext {
     }
 
     /**
-     * 「复制」推导上下文
-     * * 🚩只搬迁引用，并不更改所有权
-     */
-    public DerivationContext clone() {
-        // * 🚩创建新上下文，并随之迁移`final`变量
-        final DerivationContext self = new DerivationContext(this.memory, this.newTasks, this.exportStrings);
-        // * 🚩搬迁引用
-        // self.currentTerm = this.currentTerm;
-        self.currentConcept = this.currentConcept;
-        // self.currentTaskLink = this.currentTaskLink;
-        self.currentTask = this.currentTask;
-        // self.currentBeliefLink = this.currentBeliefLink;
-        self.currentBelief = this.currentBelief;
-        self.newStamp = this.newStamp;
-        self.substitute = this.substitute;
-        // * 🚩返回新上下文
-        return self;
-    }
-
-    /**
-     * 清理推导上下文
-     * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
-     */
-    public void clear() {
-        // * 🚩清理上下文变量
-        // this.currentTerm = null;
-        this.currentConcept = null;
-        // this.currentTaskLink = null;
-        this.currentTask = null;
-        // this.currentBeliefLink = null;
-        this.currentBelief = null;
-        this.newStamp = null;
-        this.substitute = null;
-        // * 🚩清理推理结果
-        this.newTasks.clear();
-        this.exportStrings.clear();
-    }
-
-    /**
      * Activated task called in MatchingRules.trySolution and
      * Concept.processGoal
      * * 📝仅被「答问」调用
@@ -258,7 +207,7 @@ public class DerivationContext {
      *                        forward/backward correspondence
      */
     public void activatedTask(BudgetValue budget, Sentence sentence, Sentence candidateBelief) {
-        Task task = new Task(sentence, budget, this.currentTask, sentence, candidateBelief);
+        Task task = new Task(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         if (sentence.isQuestion()) {
             float s = task.getBudget().summary();
@@ -309,7 +258,7 @@ public class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        doublePremiseTask(this.currentTask, newContent, newTruth, newBudget);
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget);
     }
 
     /**
@@ -325,7 +274,7 @@ public class DerivationContext {
         if (newContent != null) {
             final char newPunctuation = currentTask.getSentence().getPunctuation();
             final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, this.newStamp, true);
-            final Task newTask = new Task(newSentence, newBudget, this.currentTask, this.currentBelief);
+            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
             derivedTask(newTask);
         }
     }
@@ -341,10 +290,10 @@ public class DerivationContext {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
         if (newContent != null) {
-            final Sentence taskSentence = currentTask.getSentence();
+            final Sentence taskSentence = this.getCurrentTask().getSentence();
             final char newPunctuation = taskSentence.getPunctuation();
             final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
-            final Task newTask = new Task(newSentence, newBudget, currentTask, currentBelief);
+            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
             derivedTask(newTask);
         }
     }
@@ -358,7 +307,7 @@ public class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void singlePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        singlePremiseTask(newContent, currentTask.getSentence().getPunctuation(), newTruth, newBudget);
+        singlePremiseTask(newContent, this.getCurrentTask().getSentence().getPunctuation(), newTruth, newBudget);
     }
 
     /**
@@ -371,11 +320,11 @@ public class DerivationContext {
      * @param newBudget   The budget value in task
      */
     public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
-        final Task parentTask = currentTask.getParentTask();
+        final Task parentTask = this.getCurrentTask().getParentTask();
         if (parentTask != null && newContent.equals(parentTask.getContent())) { // circular structural inference
             return;
         }
-        final Sentence taskSentence = currentTask.getSentence();
+        final Sentence taskSentence = this.getCurrentTask().getSentence();
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
             this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
@@ -384,7 +333,7 @@ public class DerivationContext {
         }
         final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
-        final Task newTask = new Task(newSentence, newBudget, currentTask, null);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
         derivedTask(newTask);
     }
 
@@ -404,5 +353,55 @@ public class DerivationContext {
      */
     public static String generateReportString(Sentence sentence, ReportType type) {
         return type.toString() + ": " + sentence.toStringBrief();
+    }
+
+    /**
+     * 让「记忆区」吸收「推理上下文」
+     * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
+     * * 🎯变量隔离，防止「上下文串线」与「重复使用」
+     * * 📌传入所有权而非引用
+     * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
+     */
+    public void absorbedByMemory(Memory memory) {
+        // TODO: 销毁「当前概念」「当前信念」「新时间戳」等（要考虑更多问题）
+        // * 🚩将「当前概念」归还到「记忆区」中
+        memory.putBackConcept(this.getCurrentConcept());
+        // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
+        for (final Task newTask : this.getNewTasks()) {
+            memory.mut_newTasks().add(newTask);
+        }
+        // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
+        for (final String output : this.getExportStrings()) {
+            memory.report(output);
+        }
+        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+        this.getNewTasks().clear();
+        this.getExportStrings().clear();
+        // * 🚩销毁自身：在此处销毁相应变量
+        drop(this.getNewTasks());
+        drop(this.getExportStrings());
+    }
+
+    /**
+     * 默认就是被「自身所属记忆区」吸收
+     */
+    public void absorbedByMemory() {
+        absorbedByMemory(this.getMemory());
+    }
+
+    protected void drop(Object any) {
+    }
+
+    /**
+     * 获取「已存在的概念」
+     * * 🎯让「概念推理」可以在「拿出概念」的时候运行，同时不影响具体推理过程
+     * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
+     * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
+     */
+    public Concept termToConcept(Term term) {
+        if (term.equals(this.getCurrentTerm()))
+            return this.getCurrentConcept();
+        else
+            return this.memory.termToConcept(term);
     }
 }

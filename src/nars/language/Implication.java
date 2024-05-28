@@ -15,7 +15,7 @@ public class Implication extends Statement {
      *
      * @param arg The component list of the term
      */
-    protected Implication(ArrayList<Term> arg) {
+    public Implication(ArrayList<Term> arg) {
         super(arg);
     }
 

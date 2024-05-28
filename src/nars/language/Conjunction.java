@@ -15,7 +15,7 @@ public class Conjunction extends CompoundTerm {
      *
      * @param arg The component list of the term
      */
-    protected Conjunction(ArrayList<Term> arg) {
+    public Conjunction(ArrayList<Term> arg) {
         super(arg);
     }
 

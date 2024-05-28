@@ -15,7 +15,7 @@ public class Equivalence extends Statement {
      *
      * @param components The component list of the term
      */
-    protected Equivalence(ArrayList<Term> components) {
+    public Equivalence(ArrayList<Term> components) {
         super(components);
     }
 

@@ -24,7 +24,7 @@ public class ImageExt extends CompoundTerm {
      * @param arg   The component list of the term
      * @param index The index of relation in the component list
      */
-    private ImageExt(String n, ArrayList<Term> arg, short index) {
+    public ImageExt(String n, ArrayList<Term> arg, short index) {
         super(n, arg);
         relationIndex = index;
     }

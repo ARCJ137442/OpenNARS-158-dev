@@ -17,7 +17,7 @@ public class DifferenceInt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private DifferenceInt(ArrayList<Term> arg) {
+    public DifferenceInt(ArrayList<Term> arg) {
         super(arg);
     }
 

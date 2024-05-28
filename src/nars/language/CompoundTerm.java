@@ -256,7 +256,7 @@ public abstract class CompoundTerm extends Term {
      * @param t2 the second component
      * @return the component list
      */
-    protected static ArrayList<Term> argumentsToList(Term t1, Term t2) {
+    public static ArrayList<Term> argumentsToList(Term t1, Term t2) {
         ArrayList<Term> list = new ArrayList<>(2);
         list.add(t1);
         list.add(t2);
@@ -281,7 +281,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg the list of components
      * @return the oldName of the term
      */
-    protected static String makeCompoundName(String op, ArrayList<Term> arg) {
+    public static String makeCompoundName(String op, ArrayList<Term> arg) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);
@@ -304,7 +304,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg    the list of components
      * @return the oldName of the term
      */
-    protected static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
+    public static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
         StringBuilder name = new StringBuilder();
         name.append(opener);
         name.append(arg.get(0).getName());
@@ -324,7 +324,7 @@ public abstract class CompoundTerm extends Term {
      * @param relationIndex the location of the place holder
      * @return the oldName of the term
      */
-    protected static String makeImageName(String op, ArrayList<Term> arg, int relationIndex) {
+    public static String makeImageName(String op, ArrayList<Term> arg, int relationIndex) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);

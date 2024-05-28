@@ -10,8 +10,6 @@ import nars.storage.Memory;
  */
 public class DerivationContextDirect extends DerivationContext {
 
-    /* ---------- Short-term workspace for a single cycle ---------- */
-
     /**
      * 用于构建「直接推理上下文」对象
      */
@@ -59,20 +57,33 @@ public class DerivationContextDirect extends DerivationContext {
     }
 
     /**
-     * 清理上下文
-     * * 🎯便于断言性、学习性调试：各「推导上下文」字段的可空性、可变性
+     * The selected Task
      */
-    public void clear() {
-        super.clear();
-        // * 🚩清理独有变量
-        // this.currentTerm = null;
-        // this.currentConcept = null;
-        // this.currentTaskLink = null;
-        // this.currentTask = null;
-        // this.currentBeliefLink = null;
-        // this.currentBelief = null;
-        // this.newStamp = null;
-        // this.substitute = null;
+    private Task currentTask;
+
+    /**
+     * * 📄「直接推理上下文」将其作为字段
+     */
+    @Override
+    public Task getCurrentTask() {
+        return currentTask;
     }
 
+    /**
+     * 设置当前任务
+     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
+     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
+     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
+     */
+    public void setCurrentTask(Task currentTask) {
+        this.currentTask = currentTask;
+    }
+
+    @Override
+    public void absorbedByMemory(Memory memory) {
+        // * 🚩销毁「当前任务」
+        drop(this.currentTask);
+        // * 🚩从基类方法继续
+        super.absorbedByMemory(memory);
+    }
 }

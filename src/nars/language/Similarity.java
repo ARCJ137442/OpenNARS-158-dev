@@ -16,7 +16,7 @@ public class Similarity extends Statement {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private Similarity(ArrayList<Term> arg) {
+    public Similarity(ArrayList<Term> arg) {
         super(arg);
     }
 

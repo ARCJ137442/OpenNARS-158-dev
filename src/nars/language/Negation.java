@@ -16,7 +16,7 @@ public class Negation extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private Negation(ArrayList<Term> arg) {
+    public Negation(ArrayList<Term> arg) {
         super(arg);
     }
 

@@ -374,8 +374,8 @@ public class Memory {
         for (final String output : context.getExportStrings()) {
             this.report(output);
         }
-        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
-        context.clear();
+        // // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+        // context.clear();
     }
 
     /**

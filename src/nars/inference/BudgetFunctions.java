@@ -2,6 +2,7 @@ package nars.inference;
 
 import nars.control.DerivationContext;
 import nars.control.DerivationContextReason;
+import nars.control.DerivationContextTransform;
 import nars.entity.*;
 import nars.language.*;
 
@@ -41,6 +42,8 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Evaluate the quality of a belief as a solution to a problem, then reward
      * the belief and de-prioritize the problem
+     * 
+     * TODO: 后续或许需要依「直接推理」「概念推理」拆分
      *
      * @param problem  The problem (question or goal) to be solved
      * @param solution The belief as solution
@@ -49,7 +52,11 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget for the new task which is the belief activated, if
      *         necessary
      */
-    static BudgetValue solutionEval(Sentence problem, Sentence solution, Task task, DerivationContext context) {
+    static BudgetValue solutionEval(
+            Sentence problem,
+            Sentence solution,
+            Task task,
+            DerivationContext context) {
         final BudgetValue budget;
         final boolean feedbackToLinks;
         if (task == null) { // called in continued processing
@@ -224,7 +231,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion
      * @return The budget value of the conclusion
      */
-    static BudgetValue forward(TruthValue truth, DerivationContextReason context) {
+    static BudgetValue forward(TruthValue truth, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -235,7 +242,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backward(TruthValue truth, DerivationContextReason context) {
+    public static BudgetValue backward(TruthValue truth, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -246,7 +253,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backwardWeak(TruthValue truth, DerivationContextReason context) {
+    public static BudgetValue backwardWeak(TruthValue truth, DerivationContextTransform context) {
         return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
@@ -259,7 +266,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContextReason context) {
+    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
@@ -270,7 +277,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackward(Term content, DerivationContextReason context) {
+    public static BudgetValue compoundBackward(Term content, DerivationContextTransform context) {
         return budgetInference(1, content.getComplexity(), context);
     }
 
@@ -281,7 +288,9 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackwardWeak(Term content, DerivationContextReason context) {
+    public static BudgetValue compoundBackwardWeak(
+            final Term content,
+            final DerivationContextTransform context) {
         return budgetInference(w2c(1), content.getComplexity(), context);
     }
 
@@ -293,25 +302,30 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory     Reference to the memory
      * @return Budget of the conclusion task
      */
-    private static BudgetValue budgetInference(float qual, int complexity, DerivationContextReason context) {
-        final Item t = context.getCurrentTaskLink();
+    private static BudgetValue budgetInference(
+            final float qual,
+            final int complexity,
+            final DerivationContextTransform context) {
+        final Item tLink = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         // if (t == null) {
         // t = context.getCurrentTask();
         // }
-        if (t == null) {
+        if (tLink == null) {
             throw new NullPointerException("t shouldn't be `null`!");
         }
-        float priority = t.getPriority();
-        float durability = t.getDurability() / complexity;
+        float priority = tLink.getPriority();
+        float durability = tLink.getDurability() / complexity;
         final float quality = qual / complexity;
-        final TermLink bLink = context.getCurrentBeliefLink();
-        if (bLink != null) {
-            priority = or(priority, bLink.getPriority());
-            durability = and(durability, bLink.getDurability());
-            final float targetActivation = context.getMemory().getConceptActivation(bLink.getTarget());
-            bLink.incPriority(or(quality, targetActivation));
-            bLink.incDurability(quality);
+        if (context instanceof DerivationContextReason) {
+            final TermLink bLink = ((DerivationContextReason) context).getCurrentBeliefLink();
+            if (bLink != null) {
+                priority = or(priority, bLink.getPriority());
+                durability = and(durability, bLink.getDurability());
+                final float targetActivation = context.getMemory().getConceptActivation(bLink.getTarget());
+                bLink.incPriority(or(quality, targetActivation));
+                bLink.incDurability(quality);
+            }
         }
         return new BudgetValue(priority, durability, quality);
     }

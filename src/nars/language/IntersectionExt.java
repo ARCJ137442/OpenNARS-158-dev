@@ -17,7 +17,7 @@ public class IntersectionExt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private IntersectionExt(ArrayList<Term> arg) {
+    public IntersectionExt(ArrayList<Term> arg) {
         super(arg);
     }
 

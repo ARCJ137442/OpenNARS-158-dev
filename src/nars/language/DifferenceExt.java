@@ -17,7 +17,7 @@ public class DifferenceExt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    private DifferenceExt(ArrayList<Term> arg) {
+    public DifferenceExt(ArrayList<Term> arg) {
         super(arg);
     }
 
