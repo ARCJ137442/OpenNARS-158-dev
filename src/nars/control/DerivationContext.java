@@ -31,6 +31,12 @@ public abstract class DerivationContext {
         return memory;
     }
 
+    // TODO: 后续有待从`getMemory`中分离，以明确「记忆区」在各处推理中的可变性
+    // * ❓记忆区在「直接推理」「转换推理」「概念推理」的过程中，是否仅为只读？
+    public Memory mutMemory() {
+        return memory;
+    }
+
     /**
      * 🆕访问「当前时间」
      * * 🎯用于在推理过程中构建「新时间戳」

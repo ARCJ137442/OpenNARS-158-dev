@@ -192,8 +192,7 @@ public final class Concept extends Item {
      *
      * @return The quality value
      */
-    @Override
-    public float getQuality() {
+    public float getTotalQuality() {
         final float linkPriority = termLinks.averagePriority();
         final float termComplexityFactor = 1.0f / term.getComplexity();
         return UtilityFunctions.or(linkPriority, termComplexityFactor);

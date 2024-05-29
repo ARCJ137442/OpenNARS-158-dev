@@ -138,33 +138,46 @@ public abstract class ConceptLinking {
      * the near future for unspecified time.
      * <p>
      * The only method that calls the TaskLink constructor.
+     * * 📝【2024-05-30 00:37:39】此时该方法从「直接推理」被调用，同时「概念」「任务」「记忆区」均来自「直接推理上下文」
      *
      * @param task    The task to be linked
      * @param content The content of the task
      */
-    public static void linkToTask(final Concept self, final Memory memory, final Task task) {
+    public static void linkConceptToTask(final DerivationContextDirect context) {
+        final Concept self = context.getCurrentConcept();
+        final Memory memory = context.getMemory();
+        final Task task = context.getCurrentTask();
         final BudgetValue taskBudget = task.getBudget();
+        // * 🚩对当前任务构造任务链，链接到传入的任务
         final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
         insertTaskLink(self, memory, taskLink);
-        if (!(self.getTerm() instanceof CompoundTerm && self.getTermLinkTemplates().size() > 0)) {
+        // * 🚩仅在「自身为复合词项」且「词项链模板非空」时准备
+        // * 📝只有复合词项会有「对子项的词项链」，子项不会持有「对所属词项的词项链」
+        if (!(self.getTerm() instanceof CompoundTerm && self.getTermLinkTemplates().size() > 0))
             return;
-        }
-        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget,
+        // * 🚩分发并指数递减预算值
+        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
+                taskBudget,
                 self.getTermLinkTemplates().size());
-        if (subBudget.aboveThreshold()) {
-            for (final TermLink termLink : self.getTermLinkTemplates()) {
-                // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM))) {
-                // // avoid circular transform
-                final TaskLink tLink = new TaskLink(task, termLink, subBudget);
-                final Term componentTerm = termLink.getTarget();
-                final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
-                if (componentConcept != null) {
-                    insertTaskLink(componentConcept, memory, tLink);
-                }
-                // }
-            }
-            buildTermLinks(self, memory, taskBudget); // recursively insert TermLink
+        if (!subBudget.aboveThreshold())
+            return;
+        // * 🚩仅在「预算达到阈值」时：遍历预先构建好的所有「子项词项链模板」，递归链接到任务
+        for (final TermLink termLink : self.getTermLinkTemplates()) {
+            // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM)))
+            // continue;
+            // // avoid circular transform
+            final Term componentTerm = termLink.getTarget();
+            // ! 📝数据竞争：不能在「其它概念被拿出去后」并行推理，会导致重复创建概念
+            final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
+            if (componentConcept == null)
+                continue;
+            // * 🚩为子项的概念构造新词项链，并在其中使用模板
+            final TaskLink tLink = new TaskLink(task, termLink, subBudget);
+            // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
+            insertTaskLink(componentConcept, memory, tLink);
         }
+        // * 🚩递归插入词项链
+        buildTermLinks(self, memory, taskBudget); // recursively insert TermLink
     }
 
     /**
@@ -175,38 +188,50 @@ public abstract class ConceptLinking {
      * @param taskLink The termLink to be inserted
      */
     private static void insertTaskLink(final Concept self, final Memory memory, final TaskLink taskLink) {
-        final BudgetValue taskBudget = taskLink.getBudget();
+        final BudgetValue linkBudget = taskLink.getBudget();
+        // * 📝注意：任务链の预算 ≠ 任务の预算；「任务链」与「所链接的任务」是不同的Item对象
         self.putInTaskLink(taskLink);
-        memory.activateConcept(self, taskBudget);
+        // * 🚩插入「任务链」的同时，以「任务链」激活概念
+        memory.activateConcept(self, linkBudget);
     }
 
     /**
      * Recursively build TermLinks between a compound and its components
      * <p>
      * called only from Memory.continuedProcess
+     * * ❌【2024-05-30 00:49:19】无法断言原先传入的「当前概念」「当前记忆区」「当前任务预算值」都来自「直接推理上下文」
+     * * 📝原因：需要递归处理，并在这其中改变self、memory与taskBudget三个参数
      *
      * @param taskBudget The BudgetValue of the task
      */
     private static void buildTermLinks(final Concept self, final Memory memory, final BudgetValue taskBudget) {
-        if (self.getTermLinkTemplates().size() > 0) {
-            BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(taskBudget,
-                    self.getTermLinkTemplates().size());
-            if (subBudget.aboveThreshold()) {
-                for (final TermLink template : self.getTermLinkTemplates()) {
-                    if (template.getType() != TermLink.TRANSFORM) {
-                        final Term t = template.getTarget();
-                        final Concept concept = memory.getConceptOrCreate(t);
-                        if (concept != null) {
-                            final TermLink termLink1 = new TermLink(t, template, subBudget);
-                            insertTermLink(self, termLink1); // this termLink to that
-                            final TermLink termLink2 = new TermLink(self.getTerm(), template, subBudget);
-                            insertTermLink(concept, termLink2); // that termLink to this
-                            if (t instanceof CompoundTerm) {
-                                buildTermLinks(concept, memory, subBudget);
-                            }
-                        }
-                    }
-                }
+        // * 🚩仅在有「词项链模板」时
+        if (self.getTermLinkTemplates().isEmpty())
+            return;
+        // * 🚩分派链接，继续
+        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
+                taskBudget,
+                self.getTermLinkTemplates().size());
+        if (!subBudget.aboveThreshold())
+            return;
+        // * 🚩仅在超过阈值时：遍历所有「词项链模板」
+        for (final TermLink template : self.getTermLinkTemplates()) {
+            if (template.getType() == TermLink.TRANSFORM)
+                continue;
+            // * 🚩仅在链接类型不是「转换」时
+            final Term component = template.getTarget();
+            final Concept concept = memory.getConceptOrCreate(component);
+            // * 🚩仅在「元素词项所对应概念」存在时
+            if (concept == null)
+                continue;
+            // * 🚩建立双向链接
+            final TermLink termLink1 = new TermLink(component, template, subBudget);
+            insertTermLink(self, termLink1); // this termLink to that
+            final TermLink termLink2 = new TermLink(self.getTerm(), template, subBudget);
+            insertTermLink(concept, termLink2); // that termLink to this
+            // * 🚩对复合子项 继续深入递归
+            if (component instanceof CompoundTerm) {
+                buildTermLinks(concept, memory, subBudget);
             }
         }
     }
@@ -220,6 +245,5 @@ public abstract class ConceptLinking {
      */
     private static void insertTermLink(final Concept self, final TermLink termLink) {
         self.putInTermLink(termLink);
-        ;
     }
 }

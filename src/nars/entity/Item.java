@@ -144,7 +144,7 @@ public abstract class Item {
      *
      * @return The quality value
      */
-    public float getQuality() {
+    public float getTotalQuality() {
         return budget.getQuality();
     }
 

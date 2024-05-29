@@ -161,31 +161,42 @@ public final class BudgetFunctions extends UtilityFunctions {
     /* ----------------------- Links ----------------------- */
     /**
      * Distribute the budget of a task among the links to it
+     * * 🚩【2024-05-30 00:53:02】产生新预算值，不会修改旧预算值
+     * * 📝【2024-05-30 00:53:41】逻辑：仅优先级随链接数指数级降低
      *
-     * @param b The original budget
-     * @param n Number of links
+     * @param original The original budget
+     * @param nLinks   Number of links
      * @return Budget value for each link
      */
-    public static BudgetValue distributeAmongLinks(BudgetValue b, int n) {
-        final float priority = (float) (b.getPriority() / Math.sqrt(n));
-        return new BudgetValue(priority, b.getDurability(), b.getQuality());
+    public static BudgetValue distributeAmongLinks(final BudgetValue original, final int nLinks) {
+        final float priority = (float) (original.getPriority() / Math.sqrt(nLinks));
+        return new BudgetValue(priority, original.getDurability(), original.getQuality());
     }
 
     /* ----------------------- Concept ----------------------- */
     /**
      * Activate a concept by an incoming TaskLink
+     * * 📝【2024-05-30 01:08:26】调用溯源：仅在「直接推理」中使用
+     * * 📝【2024-05-30 01:03:01】逻辑：优先级「析取」提升，耐久度「算术」平均
+     * * 📌新の优先级 = 概念 | 参考
+     * * 📌新の耐久度 = (概念 + 参考) / 2
+     * * 📌新の质量 = 综合所有词项链后的新「质量」
      *
      * @param concept The concept
      * @param budget  The budget for the new item
      */
-    public static void activate(Concept concept, BudgetValue budget) {
-        final float oldPri = concept.getPriority();
-        final float priority = or(oldPri, budget.getPriority());
-        final float durability = aveAri(concept.getDurability(), budget.getDurability());
-        final float quality = concept.getQuality();
-        concept.setPriority(priority);
-        concept.setDurability(durability);
-        concept.setQuality(quality);
+    public static void activate(final Concept concept, final BudgetValue budget) {
+        final float cP = concept.getPriority();
+        final float cD = concept.getDurability();
+        final float bP = budget.getPriority();
+        final float bD = budget.getDurability();
+        final float p = or(cP, bP);
+        final float d = aveAri(cD, bD);
+        final float q = concept.getTotalQuality(); // ! 📌【2024-05-30 01:25:51】若注释此行，将破坏「同义重构」
+        concept.setPriority(p);
+        concept.setDurability(d);
+        concept.setQuality(q);
+        // * 📝此「质量」非上头「质量」：上头的「质量」实为「总体质量」，与「词项链」「词项复杂度」均有关
     }
 
     /* ---------------- Bag functions, on all Items ------------------- */

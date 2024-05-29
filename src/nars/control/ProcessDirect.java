@@ -192,7 +192,6 @@ public abstract class ProcessDirect {
         // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         // * 📝相比于「概念推理」仅少了「当前词项链」与「当前任务链」，其它基本通用
-        final Concept self = context.getCurrentConcept();
         final Task task = context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
@@ -208,7 +207,7 @@ public abstract class ProcessDirect {
         }
         // * 🚩在推理后做链接
         if (task.getBudget().aboveThreshold()) { // still need to be processed
-            ConceptLinking.linkToTask(self, context.getMemory(), task);
+            ConceptLinking.linkConceptToTask(context);
         }
     }
 

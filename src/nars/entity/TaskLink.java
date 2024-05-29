@@ -28,6 +28,7 @@ public class TaskLink extends TLink<Task> {
      * Constructor
      * <p>
      * only called in Memory.continuedProcess
+     * * 📝【2024-05-30 00:46:38】只在「链接概念到任务」中使用
      *
      * @param t        The target Task
      * @param template The TermLink template
@@ -37,14 +38,13 @@ public class TaskLink extends TLink<Task> {
         super(t, "", v,
                 template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());
-        recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
-        recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
-        counter = 0;
+        this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
+        this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
+        this.counter = 0;
         setKey(); // as defined in TermLink
-        if (target != null) {
-            key += target.getContent();
-        }
-        key += t.getKey();
+        if (this.target != null)
+            this.key += this.target.getContent();
+        this.key += t.getKey();
     }
 
     /**
