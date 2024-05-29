@@ -208,7 +208,7 @@ public abstract class ProcessDirect {
         }
         // * 🚩在推理后做链接
         if (task.getBudget().aboveThreshold()) { // still need to be processed
-            Concept.linkToTask(self, task);
+            ConceptLinking.linkToTask(self, context.getMemory(), task);
         }
     }
 
