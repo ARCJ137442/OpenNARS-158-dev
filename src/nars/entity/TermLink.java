@@ -57,7 +57,7 @@ public class TermLink extends TLink<Term> {
      */
     public TermLink(Term t, TermLink template, BudgetValue v) {
         super(t, t.getName(), template, v);
-        setKey();
+        this.key = generateKey(this.type, this.index);
         if (target != null) {
             key += target;
         }

@@ -41,7 +41,7 @@ public class TaskLink extends TLink<Task> {
         this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         this.counter = 0;
-        setKey(); // as defined in TermLink
+        this.key = generateKey(this.type, this.index); // as defined in TermLink
         if (this.target != null)
             this.key += this.target.getContent();
         this.key += t.getKey();

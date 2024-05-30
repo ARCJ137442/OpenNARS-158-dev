@@ -130,13 +130,6 @@ public abstract class TLink<Target> extends Item {
 
     /**
      * Set the key of the link
-     */
-    protected final void setKey() {
-        this.key = generateKey(this.type, this.index);
-    }
-
-    /**
-     * Set the key of the link
      * * 📝原`setKey`就是「根据现有信息计算出key，并最终给自身key赋值」的功能
      * * 🚩【2024-05-30 19:06:30】现在不再有副作用，仅返回key让调用方自行决定
      * * 📌原`setKey()`要变成`this.key = generateKey(this.type, this.index)`
