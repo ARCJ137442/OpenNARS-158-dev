@@ -8,14 +8,24 @@ import nars.main_nogui.Parameters;
 public class UtilityFunctions {
 
     /**
+     * 🆕扩展逻辑非
+     *
+     * @param value
+     * @return
+     */
+    public static final float not(final float value) {
+        return 1 - value;
+    }
+
+    /**
      * A function where the output is conjunctively determined by the inputs
      *
      * @param arr The inputs, each in [0, 1]
      * @return The output that is no larger than each input
      */
-    public static float and(float... arr) {
+    public static final float and(final float... arr) {
         float product = 1;
-        for (float f : arr) {
+        for (final float f : arr) {
             product *= f;
         }
         return product;
@@ -27,12 +37,12 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The output that is no smaller than each input
      */
-    public static float or(float... arr) {
+    public static final float or(final float... arr) {
         float product = 1;
-        for (float f : arr) {
-            product *= (1 - f);
+        for (final float f : arr) {
+            product *= not(f);
         }
-        return 1 - product;
+        return not(product);
     }
 
     /**
@@ -41,9 +51,9 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The arithmetic average the inputs
      */
-    public static float aveAri(float... arr) {
+    public static final float aveAri(final float... arr) {
         float sum = 0;
-        for (float f : arr) {
+        for (final float f : arr) {
             sum += f;
         }
         return sum / arr.length;
@@ -55,9 +65,9 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The geometric average the inputs
      */
-    public static float aveGeo(float... arr) {
+    public static final float aveGeo(final float... arr) {
         float product = 1;
-        for (float f : arr) {
+        for (final float f : arr) {
             product *= f;
         }
         return (float) Math.pow(product, 1.00 / arr.length);
@@ -69,7 +79,7 @@ public class UtilityFunctions {
      * @param w Weight of evidence, a non-negative real number
      * @return The corresponding confidence, in [0, 1)
      */
-    public static float w2c(float w) {
+    public static final float w2c(final float w) {
         return w / (w + Parameters.HORIZON);
     }
 
@@ -79,7 +89,7 @@ public class UtilityFunctions {
      * @param c confidence, in [0, 1)
      * @return The corresponding weight of evidence, a non-negative real number
      */
-    public static float c2w(float c) {
+    public static final float c2w(float c) {
         return Parameters.HORIZON * c / (1 - c);
     }
 }

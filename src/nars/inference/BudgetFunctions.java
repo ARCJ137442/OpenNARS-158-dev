@@ -22,7 +22,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static float truthToQuality(TruthValue t) {
         final float exp = t.getExpectation();
-        return (float) Math.max(exp, (1 - exp) * 0.75);
+        return (float) Math.max(exp, not(exp) * 0.75);
     }
 
     /**
@@ -74,12 +74,12 @@ public final class BudgetFunctions extends UtilityFunctions {
             float taskPriority = task.getPriority();
             budget = new BudgetValue(or(taskPriority, quality), task.getDurability(),
                     truthToQuality(solution.getTruth()));
-            task.setPriority(Math.min(1 - quality, taskPriority));
+            task.setPriority(Math.min(not(quality), taskPriority));
         }
         if (feedbackToLinks && context instanceof DerivationContextReason) {
             final DerivationContextReason contextReason = (DerivationContextReason) context;
             final TaskLink tLink = contextReason.getCurrentTaskLink();
-            tLink.setPriority(Math.min(1 - quality, tLink.getPriority()));
+            tLink.setPriority(Math.min(not(quality), tLink.getPriority()));
             final TermLink bLink = contextReason.getCurrentBeliefLink();
             bLink.incPriority(quality);
         }
@@ -103,8 +103,8 @@ public final class BudgetFunctions extends UtilityFunctions {
         // * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
         final float difT = truth.getExpDifAbs(tTruth);
         final Task task = context.getCurrentTask();
-        task.decPriority(1 - difT);
-        task.decDurability(1 - difT);
+        task.decPriority(not(difT));
+        task.decDurability(not(difT));
         final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
@@ -132,12 +132,12 @@ public final class BudgetFunctions extends UtilityFunctions {
         final BudgetValue revised = revise(tTruth, bTruth, truth, (DerivationContext) context);
         { // * 🚩独有逻辑：反馈到任务链、信念链
             final TaskLink tLink = context.getCurrentTaskLink();
-            tLink.decPriority(1 - difT);
-            tLink.decDurability(1 - difT);
+            tLink.decPriority(not(difT));
+            tLink.decDurability(not(difT));
             final TermLink bLink = context.getCurrentBeliefLink();
             final float difB = truth.getExpDifAbs(bTruth);
-            bLink.decPriority(1 - difB);
-            bLink.decDurability(1 - difB);
+            bLink.decPriority(not(difB));
+            bLink.decDurability(not(difB));
         }
         return revised;
     }

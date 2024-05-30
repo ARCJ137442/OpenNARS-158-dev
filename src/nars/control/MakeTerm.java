@@ -45,6 +45,7 @@ public abstract class MakeTerm {
      */
     @SuppressWarnings("unchecked")
     public static <T extends Term> T getFromNameOrNull(String name, Memory memory) {
+        // TODO: 验证：实际上「不要记忆区」也能在功能上与原版一致
         final Term t = memory.nameToListedTerm(name);
         return t == null ? null : (T) t;
     }

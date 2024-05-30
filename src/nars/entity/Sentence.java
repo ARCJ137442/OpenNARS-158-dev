@@ -33,7 +33,7 @@ public class Sentence implements Cloneable {
     /**
      * Whether the sentence can be revised
      */
-    private boolean revisable;
+    private final boolean revisable;
 
     /**
      * Create a Sentence with the given fields

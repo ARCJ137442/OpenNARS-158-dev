@@ -32,7 +32,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     static TruthValue negation(TruthValue v1) {
-        float f = 1 - v1.getFrequency();
+        float f = not(v1.getFrequency());
         float c = v1.getConfidence();
         return new TruthValue(f, c);
     }
@@ -46,7 +46,7 @@ public final class TruthFunctions extends UtilityFunctions {
     static TruthValue contraposition(TruthValue v1) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
-        float w = and(1 - f1, c1);
+        float w = and(not(f1), c1);
         float c = w2c(w);
         return new TruthValue(0, c);
     }
