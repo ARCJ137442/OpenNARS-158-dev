@@ -57,7 +57,7 @@ public class Task extends Item {
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
         super(s.toKey(), b); // change to toKey()
         this.sentence = s;
-        this.key = this.sentence.toKey();
+        // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
         this.parentBelief = parentBelief;
         this.bestSolution = solution;

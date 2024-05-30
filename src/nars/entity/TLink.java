@@ -22,14 +22,34 @@ public abstract class TLink<Target> extends Item {
     public static final short COMPOUND_CONDITION = 6;
     /** At C, point to <(*, C, B) --> A>; TaskLink only */
     public static final short TRANSFORM = 8;
-    /** The linked Target */
+
+    /**
+     * The linked Target
+     * * 📝【2024-05-30 19:39:14】final化：一切均在构造时确定，构造后不再改变
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权，也可能是共享引用（见{@link TaskLink}）
+     */
     protected final Target target;
-    /** The type of link, one of the above */
+
+    /**
+     * The type of link, one of the above
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
+     */
     protected final short type;
+
     /**
      * The index of the component in the component list of the compound,
      * may have up to 4 levels
-     * * 📝「复合条件」+「NAL-4 转换」
+     * * 📝「概念推理」中经常用到
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
     protected final short[] index;
 
@@ -43,36 +63,32 @@ public abstract class TLink<Target> extends Item {
      * @param indices Component indices in compound, may be 1 to 4
      */
     public TLink(final Target target, final short type, final int[] indices) {
-        super(null);
-        this.target = target;
-        this.type = type;
-        if (type % 2 != 0)
-            throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
-        // template types all point to compound, though the target is component
-        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
-            index = new short[indices.length + 1];
-            index[0] = 0;
-            for (int i = 0; i < indices.length; i++) {
-                index[i + 1] = (short) indices[i];
-            }
-        } else {
-            index = new short[indices.length];
-            for (int i = 0; i < index.length; i++) {
-                index[i] = (short) indices[i];
-            }
-        }
+        this( // * 🚩传递到「完全构造方法」
+                target,
+                null, // * 🚩相当于调用Item的单Key构造函数
+                // TODO: ↑这似乎是不好的可空性，需要调整（可能「链接模板」的实现需要商议）
+                new BudgetValue(),
+                type,
+                // template types all point to compound, though the target is component
+                generateIndices(type, indices));
     }
 
     /**
      * called from TaskLink
+     * 📝完全构造方法
      *
      * @param s       The key of the TaskLink
      * @param v       The budget value of the TaskLink
      * @param type    Link type
      * @param indices Component indices in compound, may be 1 to 4
      */
-    protected TLink(Target target, String s, BudgetValue v, short type, short[] indices) {
-        super(s, v);
+    protected TLink(
+            final Target target,
+            final String key,
+            final BudgetValue budget,
+            final short type,
+            final short[] indices) {
+        super(key, budget);
         this.target = target;
         this.type = type;
         this.index = indices;
@@ -82,28 +98,51 @@ public abstract class TLink<Target> extends Item {
      * Constructor to make actual TermLink from a template
      * <p>
      * called in Concept.buildTermLinks only
-     * * 🚩现在从「词项链」往下调用
+     * * 🚩现在从「词项链」往下调用，且仅从「词项链」调用
      *
-     * @param t        Target Term
+     * @param target   Target Term
      * @param template TermLink template previously prepared
-     * @param v        Budget value of the link
+     * @param budget   Budget value of the link
      */
-    protected TLink(Target t, String name, TermLink template, BudgetValue v) {
-        super(name, v);
-        target = t;
+    protected TLink(Target target, String key, TLink<Target> template, BudgetValue budget) {
+        this(
+                target,
+                key, budget,
+                generateTypeFromTemplate(target, template),
+                template.getIndices());
+    }
+
+    /**
+     * 🆕从「目标」与「模板」中产生链接类型
+     *
+     * @param <Target>
+     * @param t
+     * @param template
+     * @return
+     */
+    protected static <Target> short generateTypeFromTemplate(final Target t, final TLink<Target> template) {
         short type = template.getType();
         if (template.getTarget().equals(t)) {
             type--; // point to component
         }
-        this.type = type;
-        index = template.getIndices();
+        return type;
     }
 
     /**
      * Set the key of the link
      */
     protected final void setKey() {
-        String at1, at2;
+        this.key = generateKey(this.type, this.index);
+    }
+
+    /**
+     * Set the key of the link
+     * * 📝原`setKey`就是「根据现有信息计算出key，并最终给自身key赋值」的功能
+     * * 🚩【2024-05-30 19:06:30】现在不再有副作用，仅返回key让调用方自行决定
+     * * 📌原`setKey()`要变成`this.key = generateKey(this.type, this.index)`
+     */
+    protected static final String generateKey(short type, short[] index) {
+        final String at1, at2;
         if ((type % 2) == 1) { // to component
             at1 = Symbols.TO_COMPONENT_1;
             at2 = Symbols.TO_COMPONENT_2;
@@ -117,7 +156,36 @@ public abstract class TLink<Target> extends Item {
                 in += "-" + (index[i] + 1);
             }
         }
-        key = at1 + in + at2;
+        return at1 + in + at2;
+    }
+
+    /**
+     * 🆕将构造方法中的「生成索引部分」独立出来
+     * * ⚠️仅在「复合词项→元素」中使用
+     *
+     * @param type
+     * @param indices
+     * @return
+     */
+    protected static final short[] generateIndices(
+            final short type,
+            final int[] indices) {
+        if (type % 2 != 0)
+            throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
+        final short[] index;
+        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
+            index = new short[indices.length + 1];
+            index[0] = 0;
+            for (int i = 0; i < indices.length; i++) {
+                index[i + 1] = (short) indices[i];
+            }
+        } else {
+            index = new short[indices.length];
+            for (int i = 0; i < index.length; i++) {
+                index[i] = (short) indices[i];
+            }
+        }
+        return index;
     }
 
     /**
