@@ -148,6 +148,10 @@ public class DerivationContextReason extends DerivationContextTransform {
     /**
      * The selected TermLink
      * * 📝相比「转换推理上下文」仅多了个可查的「当前信念链」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 构造后不重新赋值，但内部可变（预算推理/反馈预算值）
+     * * 📝所有权：具所有权，无需共享 | 存储「拿出的词项链」
      */
     private TermLink currentBeliefLink;
 
@@ -171,8 +175,9 @@ public class DerivationContextReason extends DerivationContextTransform {
     /**
      * 设置当前任务链
      * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现（构建推理上下文）
+     * * 📝构造后除「切换信念链」不再重新赋值
      */
-    public void setCurrentBeliefLink(TermLink currentBeliefLink) {
+    protected void setCurrentBeliefLink(TermLink currentBeliefLink) {
         this.currentBeliefLink = currentBeliefLink;
     }
 

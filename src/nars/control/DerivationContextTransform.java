@@ -71,7 +71,7 @@ public class DerivationContextTransform extends DerivationContext {
     /* ---------- Short-term workspace for a single cycle ---------- */
 
     /**
-     * * 📄「直接推理上下文」将其作为字段
+     * * 📄「转换推理上下文」「概念推理上下文」仅作为「当前任务链之目标」
      */
     @Override
     public Task getCurrentTask() {
@@ -81,6 +81,10 @@ public class DerivationContextTransform extends DerivationContext {
     /**
      * The selected TaskLink
      * * 📌【2024-05-21 20:26:30】不可空！
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 构造后不重新赋值，但内部可变（预算推理/反馈预算值）
+     * * 📝所有权：具所有权，无需共享 | 存储「拿出的词项链」
      */
     private TaskLink currentTaskLink;
 
@@ -91,8 +95,9 @@ public class DerivationContextTransform extends DerivationContext {
     /**
      * 设置当前任务链
      * * 📝仅在「开始推理」之前设置，并且只在「概念推理」中出现
+     * * 📝构造后不再重新赋值
      */
-    public void setCurrentTaskLink(TaskLink currentTaskLink) {
+    protected void setCurrentTaskLink(TaskLink currentTaskLink) {
         this.currentTaskLink = currentTaskLink;
     }
 
