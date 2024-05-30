@@ -92,7 +92,7 @@ public class TermLink extends TLink<Term> {
      * @param indices
      * @return
      */
-    private static String generateKey(final Term target, final short type, final short[] indices) {
+    private static final String generateKey(final Term target, final short type, final short[] indices) {
         String key = TLink.generateKey(type, indices);
         if (target != null) {
             key += target;

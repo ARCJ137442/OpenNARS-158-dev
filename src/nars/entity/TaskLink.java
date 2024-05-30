@@ -31,8 +31,8 @@ public class TaskLink extends TLink<Task> {
      * @param template
      * @param v
      */
-    private TaskLink(Task target, String key, BudgetValue budget, short type, short[] indices) {
-        super(target, key, budget, type, indices);
+    private TaskLink(final Task target, final BudgetValue budget, final short type, final short[] indices) {
+        super(target, generateKey(target, type, indices), budget, type, indices);
         this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         this.counter = 0;
@@ -46,17 +46,21 @@ public class TaskLink extends TLink<Task> {
      *
      * @param target   The target Task
      * @param template The TermLink template
-     * @param v        The budget
+     * @param budget   The budget
      */
-    public TaskLink(Task target, TermLink template, BudgetValue v) {
-        this(target, "", v,
+    public TaskLink(final Task target, final TermLink template, final BudgetValue budget) {
+        this(target, budget,
                 template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());
 
-        this.key = generateKey(this.type, this.index); // as defined in TermLink
-        if (this.target != null)
-            this.key += this.target.getContent();
-        this.key += target.getKey();
+    }
+
+    private static final String generateKey(final Task target, final short type, final short[] indices) {
+        String key = generateKey(type, indices); // as defined in TermLink
+        if (target != null)
+            key += target.getContent();
+        key += target.getKey();
+        return key;
     }
 
     /**
@@ -64,19 +68,22 @@ public class TaskLink extends TLink<Task> {
      * interacted recently
      * <p>
      * called in TermLinkBag only
+     * * 📝在「概念推理」的「准备待推理词项链」的过程中用到
+     * * 🔗ProcessReason.chooseTermLinksToReason
+     * * TODO: 有待笔记注释
      *
      * @param termLink    The TermLink to be checked
      * @param currentTime The current time
      * @return Whether they are novel to each other
      */
-    public boolean novel(TermLink termLink, long currentTime) {
-        Term bTerm = termLink.getTarget();
+    public boolean novel(final TermLink termLink, final long currentTime) {
+        final Term bTerm = termLink.getTarget();
         if (bTerm.equals(target.getSentence().getContent())) {
             return false;
         }
-        String linkKey = termLink.getKey();
-        int next, i;
-        for (i = 0; i < counter; i++) {
+        final String linkKey = termLink.getKey();
+        int next;
+        for (int i = 0; i < counter; i++) {
             next = i % Parameters.TERM_LINK_RECORD_LENGTH;
             if (linkKey.equals(recordedLinks[next])) {
                 if (currentTime < recordingTime[next] + Parameters.TERM_LINK_RECORD_LENGTH) {
@@ -87,7 +94,8 @@ public class TaskLink extends TLink<Task> {
                 }
             }
         }
-        next = i % Parameters.TERM_LINK_RECORD_LENGTH;
+        // * 📝此处`i`必定为`counter`
+        next = counter % Parameters.TERM_LINK_RECORD_LENGTH;
         recordedLinks[next] = linkKey; // add knowledge reference to recordedLinks
         recordingTime[next] = currentTime;
         if (counter < Parameters.TERM_LINK_RECORD_LENGTH) { // keep a constant length

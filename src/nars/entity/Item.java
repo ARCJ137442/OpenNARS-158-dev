@@ -11,12 +11,19 @@ public abstract class Item {
     /**
      * The key of the Item, unique in a Bag
      * * ❓TODO: 后续可以放入「袋」中，使用「Key → Item(T, Budget)」的结构将「预算值」完全合并入「袋」中
-     * * 🚧TODO: 加上final，整理乱成一团的`setKey`逻辑
+     *
+     * * ️📝可空性：可空 | 仅「词项链模板」
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
-    protected String key;
+    protected final String key;
     /**
      * The budget of the Item, consisting of 3 numbers
      * * 📝仅用于各预算值函数，以及在「袋」中的选取（优先级）
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：始终具所有权
      */
     protected final BudgetValue budget;
 
@@ -40,15 +47,6 @@ public abstract class Item {
         this.key = key;
         this.budget = new BudgetValue(budget); // clone, not assignment
     }
-
-    // /**
-    // * Constructor with initial budget
-    // *
-    // * @param budget The initial budget
-    // */
-    // protected void setBudget(BudgetValue budget) {
-    // this.budget = budget;
-    // }
 
     /**
      * Get the current key
