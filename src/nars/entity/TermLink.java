@@ -64,16 +64,40 @@ public class TermLink extends TLink<Term> {
      * @param template TermLink template previously prepared
      * @param budget   Budget value of the link
      */
-    public TermLink(Term target, TermLink template, BudgetValue budget) {
-        super(
+    public TermLink(final Term target, final TermLink template, final BudgetValue budget) {
+        this(
                 target,
-                target.getName(), budget,
+                budget,
                 generateTypeFromTemplate(target, template),
                 template.getIndices());
-        this.key = generateKey(this.type, this.index);
+    }
+
+    /**
+     * 🆕从「模板」中确定好「类型」与「索引」后，再进一步确定「键」
+     */
+    private TermLink(final Term target, final BudgetValue budget, final short type, final short[] indices) {
+        super(
+                target,
+                /* target.getName() */
+                generateKey(target, type, indices), budget,
+                type,
+                indices);
+    }
+
+    /**
+     * 从「目标」、已生成的「类型」「索引」生成「键」
+     *
+     * @param target
+     * @param type
+     * @param indices
+     * @return
+     */
+    private static String generateKey(final Term target, final short type, final short[] indices) {
+        String key = TLink.generateKey(type, indices);
         if (target != null) {
             key += target;
         }
+        return key;
     }
 
     /**
@@ -84,7 +108,7 @@ public class TermLink extends TLink<Term> {
      * @param template
      * @return
      */
-    protected static <Target> short generateTypeFromTemplate(final Target t, final TLink<Target> template) {
+    protected static short generateTypeFromTemplate(final Term t, final TermLink template) {
         short type = template.getType();
         if (template.getTarget().equals(t)) {
             type--; // point to component
