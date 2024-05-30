@@ -9,20 +9,59 @@ public class Task extends Item {
 
     /**
      * The sentence of the Task
+     * * 📝任务的「内容」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
+     * * 📝所有权：具所有权
      */
     private final Sentence sentence;
+
     /**
      * Task from which the Task is derived, or null if input
+     *
+     * * ️📝可空性：可空
+     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
+     * * 📝所有权：共享引用
      */
     private final Task parentTask;
+
     /**
      * Belief from which the Task is derived, or null if derived from a theorem
+     *
+     * * ️📝可空性：可空
+     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
+     * * 📝所有权：具所有权
      */
     private final Sentence parentBelief;
+
     /**
      * For Question and Goal: best solution found so far
+     * * 📝一旦设定值后，永不回到空值状态
+     *
+     * * ️📝可空性：可空 | 可能暂无「最优解」
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权 | 「语句」类型
      */
     private Sentence bestSolution;
+
+    /**
+     * 完全构造函数
+     * Constructor for an activated task
+     *
+     * @param s            The sentence
+     * @param b            The budget
+     * @param parentTask   The task from which this new task is derived
+     * @param parentBelief The belief from which this new task is derived
+     */
+    public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
+        super(s.toKey(), b); // change to toKey()
+        this.sentence = s;
+        this.key = this.sentence.toKey();
+        this.parentTask = parentTask;
+        this.parentBelief = parentBelief;
+        this.bestSolution = solution;
+    }
 
     /**
      * Constructor for input task
@@ -31,11 +70,7 @@ public class Task extends Item {
      * @param b The budget
      */
     public Task(Sentence s, BudgetValue b) {
-        super(s.toKey(), b); // change to toKey()
-        sentence = s;
-        key = sentence.toKey();
-        parentTask = null;
-        parentBelief = null;
+        this(s, b, null, null, null);
     }
 
     /**
@@ -47,25 +82,7 @@ public class Task extends Item {
      * @param parentBelief The belief from which this new task is derived
      */
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief) {
-        super(s.toKey(), b); // change to toKey()
-        sentence = s;
-        key = sentence.toKey();
-        this.parentTask = parentTask;
-        this.parentBelief = parentBelief;
-    }
-
-    /**
-     * Constructor for an activated task
-     *
-     * @param s            The sentence
-     * @param b            The budget
-     * @param parentTask   The task from which this new task is derived
-     * @param parentBelief The belief from which this new task is derived
-     * @param solution     The belief to be used in future inference
-     */
-    public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
-        this(s, b, parentTask, parentBelief);
-        this.bestSolution = solution;
+        this(s, b, parentTask, parentBelief, null);
     }
 
     /**
@@ -74,7 +91,7 @@ public class Task extends Item {
      * @return The sentence
      */
     public Sentence getSentence() {
-        return sentence;
+        return this.sentence;
     }
 
     /**
@@ -83,7 +100,7 @@ public class Task extends Item {
      * @return The content of the sentence
      */
     public Term getContent() {
-        return sentence.getContent();
+        return this.sentence.getContent();
     }
 
     /**
@@ -92,7 +109,7 @@ public class Task extends Item {
      * @return The creation time of the sentence
      */
     public long getCreationTime() {
-        return sentence.getStamp().getCreationTime();
+        return this.sentence.getStamp().getCreationTime();
     }
 
     /**
@@ -101,7 +118,7 @@ public class Task extends Item {
      * @return Whether the Task is derived from another task
      */
     public boolean isInput() {
-        return parentTask == null;
+        return this.parentTask == null;
     }
 
     /**
@@ -118,12 +135,11 @@ public class Task extends Item {
      * @param that The other Task
      */
     @Override
-    public void merge(Item that) {
-        if (getCreationTime() >= ((Task) that).getCreationTime()) {
+    public void merge(final Item that) {
+        if (getCreationTime() >= ((Task) that).getCreationTime())
             super.merge(that);
-        } else {
+        else
             that.merge(this);
-        }
     }
 
     /**
@@ -132,26 +148,32 @@ public class Task extends Item {
      * @return The stored Sentence or null
      */
     public Sentence getBestSolution() {
-        return bestSolution;
+        return this.bestSolution;
     }
 
     /**
      * Set the best-so-far solution for a Question or Goal, and report answer
      * for input question
+     * * 📝【2024-05-30 17:59:59】仅在「本地规则」中调用
      *
      * @param judgment The solution to be remembered
      */
-    public void setBestSolution(Sentence judgment) {
-        bestSolution = judgment;
+    public void setBestSolution(final Sentence judgment) {
+        if (judgment == null)
+            throw new NullPointerException("judgment == null");
+        if (!judgment.isJudgment())
+            throw new IllegalArgumentException(judgment + " is not judgment");
+        this.bestSolution = judgment;
     }
 
     /**
      * Get the parent belief of a task
+     * * 📝似乎只有一处
      *
      * @return The belief from which the task is derived
      */
     public Sentence getParentBelief() {
-        return parentBelief;
+        return this.parentBelief;
     }
 
     /**
@@ -160,7 +182,7 @@ public class Task extends Item {
      * @return The task from which the task is derived
      */
     public Task getParentTask() {
-        return parentTask;
+        return this.parentTask;
     }
 
     /**
@@ -170,7 +192,7 @@ public class Task extends Item {
      */
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder();
+        final StringBuilder s = new StringBuilder();
         s.append(super.toString()).append(" ");
         s.append(getSentence().getStamp());
         if (parentTask != null) {
