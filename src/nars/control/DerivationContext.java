@@ -24,6 +24,8 @@ public abstract class DerivationContext {
     /**
      * 对「记忆区」的反向引用
      * * 🚩【2024-05-18 17:00:12】目前需要访问其「输出」「概念」等功能
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 【2024-05-30 08:47:16】在「概念链接建立」的过程中需要
      */
     private Memory memory;
 
@@ -31,37 +33,60 @@ public abstract class DerivationContext {
         return memory;
     }
 
-    // TODO: 后续有待从`getMemory`中分离，以明确「记忆区」在各处推理中的可变性
     // * ❓记忆区在「直接推理」「转换推理」「概念推理」的过程中，是否仅为只读？
+    // * ✅【2024-05-30 08:55:00】初步明确其可变性
     public Memory mutMemory() {
         return memory;
     }
 
     /**
+     * 缓存的「当前时间」
+     * * 🎯与「记忆区」解耦
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：只读 | 仅构造时赋值
+     * * 📝所有权：具所有权
+     */
+    private final long time;
+
+    /**
      * 🆕访问「当前时间」
      * * 🎯用于在推理过程中构建「新时间戳」
+     * * ️📝可空性：非空
+     * * 📝可变性：只读
      */
     public long getTime() {
-        return memory.getTime();
+        return time;
     }
 
     /**
      * 获取「静默值」
      * * 🎯在「推理上下文」中无需获取「推理器」`getReasoner`
+     * * ️📝可空性：非空
+     * * 📝可变性：只读
      *
      * @return 静默值
      */
-    public int getSilenceValue() {
-        return memory.getSilenceValue().get();
+    public float getSilencePercent() {
+        return silenceValue / 100.0f;
     }
 
-    // public MainWindow getMainWindow() {
-    // return reasoner.getMainWindow();
-    // }
+    /**
+     * 缓存的「静默值」
+     * * 🚩【2024-05-30 09:02:10】现仅在构造时赋值，其余情况不变
+     * * ️📝可空性：非空
+     * * 📝可变性：只读
+     * * 📝所有权：具所有权
+     */
+    protected final int silenceValue;
+
     /**
      * Actually means that there are no new Tasks
      * * 🚩【2024-05-21 11:50:51】现在从「记忆区」迁移而来
      * * ❓【2024-05-21 12:04:35】尚未实装：若靠「局部是否有结果」则会改变推理结果
+     * * ️📝可空性：非空
+     * * 📝可变性：只读
+     * * 📝所有权：仅引用
      */
     public boolean noResult() {
         return newTasks.isEmpty();
@@ -69,6 +94,9 @@ public abstract class DerivationContext {
 
     /**
      * 用于「变量替换」中的「伪随机数生成器」
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 在「打乱集合」时被`shuffle`函数修改
+     * * 📝所有权：具所有权
      */
     public static Random randomNumber = new Random(1);
 
@@ -78,6 +106,9 @@ public abstract class DerivationContext {
      * cycle
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 单次推理的结果存放至此
+     * * 📝所有权：具所有权
      */
     private final LinkedList<Task> newTasks;
 
@@ -89,6 +120,9 @@ public abstract class DerivationContext {
      * List of Strings or Tasks to be sent to the output channels
      * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
      * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 单次推理的结果存放至此
+     * * 📝所有权：具所有权
      */
     private final ArrayList<String> exportStrings;
 
@@ -99,6 +133,9 @@ public abstract class DerivationContext {
     /**
      * * 📝在所有使用场景中，均为「当前概念要处理的词项」且只读
      * * 🚩【2024-05-20 09:15:59】故此处仅保留getter，并且不留存多余字段（减少共享引用）
+     * * ️📝可空性：非空
+     * * 📝可变性：只读 | 完全依赖「当前概念」而定，且「当前概念」永不变更词项
+     * * 📝所有权：仅引用
      */
     public Term getCurrentTerm() {
         // ! 🚩需要假定`this.getCurrentConcept() != null`
@@ -108,6 +145,9 @@ public abstract class DerivationContext {
     /**
      * The selected Concept
      * * 🚩【2024-05-25 16:19:51】现在已经具备所有权
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 「链接到任务」等
+     * * 📝所有权：具所有权
      */
     private Concept currentConcept;
 
@@ -115,7 +155,12 @@ public abstract class DerivationContext {
         return currentConcept;
     }
 
-    public void setCurrentConcept(Concept currentConcept) {
+    /**
+     * 🚩【2024-05-30 08:59:05】仅用于内部设定，外部不会也无法修改
+     *
+     * @param currentConcept
+     */
+    protected void setCurrentConcept(Concept currentConcept) {
         this.currentConcept = currentConcept;
     }
 
@@ -128,6 +173,12 @@ public abstract class DerivationContext {
 
     /**
      * The selected belief
+     *
+     * * ️📝可空性：可空
+     * * 📝可变性：可变 | 仅切换值，不修改内部 @ 切换信念/修正
+     * * 📝所有权：具所有权
+     *
+     * * 🚩【2024-05-30 09:25:15】内部不被修改，同时「语句」允许被随意复制（内容固定，占用小）
      */
     private Sentence currentBelief;
 
@@ -140,12 +191,16 @@ public abstract class DerivationContext {
      * * 📝在「概念推理」仅在准备阶段设置
      * * 📝在「直接推理」会在推理过程中设置
      */
-    public void setCurrentBelief(Sentence currentBelief) {
+    protected void setCurrentBelief(Sentence currentBelief) {
         this.currentBelief = currentBelief;
     }
 
     /**
      * The new Stamp
+     *
+     * * ️📝可空性：可空
+     * * 📝可变性：可变 | 仅切换值，不修改内部 @ 切换信念/修正
+     * * 📝所有权：具所有权
      */
     private Stamp newStamp;
 
@@ -153,13 +208,23 @@ public abstract class DerivationContext {
         return newStamp;
     }
 
-    public void setNewStamp(Stamp newStamp) {
+    /**
+     * 设置新时间戳
+     * * 🚩【2024-05-30 09:30:25】现在仅在「内部修正」与「切换当前信念」时使用
+     *
+     * @param newStamp
+     */
+    protected void setNewStamp(Stamp newStamp) {
         this.newStamp = newStamp;
     }
 
     /**
      * The substitution that unify the common term in the Task and the Belief
      * TODO unused
+     *
+     * * ️📝可空性：？
+     * * 📝可变性：？
+     * * 📝所有权：？
      */
     private HashMap<Term, Term> substitute;
 
@@ -193,6 +258,8 @@ public abstract class DerivationContext {
         this.memory = memory;
         this.newTasks = newTasks;
         this.exportStrings = exportStrings;
+        this.silenceValue = memory.getSilenceValue().get();
+        this.time = memory.getTime();
     }
 
     /**
@@ -212,18 +279,20 @@ public abstract class DerivationContext {
      * @param candidateBelief The belief to be used in future inference, for
      *                        forward/backward correspondence
      */
-    public void activatedTask(BudgetValue budget, Sentence sentence, Sentence candidateBelief) {
-        Task task = new Task(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
+    public void activatedTask(final BudgetValue budget, final Sentence sentence, final Sentence candidateBelief) {
+        // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以
+        final Task task = new Task(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
+        // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (sentence.isQuestion()) {
-            float s = task.getBudget().summary();
+            final float s = task.getBudget().summary();
             // float minSilent = memory.getReasoner().getMainWindow().silentW.value() /
             // 100.0f;
-            float minSilent = memory.getSilenceValue().get() / 100.0f;
-            if (s > minSilent) { // only report significant derived Tasks
+            if (s > this.getSilencePercent()) { // only report significant derived Tasks
                 report(task.getSentence(), ReportType.OUT);
             }
         }
+        // * 🚩将新创建的「导出任务」添加到「新任务」中
         newTasks.add(task);
     }
 
@@ -244,8 +313,7 @@ public abstract class DerivationContext {
             final float budget = task.getBudget().summary();
             // final float minSilent = memory.getReasoner()
             // .getMainWindow().silentW.value() / 100.0f;
-            final float minSilent = memory.getSilenceValue().get() / 100.0f;
-            if (budget > minSilent) { // only report significant derived Tasks
+            if (budget > this.getSilencePercent()) { // only report significant derived Tasks
                 report(task.getSentence(), ReportType.OUT);
             }
         }
@@ -264,25 +332,34 @@ public abstract class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget);
+        // * 🚩引入「当前任务」与「新时间戳」
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.getNewStamp());
     }
 
     /**
      * 🆕其直接调用来自组合规则
      * * 🎯避免对`currentTask`的赋值，解耦调用（并让`currentTask`不可变）
+     * * 🎯避免对`newStamp`的复制，解耦调用（让「新时间戳」的赋值止步在「推理开始」之前）
      *
      * @param currentTask
      * @param newContent
      * @param newTruth
      * @param newBudget
+     * @param newStamp
      */
-    public void doublePremiseTask(Task currentTask, Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        if (newContent != null) {
-            final char newPunctuation = currentTask.getSentence().getPunctuation();
-            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, this.newStamp, true);
-            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
-            derivedTask(newTask);
-        }
+    public void doublePremiseTask(
+            final Task currentTask,
+            final Term newContent,
+            final TruthValue newTruth,
+            final BudgetValue newBudget,
+            final Stamp newStamp) {
+        if (newContent == null)
+            return;
+        // * 🚩仅在「任务内容」可用时构造
+        final char newPunctuation = currentTask.getSentence().getPunctuation();
+        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, true);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
+        derivedTask(newTask);
     }
 
     /**
@@ -295,13 +372,15 @@ public abstract class DerivationContext {
      * @param revisable  Whether the sentence is revisable
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
-        if (newContent != null) {
-            final Sentence taskSentence = this.getCurrentTask().getSentence();
-            final char newPunctuation = taskSentence.getPunctuation();
-            final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
-            final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
-            derivedTask(newTask);
-        }
+        if (newContent == null)
+            return;
+
+        // * 🚩仅在「任务内容」可用时构造
+        final Sentence taskSentence = this.getCurrentTask().getSentence();
+        final char newPunctuation = taskSentence.getPunctuation();
+        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
+        derivedTask(newTask);
     }
 
     /**
@@ -327,19 +406,23 @@ public abstract class DerivationContext {
      */
     public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
         final Task parentTask = this.getCurrentTask().getParentTask();
-        if (parentTask != null && newContent.equals(parentTask.getContent())) { // circular structural inference
-            return;
-        }
+        // * 🚩对于「结构转换」的单前提推理，若已有父任务且该任务与父任务相同⇒中止，避免重复推理
+        if (parentTask != null && newContent.equals(parentTask.getContent()))
+            return; // to avoid circular structural inference
         final Sentence taskSentence = this.getCurrentTask().getSentence();
+        // * 🚩构造新时间戳
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
             this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
             this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
+        // * 🚩使用新内容构造新语句
         final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
+        // * 🚩构造新任务
         final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
+        // * 🚩导出
         derivedTask(newTask);
     }
 
@@ -368,8 +451,11 @@ public abstract class DerivationContext {
      * * 📌传入所有权而非引用
      * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
      */
-    public void absorbedByMemory(Memory memory) {
-        // TODO: 销毁「当前概念」「当前信念」「新时间戳」等（要考虑更多问题）
+    public void absorbedByMemory(final Memory memory) {
+        // * 🚩销毁「新时间戳」 | 变量值仅临时推理用
+        this.newStamp = null;
+        // * 🚩销毁「当前信念」 | 变量值仅临时推理用
+        this.newStamp = null;
         // * 🚩将「当前概念」归还到「记忆区」中
         memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
@@ -380,7 +466,7 @@ public abstract class DerivationContext {
         for (final String output : this.getExportStrings()) {
             memory.report(output);
         }
-        // * 清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+        // * 🚩清理上下文防串（同时清理「导出的新任务」与「导出字串」）
         this.getNewTasks().clear();
         this.getExportStrings().clear();
         // * 🚩销毁自身：在此处销毁相应变量
@@ -390,9 +476,11 @@ public abstract class DerivationContext {
 
     /**
      * 默认就是被「自身所属记忆区」吸收
+     * * 📝【2024-05-30 08:48:15】此处的「记忆区」可变，因为要从「上下文」中获取结果
+     * * 🚩【2024-05-30 08:48:29】此方法仅为分派需要，实际上要先将引用解耦
      */
     public void absorbedByMemory() {
-        absorbedByMemory(this.getMemory());
+        absorbedByMemory(this.mutMemory());
     }
 
     protected void drop(Object any) {

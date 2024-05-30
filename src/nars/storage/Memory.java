@@ -262,10 +262,10 @@ public class Memory {
      * @param c the concept to be adjusted
      * @param b the new BudgetValue
      */
-    public void activateConcept(Concept c, BudgetValue b) {
+    public void activateConcept(final Concept c, final BudgetValue b) {
         // * 🚩存在性检查
         final boolean hasC = concepts.contains(c);
-        // * 🚩若已有⇒拿出→放回
+        // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置
         if (hasC) {
             concepts.pickOut(c.getKey());
             BudgetFunctions.activate(c, b);

@@ -316,7 +316,6 @@ public final class CompositionalRules {
                         task.getSentence().getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
                         context.getTime());
-                context.setNewStamp(newStamp);
                 final Task contentTask = new Task(contentBelief, task.getBudget());
                 // context.currentTask = contentTask;
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
@@ -327,7 +326,7 @@ public final class CompositionalRules {
                 budget = BudgetFunctions.compoundForward(truth, conj, context);
                 // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
                 // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
-                context.doublePremiseTask(contentTask, conj, truth, budget);
+                context.doublePremiseTask(contentTask, conj, truth, budget, newStamp);
             }
         } else {
             final TruthValue v1, v2;

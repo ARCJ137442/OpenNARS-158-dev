@@ -145,7 +145,7 @@ public abstract class ConceptLinking {
      */
     public static void linkConceptToTask(final DerivationContextDirect context) {
         final Concept self = context.getCurrentConcept();
-        final Memory memory = context.getMemory();
+        final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
         final Task task = context.getCurrentTask();
         final BudgetValue taskBudget = task.getBudget();
         // * 🚩对当前任务构造任务链，链接到传入的任务
@@ -176,7 +176,7 @@ public abstract class ConceptLinking {
             // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
             insertTaskLink(componentConcept, memory, tLink);
         }
-        // * 🚩递归插入词项链
+        // * 🚩从当前词项开始，递归插入词项链
         buildTermLinks(self, memory, taskBudget); // recursively insert TermLink
     }
 
@@ -208,7 +208,8 @@ public abstract class ConceptLinking {
         // * 🚩仅在有「词项链模板」时
         if (self.getTermLinkTemplates().isEmpty())
             return;
-        // * 🚩分派链接，继续
+        // * 🚩分派链接，更新预算值，继续
+        // * 📝太大的词项、太远的链接 根据AIKR有所取舍
         final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
                 taskBudget,
                 self.getTermLinkTemplates().size());

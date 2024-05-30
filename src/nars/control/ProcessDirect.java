@@ -247,7 +247,6 @@ public abstract class ProcessDirect {
                 if (newStamp != null) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
                     context.setCurrentBelief(oldBelief);
-                    // TODO: 🎯去掉上边的`setCurrentBelief`，断言「『直接推理』不会使用『当前信念』」
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
                     // * 📝↑用法仅限于「父信念」
                     LocalRules.revision(judgment, oldBelief, context);

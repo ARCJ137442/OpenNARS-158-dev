@@ -51,7 +51,7 @@ public abstract class ProcessReason {
         }
         // * ✅归还「当前任务链/当前信念链」的工作已经在「吸收上下文」中被执行
         // * 🚩吸收并清空上下文
-        context.absorbedByMemory(context.getMemory());
+        context.absorbedByMemory(context.mutMemory());
     }
 
     /* ---------- main loop ---------- */

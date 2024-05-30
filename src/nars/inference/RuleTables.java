@@ -14,6 +14,8 @@ public class RuleTables {
 
     /**
      * Entry point of the inference engine
+     * 
+     * TODO: 追溯调用是否均以「导出结论」终止（若有）
      *
      * @param tLink   The selected TaskLink, which will provide a task
      * @param bLink   The selected TermLink, which may provide a belief

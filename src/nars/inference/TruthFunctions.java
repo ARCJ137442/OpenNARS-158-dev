@@ -4,6 +4,8 @@ import nars.entity.*;
 
 /**
  * All truth-value (and desire-value) functions used in inference rules
+ * * 🚩【2024-05-30 09:21:34】此处不加`final`：逻辑最简
+ * * 📝所有函数均【返回新真值对象】且【不修改所传入参数】
  */
 public final class TruthFunctions extends UtilityFunctions {
 
