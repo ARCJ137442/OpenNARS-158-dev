@@ -54,26 +54,6 @@ public abstract class TLink<Target> extends Item {
     protected final short[] index;
 
     /**
-     * Constructor for TermLink template
-     * <p>
-     * called in CompoundTerm.prepareComponentLinks only
-     *
-     * @param target  Target Term
-     * @param type    Link type
-     * @param indices Component indices in compound, may be 1 to 4
-     */
-    public TLink(final Target target, final short type, final int[] indices) {
-        this( // * 🚩传递到「完全构造方法」
-                target,
-                null, // * 🚩相当于调用Item的单Key构造函数
-                // TODO: ↑这似乎是不好的可空性，需要调整（可能「链接模板」的实现需要商议）
-                new BudgetValue(),
-                type,
-                // template types all point to compound, though the target is component
-                generateIndices(type, indices));
-    }
-
-    /**
      * called from TaskLink
      * 📝完全构造方法
      *
@@ -92,40 +72,6 @@ public abstract class TLink<Target> extends Item {
         this.target = target;
         this.type = type;
         this.index = indices;
-    }
-
-    /**
-     * Constructor to make actual TermLink from a template
-     * <p>
-     * called in Concept.buildTermLinks only
-     * * 🚩现在从「词项链」往下调用，且仅从「词项链」调用
-     *
-     * @param target   Target Term
-     * @param template TermLink template previously prepared
-     * @param budget   Budget value of the link
-     */
-    protected TLink(Target target, String key, TLink<Target> template, BudgetValue budget) {
-        this(
-                target,
-                key, budget,
-                generateTypeFromTemplate(target, template),
-                template.getIndices());
-    }
-
-    /**
-     * 🆕从「目标」与「模板」中产生链接类型
-     *
-     * @param <Target>
-     * @param t
-     * @param template
-     * @return
-     */
-    protected static <Target> short generateTypeFromTemplate(final Target t, final TLink<Target> template) {
-        short type = template.getType();
-        if (template.getTarget().equals(t)) {
-            type--; // point to component
-        }
-        return type;
     }
 
     /**
@@ -150,35 +96,6 @@ public abstract class TLink<Target> extends Item {
             }
         }
         return at1 + in + at2;
-    }
-
-    /**
-     * 🆕将构造方法中的「生成索引部分」独立出来
-     * * ⚠️仅在「复合词项→元素」中使用
-     *
-     * @param type
-     * @param indices
-     * @return
-     */
-    protected static final short[] generateIndices(
-            final short type,
-            final int[] indices) {
-        if (type % 2 != 0)
-            throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
-        final short[] index;
-        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
-            index = new short[indices.length + 1];
-            index[0] = 0;
-            for (int i = 0; i < indices.length; i++) {
-                index[i + 1] = (short) indices[i];
-            }
-        } else {
-            index = new short[indices.length];
-            for (int i = 0; i < index.length; i++) {
-                index[i] = (short) indices[i];
-            }
-        }
-        return index;
     }
 
     /**

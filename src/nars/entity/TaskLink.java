@@ -25,26 +25,38 @@ public class TaskLink extends TLink<Task> {
     private int counter;
 
     /**
+     * 🆕完全构造函数
+     *
+     * @param t
+     * @param template
+     * @param v
+     */
+    private TaskLink(Task target, String key, BudgetValue budget, short type, short[] indices) {
+        super(target, key, budget, type, indices);
+        this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
+        this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
+        this.counter = 0;
+    }
+
+    /**
      * Constructor
      * <p>
      * only called in Memory.continuedProcess
      * * 📝【2024-05-30 00:46:38】只在「链接概念到任务」中使用
      *
-     * @param t        The target Task
+     * @param target   The target Task
      * @param template The TermLink template
      * @param v        The budget
      */
-    public TaskLink(Task t, TermLink template, BudgetValue v) {
-        super(t, "", v,
+    public TaskLink(Task target, TermLink template, BudgetValue v) {
+        this(target, "", v,
                 template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());
-        this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
-        this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
-        this.counter = 0;
+
         this.key = generateKey(this.type, this.index); // as defined in TermLink
         if (this.target != null)
             this.key += this.target.getContent();
-        this.key += t.getKey();
+        this.key += target.getKey();
     }
 
     /**

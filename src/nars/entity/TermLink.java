@@ -34,36 +34,90 @@ import nars.language.Term;
 public class TermLink extends TLink<Term> {
 
     /**
-     * 🆕任务链模板构造
+     * Constructor for TermLink template
+     * <p>
+     * called in CompoundTerm.prepareComponentLinks only
      * * 🚩直接调用超类构造函数
      *
-     * @param target
-     * @param type
-     * @param indices
+     * @param target  Target Term
+     * @param type    Link type
+     * @param indices Component indices in compound, may be 1 to 4
      */
     public TermLink(final Term target, final short type, final int[] indices) {
-        super(target, type, indices);
+        super( // * 🚩直接传递到「完全构造方法」
+                target,
+                null, // * 🚩相当于调用Item的单Key构造函数
+                // TODO: ↑这似乎是不好的可空性，需要调整（可能「链接模板」的实现需要商议）
+                new BudgetValue(),
+                type,
+                // template types all point to compound, though the target is component
+                generateIndices(type, indices));
     }
 
     /**
      * Constructor to make actual TermLink from a template
      * <p>
      * called in Concept.buildTermLinks only
-     * * 🚩现在从「词项链」往下调用
+     * * 🚩【2024-05-30 20:31:47】现在直接调用超类的「完全构造函数」
      *
-     * @param t        Target Term
+     * @param target   Target Term
      * @param template TermLink template previously prepared
-     * @param v        Budget value of the link
+     * @param budget   Budget value of the link
      */
-    public TermLink(Term t, TermLink template, BudgetValue v) {
-        super(t, t.getName(), template, v);
+    public TermLink(Term target, TermLink template, BudgetValue budget) {
+        super(
+                target,
+                target.getName(), budget,
+                generateTypeFromTemplate(target, template),
+                template.getIndices());
         this.key = generateKey(this.type, this.index);
         if (target != null) {
             key += target;
         }
     }
 
-    public static TermLink from(Term t, short p, int... indices) {
-        return new TermLink(t, p, indices);
+    /**
+     * 🆕从「目标」与「模板」中产生链接类型
+     *
+     * @param <Target>
+     * @param t
+     * @param template
+     * @return
+     */
+    protected static <Target> short generateTypeFromTemplate(final Target t, final TLink<Target> template) {
+        short type = template.getType();
+        if (template.getTarget().equals(t)) {
+            type--; // point to component
+        }
+        return type;
+    }
+
+    /**
+     * 🆕将构造方法中的「生成索引部分」独立出来
+     * * ⚠️仅在「复合词项→元素」中使用
+     *
+     * @param type
+     * @param indices
+     * @return
+     */
+    protected static final short[] generateIndices(
+            final short type,
+            final int[] indices) {
+        if (type % 2 != 0)
+            throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
+        final short[] index;
+        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
+            index = new short[indices.length + 1];
+            index[0] = 0;
+            for (int i = 0; i < indices.length; i++) {
+                index[i + 1] = (short) indices[i];
+            }
+        } else {
+            index = new short[indices.length];
+            for (int i = 0; i < index.length; i++) {
+                index[i] = (short) indices[i];
+            }
+        }
+        return index;
     }
 }
