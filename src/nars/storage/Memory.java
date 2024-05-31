@@ -161,6 +161,15 @@ public class Memory {
         return reasoner.getSilenceValue();
     }
 
+    /**
+     * 🆕将「更新并获取时间戳序列号」用于「时间戳的建立」中
+     *
+     * @return
+     */
+    public long updateStampCurrentSerial() {
+        return reasoner.updateStampCurrentSerial();
+    }
+
     // public MainWindow getMainWindow() {
     // return reasoner.getMainWindow();
     // }

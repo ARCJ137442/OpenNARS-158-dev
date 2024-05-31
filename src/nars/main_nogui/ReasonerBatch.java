@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
-import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.gui.MainWindow;
 import nars.io.InputChannel;
@@ -60,6 +59,24 @@ public class ReasonerBatch {
     private long timer;
     private final AtomicInteger silenceValue = new AtomicInteger(Parameters.SILENT_LEVEL);
 
+    /**
+     * serial number, a field in {@link ReasonerBatch}
+     * * 📌当前时间戳序列号
+     * * 📝每个新创建的「时间戳」都有一个属于自身的「序列号」
+     * * 🚩从`Stamp.currentSerial`迁移过来
+     */
+    private long stampCurrentSerial = 0;
+
+    /**
+     * 🆕获取自身时间戳序列号，并在此同时更新
+     * * 🚩原先在「时间戳」中便是「先++，再构造」
+     *
+     * @return
+     */
+    public long updateStampCurrentSerial() {
+        return ++stampCurrentSerial;
+    }
+
     public ReasonerBatch() {
         name = null;
         memory = new Memory(this);
@@ -83,7 +100,7 @@ public class ReasonerBatch {
         walkingSteps = 0;
         clock = 0;
         memory.init();
-        Stamp.init();
+        stampCurrentSerial = 0;
         // timer = 0;
     }
 

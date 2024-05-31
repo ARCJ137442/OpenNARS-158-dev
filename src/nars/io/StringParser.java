@@ -88,7 +88,7 @@ public abstract class StringParser extends Symbols {
             final String str = buffer.toString().trim();
             final int last = str.length() - 1;
             final char punctuation = str.charAt(last);
-            final Stamp stamp = new Stamp(time);
+            final Stamp stamp = new Stamp(memory.updateStampCurrentSerial(), time);
             final TruthValue truth = parseTruth(truthString, punctuation);
             final Term content = parseTerm(str.substring(0, last), memory);
             final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content.getName()));

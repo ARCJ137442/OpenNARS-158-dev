@@ -4,7 +4,6 @@ import java.util.*;
 
 import nars.io.Symbols;
 import nars.main_nogui.Parameters;
-import nars.main_nogui.ReasonerBatch;
 
 /**
  * Each Sentence has a time stamp, consisting the following components:
@@ -15,20 +14,39 @@ import nars.main_nogui.ReasonerBatch;
  * be not unique.
  * The derived sentences inherits serial numbers from its parents, cut at the
  * baseLength limit.
+ *
+ * * 📝该类型基本【仅由「构造后完全不可变的轻量类型字段」组成】，故可随意复制与存储
  */
 public class Stamp implements Cloneable {
 
     /**
-     * serial number, for the whole system
-     * TODO : should it really be static?
-     * or a Stamp be a field in {@link ReasonerBatch} ?
+     * serial numbers
+     * * 📌由「序列号」组成的「证据基」
+     * * 🎯用于「时间戳判重」，避免「重复推理」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
-    private static long currentSerial = 0;
-    /** serial numbers */
     private final long[] evidentialBase;
-    /** evidentialBase baseLength */
+    /**
+     * evidentialBase baseLength
+     * * 📌证据基的长度，构造时计算并锁定
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
+     */
     private final int baseLength;
-    /** creation time of the stamp */
+    /**
+     * creation time of the stamp
+     * * 📌时间戳的「创建时间」，仅用作非逻辑性标识
+     * * 🚩在「任务」中用作「合并预算值」的顺序依据
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
+     */
     private final long creationTime;
 
     /**
@@ -36,8 +54,7 @@ public class Stamp implements Cloneable {
      *
      * @param time Creation time of the stamp
      */
-    public Stamp(long time) {
-        currentSerial++;
+    public Stamp(final long currentSerial, final long time) {
         baseLength = 1;
         evidentialBase = new long[baseLength];
         evidentialBase[0] = currentSerial;
@@ -109,11 +126,9 @@ public class Stamp implements Cloneable {
      * @return The merged Stamp, or null
      */
     public static Stamp make(Stamp first, Stamp second, long time) {
-        if (haveOverlap(first, second)) {
-            return null;
-        } else {
-            return uncheckedMerge(first, second, time);
-        }
+        return haveOverlap(first, second)
+            ? null
+            : uncheckedMerge(first, second, time);
     }
 
     /**
@@ -141,11 +156,9 @@ public class Stamp implements Cloneable {
      * * 🚩会按照顺序合并「时间戳」的证据基
      */
     public static Stamp uncheckedMerge(Stamp first, Stamp second, long time) {
-        if (first.length() > second.length()) {
-            return new Stamp(first, second, time);
-        } else {
-            return new Stamp(second, first, time);
-        }
+        return first.length() > second.length()
+            ? new Stamp(first, second, time)
+            : new Stamp(second, first, time);
     }
 
     /**
@@ -156,13 +169,6 @@ public class Stamp implements Cloneable {
     @Override
     public Stamp clone() {
         return new Stamp(this);
-    }
-
-    /**
-     * Initialize the stamp mechanism of the system, called in Reasoner
-     */
-    public static void init() {
-        currentSerial = 0;
     }
 
     /**
@@ -180,7 +186,7 @@ public class Stamp implements Cloneable {
      * @param i The index
      * @return The number at the index
      */
-    long get(int i) {
+    public long get(int i) {
         return evidentialBase[i];
     }
 
@@ -217,8 +223,8 @@ public class Stamp implements Cloneable {
         if (!(that instanceof Stamp)) {
             return false;
         }
-        TreeSet<Long> set1 = toSet();
-        TreeSet<Long> set2 = ((Stamp) that).toSet();
+        final TreeSet<Long> set1 = toSet();
+        final TreeSet<Long> set2 = ((Stamp) that).toSet();
         return (set1.containsAll(set2) && set2.containsAll(set1));
     }
 
