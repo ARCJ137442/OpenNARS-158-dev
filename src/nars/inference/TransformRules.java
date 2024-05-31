@@ -99,36 +99,36 @@ public class TransformRules {
         if (comp instanceof Product) {
             if (side == 0) {
                 subject = comp.componentAt(index);
-                predicate = makeImageExt((Product) comp, inh.getPredicate(), index, context.getMemory());
+                predicate = makeImageExt((Product) comp, inh.getPredicate(), index);
             } else {
-                subject = makeImageInt((Product) comp, inh.getSubject(), index, context.getMemory());
+                subject = makeImageInt((Product) comp, inh.getSubject(), index);
                 predicate = comp.componentAt(index);
             }
         } else if ((comp instanceof ImageExt) && (side == 1)) {
             if (index == ((ImageExt) comp).getRelationIndex()) {
-                subject = makeProduct(comp, inh.getSubject(), index, context.getMemory());
+                subject = makeProduct(comp, inh.getSubject(), index);
                 predicate = comp.componentAt(index);
             } else {
                 subject = comp.componentAt(index);
-                predicate = makeImageExt((ImageExt) comp, inh.getSubject(), index, context.getMemory());
+                predicate = makeImageExt((ImageExt) comp, inh.getSubject(), index);
             }
         } else if ((comp instanceof ImageInt) && (side == 0)) {
             if (index == ((ImageInt) comp).getRelationIndex()) {
                 subject = comp.componentAt(index);
-                predicate = makeProduct(comp, inh.getPredicate(), index, context.getMemory());
+                predicate = makeProduct(comp, inh.getPredicate(), index);
             } else {
-                subject = makeImageInt((ImageInt) comp, inh.getPredicate(), index, context.getMemory());
+                subject = makeImageInt((ImageInt) comp, inh.getPredicate(), index);
                 predicate = comp.componentAt(index);
             }
         } else {
             return;
         }
-        final Inheritance newInh = makeInheritance(subject, predicate, context.getMemory());
+        final Inheritance newInh = makeInheritance(subject, predicate);
         Term content = null;
         if (indices.length == 2) {
             content = newInh;
         } else if ((oldContent instanceof Statement) && (indices[0] == 1)) {
-            content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh, context.getMemory());
+            content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh);
         } else {
             ArrayList<Term> componentList;
             Term condition = oldContent.componentAt(0);
@@ -136,17 +136,15 @@ public class TransformRules {
                     && (condition instanceof Conjunction)) {
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
-                Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList, context.getMemory());
-                content = makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate(),
-                        context.getMemory());
+                Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
+                content = makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate());
             } else {
                 componentList = oldContent.cloneComponents();
                 componentList.set(indices[0], newInh);
                 if (oldContent instanceof Conjunction) {
-                    content = makeCompoundTerm(oldContent, componentList, context.getMemory());
+                    content = makeCompoundTerm(oldContent, componentList);
                 } else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence)) {
-                    content = makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1),
-                            context.getMemory());
+                    content = makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1));
                 }
             }
         }
@@ -184,8 +182,8 @@ public class TransformRules {
             Product product = (Product) subject;
             for (short i = 0; i < product.size(); i++) {
                 newSubj = product.componentAt(i);
-                newPred = makeImageExt(product, predicate, i, context.getMemory());
-                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
+                newPred = makeImageExt(product, predicate, i);
+                inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -201,12 +199,12 @@ public class TransformRules {
             for (short i = 0; i < image.size(); i++) {
                 if (i == relationIndex) {
                     newSubj = image.componentAt(relationIndex);
-                    newPred = makeProduct(image, predicate, relationIndex, context.getMemory());
+                    newPred = makeProduct(image, predicate, relationIndex);
                 } else {
-                    newSubj = makeImageInt((ImageInt) image, predicate, i, context.getMemory());
+                    newSubj = makeImageInt((ImageInt) image, predicate, i);
                     newPred = image.componentAt(i);
                 }
-                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -238,9 +236,9 @@ public class TransformRules {
         if (predicate instanceof Product) {
             final Product product = (Product) predicate;
             for (short i = 0; i < product.size(); i++) {
-                newSubj = makeImageInt(product, subject, i, context.getMemory());
+                newSubj = makeImageInt(product, subject, i);
                 newPred = product.componentAt(i);
-                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
@@ -255,13 +253,13 @@ public class TransformRules {
             final int relationIndex = image.getRelationIndex();
             for (short i = 0; i < image.size(); i++) {
                 if (i == relationIndex) {
-                    newSubj = makeProduct(image, subject, relationIndex, context.getMemory());
+                    newSubj = makeProduct(image, subject, relationIndex);
                     newPred = image.componentAt(relationIndex);
                 } else {
                     newSubj = image.componentAt(i);
-                    newPred = makeImageExt((ImageExt) image, subject, i, context.getMemory());
+                    newPred = makeImageExt((ImageExt) image, subject, i);
                 }
-                inheritance = makeInheritance(newSubj, newPred, context.getMemory());
+                inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) { // jmv <<<<<
                     if (truth == null) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);

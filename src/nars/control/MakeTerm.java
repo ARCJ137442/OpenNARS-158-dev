@@ -23,7 +23,6 @@ import nars.language.SetExt;
 import nars.language.SetInt;
 import nars.language.Similarity;
 import nars.language.Term;
-import nars.storage.Memory;
 
 /**
  * 所有原`nars.language`包的{@link Term}子类中有关`make`的静态方法
@@ -34,21 +33,6 @@ import nars.storage.Memory;
  * * 📝【2024-05-30 08:51:04】此中对「记忆区」的访问均为只读访问：只需判断「是否已有概念」
  */
 public abstract class MakeTerm {
-
-    /**
-     * Try to get a term from its name in the memory
-     *
-     * @param <T>    The type of the term
-     * @param name   The name of the term
-     * @param memory The memory
-     * @return The existing term or null
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends Term> T getFromNameOrNull(String name, Memory memory) {
-        // TODO: 验证：实际上「不要记忆区」也能在功能上与原版一致
-        final Term t = memory.nameToListedTerm(name);
-        return t == null ? null : (T) t;
-    }
 
     /* CompoundTerm */
 
@@ -61,13 +45,13 @@ public abstract class MakeTerm {
      * @param memory     Reference to the memory
      * @return A compound term or null
      */
-    public static Term makeCompoundTerm(CompoundTerm compound, ArrayList<Term> components, Memory memory) {
+    public static Term makeCompoundTerm(CompoundTerm compound, ArrayList<Term> components) {
         if (compound instanceof ImageExt)
-            return makeImageExt(components, ((ImageExt) compound).getRelationIndex(), memory);
+            return makeImageExt(components, ((ImageExt) compound).getRelationIndex());
         else if (compound instanceof ImageInt)
-            return makeImageInt(components, ((ImageInt) compound).getRelationIndex(), memory);
+            return makeImageInt(components, ((ImageInt) compound).getRelationIndex());
         else
-            return makeCompoundTerm(compound.operator(), components, memory);
+            return makeCompoundTerm(compound.operator(), components);
     }
 
     /**
@@ -80,39 +64,39 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound term or null
      */
-    public static Term makeCompoundTerm(String op, ArrayList<Term> arg, Memory memory) {
+    public static Term makeCompoundTerm(String op, ArrayList<Term> arg) {
         switch (op.length()) {
             case 1:
                 if (op.charAt(0) == Symbols.SET_EXT_OPENER)
-                    return makeSetExt(arg, memory);
+                    return makeSetExt(arg);
                 if (op.charAt(0) == Symbols.SET_INT_OPENER)
-                    return makeSetInt(arg, memory);
+                    return makeSetInt(arg);
                 switch (op) {
                     case Symbols.INTERSECTION_EXT_OPERATOR:
-                        return makeIntersectionExt(arg, memory);
+                        return makeIntersectionExt(arg);
                     case Symbols.INTERSECTION_INT_OPERATOR:
-                        return makeIntersectionInt(arg, memory);
+                        return makeIntersectionInt(arg);
                     case Symbols.DIFFERENCE_EXT_OPERATOR:
-                        return makeDifferenceExt(arg, memory);
+                        return makeDifferenceExt(arg);
                     case Symbols.DIFFERENCE_INT_OPERATOR:
-                        return makeDifferenceInt(arg, memory);
+                        return makeDifferenceInt(arg);
                     case Symbols.PRODUCT_OPERATOR:
-                        return makeProduct(arg, memory);
+                        return makeProduct(arg);
                     case Symbols.IMAGE_EXT_OPERATOR:
-                        return makeImageExt(arg, memory);
+                        return makeImageExt(arg);
                     case Symbols.IMAGE_INT_OPERATOR:
-                        return makeImageInt(arg, memory);
+                        return makeImageInt(arg);
                     default:
                         return null;
                 }
             case 2:
                 switch (op) {
                     case Symbols.NEGATION_OPERATOR:
-                        return makeNegation(arg, memory);
+                        return makeNegation(arg);
                     case Symbols.DISJUNCTION_OPERATOR:
-                        return makeDisjunction(arg, memory);
+                        return makeDisjunction(arg);
                     case Symbols.CONJUNCTION_OPERATOR:
-                        return makeConjunction(arg, memory);
+                        return makeConjunction(arg);
                     default:
                         return null;
                 }
@@ -129,7 +113,7 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return The new compound
      */
-    public static Term addComponents(CompoundTerm t1, Term t2, Memory memory) {
+    public static Term addComponents(CompoundTerm t1, Term t2) {
         if (t2 == null)
             return t1;
         final ArrayList<Term> list = t1.cloneComponents();
@@ -138,7 +122,7 @@ public abstract class MakeTerm {
             success = list.addAll(((CompoundTerm) t2).getComponents());
         else
             success = list.add(t2);
-        return (success ? makeCompoundTerm(t1, list, memory) : null);
+        return (success ? makeCompoundTerm(t1, list) : null);
     }
 
     /**
@@ -149,7 +133,7 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return The new compound
      */
-    public static Term reduceComponents(CompoundTerm t1, Term t2, Memory memory) {
+    public static Term reduceComponents(CompoundTerm t1, Term t2) {
         final boolean success;
         final ArrayList<Term> list = t1.cloneComponents();
         if (t1.getClass() == t2.getClass())
@@ -158,7 +142,7 @@ public abstract class MakeTerm {
             success = list.remove(t2);
         if (success) {
             if (list.size() > 1) {
-                return makeCompoundTerm(t1, list, memory);
+                return makeCompoundTerm(t1, list);
             }
             if (list.size() == 1) {
                 if ((t1 instanceof Conjunction) || (t1 instanceof Disjunction)
@@ -180,7 +164,7 @@ public abstract class MakeTerm {
      * @param memory   Reference to the memory
      * @return The new compound
      */
-    public static Term setComponent(CompoundTerm compound, int index, Term t, Memory memory) {
+    public static Term setComponent(CompoundTerm compound, int index, Term t) {
         final ArrayList<Term> list = compound.cloneComponents();
         list.remove(index);
         if (t != null) {
@@ -193,7 +177,7 @@ public abstract class MakeTerm {
                 }
             }
         }
-        return makeCompoundTerm(compound, list, memory);
+        return makeCompoundTerm(compound, list);
     }
 
     /* Statement */
@@ -207,24 +191,24 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return The Statement built
      */
-    public static Statement makeStatement(String relation, Term subject, Term predicate, Memory memory) {
+    public static Statement makeStatement(String relation, Term subject, Term predicate) {
         if (Statement.invalidStatement(subject, predicate))
             return null;
         switch (relation) {
             case Symbols.INHERITANCE_RELATION:
-                return makeInheritance(subject, predicate, memory);
+                return makeInheritance(subject, predicate);
             case Symbols.SIMILARITY_RELATION:
-                return makeSimilarity(subject, predicate, memory);
+                return makeSimilarity(subject, predicate);
             case Symbols.INSTANCE_RELATION:
-                return makeInstance(subject, predicate, memory);
+                return makeInstance(subject, predicate);
             case Symbols.PROPERTY_RELATION:
-                return makeProperty(subject, predicate, memory);
+                return makeProperty(subject, predicate);
             case Symbols.INSTANCE_PROPERTY_RELATION:
-                return makeInstanceProperty(subject, predicate, memory);
+                return makeInstanceProperty(subject, predicate);
             case Symbols.IMPLICATION_RELATION:
-                return makeImplication(subject, predicate, memory);
+                return makeImplication(subject, predicate);
             case Symbols.EQUIVALENCE_RELATION:
-                return makeEquivalence(subject, predicate, memory);
+                return makeEquivalence(subject, predicate);
             default:
                 return null;
         }
@@ -239,15 +223,15 @@ public abstract class MakeTerm {
      * @param statement A sample statement providing the class type
      * @param memory    Reference to the memory
      */
-    public static Statement makeStatement(Statement statement, Term subj, Term pred, Memory memory) {
+    public static Statement makeStatement(Statement statement, Term subj, Term pred) {
         if (statement instanceof Inheritance)
-            return makeInheritance(subj, pred, memory);
+            return makeInheritance(subj, pred);
         if (statement instanceof Similarity)
-            return makeSimilarity(subj, pred, memory);
+            return makeSimilarity(subj, pred);
         if (statement instanceof Implication)
-            return makeImplication(subj, pred, memory);
+            return makeImplication(subj, pred);
         if (statement instanceof Equivalence)
-            return makeEquivalence(subj, pred, memory);
+            return makeEquivalence(subj, pred);
         return null;
     }
 
@@ -261,11 +245,11 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return The Statement built
      */
-    public static Statement makeStatementSym(Statement statement, Term subj, Term pred, Memory memory) {
+    public static Statement makeStatementSym(Statement statement, Term subj, Term pred) {
         if (statement instanceof Inheritance)
-            return makeSimilarity(subj, pred, memory);
+            return makeSimilarity(subj, pred);
         if (statement instanceof Implication)
-            return makeEquivalence(subj, pred, memory);
+            return makeEquivalence(subj, pred);
         return null;
     }
 
@@ -279,9 +263,9 @@ public abstract class MakeTerm {
      * @param argList the list of arguments
      * @param memory  Reference to the memory
      */
-    public static Term makeConjunction(ArrayList<Term> argList, Memory memory) {
+    public static Term makeConjunction(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return makeConjunction(set, memory);
+        return makeConjunction(set);
     }
 
     /**
@@ -292,7 +276,7 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    private static Term makeConjunction(TreeSet<Term> set, Memory memory) {
+    private static Term makeConjunction(TreeSet<Term> set) {
         if (set.isEmpty()) {
             return null;
         } // special case: single component
@@ -300,9 +284,7 @@ public abstract class MakeTerm {
             return set.first();
         } // special case: single component
         final ArrayList<Term> argument = new ArrayList<>(set);
-        final String name = CompoundTerm.makeCompoundName(Symbols.CONJUNCTION_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new Conjunction(argument);
+        return new Conjunction(argument);
     }
 
     // overload this method by term type?
@@ -315,7 +297,7 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeConjunction(Term term1, Term term2, Memory memory) {
+    public static Term makeConjunction(Term term1, Term term2) {
         final TreeSet<Term> set;
         if (term1 instanceof Conjunction) {
             set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
@@ -333,7 +315,7 @@ public abstract class MakeTerm {
             set.add(term1.clone());
             set.add(term2.clone());
         }
-        return makeConjunction(set, memory);
+        return makeConjunction(set);
     }
 
     /* DifferenceExt */
@@ -345,7 +327,7 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeDifferenceExt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeDifferenceExt(ArrayList<Term> argList) {
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
             return argList.get(0);
         if (argList.size() != 2)
@@ -353,11 +335,11 @@ public abstract class MakeTerm {
         if ((argList.get(0) instanceof SetExt) && (argList.get(1) instanceof SetExt)) {
             final TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
             set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
-            return makeSetExt(set, memory);
+            return makeSetExt(set);
         }
-        final String name = CompoundTerm.makeCompoundName(Symbols.DIFFERENCE_EXT_OPERATOR, argList);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new DifferenceExt(argList);
+        // final String name =
+        // CompoundTerm.makeCompoundName(Symbols.DIFFERENCE_EXT_OPERATOR, argList);
+        return new DifferenceExt(argList);
     }
 
     /**
@@ -369,11 +351,11 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeDifferenceExt(Term t1, Term t2, Memory memory) {
+    public static Term makeDifferenceExt(Term t1, Term t2) {
         if (t1.equals(t2))
             return null;
         final ArrayList<Term> list = DifferenceExt.argumentsToList(t1, t2);
-        return makeConjunction(list, memory);
+        return makeConjunction(list);
     }
 
     /* DifferenceInt */
@@ -385,7 +367,7 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeDifferenceInt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeDifferenceInt(ArrayList<Term> argList) {
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
             return argList.get(0);
         if (argList.size() != 2)
@@ -393,11 +375,9 @@ public abstract class MakeTerm {
         if ((argList.get(0) instanceof SetInt) && (argList.get(1) instanceof SetInt)) {
             final TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
             set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
-            return makeSetInt(set, memory);
+            return makeSetInt(set);
         }
-        final String name = CompoundTerm.makeCompoundName(Symbols.DIFFERENCE_INT_OPERATOR, argList);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new DifferenceInt(argList);
+        return new DifferenceInt(argList);
     }
 
     /**
@@ -409,11 +389,11 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeDifferenceInt(Term t1, Term t2, Memory memory) {
+    public static Term makeDifferenceInt(Term t1, Term t2) {
         if (t1.equals(t2))
             return null;
         final ArrayList<Term> list = DifferenceInt.argumentsToList(t1, t2);
-        return makeDifferenceInt(list, memory);
+        return makeDifferenceInt(list);
     }
 
     /* Disjunction */
@@ -427,7 +407,7 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A Disjunction generated or a Term it reduced to
      */
-    public static Term makeDisjunction(Term term1, Term term2, Memory memory) {
+    public static Term makeDisjunction(Term term1, Term term2) {
         final TreeSet<Term> set;
         if (term1 instanceof Disjunction) {
             set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
@@ -445,7 +425,7 @@ public abstract class MakeTerm {
             set.add(term1.clone());
             set.add(term2.clone());
         }
-        return makeDisjunction(set, memory);
+        return makeDisjunction(set);
     }
 
     /**
@@ -455,9 +435,9 @@ public abstract class MakeTerm {
      * @param memory  Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeDisjunction(ArrayList<Term> argList, Memory memory) {
+    public static Term makeDisjunction(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return makeDisjunction(set, memory);
+        return makeDisjunction(set);
     }
 
     /**
@@ -468,14 +448,12 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeDisjunction(TreeSet<Term> set, Memory memory) {
+    public static Term makeDisjunction(TreeSet<Term> set) {
         if (set.size() == 1) {
             return set.first();
         } // special case: single component
         final ArrayList<Term> argument = new ArrayList<>(set);
-        final String name = CompoundTerm.makeCompoundName(Symbols.DISJUNCTION_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new Disjunction(argument);
+        return new Disjunction(argument);
     }
 
     /**
@@ -487,7 +465,7 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Equivalence makeEquivalence(Term subject, Term predicate, Memory memory) {
+    public static Equivalence makeEquivalence(Term subject, Term predicate) {
         // to be extended to check if subject is Conjunction
         if ((subject instanceof Implication) || (subject instanceof Equivalence)) {
             return null;
@@ -503,11 +481,6 @@ public abstract class MakeTerm {
             subject = predicate;
             predicate = inner;
         }
-        final String name = Equivalence.makeStatementName(subject, Symbols.EQUIVALENCE_RELATION, predicate);
-        final Term t = getFromNameOrNull(name, memory);
-        if (t != null) {
-            return (Equivalence) t;
-        }
         final ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
         return new Equivalence(argument);
     }
@@ -521,7 +494,7 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeImageExt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeImageExt(ArrayList<Term> argList) {
         if (argList.size() < 2)
             return null;
         final Term relation = argList.get(0);
@@ -535,7 +508,7 @@ public abstract class MakeTerm {
                 argument.add(argList.get(j));
             }
         }
-        return makeImageExt(argument, (short) index, memory);
+        return makeImageExt(argument, (short) index);
     }
 
     /**
@@ -547,7 +520,7 @@ public abstract class MakeTerm {
      * @param index    The index of the place-holder
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeImageExt(Product product, Term relation, short index, Memory memory) {
+    public static Term makeImageExt(Product product, Term relation, short index) {
         if (relation instanceof Product) {
             final Product p2 = (Product) relation;
             if ((product.size() == 2) && (p2.size() == 2)) {
@@ -563,7 +536,7 @@ public abstract class MakeTerm {
         }
         final ArrayList<Term> argument = product.cloneComponents();
         argument.set(index, relation);
-        return makeImageExt(argument, index, memory);
+        return makeImageExt(argument, index);
     }
 
     /**
@@ -575,13 +548,13 @@ public abstract class MakeTerm {
      * @param index     The index of the place-holder in the new Image
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeImageExt(ImageExt oldImage, Term component, short index, Memory memory) {
+    public static Term makeImageExt(ImageExt oldImage, Term component, short index) {
         final ArrayList<Term> argList = oldImage.cloneComponents();
         final int oldIndex = oldImage.getRelationIndex();
         final Term relation = argList.get(oldIndex);
         argList.set(oldIndex, component);
         argList.set(index, relation);
-        return makeImageExt(argList, index, memory);
+        return makeImageExt(argList, index);
     }
 
     /**
@@ -592,10 +565,9 @@ public abstract class MakeTerm {
      * @param index    The index of the place-holder in the new Image
      * @return the Term generated from the arguments
      */
-    public static Term makeImageExt(ArrayList<Term> argument, short index, Memory memory) {
+    public static Term makeImageExt(ArrayList<Term> argument, short index) {
         final String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, index);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new ImageExt(name, argument, index);
+        return new ImageExt(name, argument, index);
     }
 
     /* ImageInt */
@@ -607,7 +579,7 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeImageInt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeImageInt(ArrayList<Term> argList) {
         if (argList.size() < 2)
             return null;
         final Term relation = argList.get(0);
@@ -621,7 +593,7 @@ public abstract class MakeTerm {
                 argument.add(argList.get(j));
             }
         }
-        return makeImageInt(argument, (short) index, memory);
+        return makeImageInt(argument, (short) index);
     }
 
     /**
@@ -634,7 +606,7 @@ public abstract class MakeTerm {
      * @param memory   Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeImageInt(Product product, Term relation, short index, Memory memory) {
+    public static Term makeImageInt(Product product, Term relation, short index) {
         if (relation instanceof Product) {
             final Product p2 = (Product) relation;
             if ((product.size() == 2) && (p2.size() == 2)) {
@@ -650,7 +622,7 @@ public abstract class MakeTerm {
         }
         final ArrayList<Term> argument = product.cloneComponents();
         argument.set(index, relation);
-        return makeImageInt(argument, index, memory);
+        return makeImageInt(argument, index);
     }
 
     /**
@@ -663,13 +635,13 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeImageInt(ImageInt oldImage, Term component, short index, Memory memory) {
+    public static Term makeImageInt(ImageInt oldImage, Term component, short index) {
         final ArrayList<Term> argList = oldImage.cloneComponents();
         final int oldIndex = oldImage.getRelationIndex();
         final Term relation = argList.get(oldIndex);
         argList.set(oldIndex, component);
         argList.set(index, relation);
-        return makeImageInt(argList, index, memory);
+        return makeImageInt(argList, index);
     }
 
     /**
@@ -681,10 +653,9 @@ public abstract class MakeTerm {
      * @param memory   Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeImageInt(ArrayList<Term> argument, short index, Memory memory) {
+    public static Term makeImageInt(ArrayList<Term> argument, short index) {
         final String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, index);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new ImageInt(name, argument, index);
+        return new ImageInt(name, argument, index);
     }
 
     /* Implication */
@@ -698,7 +669,7 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Implication makeImplication(Term subject, Term predicate, Memory memory) {
+    public static Implication makeImplication(Term subject, Term predicate) {
         if (subject == null || predicate == null)
             return null;
         if (subject instanceof Implication || subject instanceof Equivalence
@@ -706,17 +677,13 @@ public abstract class MakeTerm {
             return null;
         if (Implication.invalidStatement(subject, predicate))
             return null;
-        final String name = Implication.makeStatementName(subject, Symbols.IMPLICATION_RELATION, predicate);
-        final Term t = getFromNameOrNull(name, memory);
-        if (t != null)
-            return (Implication) t;
         if (predicate instanceof Implication) {
             final Term oldCondition = ((Implication) predicate).getSubject();
             if ((oldCondition instanceof Conjunction) && ((Conjunction) oldCondition).containComponent(subject)) {
                 return null;
             }
-            final Term newCondition = makeConjunction(subject, oldCondition, memory);
-            return makeImplication(newCondition, ((Implication) predicate).getPredicate(), memory);
+            final Term newCondition = makeConjunction(subject, oldCondition);
+            return makeImplication(newCondition, ((Implication) predicate).getPredicate());
         } else {
             final ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
             return new Implication(argument);
@@ -734,13 +701,9 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Inheritance makeInheritance(Term subject, Term predicate, Memory memory) {
+    public static Inheritance makeInheritance(Term subject, Term predicate) {
         if (Inheritance.invalidStatement(subject, predicate))
             return null;
-        final String name = Inheritance.makeStatementName(subject, Symbols.INHERITANCE_RELATION, predicate);
-        final Inheritance t = getFromNameOrNull(name, memory);
-        if (t != null)
-            return t;
         final ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
         return new Inheritance(argument);
     }
@@ -763,8 +726,8 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Statement makeInstance(Term subject, Term predicate, Memory memory) {
-        return makeInheritance(makeSetExt(subject, memory), predicate, memory);
+    public static Statement makeInstance(Term subject, Term predicate) {
+        return makeInheritance(makeSetExt(subject), predicate);
     }
 
     /*
@@ -786,8 +749,8 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Statement makeInstanceProperty(Term subject, Term predicate, Memory memory) {
-        return makeInheritance(makeSetExt(subject, memory), makeSetInt(predicate, memory), memory);
+    public static Statement makeInstanceProperty(Term subject, Term predicate) {
+        return makeInheritance(makeSetExt(subject), makeSetInt(predicate));
     }
 
     /* IntersectionExt */
@@ -801,17 +764,17 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeIntersectionExt(Term term1, Term term2, Memory memory) {
+    public static Term makeIntersectionExt(Term term1, Term term2) {
         final TreeSet<Term> set;
         if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
-            return makeSetInt(set, memory);
+            return makeSetInt(set);
         }
         if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
-            return makeSetExt(set, memory);
+            return makeSetExt(set);
         }
         if (term1 instanceof IntersectionExt) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
@@ -829,7 +792,7 @@ public abstract class MakeTerm {
             set.add(term1.clone());
             set.add(term2.clone());
         }
-        return makeIntersectionExt(set, memory);
+        return makeIntersectionExt(set);
     }
 
     /**
@@ -839,9 +802,9 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeIntersectionExt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeIntersectionExt(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeIntersectionExt(set, memory);
+        return makeIntersectionExt(set);
     }
 
     /**
@@ -852,14 +815,12 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeIntersectionExt(TreeSet<Term> set, Memory memory) {
+    public static Term makeIntersectionExt(TreeSet<Term> set) {
         if (set.size() == 1) {
             return set.first();
         } // special case: single component
         final ArrayList<Term> argument = new ArrayList<Term>(set);
-        final String name = CompoundTerm.makeCompoundName(Symbols.INTERSECTION_EXT_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new IntersectionExt(argument);
+        return new IntersectionExt(argument);
     }
 
     /* IntersectionInt */
@@ -872,17 +833,17 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeIntersectionInt(Term term1, Term term2, Memory memory) {
+    public static Term makeIntersectionInt(Term term1, Term term2) {
         final TreeSet<Term> set;
         if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
-            return makeSetExt(set, memory);
+            return makeSetExt(set);
         }
         if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
             set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
-            return makeSetInt(set, memory);
+            return makeSetInt(set);
         }
         if (term1 instanceof IntersectionInt) {
             set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
@@ -900,7 +861,7 @@ public abstract class MakeTerm {
             set.add(term1.clone());
             set.add(term2.clone());
         }
-        return makeIntersectionInt(set, memory);
+        return makeIntersectionInt(set);
     }
 
     /**
@@ -910,9 +871,9 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeIntersectionInt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeIntersectionInt(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeIntersectionInt(set, memory);
+        return makeIntersectionInt(set);
     }
 
     /**
@@ -923,14 +884,12 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeIntersectionInt(TreeSet<Term> set, Memory memory) {
+    public static Term makeIntersectionInt(TreeSet<Term> set) {
         if (set.size() == 1) {
             return set.first();
         } // special case: single component
         final ArrayList<Term> argument = new ArrayList<Term>(set);
-        final String name = CompoundTerm.makeCompoundName(Symbols.INTERSECTION_INT_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new IntersectionInt(argument);
+        return new IntersectionInt(argument);
     }
 
     /* Negation */
@@ -942,13 +901,13 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeNegation(Term t, Memory memory) {
+    public static Term makeNegation(Term t) {
         if (t instanceof Negation) {
             return ((CompoundTerm) t).cloneComponents().get(0);
         } // (--,(--,P)) = P
         final ArrayList<Term> argument = new ArrayList<>();
         argument.add(t);
-        return makeNegation(argument, memory);
+        return makeNegation(argument);
     }
 
     /**
@@ -958,13 +917,11 @@ public abstract class MakeTerm {
      * @param argument The list of components
      * @param memory   Reference to the memory
      */
-    public static Term makeNegation(ArrayList<Term> argument, Memory memory) {
+    public static Term makeNegation(ArrayList<Term> argument) {
         if (argument.size() != 1) {
             return null;
         }
-        final String name = CompoundTerm.makeCompoundName(Symbols.NEGATION_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new Negation(argument);
+        return new Negation(argument);
     }
 
     /* Product */
@@ -976,10 +933,8 @@ public abstract class MakeTerm {
      * @param argument The list of components
      * @param memory   Reference to the memory
      */
-    public static Term makeProduct(ArrayList<Term> argument, Memory memory) {
-        final String name = CompoundTerm.makeCompoundName(Symbols.PRODUCT_OPERATOR, argument);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new Product(argument);
+    public static Term makeProduct(ArrayList<Term> argument) {
+        return new Product(argument);
     }
 
     /**
@@ -993,10 +948,10 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeProduct(CompoundTerm image, Term component, int index, Memory memory) {
+    public static Term makeProduct(CompoundTerm image, Term component, int index) {
         final ArrayList<Term> argument = image.cloneComponents();
         argument.set(index, component);
-        return makeProduct(argument, memory);
+        return makeProduct(argument);
     }
 
     /*
@@ -1016,8 +971,8 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Inheritance makeProperty(Term subject, Term predicate, Memory memory) {
-        return makeInheritance(subject, makeSetInt(predicate, memory), memory);
+    public static Inheritance makeProperty(Term subject, Term predicate) {
+        return makeInheritance(subject, makeSetInt(predicate));
     }
 
     /* SetExt */
@@ -1029,10 +984,10 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeSetExt(Term t, Memory memory) {
+    public static Term makeSetExt(Term t) {
         final TreeSet<Term> set = new TreeSet<Term>();
         set.add(t);
-        return makeSetExt(set, memory);
+        return makeSetExt(set);
     }
 
     /**
@@ -1042,9 +997,9 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeSetExt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeSetExt(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeSetExt(set, memory);
+        return makeSetExt(set);
     }
 
     /**
@@ -1055,14 +1010,12 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeSetExt(TreeSet<Term> set, Memory memory) {
+    public static Term makeSetExt(TreeSet<Term> set) {
         if (set.isEmpty()) {
             return null;
         }
         final ArrayList<Term> argument = new ArrayList<Term>(set);
-        final String name = CompoundTerm.makeSetName(Symbols.SET_EXT_OPENER, argument, Symbols.SET_EXT_CLOSER);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new SetExt(argument);
+        return new SetExt(argument);
     }
 
     /* SetInt */
@@ -1074,10 +1027,10 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeSetInt(Term t, Memory memory) {
+    public static Term makeSetInt(Term t) {
         final TreeSet<Term> set = new TreeSet<Term>();
         set.add(t);
-        return makeSetInt(set, memory);
+        return makeSetInt(set);
     }
 
     /**
@@ -1087,9 +1040,9 @@ public abstract class MakeTerm {
      * @param argList The list of components
      * @param memory  Reference to the memory
      */
-    public static Term makeSetInt(ArrayList<Term> argList, Memory memory) {
+    public static Term makeSetInt(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeSetInt(set, memory);
+        return makeSetInt(set);
     }
 
     /**
@@ -1100,14 +1053,12 @@ public abstract class MakeTerm {
      * @param memory Reference to the memory
      * @return the Term generated from the arguments
      */
-    public static Term makeSetInt(TreeSet<Term> set, Memory memory) {
+    public static Term makeSetInt(TreeSet<Term> set) {
         if (set.isEmpty()) {
             return null;
         }
         final ArrayList<Term> argument = new ArrayList<Term>(set);
-        final String name = CompoundTerm.makeSetName(Symbols.SET_INT_OPENER, argument, Symbols.SET_INT_CLOSER);
-        final Term t = getFromNameOrNull(name, memory);
-        return (t != null) ? t : new SetInt(argument);
+        return new SetInt(argument);
     }
 
     /* Similarity */
@@ -1121,17 +1072,12 @@ public abstract class MakeTerm {
      * @param memory    Reference to the memory
      * @return A compound generated or null
      */
-    public static Similarity makeSimilarity(Term subject, Term predicate, Memory memory) {
+    public static Similarity makeSimilarity(Term subject, Term predicate) {
         if (Similarity.invalidStatement(subject, predicate)) {
             return null;
         }
         if (subject.compareTo(predicate) > 0) {
-            return makeSimilarity(predicate, subject, memory);
-        }
-        final String name = Similarity.makeStatementName(subject, Symbols.SIMILARITY_RELATION, predicate);
-        final Term t = getFromNameOrNull(name, memory);
-        if (t != null) {
-            return (Similarity) t;
+            return makeSimilarity(predicate, subject);
         }
         final ArrayList<Term> argument = CompoundTerm.argumentsToList(subject, predicate);
         return new Similarity(argument);

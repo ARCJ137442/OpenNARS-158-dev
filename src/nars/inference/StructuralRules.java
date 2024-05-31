@@ -46,12 +46,12 @@ public final class StructuralRules {
             if (components.contains(sub)) {
                 sub = compound;
                 components.set(index, pred);
-                pred = makeCompoundTerm(compound, components, context.getMemory());
+                pred = makeCompoundTerm(compound, components);
             }
         } else {
             if (components.contains(pred)) {
                 components.set(index, sub);
-                sub = makeCompoundTerm(compound, components, context.getMemory());
+                sub = makeCompoundTerm(compound, components);
                 pred = compound;
             }
         }
@@ -60,9 +60,9 @@ public final class StructuralRules {
         }
         final Term content;
         if (switchOrder(compound, index)) {
-            content = makeStatement(statement, pred, sub, context.getMemory());
+            content = makeStatement(statement, pred, sub);
         } else {
-            content = makeStatement(statement, sub, pred, context.getMemory());
+            content = makeStatement(statement, sub, pred);
         }
         if (content == null) {
             return;
@@ -107,9 +107,9 @@ public final class StructuralRules {
         final Term t2 = pre.componentAt(index);
         final Term content;
         if (switchOrder(sub, (short) index)) {
-            content = makeStatement(statement, t2, t1, context.getMemory());
+            content = makeStatement(statement, t2, t1);
         } else {
-            content = makeStatement(statement, t1, t2, context.getMemory());
+            content = makeStatement(statement, t1, t2);
         }
         if (content == null) {
             return;
@@ -216,7 +216,7 @@ public final class StructuralRules {
             if (compound instanceof IntersectionInt) {
                 structuralStatement(component, pred, truthDed, context);
             } else if ((compound instanceof SetExt) && (compound.size() > 1)) {
-                structuralStatement(makeSetExt(component, context.getMemory()), pred, truthDed, context);
+                structuralStatement(makeSetExt(component), pred, truthDed, context);
             } else if (compound instanceof DifferenceInt) {
                 if (index == 0) {
                     structuralStatement(component, pred, truthDed, context);
@@ -228,7 +228,7 @@ public final class StructuralRules {
             if (compound instanceof IntersectionExt) {
                 structuralStatement(subj, component, truthDed, context);
             } else if ((compound instanceof SetInt) && (compound.size() > 1)) {
-                structuralStatement(subj, makeSetInt(component, context.getMemory()), truthDed, context);
+                structuralStatement(subj, makeSetInt(component), truthDed, context);
             } else if (compound instanceof DifferenceExt) {
                 if (index == 0) {
                     structuralStatement(subj, component, truthDed, context);
@@ -252,7 +252,7 @@ public final class StructuralRules {
         final Task task = context.getCurrentTask();
         final Term oldContent = task.getContent();
         if (oldContent instanceof Statement) {
-            final Term content = makeStatement((Statement) oldContent, subject, predicate, context.getMemory());
+            final Term content = makeStatement((Statement) oldContent, subject, predicate);
             if (content != null) {
                 final BudgetValue budget = BudgetFunctions.compoundForward(truth, content, context);
                 context.singlePremiseTask(content, truth, budget);
@@ -283,12 +283,12 @@ public final class StructuralRules {
         final Term pre = statement.getPredicate();
         final Term content;
         if (statement instanceof Inheritance) {
-            content = makeSimilarity(sub, pre, context.getMemory());
+            content = makeSimilarity(sub, pre);
         } else {
             if (((compound instanceof SetExt) && (side == 0)) || ((compound instanceof SetInt) && (side == 1))) {
-                content = makeInheritance(pre, sub, context.getMemory());
+                content = makeInheritance(pre, sub);
             } else {
-                content = makeInheritance(sub, pre, context.getMemory());
+                content = makeInheritance(sub, pre);
             }
         }
         if (content == null) {
@@ -374,9 +374,8 @@ public final class StructuralRules {
     static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
-        final Term content = makeStatement(statement, makeNegation(pred, context.getMemory()),
-                makeNegation(subj, context.getMemory()),
-                context.getMemory());
+        final Term content = makeStatement(statement, makeNegation(pred),
+                makeNegation(subj));
         TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
