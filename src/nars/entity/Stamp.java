@@ -31,16 +31,6 @@ public class Stamp implements Cloneable {
     private final long[] evidentialBase;
 
     /**
-     * evidentialBase baseLength
-     * * 📌证据基的长度，构造时计算并锁定
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：不变 | 仅构造时，无需可变
-     * * 📝所有权：具所有权
-     */
-    private final int baseLength;
-
-    /**
      * creation time of the stamp
      * * 📌时间戳的「创建时间」，仅用作非逻辑性标识
      * * 🚩在「任务」中用作「合并预算值」的顺序依据
@@ -59,7 +49,6 @@ public class Stamp implements Cloneable {
      */
     private Stamp(final long[] evidentialBase, final long creationTime) {
         this.evidentialBase = evidentialBase;
-        this.baseLength = evidentialBase.length;
         this.creationTime = creationTime;
     }
 
@@ -206,12 +195,12 @@ public class Stamp implements Cloneable {
 
     /**
      * Return the baseLength of the evidentialBase
-     * * 🚩返回缓存的「证据基长度」
+     * * 🚩返回「证据基」的实际长度
      *
      * @return Length of the Stamp
      */
     public int length() {
-        return this.baseLength;
+        return this.evidentialBase.length;
     }
 
     /**
@@ -286,9 +275,9 @@ public class Stamp implements Cloneable {
                 .append(" ")
                 .append(Symbols.STAMP_STARTER)
                 .append(" ");
-        for (int i = 0; i < this.baseLength; i++) {
+        for (int i = 0; i < this.length(); i++) {
             buffer.append(Long.toString(this.evidentialBase[i]));
-            if (i < baseLength - 1)
+            if (i < this.length() - 1)
                 buffer.append(Symbols.STAMP_SEPARATOR);
             else
                 buffer.append(Symbols.STAMP_CLOSER).append(" ");
