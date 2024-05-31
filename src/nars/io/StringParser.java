@@ -80,8 +80,7 @@ public abstract class StringParser extends Symbols {
      * @return An experienced task
      */
     private static Task parseTask(String s, Memory memory, long time) {
-        StringBuffer buffer = new StringBuffer(s);
-        Task task = null;
+        final StringBuffer buffer = new StringBuffer(s);
         try {
             final String budgetString = getBudgetString(buffer);
             final String truthString = getTruthString(buffer);
@@ -90,17 +89,17 @@ public abstract class StringParser extends Symbols {
             final char punctuation = str.charAt(last);
             final Stamp stamp = new Stamp(memory.updateStampCurrentSerial(), time);
             final TruthValue truth = parseTruth(truthString, punctuation);
-            final Term content = parseTerm(str.substring(0, last), memory);
+            final Term content = parseTerm(str.substring(0, last));
             final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content.getName()));
             final Sentence sentence = new Sentence(content, punctuation, truth, stamp, revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
-            task = new Task(sentence, budget);
-        } catch (InvalidInputException e) {
+            return new Task(sentence, budget);
+        } catch (final InvalidInputException e) {
             final String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
             System.out.println(message);
             // showWarning(message);
+            return null;
         }
-        return task;
     }
 
     /* ---------- parse values ---------- */
@@ -238,41 +237,37 @@ public abstract class StringParser extends Symbols {
      * @param memory Reference to the memory
      * @return the Term generated from the String
      */
-    private static Term parseTerm(String s0, Memory memory) {
-        String s = s0.trim();
+    private static Term parseTerm(String s0) {
+        final String s = s0.trim();
         try {
             if (s.length() == 0) {
                 throw new InvalidInputException("missing content");
             }
-            Term t = memory.nameToListedTerm(s); // existing constant or operator
-            if (t != null) {
-                return t;
-            } // existing Term
-            int index = s.length() - 1;
-            char first = s.charAt(0);
-            char last = s.charAt(index);
+            final int index = s.length() - 1;
+            final char first = s.charAt(0);
+            final char last = s.charAt(index);
             switch (first) {
                 case COMPOUND_TERM_OPENER:
                     if (last == COMPOUND_TERM_CLOSER) {
-                        return parseCompoundTerm(s.substring(1, index), memory);
+                        return parseCompoundTerm(s.substring(1, index));
                     } else {
                         throw new InvalidInputException("missing CompoundTerm closer");
                     }
                 case SET_EXT_OPENER:
                     if (last == SET_EXT_CLOSER) {
-                        return makeSetExt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory));
+                        return makeSetExt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR));
                     } else {
                         throw new InvalidInputException("missing ExtensionSet closer");
                     }
                 case SET_INT_OPENER:
                     if (last == SET_INT_CLOSER) {
-                        return makeSetInt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR, memory));
+                        return makeSetInt(parseArguments(s.substring(1, index) + ARGUMENT_SEPARATOR));
                     } else {
                         throw new InvalidInputException("missing IntensionSet closer");
                     }
                 case STATEMENT_OPENER:
                     if (last == STATEMENT_CLOSER) {
-                        return parseStatement(s.substring(1, index), memory);
+                        return parseStatement(s.substring(1, index));
                     } else {
                         throw new InvalidInputException("missing Statement closer");
                     }
@@ -326,15 +321,15 @@ public abstract class StringParser extends Symbols {
      * @throws nars.io.StringParser.InvalidInputException the String cannot be
      *                                                    parsed into a Term
      */
-    private static Statement parseStatement(String s0, Memory memory) throws InvalidInputException {
+    private static Statement parseStatement(String s0) throws InvalidInputException {
         String s = s0.trim();
         int i = topRelation(s);
         if (i < 0) {
             throw new InvalidInputException("invalid statement");
         }
         String relation = s.substring(i, i + 3);
-        Term subject = parseTerm(s.substring(0, i), memory);
-        Term predicate = parseTerm(s.substring(i + 3), memory);
+        Term subject = parseTerm(s.substring(0, i));
+        Term predicate = parseTerm(s.substring(i + 3));
         Statement t = makeStatement(relation, subject, predicate);
         if (t == null) {
             throw new InvalidInputException("invalid statement");
@@ -350,14 +345,14 @@ public abstract class StringParser extends Symbols {
      * @throws nars.io.StringParser.InvalidInputException the String cannot be
      *                                                    parsed into a Term
      */
-    private static Term parseCompoundTerm(String s0, Memory memory) throws InvalidInputException {
+    private static Term parseCompoundTerm(String s0) throws InvalidInputException {
         String s = s0.trim();
         int firstSeparator = s.indexOf(ARGUMENT_SEPARATOR);
         String op = s.substring(0, firstSeparator).trim();
         if (!CompoundTerm.isOperator(op)) {
             throw new InvalidInputException("unknown operator: " + op);
         }
-        ArrayList<Term> arg = parseArguments(s.substring(firstSeparator + 1) + ARGUMENT_SEPARATOR, memory);
+        ArrayList<Term> arg = parseArguments(s.substring(firstSeparator + 1) + ARGUMENT_SEPARATOR);
         Term t = makeCompoundTerm(op, arg);
         if (t == null) {
             throw new InvalidInputException("invalid compound term");
@@ -374,7 +369,7 @@ public abstract class StringParser extends Symbols {
      *                                                    parsed into an argument
      *                                                    get
      */
-    private static ArrayList<Term> parseArguments(String s0, Memory memory) throws InvalidInputException {
+    private static ArrayList<Term> parseArguments(String s0) throws InvalidInputException {
         String s = s0.trim();
         ArrayList<Term> list = new ArrayList<>();
         int start = 0;
@@ -382,7 +377,7 @@ public abstract class StringParser extends Symbols {
         Term t;
         while (end < s.length() - 1) {
             end = nextSeparator(s, start);
-            t = parseTerm(s.substring(start, end), memory); // recursive call
+            t = parseTerm(s.substring(start, end)); // recursive call
             list.add(t);
             start = end + 1;
         }
