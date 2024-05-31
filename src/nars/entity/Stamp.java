@@ -29,6 +29,7 @@ public class Stamp implements Cloneable {
      * * 📝所有权：具所有权
      */
     private final long[] evidentialBase;
+
     /**
      * evidentialBase baseLength
      * * 📌证据基的长度，构造时计算并锁定
@@ -38,6 +39,7 @@ public class Stamp implements Cloneable {
      * * 📝所有权：具所有权
      */
     private final int baseLength;
+
     /**
      * creation time of the stamp
      * * 📌时间戳的「创建时间」，仅用作非逻辑性标识
@@ -50,15 +52,24 @@ public class Stamp implements Cloneable {
     private final long creationTime;
 
     /**
+     * 🆕完全参数的构造函数
+     *
+     * @param evidentialBase
+     * @param creationTime
+     */
+    private Stamp(final long[] evidentialBase, final long creationTime) {
+        this.evidentialBase = evidentialBase;
+        this.baseLength = evidentialBase.length;
+        this.creationTime = creationTime;
+    }
+
+    /**
      * Generate a new stamp, with a new serial number, for a new Task
      *
      * @param time Creation time of the stamp
      */
     public Stamp(final long currentSerial, final long time) {
-        baseLength = 1;
-        evidentialBase = new long[baseLength];
-        evidentialBase[0] = currentSerial;
-        creationTime = time;
+        this(new long[] { currentSerial }, time);
     }
 
     /**
@@ -66,10 +77,8 @@ public class Stamp implements Cloneable {
      *
      * @param old The stamp to be cloned
      */
-    private Stamp(Stamp old) {
-        baseLength = old.length();
-        evidentialBase = old.getBase();
-        creationTime = old.getCreationTime();
+    private Stamp(final Stamp old) {
+        this(old.evidentialBase, old.creationTime);
     }
 
     /**
@@ -81,38 +90,73 @@ public class Stamp implements Cloneable {
      * @param old  The stamp of the single premise
      * @param time The current time
      */
-    public Stamp(Stamp old, long time) {
-        baseLength = old.length();
-        evidentialBase = old.getBase();
-        creationTime = time;
+    public Stamp(final Stamp old, final long time) {
+        this(old.evidentialBase, time);
     }
 
     /**
      * Generate a new stamp for derived sentence by merging the two from parents
-     * the first one is no shorter than the second
+     * // the first one is no shorter than the second
+     * * 📌逻辑：不经检查的合并
+     * * 🚩会按照顺序合并「时间戳」的证据基
+     * * 🚩【2024-05-31 09:41:36】现在只在「具体合并证据基」时判断长度，此处无需再判断长度
      *
-     * @param first  The first Stamp
-     * @param second The second Stamp
+     * @param parent1 The first Stamp
+     * @param parent2 The second Stamp
      */
-    private Stamp(Stamp first, Stamp second, long time) {
+    public static Stamp uncheckedMerge(final Stamp parent1, final Stamp parent2, final long time) {
+        return new Stamp(
+                // * 🚩合并的证据基，拥有新的长度和「父母证据基」各自的成员
+                mergedEvidentialBase(parent1.evidentialBase, parent2.evidentialBase),
+                // * 🚩新的「创建时间」
+                time);
+    }
+
+    /**
+     * 🆕提取出的「合并证据基」方法
+     * * ⚠️要求：第一个证据基不短于第二个证据基
+     * * 🚩使用「拉链式合并」的方式解决："1-2-1-2-1-1-1……"
+     * * 📌【2024-05-31 09:34:20】此处先派发长度，以兼容「自动计算长度」并避免「重复计算」（Java「构造前不能有代码」的缺陷）
+     *
+     * @param base1
+     * @param base2
+     * @param baseLength
+     * @return
+     */
+    private static final long[] mergedEvidentialBase(final long[] base1, final long[] base2) {
+        // * 🚩计算新证据基长度：默认长度相加，一定长度后截断
+        final int baseLength = Math.min( // * 📝一定程度上允许重复推理：在证据复杂时遗漏一定数据
+                base1.length + base2.length,
+                Parameters.MAXIMUM_STAMP_LENGTH);
+        // * 🚩计算长短证据基
+        final long[] longer, shorter;
+        if (base1.length > base2.length) {
+            longer = base1;
+            shorter = base2;
+        } else {
+            longer = base2;
+            shorter = base1;
+        }
+        // * 🚩开始构造并填充数据：拉链式填充，1-2-1-2……
         int i1, i2, j;
         i1 = i2 = j = 0;
-        baseLength = Math.min(first.length() + second.length(), Parameters.MAXIMUM_STAMP_LENGTH);
-        evidentialBase = new long[baseLength];
-        while (i2 < second.length() && j < baseLength) {
-            evidentialBase[j] = first.get(i1);
+        final long[] evidentialBase = new long[baseLength];
+        while (i2 < shorter.length && j < baseLength) {
+            evidentialBase[j] = longer[i1];
             i1++;
             j++;
-            evidentialBase[j] = second.get(i2);
+            evidentialBase[j] = shorter[i2];
             i2++;
             j++;
         }
-        while (i1 < first.length() && j < baseLength) {
-            evidentialBase[j] = first.get(i1);
+        // * 🚩2的长度比1小，所以此后随1填充
+        while (i1 < longer.length && j < baseLength) {
+            evidentialBase[j] = longer[i1];
             i1++;
             j++;
         }
-        creationTime = time;
+        // * 🚩返回构造好的新证据基
+        return evidentialBase;
     }
 
     /**
@@ -125,40 +169,29 @@ public class Stamp implements Cloneable {
      * @param time   The new creation time
      * @return The merged Stamp, or null
      */
-    public static Stamp make(Stamp first, Stamp second, long time) {
+    public static Stamp make(final Stamp first, final Stamp second, final long time) {
         return haveOverlap(first, second)
-            ? null
-            : uncheckedMerge(first, second, time);
+                ? null
+                : uncheckedMerge(first, second, time);
     }
 
     /**
      * 🆕独立出逻辑：时间戳是否不可合并
      * * 📝语义：是否不可修正 / 证据基是否重叠
-     * * 🚩判断其证据基是否有相同证据
+     * * 🚩判断其证据基是否有相同证据（重叠）
      *
      * @param first  待合并的Stamp
      * @param second 待合并的Stamp
      * @return 是否可合并
      */
-    public static boolean haveOverlap(Stamp first, Stamp second) {
-        for (int i = 0; i < first.length(); i++) {
-            for (int j = 0; j < second.length(); j++) {
-                if (first.get(i) == second.get(j)) {
+    public static boolean haveOverlap(final Stamp first, final Stamp second) {
+        for (final long serial1 : first.evidentialBase) {
+            for (final long serial2 : second.evidentialBase) {
+                if (serial1 == serial2)
                     return true;
-                }
             }
         }
         return false;
-    }
-
-    /**
-     * 🆕独立出逻辑：不经检查的合并
-     * * 🚩会按照顺序合并「时间戳」的证据基
-     */
-    public static Stamp uncheckedMerge(Stamp first, Stamp second, long time) {
-        return first.length() > second.length()
-            ? new Stamp(first, second, time)
-            : new Stamp(second, first, time);
     }
 
     /**
@@ -173,11 +206,12 @@ public class Stamp implements Cloneable {
 
     /**
      * Return the baseLength of the evidentialBase
+     * * 🚩返回缓存的「证据基长度」
      *
      * @return Length of the Stamp
      */
     public int length() {
-        return baseLength;
+        return this.baseLength;
     }
 
     /**
@@ -186,17 +220,8 @@ public class Stamp implements Cloneable {
      * @param i The index
      * @return The number at the index
      */
-    public long get(int i) {
-        return evidentialBase[i];
-    }
-
-    /**
-     * Get the evidentialBase, called in this class only
-     *
-     * @return The evidentialBase of numbers
-     */
-    private long[] getBase() {
-        return evidentialBase;
+    public long get(final int i) {
+        return this.evidentialBase[i];
     }
 
     /**
@@ -205,9 +230,9 @@ public class Stamp implements Cloneable {
      * @return The TreeSet representation of the evidential base
      */
     private TreeSet<Long> toSet() {
-        TreeSet<Long> set = new TreeSet<>();
-        for (int i = 0; i < baseLength; i++) {
-            set.add(evidentialBase[i]);
+        final TreeSet<Long> set = new TreeSet<>();
+        for (final long serial : evidentialBase) {
+            set.add(serial);
         }
         return set;
     }
@@ -219,11 +244,11 @@ public class Stamp implements Cloneable {
      * @return Whether the two have contain the same elements
      */
     @Override
-    public boolean equals(Object that) {
+    public boolean equals(final Object that) {
         if (!(that instanceof Stamp)) {
             return false;
         }
-        final TreeSet<Long> set1 = toSet();
+        final TreeSet<Long> set1 = this.toSet();
         final TreeSet<Long> set2 = ((Stamp) that).toSet();
         return (set1.containsAll(set2) && set2.containsAll(set1));
     }
@@ -244,7 +269,7 @@ public class Stamp implements Cloneable {
      * @return The creation time
      */
     public long getCreationTime() {
-        return creationTime;
+        return this.creationTime;
     }
 
     /**
@@ -255,15 +280,18 @@ public class Stamp implements Cloneable {
      */
     @Override
     public String toString() {
-        StringBuilder buffer = new StringBuilder(" " + Symbols.STAMP_OPENER + creationTime);
-        buffer.append(" ").append(Symbols.STAMP_STARTER).append(" ");
-        for (int i = 0; i < baseLength; i++) {
-            buffer.append(Long.toString(evidentialBase[i]));
-            if (i < (baseLength - 1)) {
+        final StringBuilder buffer = new StringBuilder(" ")
+                .append(Symbols.STAMP_OPENER)
+                .append(this.creationTime)
+                .append(" ")
+                .append(Symbols.STAMP_STARTER)
+                .append(" ");
+        for (int i = 0; i < this.baseLength; i++) {
+            buffer.append(Long.toString(this.evidentialBase[i]));
+            if (i < baseLength - 1)
                 buffer.append(Symbols.STAMP_SEPARATOR);
-            } else {
+            else
                 buffer.append(Symbols.STAMP_CLOSER).append(" ");
-            }
         }
         return buffer.toString();
     }
