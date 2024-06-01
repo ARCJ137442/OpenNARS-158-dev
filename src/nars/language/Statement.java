@@ -20,12 +20,6 @@ public abstract class Statement extends CompoundTerm {
     }
 
     /**
-     * Default constructor
-     */
-    protected Statement() {
-    }
-
-    /**
      * Constructor with full values, called by clone
      *
      * @param n   The nameStr of the term
@@ -44,7 +38,7 @@ public abstract class Statement extends CompoundTerm {
      * @return if the given String is a relation symbol
      */
     public static boolean isRelation(String s0) {
-        String s = s0.trim();
+        final String s = s0.trim();
         if (s.length() != 3) {
             return false;
         }
@@ -77,7 +71,7 @@ public abstract class Statement extends CompoundTerm {
      * @return The nameStr of the term
      */
     public static String makeStatementName(Term subject, String relation, Term predicate) {
-        StringBuilder nameStr = new StringBuilder();
+        final StringBuilder nameStr = new StringBuilder();
         nameStr.append(Symbols.STATEMENT_OPENER);
         nameStr.append(subject.getName());
         nameStr.append(' ').append(relation).append(' ');
@@ -104,12 +98,12 @@ public abstract class Statement extends CompoundTerm {
             return true;
         }
         if ((subject instanceof Statement) && (predicate instanceof Statement)) {
-            Statement s1 = (Statement) subject;
-            Statement s2 = (Statement) predicate;
-            Term t11 = s1.getSubject();
-            Term t12 = s1.getPredicate();
-            Term t21 = s2.getSubject();
-            Term t22 = s2.getPredicate();
+            final Statement s1 = (Statement) subject;
+            final Statement s2 = (Statement) predicate;
+            final Term t11 = s1.getSubject();
+            final Term t12 = s1.getPredicate();
+            final Term t21 = s2.getSubject();
+            final Term t22 = s2.getPredicate();
             if (t11.equals(t22) && t12.equals(t21)) {
                 return true;
             }
@@ -130,7 +124,7 @@ public abstract class Statement extends CompoundTerm {
         if (!(t1 instanceof CompoundTerm)) {
             return false;
         }
-        CompoundTerm com = (CompoundTerm) t1;
+        final CompoundTerm com = (CompoundTerm) t1;
         if ((com instanceof ImageExt) || (com instanceof ImageInt)) {
             return false;
         }

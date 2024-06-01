@@ -1,5 +1,7 @@
 package nars.language;
 
+import nars.io.Symbols;
+
 /**
  * Term is the basic component of Narsese, and the object of processing in NARS.
  * <p>
@@ -17,6 +19,7 @@ public class Term implements Cloneable, Comparable<Term> {
 
     /**
      * Default constructor that build an internal Term
+     * * 📌【2024-06-01 11:52:19】目前还不能移除：在「复合词项」中需要「构造后获取连接词」因此（暂时）需要空的名称
      */
     protected Term() {
     }
@@ -84,6 +87,18 @@ public class Term implements Cloneable, Comparable<Term> {
      * Blank method to be override in CompoundTerm
      */
     public void renameVariables() {
+        throw new Error("Method is unimplemented!");
+    }
+
+    /**
+     * 🆕是否为占位符
+     * * 🚩判断自身名称是否以"_"开头
+     * * 📝从「构造词项MakeTerm」抽象而来
+     *
+     * @return
+     */
+    public boolean isPlaceholder() {
+        return this.getName().charAt(0) == Symbols.IMAGE_PLACE_HOLDER;
     }
 
     /**

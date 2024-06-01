@@ -30,6 +30,7 @@ public abstract class CompoundTerm extends Term {
     /* ----- abstract methods to be implemented in subclasses ----- */
     /**
      * Abstract method to get the operator of the compound
+     * * ❌【2024-06-01 11:34:39】不能改为静态方法：不允许静态抽象方法，并且此类中调用只会指向该方法（即便用「未实现错误」）
      *
      * @return The operator in a String
      */
@@ -57,12 +58,6 @@ public abstract class CompoundTerm extends Term {
         this.components = components;
         this.isConstant = isConstant;
         this.complexity = complexity;
-    }
-
-    /**
-     * Default constructor
-     */
-    protected CompoundTerm() {
     }
 
     /**
@@ -173,20 +168,6 @@ public abstract class CompoundTerm extends Term {
                     || s.equals(Symbols.CONJUNCTION_OPERATOR));
         }
         return false;
-    }
-
-    /**
-     * build a component list from two terms
-     *
-     * @param t1 the first component
-     * @param t2 the second component
-     * @return the component list
-     */
-    public static ArrayList<Term> argumentsToList(Term t1, Term t2) {
-        ArrayList<Term> list = new ArrayList<>(2);
-        list.add(t1);
-        list.add(t2);
-        return list;
     }
 
     /* ----- utilities for oldName ----- */
