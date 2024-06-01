@@ -8,46 +8,67 @@ package nars.entity;
  */
 public interface Item {
 
-    // TODO: 通过interface的默认方法实现，允许将Item变为接口
-    // /**
-    // * The key of the Item, unique in a Bag
-    // * * ❓TODO: 后续可以放入「袋」中，使用「Key → Item(T, Budget)」的结构将「预算值」完全合并入「袋」中
-    // *
-    // * * ️📝可空性：可空 | 仅「词项链模板」
-    // * * 📝可变性：不变 | 仅构造时，无需可变
-    // * * 📝所有权：具所有权
-    // */
-    // protected final String key;
-    // /**
-    // * The budget of the Item, consisting of 3 numbers
-    // * * 📝仅用于各预算值函数，以及在「袋」中的选取（优先级）
-    // *
-    // * * ️📝可空性：非空
-    // * * 📝可变性：不变 | 仅构造时，无需可变
-    // * * 📝所有权：始终具所有权
-    // */
-    // protected final BudgetValue budget;
+    /**
+     * 🆕一个基于「复合」而非「继承」的{@link Item}默认实现
+     * * 🚩使用`final`强制使用复合手段（而非继承）
+     */
+    public static final class Token implements Item {
 
-    // /**
-    // * Constructor with default budget
-    // *
-    // * @param key The key value
-    // */
-    // protected Item(String key) {
-    // this.key = key;
-    // this.budget = new BudgetValue();
-    // }
+        /**
+         * The key of the Item, unique in a Bag
+         * * ❓TODO: 后续可以放入「袋」中，使用「Key → Item(T, Budget)」的结构将「预算值」完全合并入「袋」中
+         *
+         * * ️📝可空性：可空 | 仅「词项链模板」
+         * * 📝可变性：不变 | 仅构造时，无需可变
+         * * 📝所有权：具所有权
+         */
+        private final String key;
+        /**
+         * The budget of the Item, consisting of 3 numbers
+         * * 📝仅用于各预算值函数，以及在「袋」中的选取（优先级）
+         *
+         * * ️📝可空性：非空
+         * * 📝可变性：不变 | 仅构造时，无需可变
+         * * 📝所有权：始终具所有权
+         */
+        private final BudgetValue budget;
 
-    // /**
-    // * Constructor with initial budget
-    // *
-    // * @param key The key value
-    // * @param budget The initial budget
-    // */
-    // protected Item(String key, BudgetValue budget) {
-    // this.key = key;
-    // this.budget = new BudgetValue(budget); // clone, not assignment
-    // }
+        /**
+         * Constructor with default budget
+         *
+         * @param key The key value
+         */
+        public Token(final String key) {
+            this.key = key;
+            this.budget = new BudgetValue();
+        }
+
+        /**
+         * Constructor with initial budget
+         *
+         * @param key    The key value
+         * @param budget The initial budget
+         */
+        public Token(final String key, final BudgetValue budget) {
+            this.key = key;
+            this.budget = new BudgetValue(budget); // clone, not assignment
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public BudgetValue getBudget() {
+            return budget;
+        }
+
+        @Override
+        public String toString() {
+            return getBudget() + " " + getKey();
+        }
+    }
 
     /**
      * Get the current key
@@ -172,32 +193,25 @@ public interface Item {
 
     /**
      * Return a String representation of the Item
+     * 
+     * ! ❌无法覆盖{@link Object#toString}：A default method cannot override a method from
+     * java.lang.Object Java(67109915)
      *
      * @return The String representation of the full content
      */
-    public String toString();/*
-                              * {
-                              * return getBudget() + " " + getKey();
-                              * }
-                              */
+    public String toString();
 
     /**
      * Return a String representation of the Item after simplification
      *
      * @return A simplified String representation of the content
      */
-    public String toStringBrief();/*
-                                   * 
-                                   * {
-                                   * return budget.toStringBrief() + " " + key;
-                                   * }
-                                   */
+    public default String toStringBrief() {
+        return getBudget().toStringBrief() + " " + getKey();
+    }
 
-    public String toStringLong();/*
-                                  * 
-                                  * {
-                                  * return toString();
-                                  * }
-                                  */
+    public default String toStringLong() {
+        return toString();
+    }
 
 }

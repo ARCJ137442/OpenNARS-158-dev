@@ -22,7 +22,22 @@ import nars.storage.TermLinkBag;
  * concept are those in a ConceptBag. All other access go through the Term that
  * names the concept.
  */
-public final class Concept extends Item {
+public final class Concept implements Item {
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    @Override
+    public BudgetValue getBudget() {
+        return token.getBudget();
+    }
 
     /**
      * The term is the unique ID of the concept
@@ -62,21 +77,21 @@ public final class Concept extends Item {
     /**
      * Constructor, called in Memory.getConcept only
      *
-     * @param tm     A term corresponding to the concept
+     * @param term   A term corresponding to the concept
      * @param memory A reference to the memory
      */
-    public Concept(Term tm, Memory memory) {
-        super(tm.getName());
-        term = tm;
+    public Concept(Term term, Memory memory) {
+        this.token = new Token(term.getName());
+        this.term = term;
         this.memory = memory;
         this.questions = new ArrayList<>();
         this.beliefs = new ArrayList<>();
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
-        if (tm instanceof CompoundTerm) {
+        if (term instanceof CompoundTerm) {
             // * 🚩只有「复合词项→其内元素」的链接
             // * 📝「复合词项→其内元素」是有限的，而「元素→复合词项」是无限的
-            this.termLinkTemplates = ConceptLinking.prepareComponentLinks(((CompoundTerm) tm));
+            this.termLinkTemplates = ConceptLinking.prepareComponentLinks(((CompoundTerm) term));
         } else {
             this.termLinkTemplates = null;
         }
@@ -158,9 +173,9 @@ public final class Concept extends Item {
     @Override
     public String toString() { // called from concept bag
         if (NARSBatch.isStandAlone()) {
-            return (super.toStringBrief() + " " + key);
+            return (((Item) this).toStringBrief() + " " + getKey());
         } else {
-            return key;
+            return getKey();
         }
     }
 
@@ -171,7 +186,7 @@ public final class Concept extends Item {
      */
     @Override
     public String toStringLong() {
-        String res = toStringBrief() + " " + key
+        String res = toStringBrief() + " " + getKey()
                 + toStringIfNotNull(termLinks, "termLinks")
                 + toStringIfNotNull(taskLinks, "taskLinks");
         res += toStringIfNotNull(null, "questions");

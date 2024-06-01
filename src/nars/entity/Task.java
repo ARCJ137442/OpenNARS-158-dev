@@ -5,7 +5,22 @@ import nars.language.Term;
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
  */
-public class Task extends Item {
+public class Task implements Item {
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    @Override
+    public BudgetValue getBudget() {
+        return token.getBudget();
+    }
 
     /**
      * The sentence of the Task
@@ -55,7 +70,7 @@ public class Task extends Item {
      * @param parentBelief The belief from which this new task is derived
      */
     public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
-        super(s.toKey(), b); // change to toKey()
+        this.token = new Token(s.toKey(), b); // change to toKey()
         this.sentence = s;
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
@@ -137,7 +152,9 @@ public class Task extends Item {
     @Override
     public void merge(final Item that) {
         if (getCreationTime() >= ((Task) that).getCreationTime())
-            super.merge(that);
+            // * 📝此处需要对内部令牌执行「合并」，以便调用默认方法
+            // * ⚠️改成接口后无法使用`super.method`调用默认方法
+            this.token.merge(that);
         else
             that.merge(this);
     }
