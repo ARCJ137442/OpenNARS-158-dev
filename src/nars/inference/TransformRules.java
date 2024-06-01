@@ -151,7 +151,7 @@ public class TransformRules {
         if (content == null) {
             return;
         }
-        final Sentence sentence = context.getCurrentTask().getSentence();
+        final Sentence sentence = context.getCurrentTask();
         final TruthValue truth = sentence.getTruth();
         final BudgetValue budget;
         if (sentence.isQuestion()) {
@@ -174,7 +174,7 @@ public class TransformRules {
      * @param context   Reference to the derivation context
      */
     private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContextTransform context) {
-        final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truth = context.getCurrentTask().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
         Term newSubj, newPred;
@@ -229,7 +229,7 @@ public class TransformRules {
      * @param context   Reference to the derivation context
      */
     private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContextTransform context) {
-        final TruthValue truth = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truth = context.getCurrentTask().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
         Term newSubj, newPred;

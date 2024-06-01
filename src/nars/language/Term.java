@@ -85,9 +85,10 @@ public class Term implements Cloneable, Comparable<Term> {
 
     /**
      * Blank method to be override in CompoundTerm
+     * * 📝对原子词项（词语）而言，没什么可以「重命名」的
      */
     public void renameVariables() {
-        throw new Error("Method is unimplemented!");
+        // throw new Error("Method is unimplemented!");
     }
 
     /**

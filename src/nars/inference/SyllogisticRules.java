@@ -113,7 +113,7 @@ public final class SyllogisticRules {
         final Statement st = (Statement) asymmetric.getContent();
         final TruthValue truth;
         final BudgetValue budget;
-        final Sentence sentence = context.getCurrentTask().getSentence();
+        final Sentence sentence = context.getCurrentTask();
         final CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
         if (sentence.isQuestion()) {
             truth = null;
@@ -190,7 +190,7 @@ public final class SyllogisticRules {
         if ((content instanceof Statement) && ((Statement) content).invalid()) {
             return;
         }
-        final Sentence taskSentence = context.getCurrentTask().getSentence();
+        final Sentence taskSentence = context.getCurrentTask();
         final Sentence beliefSentence = context.getCurrentBelief();
         final TruthValue beliefTruth = beliefSentence.getTruth();
         final TruthValue truth1 = mainSentence.getTruth();
@@ -237,7 +237,7 @@ public final class SyllogisticRules {
     static void conditionalDedInd(Implication premise1, short index, Term premise2, int side,
             DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task.getSentence();
+        final Sentence taskSentence = task;
         final Sentence belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
@@ -323,7 +323,7 @@ public final class SyllogisticRules {
     static void conditionalAna(Equivalence premise1, short index, Term premise2, int side,
             DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task.getSentence();
+        final Sentence taskSentence = task;
         final Sentence belief = context.getCurrentBelief();
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
@@ -422,7 +422,7 @@ public final class SyllogisticRules {
             return false;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task.getSentence();
+        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final TruthValue value1 = sentence.getTruth();
         final TruthValue value2 = belief.getTruth();
@@ -479,7 +479,7 @@ public final class SyllogisticRules {
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task.getSentence();
+        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final TruthValue v1 = sentence.getTruth();
         final TruthValue v2 = belief.getTruth();

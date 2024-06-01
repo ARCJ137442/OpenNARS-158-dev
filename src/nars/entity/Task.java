@@ -1,21 +1,14 @@
 package nars.entity;
 
-import nars.language.Term;
-
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
  */
-public class Task extends Item {
+public interface Task extends Sentence, Item {
 
     /**
-     * The sentence of the Task
-     * * 📝任务的「内容」
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
-     * * 📝所有权：具所有权
+     * 🆕Item令牌
      */
-    private final Sentence sentence;
+    Token __token();
 
     /**
      * Task from which the Task is derived, or null if input
@@ -24,7 +17,7 @@ public class Task extends Item {
      * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
      * * 📝所有权：共享引用
      */
-    private final Task parentTask;
+    Task __parentTask();
 
     /**
      * Belief from which the Task is derived, or null if derived from a theorem
@@ -33,7 +26,7 @@ public class Task extends Item {
      * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
      * * 📝所有权：具所有权
      */
-    private final Sentence parentBelief;
+    Sentence __parentBelief();
 
     /**
      * For Question and Goal: best solution found so far
@@ -43,73 +36,17 @@ public class Task extends Item {
      * * 📝可变性：可变
      * * 📝所有权：具所有权 | 「语句」类型
      */
-    private Sentence bestSolution;
+    Sentence __bestSolution();
 
-    /**
-     * 完全构造函数
-     * Constructor for an activated task
-     *
-     * @param s            The sentence
-     * @param b            The budget
-     * @param parentTask   The task from which this new task is derived
-     * @param parentBelief The belief from which this new task is derived
-     */
-    public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
-        super(s.toKey(), b); // change to toKey()
-        this.sentence = s;
-        // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
-        this.parentTask = parentTask;
-        this.parentBelief = parentBelief;
-        this.bestSolution = solution;
-    }
-
-    /**
-     * Constructor for input task
-     *
-     * @param s The sentence
-     * @param b The budget
-     */
-    public Task(Sentence s, BudgetValue b) {
-        this(s, b, null, null, null);
-    }
-
-    /**
-     * Constructor for a derived task
-     *
-     * @param s            The sentence
-     * @param b            The budget
-     * @param parentTask   The task from which this new task is derived
-     * @param parentBelief The belief from which this new task is derived
-     */
-    public Task(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief) {
-        this(s, b, parentTask, parentBelief, null);
-    }
-
-    /**
-     * Get the sentence
-     *
-     * @return The sentence
-     */
-    public Sentence getSentence() {
-        return this.sentence;
-    }
-
-    /**
-     * Directly get the content of the sentence
-     *
-     * @return The content of the sentence
-     */
-    public Term getContent() {
-        return this.sentence.getContent();
-    }
+    void __bestSolution_set(Sentence sentence);
 
     /**
      * Directly get the creation time of the sentence
      *
      * @return The creation time of the sentence
      */
-    public long getCreationTime() {
-        return this.sentence.getStamp().getCreationTime();
+    public default long getCreationTime() {
+        return this.getStamp().getCreationTime();
     }
 
     /**
@@ -117,8 +54,8 @@ public class Task extends Item {
      *
      * @return Whether the Task is derived from another task
      */
-    public boolean isInput() {
-        return this.parentTask == null;
+    public default boolean isInput() {
+        return this.__parentTask() == null;
     }
 
     /**
@@ -135,9 +72,11 @@ public class Task extends Item {
      * @param that The other Task
      */
     @Override
-    public void merge(final Item that) {
+    public default void merge(final Item that) {
         if (getCreationTime() >= ((Task) that).getCreationTime())
-            super.merge(that);
+            // * 📝此处需要对内部令牌执行「合并」，以便调用默认方法
+            // * ⚠️改成接口后无法使用`super.method`调用默认方法
+            this.__token().merge(that);
         else
             that.merge(this);
     }
@@ -147,8 +86,8 @@ public class Task extends Item {
      *
      * @return The stored Sentence or null
      */
-    public Sentence getBestSolution() {
-        return this.bestSolution;
+    public default Sentence getBestSolution() {
+        return this.__bestSolution();
     }
 
     /**
@@ -158,12 +97,13 @@ public class Task extends Item {
      *
      * @param judgment The solution to be remembered
      */
-    public void setBestSolution(final Sentence judgment) {
+    public default void setBestSolution(final Sentence judgment) {
         if (judgment == null)
             throw new NullPointerException("judgment == null");
         if (!judgment.isJudgment())
             throw new IllegalArgumentException(judgment + " is not judgment");
-        this.bestSolution = judgment;
+        // this.bestSolution = judgment;
+        this.__bestSolution_set(judgment);
     }
 
     /**
@@ -172,8 +112,8 @@ public class Task extends Item {
      *
      * @return The belief from which the task is derived
      */
-    public Sentence getParentBelief() {
-        return this.parentBelief;
+    public default Sentence getParentBelief() {
+        return this.__parentBelief();
     }
 
     /**
@@ -181,29 +121,7 @@ public class Task extends Item {
      *
      * @return The task from which the task is derived
      */
-    public Task getParentTask() {
-        return this.parentTask;
-    }
-
-    /**
-     * Get a String representation of the Task
-     *
-     * @return The Task as a String
-     */
-    @Override
-    public String toString() {
-        final StringBuilder s = new StringBuilder();
-        s.append(super.toString()).append(" ");
-        s.append(getSentence().getStamp());
-        if (parentTask != null) {
-            s.append("  \n from task: ").append(parentTask.toStringBrief());
-            if (parentBelief != null) {
-                s.append("  \n from belief: ").append(parentBelief.toStringBrief());
-            }
-        }
-        if (bestSolution != null) {
-            s.append("  \n solution: ").append(bestSolution.toStringBrief());
-        }
-        return s.toString();
+    public default Task getParentTask() {
+        return this.__parentTask();
     }
 }

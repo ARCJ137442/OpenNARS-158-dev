@@ -5,7 +5,7 @@ import nars.io.Symbols;
 /**
  * 🆕任务链与词项链共有的「T链接」
  */
-public abstract class TLink<Target> extends Item {
+public abstract class TLink<Target> implements Item {
     /** At C, point to C; TaskLink only */
     public static final short SELF = 0;
     /** At (&&, A, C), point to C */
@@ -22,6 +22,21 @@ public abstract class TLink<Target> extends Item {
     public static final short COMPOUND_CONDITION = 6;
     /** At C, point to <(*, C, B) --> A>; TaskLink only */
     public static final short TRANSFORM = 8;
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    @Override
+    public BudgetValue getBudget() {
+        return token.getBudget();
+    }
 
     /**
      * The linked Target
@@ -68,7 +83,7 @@ public abstract class TLink<Target> extends Item {
             final BudgetValue budget,
             final short type,
             final short[] indices) {
-        super(key, budget);
+        this.token = new Token(key, budget);
         this.target = target;
         this.type = type;
         this.index = indices;

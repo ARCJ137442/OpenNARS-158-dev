@@ -78,7 +78,7 @@ public abstract class ProcessDirect {
             if (task.isInput() || self.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
             } else {
-                final Sentence s = task.getSentence();
+                final Sentence s = task;
                 if (s.isJudgment()) {
                     final double d = s.getTruth().getExpectation();
                     if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
@@ -195,7 +195,7 @@ public abstract class ProcessDirect {
         final Task task = context.getCurrentTask();
 
         // * 🚩先根据类型分派推理
-        switch (task.getSentence().getPunctuation()) {
+        switch (task.getPunctuation()) {
             case Symbols.JUDGMENT_MARK:
                 processJudgment(context);
                 break;
@@ -225,7 +225,7 @@ public abstract class ProcessDirect {
         final Concept self = context.getCurrentConcept();
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
-        final Sentence judgment = task.getSentence();
+        final Sentence judgment = task;
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
         if (oldBelief != null) {
@@ -233,7 +233,7 @@ public abstract class ProcessDirect {
             final Stamp oldStamp = oldBelief.getStamp();
             if (currentStamp.equals(oldStamp)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
-                if (task.getParentTask().getSentence().isJudgment()) {
+                if (task.getParentTask().isJudgment()) {
                     task.getBudget().decPriority(0); // duplicated task
                 } // else: activated belief
                 return;
@@ -258,7 +258,7 @@ public abstract class ProcessDirect {
         if (task.getBudget().aboveThreshold()) {
             // * 🚩开始尝试解决「问题表」中的所有问题
             for (final Task existedQuestion : self.getQuestions()) {
-                // LocalRules.trySolution(ques.getSentence(), judgment, ques, memory);
+                // LocalRules.trySolution(ques, judgment, ques, memory);
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」
@@ -285,7 +285,7 @@ public abstract class ProcessDirect {
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
         final Task existedQuestion = findExistedQuestion(self, task.getContent());
         final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? task.getSentence() : existedQuestion.getSentence();
+        final Sentence question = newQuestion ? task : existedQuestion;
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Sentence newAnswer = evaluation(question, self.getBeliefs());

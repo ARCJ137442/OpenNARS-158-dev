@@ -8,8 +8,10 @@ import java.util.Random;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Sentence;
+import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
+import nars.entity.TaskV1;
 import nars.entity.TruthValue;
 import nars.language.Term;
 import nars.storage.Memory;
@@ -281,7 +283,7 @@ public abstract class DerivationContext {
      */
     public void activatedTask(final BudgetValue budget, final Sentence sentence, final Sentence candidateBelief) {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以
-        final Task task = new Task(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
+        final Task task = new TaskV1(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (sentence.isQuestion()) {
@@ -289,7 +291,7 @@ public abstract class DerivationContext {
             // float minSilent = memory.getReasoner().getMainWindow().silentW.value() /
             // 100.0f;
             if (s > this.getSilencePercent()) { // only report significant derived Tasks
-                report(task.getSentence(), ReportType.OUT);
+                report(task, ReportType.OUT);
             }
         }
         // * 🚩将新创建的「导出任务」添加到「新任务」中
@@ -314,7 +316,7 @@ public abstract class DerivationContext {
             // final float minSilent = memory.getReasoner()
             // .getMainWindow().silentW.value() / 100.0f;
             if (budget > this.getSilencePercent()) { // only report significant derived Tasks
-                report(task.getSentence(), ReportType.OUT);
+                report(task, ReportType.OUT);
             }
         }
         // * 🚩将「导出的新任务」添加到「新任务表」中
@@ -356,9 +358,9 @@ public abstract class DerivationContext {
         if (newContent == null)
             return;
         // * 🚩仅在「任务内容」可用时构造
-        final char newPunctuation = currentTask.getSentence().getPunctuation();
-        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, true);
-        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
+        final char newPunctuation = currentTask.getPunctuation();
+        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, true);
+        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
         derivedTask(newTask);
     }
 
@@ -376,10 +378,10 @@ public abstract class DerivationContext {
             return;
 
         // * 🚩仅在「任务内容」可用时构造
-        final Sentence taskSentence = this.getCurrentTask().getSentence();
+        final Sentence taskSentence = this.getCurrentTask();
         final char newPunctuation = taskSentence.getPunctuation();
-        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
-        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
+        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, revisable);
+        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), currentBelief);
         derivedTask(newTask);
     }
 
@@ -392,7 +394,7 @@ public abstract class DerivationContext {
      * @param newBudget  The budget value in task
      */
     public void singlePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
-        singlePremiseTask(newContent, this.getCurrentTask().getSentence().getPunctuation(), newTruth, newBudget);
+        singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
     }
 
     /**
@@ -409,7 +411,7 @@ public abstract class DerivationContext {
         // * 🚩对于「结构转换」的单前提推理，若已有父任务且该任务与父任务相同⇒中止，避免重复推理
         if (parentTask != null && newContent.equals(parentTask.getContent()))
             return; // to avoid circular structural inference
-        final Sentence taskSentence = this.getCurrentTask().getSentence();
+        final Sentence taskSentence = this.getCurrentTask();
         // * 🚩构造新时间戳
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
@@ -418,10 +420,10 @@ public abstract class DerivationContext {
             this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
         // * 🚩使用新内容构造新语句
-        final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
+        final Sentence newSentence = new SentenceV1(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
         // * 🚩构造新任务
-        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
+        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);
         // * 🚩导出
         derivedTask(newTask);
     }
@@ -441,6 +443,8 @@ public abstract class DerivationContext {
      * * 🎯在「记忆区」与「推理上下文」中一同使用
      */
     public static String generateReportString(Sentence sentence, ReportType type) {
+        // ! ⚠️由于「语句」和「任务」的扁平化（`.getSentence()`的消失），此处将直接打印作为「语句」的「任务」
+        // * 💭思想：「任务」也是一种「语句」，只不过带了「物品」特性，可以被「袋」分派而已
         return type.toString() + ": " + sentence.toStringBrief();
     }
 

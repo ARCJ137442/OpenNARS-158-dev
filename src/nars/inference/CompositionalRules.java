@@ -20,7 +20,7 @@ public final class CompositionalRules {
             Sentence subSentence, Term component,
             CompoundTerm content, int index,
             DerivationContextReason context) {
-        final Sentence cloned = originalMainSentence.clone();
+        final Sentence cloned = originalMainSentence.cloneSentence();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
             return;
@@ -81,7 +81,7 @@ public final class CompositionalRules {
             Statement beliefContent,
             int index,
             DerivationContextReason context) {
-        if ((!context.getCurrentTask().getSentence().isJudgment())
+        if ((!context.getCurrentTask().isJudgment())
                 || (taskContent.getClass() != beliefContent.getClass())) {
             return;
         }
@@ -96,7 +96,7 @@ public final class CompositionalRules {
             decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, index, false, context);
             return;
         }
-        final TruthValue truthT = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truthT = context.getCurrentTask().getTruth();
         final TruthValue truthB = context.getCurrentBelief().getTruth();
         final TruthValue truthOr = TruthFunctions.union(truthT, truthB);
         final TruthValue truthAnd = TruthFunctions.intersection(truthT, truthB);
@@ -200,7 +200,7 @@ public final class CompositionalRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task.getSentence();
+        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final Statement oldContent = (Statement) task.getContent();
         final TruthValue v1, v2;
@@ -289,7 +289,7 @@ public final class CompositionalRules {
             CompoundTerm compound, Term component,
             boolean compoundTask, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task.getSentence();
+        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final Term content = reduceComponents(compound, component);
         if (content == null) {
@@ -307,16 +307,16 @@ public final class CompositionalRules {
                     return;
                 }
                 // * ⚠️↓又会在此修改`newStamp`
-                final Sentence contentBelief = contentConcept.getBelief(task.getSentence());
+                final Sentence contentBelief = contentConcept.getBelief(task);
                 if (contentBelief == null) {
                     return;
                 }
                 // * 💭【2024-05-19 20:48:50】实质上是借助「元素陈述」的内容来修正
                 final Stamp newStamp = Stamp.uncheckedMerge(
-                        task.getSentence().getStamp(),
+                        task.getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
                         context.getTime());
-                final Task contentTask = new Task(contentBelief, task.getBudget());
+                final Task contentTask = new TaskV1(contentBelief, task.getBudget());
                 // context.currentTask = contentTask;
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
                 final Term conj = makeConjunction(component, content);
@@ -367,7 +367,7 @@ public final class CompositionalRules {
             Statement taskContent,
             Statement beliefContent,
             int index, DerivationContextReason context) {
-        final TruthValue truthT = context.getCurrentTask().getSentence().getTruth();
+        final TruthValue truthT = context.getCurrentTask().getTruth();
         final TruthValue truthB = context.getCurrentBelief().getTruth();
         final Variable varInd = new Variable("$varInd1");
         final Variable varInd2 = new Variable("$varInd2");
@@ -466,7 +466,7 @@ public final class CompositionalRules {
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
             DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task.getSentence();
+        final Sentence taskSentence = task;
         if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())
                 || oldCompound.containComponent(premise1)) {
             return;

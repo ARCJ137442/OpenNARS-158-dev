@@ -2,6 +2,7 @@ package nars.entity;
 
 import nars.io.Symbols;
 import nars.language.Term;
+import util.ToStringBriefAndLong;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
@@ -9,85 +10,21 @@ import nars.language.Term;
  * <p>
  * It is used as the premises and conclusions of all inference rules.
  * <p>
- * * 📝【2024-05-22 16:45:08】其中所有字段基本为只读——静态数据，可自由复制
+ * * 🚩作为一个接口，仅对其中的字段做抽象要求（实现者只要求在这些方法里返回字段或其它表达式）
+ * * 🚩所有「字段类接口方法」均【以双下划线开头】并【不带public】
  */
-public class Sentence implements Cloneable {
+public interface Sentence extends ToStringBriefAndLong {
 
-    /**
-     * The content of a Sentence is a Term
-     */
-    private final Term content;
-    /**
-     * The punctuation also indicates the type of the Sentence: Judgment,
-     * Question, or Goal
-     */
-    private final char punctuation;
-    /**
-     * The truth value of Judgment
-     */
-    private final TruthValue truth;
-    /**
-     * Partial record of the derivation path
-     */
-    private final Stamp stamp;
-    /**
-     * Whether the sentence can be revised
-     */
-    private final boolean revisable;
+    // 所有抽象字段
+    Term __content();
 
-    /**
-     * Create a Sentence with the given fields
-     *
-     * @param content     The Term that forms the content of the sentence
-     * @param punctuation The punctuation indicating the type of the sentence
-     * @param truth       The truth value of the sentence, null for question
-     * @param stamp       The stamp of the sentence indicating its derivation time
-     *                    and
-     *                    base
-     * @param revisable   Whether the sentence can be revised
-     */
-    public Sentence(Term content, char punctuation, TruthValue truth, Stamp stamp, boolean revisable) {
-        this.content = content;
-        this.content.renameVariables();
-        this.punctuation = punctuation;
-        this.truth = truth;
-        this.stamp = stamp;
-        this.revisable = revisable;
-        if (stamp == null) {
-            throw new NullPointerException("Stamp is null!");
-        }
-    }
+    char __punctuation();
 
-    /**
-     * To check whether two sentences are equal
-     *
-     * @param that The other sentence
-     * @return Whether the two sentences have the same content
-     */
-    @Override
-    public boolean equals(Object that) {
-        if (that instanceof Sentence) {
-            Sentence t = (Sentence) that;
-            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.getTruth())
-                    && stamp.equals(t.getStamp());
-        }
-        return false;
-    }
+    TruthValue __truth();
 
-    /**
-     * To produce the hashcode of a sentence
-     *
-     * @return A hashcode
-     */
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 67 * hash + (this.content != null ? this.content.hashCode() : 0);
-        hash = 67 * hash + this.punctuation;
-        hash = 67 * hash + (this.truth != null ? this.truth.hashCode() : 0);
-        hash = 67 * hash + (this.stamp != null ? this.stamp.hashCode() : 0);
-        return hash;
-    }
+    Stamp __stamp();
+
+    boolean __revisable();
 
     /**
      * Check whether the judgment is equivalent to another one
@@ -97,31 +34,25 @@ public class Sentence implements Cloneable {
      * @param that The other judgment
      * @return Whether the two are equivalent
      */
-    public boolean equivalentTo(Sentence that) {
-        assert content.equals(that.getContent()) && punctuation == that.getPunctuation();
-        return (truth.equals(that.getTruth()) && stamp.equals(that.getStamp()));
+    public default boolean equivalentTo(Sentence that) {
+        assert __content().equals(that.__content()) && __punctuation() == that.__punctuation();
+        return (__truth().equals(that.__truth()) && __stamp().equals(that.__stamp()));
     }
 
     /**
-     * Clone the Sentence
-     *
-     * @return The clone
+     * 🆕复制其中的「语句」成分
+     * * 🎯为了不让方法实现冲突而构建
+     * * ⚠️可能没有
      */
-    @Override
-    public Sentence clone() {
-        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
-        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
-        return new Sentence(content.clone(), punctuation, truth == null ? null : truth.clone(), stamp.clone(),
-                revisable);
-    }
+    public Sentence cloneSentence();
 
     /**
      * Get the content of the sentence
      *
      * @return The content Term
      */
-    public Term getContent() {
-        return content;
+    public default Term getContent() {
+        return __content();
     }
 
     /**
@@ -129,8 +60,8 @@ public class Sentence implements Cloneable {
      *
      * @return The character '.' or '?'
      */
-    public char getPunctuation() {
-        return punctuation;
+    public default char getPunctuation() {
+        return __punctuation();
     }
 
     /**
@@ -138,26 +69,17 @@ public class Sentence implements Cloneable {
      *
      * @return A clone of the content Term
      */
-    public Term cloneContent() {
-        return content.clone();
+    public default Term cloneContent() {
+        return __content().clone();
     }
-
-    // /**
-    // * Set the content Term of the Sentence
-    // *
-    // * @param t The new content
-    // */
-    // public void setContent(Term t) {
-    // content = t;
-    // }
 
     /**
      * Get the truth value of the sentence
      *
      * @return Truth value, null for question
      */
-    public TruthValue getTruth() {
-        return truth;
+    public default TruthValue getTruth() {
+        return __truth();
     }
 
     /**
@@ -165,21 +87,17 @@ public class Sentence implements Cloneable {
      *
      * @return The stamp
      */
-    public Stamp getStamp() {
-        return stamp;
+    public default Stamp getStamp() {
+        return __stamp();
     }
-
-    // public void setStamp(Stamp s) {
-    // stamp = s;
-    // }
 
     /**
      * Distinguish Judgment from Goal ("instanceof Judgment" doesn't work)
      *
      * @return Whether the object is a Judgment
      */
-    public boolean isJudgment() {
-        return (punctuation == Symbols.JUDGMENT_MARK);
+    public default boolean isJudgment() {
+        return (__punctuation() == Symbols.JUDGMENT_MARK);
     }
 
     /**
@@ -187,42 +105,16 @@ public class Sentence implements Cloneable {
      *
      * @return Whether the object is a Question
      */
-    public boolean isQuestion() {
-        return (punctuation == Symbols.QUESTION_MARK);
+    public default boolean isQuestion() {
+        return (__punctuation() == Symbols.QUESTION_MARK);
     }
 
-    public boolean containQueryVar() {
-        return (content.getName().indexOf(Symbols.VAR_QUERY) >= 0);
+    public default boolean containQueryVar() {
+        return (__content().getName().indexOf(Symbols.VAR_QUERY) >= 0);
     }
 
-    public boolean getRevisable() {
-        return revisable;
-    }
-
-    /**
-     * Get a String representation of the sentence
-     *
-     * @return The String
-     */
-    @Override
-    public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(content.toString());
-        s.append(punctuation).append(" ");
-        if (truth != null) {
-            s.append(truth.toString());
-        }
-        s.append(stamp.toString());
-        return s.toString();
-    }
-
-    /**
-     * Get a String representation of the sentence, with 2-digit accuracy
-     *
-     * @return The String
-     */
-    public String toStringBrief() {
-        return toKey() + stamp.toString();
+    public default boolean getRevisable() {
+        return __revisable();
     }
 
     /**
@@ -230,12 +122,12 @@ public class Sentence implements Cloneable {
      *
      * @return The String
      */
-    public String toKey() {
-        StringBuilder s = new StringBuilder();
-        s.append(content.toString());
-        s.append(punctuation).append(" ");
-        if (truth != null) {
-            s.append(truth.toStringBrief());
+    public default String toKey() {
+        final StringBuilder s = new StringBuilder();
+        s.append(__content().toString());
+        s.append(__punctuation()).append(" ");
+        if (__truth() != null) {
+            s.append(__truth().toStringBrief());
         }
         return s.toString();
     }

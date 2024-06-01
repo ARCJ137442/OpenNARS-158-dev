@@ -37,7 +37,7 @@ public class LocalRules {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
         final Sentence belief = context.getCurrentBelief();
 
-        final Sentence sentence = task.getSentence().clone();
+        final Sentence sentence = task.cloneSentence();
         if (sentence.isJudgment()) {
             if (revisable(sentence, belief)) {
                 revision(sentence, belief, context);
@@ -92,7 +92,7 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     public static void trySolution(Sentence belief, Task task, DerivationContext context) {
-        final Sentence problem = task.getSentence();
+        final Sentence problem = task;
         final Sentence oldBest = task.getBestSolution();
         // * 🚩验证这个信念是否为「解决问题的最优解」
         final float newQ = solutionQuality(problem, belief);
@@ -143,7 +143,7 @@ public class LocalRules {
     public static void matchReverse(DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
-        final Sentence sentence = task.getSentence();
+        final Sentence sentence = task;
         if (sentence.isJudgment()) {
             inferToSym((Sentence) sentence, belief, context);
         } else {
@@ -160,7 +160,7 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     public static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
-        if (context.getCurrentTask().getSentence().isJudgment()) {
+        if (context.getCurrentTask().isJudgment()) {
             inferToAsym((Sentence) asym, (Sentence) sym, context);
         } else {
             convertRelation(context);

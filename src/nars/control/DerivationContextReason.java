@@ -123,10 +123,10 @@ public class DerivationContextReason extends DerivationContextTransform {
         final Term beliefTerm = newBeliefLink.getTarget();
         final Concept beliefConcept = this.termToConcept(beliefTerm);
         if (beliefConcept != null) {
-            newBelief = beliefConcept.getBelief(this.getCurrentTask().getSentence()); // ! may be null
+            newBelief = beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
             if (newBelief != null) {
                 newStamp = Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
-                        this.getCurrentTask().getSentence().getStamp(),
+                        this.getCurrentTask().getStamp(),
                         // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                         // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
                         newBelief.getStamp(),
