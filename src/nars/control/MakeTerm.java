@@ -218,656 +218,88 @@ public abstract class MakeTerm {
         return list;
     }
 
-    /* Statement */
+    /* SetExt */
 
     /**
-     * Make a Statement from String, called by StringParser
-     * * 🚩从字符串解析器中分派（系词+主谓项）
-     * * ⚠️结果可空
+     * Try to make a new set from one component. Called by the inference rules.
+     * * 🚩单个词项⇒直接从一元集构造
      *
-     * @param relation  The relation String
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return The Statement built
+     * @param t The component
+     * @return A compound generated or a term it reduced to
      */
-    public static Statement makeStatement(String relation, Term subject, Term predicate) {
-        // * 📌【2024-06-01 10:46:42】原则：不让`nars.language`依赖MakeTerm
-        if (Statement.invalidStatement(subject, predicate))
-            return null;
-        // * 🚩根据陈述系词分派
-        switch (relation) {
-            case Symbols.INHERITANCE_RELATION:
-                return makeInheritance(subject, predicate);
-            case Symbols.SIMILARITY_RELATION:
-                return makeSimilarity(subject, predicate);
-            case Symbols.INSTANCE_RELATION:
-                return makeInstance(subject, predicate);
-            case Symbols.PROPERTY_RELATION:
-                return makeProperty(subject, predicate);
-            case Symbols.INSTANCE_PROPERTY_RELATION:
-                return makeInstanceProperty(subject, predicate);
-            case Symbols.IMPLICATION_RELATION:
-                return makeImplication(subject, predicate);
-            case Symbols.EQUIVALENCE_RELATION:
-                return makeEquivalence(subject, predicate);
-            default:
-                return null;
-        }
+    public static Term makeSetExt(Term t) {
+        final TreeSet<Term> set = new TreeSet<Term>();
+        set.add(t);
+        return makeSetExt(set);
     }
 
     /**
-     * Make a Statement from given components, called by the rules
-     * * 🚩从现有的陈述模板中构造
-     * * ⚠️结果可空
-     *
-     * @return The Statement built
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param statement A sample statement providing the class type
-     */
-    public static Statement makeStatement(Statement statement, Term subj, Term pred) {
-        // * 🚩按四种基本系词构造
-        if (statement instanceof Inheritance)
-            return makeInheritance(subj, pred);
-        if (statement instanceof Similarity)
-            return makeSimilarity(subj, pred);
-        if (statement instanceof Implication)
-            return makeImplication(subj, pred);
-        if (statement instanceof Equivalence)
-            return makeEquivalence(subj, pred);
-        return null;
-    }
-
-    /**
-     * Make a symmetric Statement from given components and temporal
-     * information, called by the rules
-     * * ⚠️结果可空
-     *
-     * @param statement A sample asymmetric statement providing the class type
-     * @param subj      The first component
-     * @param pred      The second component
-     * @return The Statement built
-     */
-    public static Statement makeStatementSym(Statement statement, Term subj, Term pred) {
-        // * 🚩非对称陈述⇒对称陈述
-        if (statement instanceof Inheritance)
-            // * 🚩继承⇒相似
-            return makeSimilarity(subj, pred);
-        if (statement instanceof Implication)
-            // * 🚩蕴含⇒等价
-            return makeEquivalence(subj, pred);
-        return null;
-    }
-
-    /* Conjunction */
-
-    /**
-     * Try to make a new compound from a list of components. Called by
-     * StringParser.
-     * * 🚩从字符串解析器中构造「合取」
-     * * ⚠️结果可空
+     * Try to make a new SetExt. Called by StringParser.
+     * * 🚩单个列表⇒转换为集合（此时去重&排序）
      *
      * @return the Term generated from the arguments
-     * @param argList the list of arguments
+     * @param argList The list of components
      */
-    public static Term makeConjunction(ArrayList<Term> argList) {
-        final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return makeConjunction(set);
+    public static Term makeSetExt(ArrayList<Term> argList) {
+        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
+        return makeSetExt(set);
     }
 
     /**
-     * Try to make a new Disjunction from a set of components. Called by the
-     * public make methods.
-     * * 🚩从一个词项集合中构造「合取」
-     * * ️📝是一个相对原始的方法：只考虑元素个数
-     * * ⚠️结果可空
+     * Try to make a new compound from a set of components. Called by the public
+     * make methods.
+     * * 🚩单个集合⇒排序后数组⇒构造
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    private static Term makeConjunction(TreeSet<Term> set) {
-        // * 🚩不允许空集
+    public static Term makeSetExt(TreeSet<Term> set) {
         if (set.isEmpty())
             return null;
-        // * 🚩单元素⇒直接用元素
-        // special case: single component
-        if (set.size() == 1)
-            return set.first();
-        // * 🚩将集合转换为数组，直接构造之
-        final ArrayList<Term> argument = new ArrayList<>(set);
-        return new Conjunction(argument);
+        final ArrayList<Term> argument = new ArrayList<Term>(set);
+        return new SetExt(argument);
     }
 
-    // overload this method by term type?
+    /* SetInt */
+
     /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * * 🚩从两个词项中构造一个「合取」，等同于(A, B) => (&&, A, B)的操作
-     * * 📝在这些操作的过程中，元素会根据一些规则被约简
-     * * ⚠️结果可空
+     * Try to make a new set from one component. Called by the inference rules.
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
-     * @param term1 The first component
-     * @param term2 The second component
+     * @param t The component
      * @return A compound generated or a term it reduced to
      */
-    public static Term makeConjunction(Term term1, Term term2) {
-        // * 📝通过这个集合消除重复项 | 比对函数在Collection.class基于`Object.equals`方法，所以不会存在「按引用不按值」的情况
-        final TreeSet<Term> set;
-        // * 🚩同类合并 | 📝实际上可以用模式匹配
-        final boolean containable1 = term1 instanceof Conjunction;
-        final boolean containable2 = term2 instanceof Conjunction;
-        if (containable1) {
-            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
-            // (&&,P,Q) && (&&,R,S) = (&&,P,Q,R,S)
-            if (containable2)
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            // (&&,P,Q) && R = (&&,P,Q,R)
-            else
-                set.add(term2.clone());
-        } else if (containable2) {
-            // (&&,R,(&&,P,Q)) = (&&,P,Q,R)
-            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone());
-        }
-        // * 🚩否则：纯粹构造二元集
-        else {
-            // P && Q = (&&,P,Q)
-            set = new TreeSet<>();
-            set.add(term1.clone());
-            set.add(term2.clone());
-        }
-        // * 🚩继续通过集合构建词项
-        return makeConjunction(set);
+    public static Term makeSetInt(Term t) {
+        final TreeSet<Term> set = new TreeSet<Term>();
+        set.add(t);
+        return makeSetInt(set);
     }
 
-    /* DifferenceExt */
-
     /**
-     * Try to make a new DifferenceExt. Called by StringParser.
-     * * 🚩从解析器构造「外延差」
-     * * ⚠️结果可空
+     * Try to make a new SetInt. Called by StringParser.
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeDifferenceExt(ArrayList<Term> argList) {
-        // * 🚩单个元素：约简为内部元素 | (-,A) = A
-        if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
-            return argList.get(0);
-        // * 🚩太多元素/空集：构造失败 | (-,A,B,C) = null
-        if (argList.size() != 2)
-            return null;
-        // * 🚩外延集的差：求差，构造外延集 | {A, B} - {A} = {B}
-        if ((argList.get(0) instanceof SetExt) && (argList.get(1) instanceof SetExt)) {
-            final ArrayList<Term> left = ((CompoundTerm) argList.get(0)).cloneComponents();
-            final ArrayList<Term> right = ((CompoundTerm) argList.get(1)).cloneComponents();
-            final TreeSet<Term> set = new TreeSet<Term>(left);
-            set.removeAll(right); // set difference
-            return makeSetExt(set);
-        }
-        // * 🚩否则：直接构造外延差 | A - B = (-,A,B)
-        return new DifferenceExt(argList);
+    public static Term makeSetInt(ArrayList<Term> argList) {
+        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
+        return makeSetInt(set);
     }
 
     /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * * 🚩从推理规则构造外延差
-     *
-     * @param t1 The first component
-     * @param t2 The second component
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeDifferenceExt(Term t1, Term t2) {
-        // * 🚩自己减自己⇒空集⇒null
-        if (t1.equals(t2))
-            return null;
-        // * 🚩否则⇒直接从二元列表构造
-        final ArrayList<Term> list = argumentsToList(t1, t2);
-        return makeConjunction(list);
-    }
-
-    /* DifferenceInt */
-
-    /**
-     * Try to make a new DifferenceExt. Called by StringParser.
-     * * 📝与「外延差」对应方法相似
-     *
-     * @return the Term generated from the arguments
-     * @param argList The list of components
-     */
-    public static Term makeDifferenceInt(ArrayList<Term> argList) {
-        if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
-            return argList.get(0);
-        if (argList.size() != 2)
-            return null;
-        if ((argList.get(0) instanceof SetInt) && (argList.get(1) instanceof SetInt)) {
-            final TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
-            set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
-            return makeSetInt(set);
-        }
-        return new DifferenceInt(argList);
-    }
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * * 📝与「外延差」对应方法相似
-     *
-     * @param t1 The first component
-     * @param t2 The second component
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeDifferenceInt(Term t1, Term t2) {
-        if (t1.equals(t2))
-            return null;
-        final ArrayList<Term> list = argumentsToList(t1, t2);
-        return makeDifferenceInt(list);
-    }
-
-    /* Disjunction */
-
-    /**
-     * Try to make a new Disjunction from two components. Called by the inference
-     * rules.
-     * * 📝与「合取」对应方法相似
-     *
-     * @param term1 The first component
-     * @param term2 The first component
-     * @return A Disjunction generated or a Term it reduced to
-     */
-    public static Term makeDisjunction(Term term1, Term term2) {
-        final TreeSet<Term> set;
-        if (term1 instanceof Disjunction) {
-            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
-            if (term2 instanceof Disjunction) {
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            } // (||,P,Q) || (||,R,S)) = (||,P,Q,R,S)
-            else {
-                set.add(term2.clone());
-            } // (||,P,Q) || R = (||,P,Q,R)
-        } else if (term2 instanceof Disjunction) {
-            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone()); // R || (||,P,Q) = (||,P,Q,R)
-        } else {
-            set = new TreeSet<>();
-            set.add(term1.clone());
-            set.add(term2.clone());
-        }
-        return makeDisjunction(set);
-    }
-
-    /**
-     * Try to make a new IntersectionExt. Called by StringParser.
-     *
-     * @param argList a list of Term as components
-     * @return the Term generated from the arguments
-     */
-    public static Term makeDisjunction(ArrayList<Term> argList) {
-        final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
-        return makeDisjunction(set);
-    }
-
-    /**
-     * Try to make a new Disjunction from a set of components. Called by the public
+     * Try to make a new compound from a set of components. Called by the public
      * make methods.
-     * * 📝与「合取」对应方法相似
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeDisjunction(TreeSet<Term> set) {
-        if (set.size() == 1) {
-            return set.first();
-        } // special case: single component
-        final ArrayList<Term> argument = new ArrayList<>(set);
-        return new Disjunction(argument);
-    }
-
-    /* Equivalence */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * * 🚩在推理时构造「等价」陈述
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Equivalence makeEquivalence(Term subject, Term predicate) {
-        // to be extended to check if subject is Conjunction
-        // * 🚩检查非法主谓组合
-        if (subject instanceof Implication || subject instanceof Equivalence)
-            return null; // ! <<A ==> B> <=> C>
-        if (predicate instanceof Implication || predicate instanceof Equivalence)
-            return null; // ! <C <=> <C ==> D>>
-        if (Statement.invalidStatement(subject, predicate))
-            return null; // ! <A <=> A>, <<A --> B> <=> <B --> A>>
-        // * 🚩自动排序
-        if (subject.compareTo(predicate) > 0) {
-            final Term inner = subject;
-            subject = predicate;
-            predicate = inner;
-        }
-        // * 🚩构造
-        final ArrayList<Term> argument = argumentsToList(subject, predicate);
-        return new Equivalence(argument);
-    }
-
-    /* ImageExt */
-
-    /**
-     * Try to make a new ImageExt. Called by StringParser.
-     * * 🚩从解析器构造外延像
-     *
-     * @return the Term generated from the arguments
-     * @param argList The list of components
-     */
-    public static Term makeImageExt(ArrayList<Term> argList) {
-        // * 🚩拒绝元素过少的词项 | 第一个词项需要是「关系」，除此之外必须含有至少一个元素 & 占位符
-        if (argList.size() < 2)
+    public static Term makeSetInt(TreeSet<Term> set) {
+        if (set.isEmpty())
             return null;
-        // * 🚩第一个词项是「关系」词项 | (/, R, a, _) 中的 R
-        final Term relation = argList.get(0);
-        final ArrayList<Term> argument = new ArrayList<Term>();
-        // * 🚩开始填充「关系词项」
-        int index = 0;
-        for (int j = 1; j < argList.size(); j++) {
-            // * 🚩在「占位符」的位置放置「关系」，以便节省存储空间
-            // * 📄 (/, R, a, _) => Image { op: "/", arr: [a, R], r_index: 1 }
-            if (argList.get(j).isPlaceholder()) {
-                index = j - 1;
-                argument.add(relation);
-            } else {
-                argument.add(argList.get(j));
-            }
-        }
-        // * 🚩构造
-        return makeImageExt(argument, (short) index);
-    }
-
-    /**
-     * Try to make an Image from a Product and a relation. Called by the inference
-     * rules.
-     * * 🚩从「乘积」构造外延像
-     * * 📄(*, A, B) --> R @ 0 = A --> (/, R, _, B)
-     * * 📄{<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
-     *
-     * @param product  The product
-     * @param relation The relation
-     * @param index    The index of the place-holder
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeImageExt(Product product, Term relation, short index) {
-        // * 🚩关系词项是「乘积」⇒可能可以简化
-        if (relation instanceof Product) {
-            final Product p2 = (Product) relation;
-            // * 🚩对「二元外延像」作特别的「取索引」简化
-            if ((product.size() == 2) && (p2.size() == 2)) {
-                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {
-                    // (/,(*,a,b),_,b) with [(*,a,b),b]#0
-                    // is reduced to self[0][0] = (*,a,b)[0] = a
-                    return p2.componentAt(0);
-                }
-                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {
-                    // (/,(*,a,b),a,_) with [a,(*,a,b)]#1
-                    // is reduced to self[1][1] = (*,a,b)[1] = b
-                    return p2.componentAt(1);
-                }
-            }
-        }
-        // * 🚩从「乘积」中设置「关系词项」（直接表示占位符位置），然后直接构造
-        final ArrayList<Term> argument = product.cloneComponents();
-        argument.set(index, relation);
-        return makeImageExt(argument, index);
-    }
-
-    /**
-     * Try to make an Image from an existing Image and a component. Called by the
-     * inference rules.
-     * * 🚩从一个已知的外延像中构造新外延像，并切换占位符的位置
-     *
-     * @param oldImage  The existing Image
-     * @param component The component to be added into the component list
-     * @param index     The index of the place-holder in the new Image
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeImageExt(ImageExt oldImage, Term component, short index) {
-        final ArrayList<Term> argList = oldImage.cloneComponents();
-        final int oldIndex = oldImage.getRelationIndex();
-        final Term relation = argList.get(oldIndex);
-        argList.set(oldIndex, component);
-        argList.set(index, relation);
-        return makeImageExt(argList, index);
-    }
-
-    /**
-     * Try to make a new compound from a set of components. Called by the public
-     * make methods.
-     * * 🚩预先构造好名称，然后传入类构造函数中（这样无需再创建名称）
-     *
-     * @param argument The argument list
-     * @param index    The index of the place-holder in the new Image
-     * @return the Term generated from the arguments
-     */
-    private static Term makeImageExt(ArrayList<Term> argument, short index) {
-        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, index);
-        return new ImageExt(name, argument, index);
-    }
-
-    /* ImageInt */
-
-    /**
-     * Try to make a new ImageExt. Called by StringParser.
-     * * 📝与「外延像」对应方法相似
-     *
-     * @return the Term generated from the arguments
-     * @param argList The list of components
-     */
-    public static Term makeImageInt(ArrayList<Term> argList) {
-        if (argList.size() < 2)
-            return null;
-        final Term relation = argList.get(0);
-        final ArrayList<Term> argument = new ArrayList<Term>();
-        int index = 0;
-        for (int j = 1; j < argList.size(); j++) {
-            if (argList.get(j).isPlaceholder()) {
-                index = j - 1;
-                argument.add(relation);
-            } else {
-                argument.add(argList.get(j));
-            }
-        }
-        return makeImageInt(argument, (short) index);
-    }
-
-    /**
-     * Try to make an Image from a Product and a relation. Called by the inference
-     * rules.
-     * * 📝与「外延像」对应方法相似
-     *
-     * @param product  The product
-     * @param relation The relation
-     * @param index    The index of the place-holder
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeImageInt(Product product, Term relation, short index) {
-        if (relation instanceof Product) {
-            final Product p2 = (Product) relation;
-            if ((product.size() == 2) && (p2.size() == 2)) {
-                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {
-                    // (\,_,(*,a,b),b) is reduced to a
-                    return p2.componentAt(0);
-                }
-                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {
-                    // (\,(*,a,b),a,_) is reduced to b
-                    return p2.componentAt(1);
-                }
-            }
-        }
-        final ArrayList<Term> argument = product.cloneComponents();
-        argument.set(index, relation);
-        return makeImageInt(argument, index);
-    }
-
-    /**
-     * Try to make an Image from an existing Image and a component. Called by the
-     * inference rules.
-     * * 📝与「外延像」对应方法相似
-     *
-     * @param oldImage  The existing Image
-     * @param component The component to be added into the component list
-     * @param index     The index of the place-holder in the new Image
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeImageInt(ImageInt oldImage, Term component, short index) {
-        final ArrayList<Term> argList = oldImage.cloneComponents();
-        final int oldIndex = oldImage.getRelationIndex();
-        final Term relation = argList.get(oldIndex);
-        argList.set(oldIndex, component);
-        argList.set(index, relation);
-        return makeImageInt(argList, index);
-    }
-
-    /**
-     * Try to make a new compound from a set of components. Called by the public
-     * make methods.
-     * * 📝与「外延像」对应方法相似
-     *
-     * @param argument The argument list
-     * @param index    The index of the place-holder in the new Image
-     * @return the Term generated from the arguments
-     */
-    private static Term makeImageInt(ArrayList<Term> argument, short index) {
-        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, index);
-        return new ImageInt(name, argument, index);
-    }
-
-    /* Implication */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or a term it reduced to
-     */
-    public static Implication makeImplication(Term subject, Term predicate) {
-        // * 🚩检查有效性：任意元素为空⇒空 | 保证后续非空，并接受「自反性」等检验
-        if (subject == null || predicate == null)
-            return null;
-        if (Statement.invalidStatement(subject, predicate))
-            return null;
-        // * 🚩检查主词类型
-        if (subject instanceof Implication || subject instanceof Equivalence)
-            // ! ❌ <<A ==> B> ==> C> | <<A <=> B> ==> C>
-            return null;
-        if (predicate instanceof Equivalence)
-            // ! ❌ <A ==> <B <=> C>>
-            return null;
-        if (predicate instanceof Implication) {
-            /** B in <A ==> <B ==> C>> */
-            final Term oldCondition = ((Implication) predicate).getSubject();
-            if (oldCondition instanceof Conjunction && ((Conjunction) oldCondition).containComponent(subject)) {
-                // ! ❌ <A ==> <(&&, A, B) ==> C>>
-                // ? ❓为何不能合并：实际上A && (&&, A, B) = (&&, A, B)
-                return null;
-            }
-            // * ♻️ <A ==> <B ==> C>> ⇒ <(&&, A, B) ==> C>
-            final Term newCondition = makeConjunction(subject, oldCondition);
-            return makeImplication(newCondition, ((Implication) predicate).getPredicate());
-        } else {
-            final ArrayList<Term> argument = argumentsToList(subject, predicate);
-            return new Implication(argument);
-        }
-    }
-
-    /* Inheritance */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * * 📝此处只检查有效性（重言式、反推式，等等），无需做其它约简/检验
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Inheritance makeInheritance(Term subject, Term predicate) {
-        // * 🚩检查有效性
-        if (Statement.invalidStatement(subject, predicate))
-            return null;
-        // * 🚩直接构造
-        final ArrayList<Term> argument = argumentsToList(subject, predicate);
-        return new Inheritance(argument);
-    }
-
-    /*
-     * Instance
-     * A Statement about an Instance relation, which is used only in Narsese for
-     * I/O,
-     * and translated into Inheritance for internal use.
-     */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * <p>
-     * A {-- B becomes {A} --> B
-     * * 📝实例 = {主项} --> 谓项
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Statement makeInstance(Term subject, Term predicate) {
-        return makeInheritance(makeSetExt(subject), predicate);
-    }
-
-    /*
-     * Property
-     * A Statement about a Property relation, which is used only in Narsese for I/O,
-     * and translated into Inheritance for internal use.
-     */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * <p>
-     * A --] B becomes A --> [B]
-     * * 📝属性 = 主项 --> [谓项]
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Inheritance makeProperty(Term subject, Term predicate) {
-        return makeInheritance(subject, makeSetInt(predicate));
-    }
-
-    /*
-     * InstanceProperty
-     *
-     * A Statement about an InstanceProperty relation, which is used only in Narsese
-     * for I/O,
-     * and translated into Inheritance for internal use.
-     */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * <p>
-     * A {-] B becomes {A} --> [B]
-     * * 📝实例属性 = {主项} --> [谓项]
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Statement makeInstanceProperty(Term subject, Term predicate) {
-        return makeInheritance(makeSetExt(subject), makeSetInt(predicate));
+        final ArrayList<Term> argument = new ArrayList<Term>(set);
+        return new SetInt(argument);
     }
 
     /* IntersectionExt */
@@ -1072,35 +504,89 @@ public abstract class MakeTerm {
         return new IntersectionInt(argument);
     }
 
-    /* Negation */
+    /* DifferenceExt */
 
     /**
-     * Try to make a Negation of one component. Called by the inference rules.
+     * Try to make a new DifferenceExt. Called by StringParser.
+     * * 🚩从解析器构造「外延差」
+     * * ⚠️结果可空
      *
-     * @param t The component
-     * @return A compound generated or a term it reduced to
+     * @return the Term generated from the arguments
+     * @param argList The list of components
      */
-    public static Term makeNegation(Term t) {
-        // * 🚩双重否定⇒肯定
-        // * 📄-- (--,P) = P
-        if (t instanceof Negation)
-            return ((CompoundTerm) t).cloneComponents().get(0);
-        final ArrayList<Term> argument = new ArrayList<>();
-        argument.add(t);
-        return makeNegation(argument);
+    public static Term makeDifferenceExt(ArrayList<Term> argList) {
+        // * 🚩单个元素：约简为内部元素 | (-,A) = A
+        if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
+            return argList.get(0);
+        // * 🚩太多元素/空集：构造失败 | (-,A,B,C) = null
+        if (argList.size() != 2)
+            return null;
+        // * 🚩外延集的差：求差，构造外延集 | {A, B} - {A} = {B}
+        if ((argList.get(0) instanceof SetExt) && (argList.get(1) instanceof SetExt)) {
+            final ArrayList<Term> left = ((CompoundTerm) argList.get(0)).cloneComponents();
+            final ArrayList<Term> right = ((CompoundTerm) argList.get(1)).cloneComponents();
+            final TreeSet<Term> set = new TreeSet<Term>(left);
+            set.removeAll(right); // set difference
+            return makeSetExt(set);
+        }
+        // * 🚩否则：直接构造外延差 | A - B = (-,A,B)
+        return new DifferenceExt(argList);
     }
 
     /**
-     * Try to make a new Negation. Called by StringParser.
-     * * 🚩仅检查长度
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * * 🚩从推理规则构造外延差
+     *
+     * @param t1 The first component
+     * @param t2 The second component
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeDifferenceExt(Term t1, Term t2) {
+        // * 🚩自己减自己⇒空集⇒null
+        if (t1.equals(t2))
+            return null;
+        // * 🚩否则⇒直接从二元列表构造
+        final ArrayList<Term> list = argumentsToList(t1, t2);
+        return makeConjunction(list);
+    }
+
+    /* DifferenceInt */
+
+    /**
+     * Try to make a new DifferenceExt. Called by StringParser.
+     * * 📝与「外延差」对应方法相似
      *
      * @return the Term generated from the arguments
-     * @param argument The list of components
+     * @param argList The list of components
      */
-    public static Term makeNegation(ArrayList<Term> argument) {
-        if (argument.size() != 1)
+    public static Term makeDifferenceInt(ArrayList<Term> argList) {
+        if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
+            return argList.get(0);
+        if (argList.size() != 2)
             return null;
-        return new Negation(argument);
+        if ((argList.get(0) instanceof SetInt) && (argList.get(1) instanceof SetInt)) {
+            final TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
+            set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
+            return makeSetInt(set);
+        }
+        return new DifferenceInt(argList);
+    }
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * * 📝与「外延差」对应方法相似
+     *
+     * @param t1 The first component
+     * @param t2 The second component
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeDifferenceInt(Term t1, Term t2) {
+        if (t1.equals(t2))
+            return null;
+        final ArrayList<Term> list = argumentsToList(t1, t2);
+        return makeDifferenceInt(list);
     }
 
     /* Product */
@@ -1134,88 +620,531 @@ public abstract class MakeTerm {
         return makeProduct(argument);
     }
 
-    /* SetExt */
+    /* ImageExt */
 
     /**
-     * Try to make a new set from one component. Called by the inference rules.
-     * * 🚩单个词项⇒直接从一元集构造
-     *
-     * @param t The component
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeSetExt(Term t) {
-        final TreeSet<Term> set = new TreeSet<Term>();
-        set.add(t);
-        return makeSetExt(set);
-    }
-
-    /**
-     * Try to make a new SetExt. Called by StringParser.
-     * * 🚩单个列表⇒转换为集合（此时去重&排序）
+     * Try to make a new ImageExt. Called by StringParser.
+     * * 🚩从解析器构造外延像
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeSetExt(ArrayList<Term> argList) {
-        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeSetExt(set);
+    public static Term makeImageExt(ArrayList<Term> argList) {
+        // * 🚩拒绝元素过少的词项 | 第一个词项需要是「关系」，除此之外必须含有至少一个元素 & 占位符
+        if (argList.size() < 2)
+            return null;
+        // * 🚩第一个词项是「关系」词项 | (/, R, a, _) 中的 R
+        final Term relation = argList.get(0);
+        final ArrayList<Term> argument = new ArrayList<Term>();
+        // * 🚩开始填充「关系词项」
+        int index = 0;
+        for (int j = 1; j < argList.size(); j++) {
+            // * 🚩在「占位符」的位置放置「关系」，以便节省存储空间
+            // * 📄 (/, R, a, _) => Image { op: "/", arr: [a, R], r_index: 1 }
+            if (argList.get(j).isPlaceholder()) {
+                index = j - 1;
+                argument.add(relation);
+            } else {
+                argument.add(argList.get(j));
+            }
+        }
+        // * 🚩构造
+        return makeImageExt(argument, (short) index);
+    }
+
+    /**
+     * Try to make an Image from a Product and a relation. Called by the inference
+     * rules.
+     * * 🚩从「乘积」构造外延像
+     * * 📄(*, A, B) --> R @ 0 = A --> (/, R, _, B)
+     * * 📄{<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     *
+     * @param product  The product
+     * @param relation The relation
+     * @param index    The index of the place-holder
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeImageExt(Product product, Term relation, short index) {
+        // * 🚩关系词项是「乘积」⇒可能可以简化
+        if (relation instanceof Product) {
+            final Product p2 = (Product) relation;
+            // * 🚩对「二元外延像」作特别的「取索引」简化
+            if ((product.size() == 2) && (p2.size() == 2)) {
+                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {
+                    // (/,(*,a,b),_,b) with [(*,a,b),b]#0
+                    // is reduced to self[0][0] = (*,a,b)[0] = a
+                    return p2.componentAt(0);
+                }
+                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {
+                    // (/,(*,a,b),a,_) with [a,(*,a,b)]#1
+                    // is reduced to self[1][1] = (*,a,b)[1] = b
+                    return p2.componentAt(1);
+                }
+            }
+        }
+        // * 🚩从「乘积」中设置「关系词项」（直接表示占位符位置），然后直接构造
+        final ArrayList<Term> argument = product.cloneComponents();
+        argument.set(index, relation);
+        return makeImageExt(argument, index);
+    }
+
+    /**
+     * Try to make an Image from an existing Image and a component. Called by the
+     * inference rules.
+     * * 🚩从一个已知的外延像中构造新外延像，并切换占位符的位置
+     *
+     * @param oldImage  The existing Image
+     * @param component The component to be added into the component list
+     * @param index     The index of the place-holder in the new Image
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeImageExt(ImageExt oldImage, Term component, short index) {
+        final ArrayList<Term> argList = oldImage.cloneComponents();
+        final int oldIndex = oldImage.getRelationIndex();
+        final Term relation = argList.get(oldIndex);
+        argList.set(oldIndex, component);
+        argList.set(index, relation);
+        return makeImageExt(argList, index);
     }
 
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
-     * * 🚩单个集合⇒排序后数组⇒构造
+     * * 🚩预先构造好名称，然后传入类构造函数中（这样无需再创建名称）
      *
-     * @param set a set of Term as components
+     * @param argument The argument list
+     * @param index    The index of the place-holder in the new Image
      * @return the Term generated from the arguments
      */
-    public static Term makeSetExt(TreeSet<Term> set) {
-        if (set.isEmpty())
-            return null;
-        final ArrayList<Term> argument = new ArrayList<Term>(set);
-        return new SetExt(argument);
+    private static Term makeImageExt(ArrayList<Term> argument, short index) {
+        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, index);
+        return new ImageExt(name, argument, index);
     }
 
-    /* SetInt */
+    /* ImageInt */
 
     /**
-     * Try to make a new set from one component. Called by the inference rules.
-     * * 📝类似{@link MakeTerm#makeSetExt}的做法
-     *
-     * @param t The component
-     * @return A compound generated or a term it reduced to
-     */
-    public static Term makeSetInt(Term t) {
-        final TreeSet<Term> set = new TreeSet<Term>();
-        set.add(t);
-        return makeSetInt(set);
-    }
-
-    /**
-     * Try to make a new SetInt. Called by StringParser.
-     * * 📝类似{@link MakeTerm#makeSetExt}的做法
+     * Try to make a new ImageExt. Called by StringParser.
+     * * 📝与「外延像」对应方法相似
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeSetInt(ArrayList<Term> argList) {
-        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeSetInt(set);
+    public static Term makeImageInt(ArrayList<Term> argList) {
+        if (argList.size() < 2)
+            return null;
+        final Term relation = argList.get(0);
+        final ArrayList<Term> argument = new ArrayList<Term>();
+        int index = 0;
+        for (int j = 1; j < argList.size(); j++) {
+            if (argList.get(j).isPlaceholder()) {
+                index = j - 1;
+                argument.add(relation);
+            } else {
+                argument.add(argList.get(j));
+            }
+        }
+        return makeImageInt(argument, (short) index);
+    }
+
+    /**
+     * Try to make an Image from a Product and a relation. Called by the inference
+     * rules.
+     * * 📝与「外延像」对应方法相似
+     *
+     * @param product  The product
+     * @param relation The relation
+     * @param index    The index of the place-holder
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeImageInt(Product product, Term relation, short index) {
+        if (relation instanceof Product) {
+            final Product p2 = (Product) relation;
+            if ((product.size() == 2) && (p2.size() == 2)) {
+                if ((index == 0) && product.componentAt(1).equals(p2.componentAt(1))) {
+                    // (\,_,(*,a,b),b) is reduced to a
+                    return p2.componentAt(0);
+                }
+                if ((index == 1) && product.componentAt(0).equals(p2.componentAt(0))) {
+                    // (\,(*,a,b),a,_) is reduced to b
+                    return p2.componentAt(1);
+                }
+            }
+        }
+        final ArrayList<Term> argument = product.cloneComponents();
+        argument.set(index, relation);
+        return makeImageInt(argument, index);
+    }
+
+    /**
+     * Try to make an Image from an existing Image and a component. Called by the
+     * inference rules.
+     * * 📝与「外延像」对应方法相似
+     *
+     * @param oldImage  The existing Image
+     * @param component The component to be added into the component list
+     * @param index     The index of the place-holder in the new Image
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeImageInt(ImageInt oldImage, Term component, short index) {
+        final ArrayList<Term> argList = oldImage.cloneComponents();
+        final int oldIndex = oldImage.getRelationIndex();
+        final Term relation = argList.get(oldIndex);
+        argList.set(oldIndex, component);
+        argList.set(index, relation);
+        return makeImageInt(argList, index);
     }
 
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
-     * * 📝类似{@link MakeTerm#makeSetExt}的做法
+     * * 📝与「外延像」对应方法相似
+     *
+     * @param argument The argument list
+     * @param index    The index of the place-holder in the new Image
+     * @return the Term generated from the arguments
+     */
+    private static Term makeImageInt(ArrayList<Term> argument, short index) {
+        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, index);
+        return new ImageInt(name, argument, index);
+    }
+
+    /* Conjunction */
+
+    /**
+     * Try to make a new compound from a list of components. Called by
+     * StringParser.
+     * * 🚩从字符串解析器中构造「合取」
+     * * ⚠️结果可空
+     *
+     * @return the Term generated from the arguments
+     * @param argList the list of arguments
+     */
+    public static Term makeConjunction(ArrayList<Term> argList) {
+        final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
+        return makeConjunction(set);
+    }
+
+    /**
+     * Try to make a new Disjunction from a set of components. Called by the
+     * public make methods.
+     * * 🚩从一个词项集合中构造「合取」
+     * * ️📝是一个相对原始的方法：只考虑元素个数
+     * * ⚠️结果可空
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeSetInt(TreeSet<Term> set) {
+    private static Term makeConjunction(TreeSet<Term> set) {
+        // * 🚩不允许空集
         if (set.isEmpty())
             return null;
-        final ArrayList<Term> argument = new ArrayList<Term>(set);
-        return new SetInt(argument);
+        // * 🚩单元素⇒直接用元素
+        // special case: single component
+        if (set.size() == 1)
+            return set.first();
+        // * 🚩将集合转换为数组，直接构造之
+        final ArrayList<Term> argument = new ArrayList<>(set);
+        return new Conjunction(argument);
+    }
+
+    // overload this method by term type?
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * * 🚩从两个词项中构造一个「合取」，等同于(A, B) => (&&, A, B)的操作
+     * * 📝在这些操作的过程中，元素会根据一些规则被约简
+     * * ⚠️结果可空
+     *
+     * @param term1 The first component
+     * @param term2 The second component
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeConjunction(Term term1, Term term2) {
+        // * 📝通过这个集合消除重复项 | 比对函数在Collection.class基于`Object.equals`方法，所以不会存在「按引用不按值」的情况
+        final TreeSet<Term> set;
+        // * 🚩同类合并 | 📝实际上可以用模式匹配
+        final boolean containable1 = term1 instanceof Conjunction;
+        final boolean containable2 = term2 instanceof Conjunction;
+        if (containable1) {
+            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
+            // (&&,P,Q) && (&&,R,S) = (&&,P,Q,R,S)
+            if (containable2)
+                set.addAll(((CompoundTerm) term2).cloneComponents());
+            // (&&,P,Q) && R = (&&,P,Q,R)
+            else
+                set.add(term2.clone());
+        } else if (containable2) {
+            // (&&,R,(&&,P,Q)) = (&&,P,Q,R)
+            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
+            set.add(term1.clone());
+        }
+        // * 🚩否则：纯粹构造二元集
+        else {
+            // P && Q = (&&,P,Q)
+            set = new TreeSet<>();
+            set.add(term1.clone());
+            set.add(term2.clone());
+        }
+        // * 🚩继续通过集合构建词项
+        return makeConjunction(set);
+    }
+
+    /* Disjunction */
+
+    /**
+     * Try to make a new Disjunction from two components. Called by the inference
+     * rules.
+     * * 📝与「合取」对应方法相似
+     *
+     * @param term1 The first component
+     * @param term2 The first component
+     * @return A Disjunction generated or a Term it reduced to
+     */
+    public static Term makeDisjunction(Term term1, Term term2) {
+        final TreeSet<Term> set;
+        if (term1 instanceof Disjunction) {
+            set = new TreeSet<>(((CompoundTerm) term1).cloneComponents());
+            if (term2 instanceof Disjunction) {
+                set.addAll(((CompoundTerm) term2).cloneComponents());
+            } // (||,P,Q) || (||,R,S)) = (||,P,Q,R,S)
+            else {
+                set.add(term2.clone());
+            } // (||,P,Q) || R = (||,P,Q,R)
+        } else if (term2 instanceof Disjunction) {
+            set = new TreeSet<>(((CompoundTerm) term2).cloneComponents());
+            set.add(term1.clone()); // R || (||,P,Q) = (||,P,Q,R)
+        } else {
+            set = new TreeSet<>();
+            set.add(term1.clone());
+            set.add(term2.clone());
+        }
+        return makeDisjunction(set);
+    }
+
+    /**
+     * Try to make a new IntersectionExt. Called by StringParser.
+     *
+     * @param argList a list of Term as components
+     * @return the Term generated from the arguments
+     */
+    public static Term makeDisjunction(ArrayList<Term> argList) {
+        final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
+        return makeDisjunction(set);
+    }
+
+    /**
+     * Try to make a new Disjunction from a set of components. Called by the public
+     * make methods.
+     * * 📝与「合取」对应方法相似
+     *
+     * @param set a set of Term as components
+     * @return the Term generated from the arguments
+     */
+    public static Term makeDisjunction(TreeSet<Term> set) {
+        if (set.size() == 1) {
+            return set.first();
+        } // special case: single component
+        final ArrayList<Term> argument = new ArrayList<>(set);
+        return new Disjunction(argument);
+    }
+
+    /* Negation */
+
+    /**
+     * Try to make a Negation of one component. Called by the inference rules.
+     *
+     * @param t The component
+     * @return A compound generated or a term it reduced to
+     */
+    public static Term makeNegation(Term t) {
+        // * 🚩双重否定⇒肯定
+        // * 📄-- (--,P) = P
+        if (t instanceof Negation)
+            return ((CompoundTerm) t).cloneComponents().get(0);
+        final ArrayList<Term> argument = new ArrayList<>();
+        argument.add(t);
+        return makeNegation(argument);
+    }
+
+    /**
+     * Try to make a new Negation. Called by StringParser.
+     * * 🚩仅检查长度
+     *
+     * @return the Term generated from the arguments
+     * @param argument The list of components
+     */
+    public static Term makeNegation(ArrayList<Term> argument) {
+        if (argument.size() != 1)
+            return null;
+        return new Negation(argument);
+    }
+
+    /* Statement */
+
+    /**
+     * Make a Statement from String, called by StringParser
+     * * 🚩从字符串解析器中分派（系词+主谓项）
+     * * ⚠️结果可空
+     *
+     * @param relation  The relation String
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return The Statement built
+     */
+    public static Statement makeStatement(String relation, Term subject, Term predicate) {
+        // * 📌【2024-06-01 10:46:42】原则：不让`nars.language`依赖MakeTerm
+        if (Statement.invalidStatement(subject, predicate))
+            return null;
+        // * 🚩根据陈述系词分派
+        switch (relation) {
+            case Symbols.INHERITANCE_RELATION:
+                return makeInheritance(subject, predicate);
+            case Symbols.SIMILARITY_RELATION:
+                return makeSimilarity(subject, predicate);
+            case Symbols.INSTANCE_RELATION:
+                return makeInstance(subject, predicate);
+            case Symbols.PROPERTY_RELATION:
+                return makeProperty(subject, predicate);
+            case Symbols.INSTANCE_PROPERTY_RELATION:
+                return makeInstanceProperty(subject, predicate);
+            case Symbols.IMPLICATION_RELATION:
+                return makeImplication(subject, predicate);
+            case Symbols.EQUIVALENCE_RELATION:
+                return makeEquivalence(subject, predicate);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Make a Statement from given components, called by the rules
+     * * 🚩从现有的陈述模板中构造
+     * * ⚠️结果可空
+     *
+     * @return The Statement built
+     * @param subj      The first component
+     * @param pred      The second component
+     * @param statement A sample statement providing the class type
+     */
+    public static Statement makeStatement(Statement statement, Term subj, Term pred) {
+        // * 🚩按四种基本系词构造
+        if (statement instanceof Inheritance)
+            return makeInheritance(subj, pred);
+        if (statement instanceof Similarity)
+            return makeSimilarity(subj, pred);
+        if (statement instanceof Implication)
+            return makeImplication(subj, pred);
+        if (statement instanceof Equivalence)
+            return makeEquivalence(subj, pred);
+        return null;
+    }
+
+    /**
+     * Make a symmetric Statement from given components and temporal
+     * information, called by the rules
+     * * ⚠️结果可空
+     *
+     * @param statement A sample asymmetric statement providing the class type
+     * @param subj      The first component
+     * @param pred      The second component
+     * @return The Statement built
+     */
+    public static Statement makeStatementSym(Statement statement, Term subj, Term pred) {
+        // * 🚩非对称陈述⇒对称陈述
+        if (statement instanceof Inheritance)
+            // * 🚩继承⇒相似
+            return makeSimilarity(subj, pred);
+        if (statement instanceof Implication)
+            // * 🚩蕴含⇒等价
+            return makeEquivalence(subj, pred);
+        return null;
+    }
+
+    /* Inheritance */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * * 📝此处只检查有效性（重言式、反推式，等等），无需做其它约简/检验
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Inheritance makeInheritance(Term subject, Term predicate) {
+        // * 🚩检查有效性
+        if (Statement.invalidStatement(subject, predicate))
+            return null;
+        // * 🚩直接构造
+        final ArrayList<Term> argument = argumentsToList(subject, predicate);
+        return new Inheritance(argument);
+    }
+
+    /*
+     * Instance
+     * A Statement about an Instance relation, which is used only in Narsese for
+     * I/O,
+     * and translated into Inheritance for internal use.
+     */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * <p>
+     * A {-- B becomes {A} --> B
+     * * 📝实例 = {主项} --> 谓项
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Statement makeInstance(Term subject, Term predicate) {
+        return makeInheritance(makeSetExt(subject), predicate);
+    }
+
+    /*
+     * Property
+     * A Statement about a Property relation, which is used only in Narsese for I/O,
+     * and translated into Inheritance for internal use.
+     */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * <p>
+     * A --] B becomes A --> [B]
+     * * 📝属性 = 主项 --> [谓项]
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Inheritance makeProperty(Term subject, Term predicate) {
+        return makeInheritance(subject, makeSetInt(predicate));
+    }
+
+    /*
+     * InstanceProperty
+     *
+     * A Statement about an InstanceProperty relation, which is used only in Narsese
+     * for I/O,
+     * and translated into Inheritance for internal use.
+     */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * <p>
+     * A {-] B becomes {A} --> [B]
+     * * 📝实例属性 = {主项} --> [谓项]
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Statement makeInstanceProperty(Term subject, Term predicate) {
+        return makeInheritance(makeSetExt(subject), makeSetInt(predicate));
     }
 
     /* Similarity */
@@ -1238,5 +1167,76 @@ public abstract class MakeTerm {
         // * 🚩从二元数组构造
         final ArrayList<Term> argument = argumentsToList(subject, predicate);
         return new Similarity(argument);
+    }
+
+    /* Implication */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or a term it reduced to
+     */
+    public static Implication makeImplication(Term subject, Term predicate) {
+        // * 🚩检查有效性：任意元素为空⇒空 | 保证后续非空，并接受「自反性」等检验
+        if (subject == null || predicate == null)
+            return null;
+        if (Statement.invalidStatement(subject, predicate))
+            return null;
+        // * 🚩检查主词类型
+        if (subject instanceof Implication || subject instanceof Equivalence)
+            // ! ❌ <<A ==> B> ==> C> | <<A <=> B> ==> C>
+            return null;
+        if (predicate instanceof Equivalence)
+            // ! ❌ <A ==> <B <=> C>>
+            return null;
+        if (predicate instanceof Implication) {
+            /** B in <A ==> <B ==> C>> */
+            final Term oldCondition = ((Implication) predicate).getSubject();
+            if (oldCondition instanceof Conjunction && ((Conjunction) oldCondition).containComponent(subject)) {
+                // ! ❌ <A ==> <(&&, A, B) ==> C>>
+                // ? ❓为何不能合并：实际上A && (&&, A, B) = (&&, A, B)
+                return null;
+            }
+            // * ♻️ <A ==> <B ==> C>> ⇒ <(&&, A, B) ==> C>
+            final Term newCondition = makeConjunction(subject, oldCondition);
+            return makeImplication(newCondition, ((Implication) predicate).getPredicate());
+        } else {
+            final ArrayList<Term> argument = argumentsToList(subject, predicate);
+            return new Implication(argument);
+        }
+    }
+
+    /* Equivalence */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * * 🚩在推理时构造「等价」陈述
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Equivalence makeEquivalence(Term subject, Term predicate) {
+        // to be extended to check if subject is Conjunction
+        // * 🚩检查非法主谓组合
+        if (subject instanceof Implication || subject instanceof Equivalence)
+            return null; // ! <<A ==> B> <=> C>
+        if (predicate instanceof Implication || predicate instanceof Equivalence)
+            return null; // ! <C <=> <C ==> D>>
+        if (Statement.invalidStatement(subject, predicate))
+            return null; // ! <A <=> A>, <<A --> B> <=> <B --> A>>
+        // * 🚩自动排序
+        if (subject.compareTo(predicate) > 0) {
+            final Term inner = subject;
+            subject = predicate;
+            predicate = inner;
+        }
+        // * 🚩构造
+        final ArrayList<Term> argument = argumentsToList(subject, predicate);
+        return new Equivalence(argument);
     }
 }
