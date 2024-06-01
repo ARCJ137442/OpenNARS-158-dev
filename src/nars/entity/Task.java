@@ -5,7 +5,7 @@ import nars.language.Term;
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
  */
-public class Task implements Item {
+public class Task implements Sentence, Item {
 
     /**
      * 🆕Item令牌
@@ -31,6 +31,36 @@ public class Task implements Item {
      * * 📝所有权：具所有权
      */
     private final Sentence sentence;
+
+    @Override
+    public Term __content() {
+        return sentence.__content();
+    }
+
+    @Override
+    public char __punctuation() {
+        return sentence.__punctuation();
+    }
+
+    @Override
+    public TruthValue __truth() {
+        return sentence.__truth();
+    }
+
+    @Override
+    public Stamp __stamp() {
+        return sentence.__stamp();
+    }
+
+    @Override
+    public boolean __revisable() {
+        return sentence.__revisable();
+    }
+
+    @Override
+    public Sentence cloneSentence() {
+        return this.sentence.cloneSentence();
+    }
 
     /**
      * Task from which the Task is derived, or null if input
@@ -222,5 +252,15 @@ public class Task implements Item {
             s.append("  \n solution: ").append(bestSolution.toStringBrief());
         }
         return s.toString();
+    }
+
+    /**
+     * Get a String representation of the sentence, with 2-digit accuracy
+     *
+     * @return The String
+     */
+    @Override
+    public String toStringBrief() {
+        return toString();
     }
 }

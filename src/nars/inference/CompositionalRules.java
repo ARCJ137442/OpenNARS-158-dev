@@ -20,7 +20,7 @@ public final class CompositionalRules {
             Sentence subSentence, Term component,
             CompoundTerm content, int index,
             DerivationContextReason context) {
-        final Sentence cloned = originalMainSentence.clone();
+        final Sentence cloned = originalMainSentence.cloneSentence();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
             return;

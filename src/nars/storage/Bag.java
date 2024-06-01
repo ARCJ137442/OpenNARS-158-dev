@@ -5,6 +5,7 @@ import java.util.*;
 import nars.entity.Item;
 import nars.inference.BudgetFunctions;
 import nars.main_nogui.Parameters;
+import util.ToStringBriefAndLong;
 
 /**
  * A Bag is a storage with a constant capacity and maintains an internal
@@ -416,7 +417,9 @@ public abstract class Bag<E extends Item> {
             if (!emptyLevel(i - 1)) {
                 buf = buf.append("\n --- Level ").append(i).append(":\n ");
                 for (int j = 0; j < itemTable.get(i - 1).size(); j++) {
-                    buf = buf.append(itemTable.get(i - 1).get(j).toStringBrief()).append("\n ");
+                    final Item item = itemTable.get(i - 1).get(j);
+                    if (item instanceof ToStringBriefAndLong)
+                        buf = buf.append(((ToStringBriefAndLong) item).toStringBrief()).append("\n ");
                 }
             }
         }
@@ -433,7 +436,9 @@ public abstract class Bag<E extends Item> {
             if (!emptyLevel(i - 1)) {
                 buf = buf.append("\n --- LEVEL ").append(i).append(":\n ");
                 for (int j = 0; j < itemTable.get(i - 1).size(); j++) {
-                    buf = buf.append(itemTable.get(i - 1).get(j).toStringLong()).append("\n ");
+                    final Item item = itemTable.get(i - 1).get(j);
+                    if (item instanceof ToStringBriefAndLong)
+                        buf = buf.append(((ToStringBriefAndLong) item).toStringLong()).append("\n ");
                 }
             }
         }

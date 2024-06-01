@@ -13,6 +13,7 @@ import nars.storage.Memory;
 import nars.storage.NullBagObserver;
 import nars.storage.TaskLinkBag;
 import nars.storage.TermLinkBag;
+import util.ToStringBriefAndLong;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -22,7 +23,7 @@ import nars.storage.TermLinkBag;
  * concept are those in a ConceptBag. All other access go through the Term that
  * names the concept.
  */
-public final class Concept implements Item {
+public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕Item令牌
@@ -173,7 +174,7 @@ public final class Concept implements Item {
     @Override
     public String toString() { // called from concept bag
         if (NARSBatch.isStandAlone()) {
-            return (((Item) this).toStringBrief() + " " + getKey());
+            return (this.token.toStringBrief() + " " + getKey());
         } else {
             return getKey();
         }
@@ -244,7 +245,7 @@ public final class Concept implements Item {
             // context.newStamp = Stamp.make(taskSentence.getStamp(),
             // belief.getStamp(), memory.getTime());
             if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
-                final Sentence belief2 = belief.clone(); // will this mess up priority adjustment?
+                final Sentence belief2 = belief.cloneSentence(); // will this mess up priority adjustment?
                 return belief2;
             }
         }

@@ -8,6 +8,7 @@ import java.util.Random;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Sentence;
+import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TruthValue;
@@ -357,7 +358,7 @@ public abstract class DerivationContext {
             return;
         // * 🚩仅在「任务内容」可用时构造
         final char newPunctuation = currentTask.getSentence().getPunctuation();
-        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, true);
+        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, true);
         final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
         derivedTask(newTask);
     }
@@ -378,7 +379,7 @@ public abstract class DerivationContext {
         // * 🚩仅在「任务内容」可用时构造
         final Sentence taskSentence = this.getCurrentTask().getSentence();
         final char newPunctuation = taskSentence.getPunctuation();
-        final Sentence newSentence = new Sentence(newContent, newPunctuation, newTruth, newStamp, revisable);
+        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, revisable);
         final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), currentBelief);
         derivedTask(newTask);
     }
@@ -418,7 +419,7 @@ public abstract class DerivationContext {
             this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
         // * 🚩使用新内容构造新语句
-        final Sentence newSentence = new Sentence(newContent, punctuation, newTruth, newStamp,
+        final Sentence newSentence = new SentenceV1(newContent, punctuation, newTruth, newStamp,
                 taskSentence.getRevisable());
         // * 🚩构造新任务
         final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);

@@ -423,7 +423,7 @@ public class RuleTables {
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
             DerivationContextReason context) {
-        final Sentence mainSentence = originalMainSentence.clone(); // for substitution
+        final Sentence mainSentence = originalMainSentence.cloneSentence(); // for substitution
         final Statement statement = (Statement) mainSentence.getContent();
         final Term component = statement.componentAt(index);
         final CompoundTerm content = (CompoundTerm) subSentence.getContent();

@@ -1,5 +1,7 @@
 package nars.entity;
 
+import util.ToStringBriefAndLong;
+
 /**
  * An item is an object that can be put into a Bag,
  * to participate in the resource competition of the system.
@@ -12,7 +14,7 @@ public interface Item {
      * 🆕一个基于「复合」而非「继承」的{@link Item}默认实现
      * * 🚩使用`final`强制使用复合手段（而非继承）
      */
-    public static final class Token implements Item {
+    public static final class Token implements Item, ToStringBriefAndLong {
 
         /**
          * The key of the Item, unique in a Bag
@@ -67,6 +69,16 @@ public interface Item {
         @Override
         public String toString() {
             return getBudget() + " " + getKey();
+        }
+
+        /**
+         * Return a String representation of the Item after simplification
+         *
+         * @return A simplified String representation of the content
+         */
+        @Override
+        public String toStringBrief() {
+            return getBudget().toStringBrief() + " " + getKey();
         }
     }
 
@@ -190,28 +202,4 @@ public interface Item {
     default public void merge(Item that) {
         getBudget().merge(that.getBudget());
     }
-
-    /**
-     * Return a String representation of the Item
-     * 
-     * ! ❌无法覆盖{@link Object#toString}：A default method cannot override a method from
-     * java.lang.Object Java(67109915)
-     *
-     * @return The String representation of the full content
-     */
-    public String toString();
-
-    /**
-     * Return a String representation of the Item after simplification
-     *
-     * @return A simplified String representation of the content
-     */
-    public default String toStringBrief() {
-        return getBudget().toStringBrief() + " " + getKey();
-    }
-
-    public default String toStringLong() {
-        return toString();
-    }
-
 }
