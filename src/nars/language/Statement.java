@@ -87,7 +87,7 @@ public abstract class Statement extends CompoundTerm {
      * @param predicate The second component
      * @return Whether The Statement is invalid
      */
-    public static boolean invalidStatement(Term subject, Term predicate) {
+    public static final boolean invalidStatement(Term subject, Term predicate) {
         if (subject.equals(predicate)) {
             return true;
         }
