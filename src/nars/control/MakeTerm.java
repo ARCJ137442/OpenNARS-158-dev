@@ -351,6 +351,7 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Term makeConjunction(Term term1, Term term2) {
+        // * 📝通过这个集合消除重复项 | 比对函数在Collection.class基于`Object.equals`方法，所以不会存在「按引用不按值」的情况
         final TreeSet<Term> set;
         // * 🚩同类合并 | 📝实际上可以用模式匹配
         final boolean containable1 = term1 instanceof Conjunction;
@@ -541,7 +542,7 @@ public abstract class MakeTerm {
             return null; // ! <<A ==> B> <=> C>
         if (predicate instanceof Implication || predicate instanceof Equivalence)
             return null; // ! <C <=> <C ==> D>>
-        if (Equivalence.invalidStatement(subject, predicate))
+        if (Statement.invalidStatement(subject, predicate))
             return null; // ! <A <=> A>, <<A --> B> <=> <B --> A>>
         // * 🚩自动排序
         if (subject.compareTo(predicate) > 0) {
@@ -748,25 +749,33 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from two components. Called by the inference
      * rules.
-     * TODO: 继续
      *
      * @param subject   The first component
      * @param predicate The second component
      * @return A compound generated or a term it reduced to
      */
     public static Implication makeImplication(Term subject, Term predicate) {
+        // * 🚩检查有效性：任意元素为空⇒空 | 保证后续非空，并接受「自反性」等检验
         if (subject == null || predicate == null)
             return null;
-        if (subject instanceof Implication || subject instanceof Equivalence
-                || predicate instanceof Equivalence)
+        if (Statement.invalidStatement(subject, predicate))
             return null;
-        if (Implication.invalidStatement(subject, predicate))
+        // * 🚩检查主词类型
+        if (subject instanceof Implication || subject instanceof Equivalence)
+            // ! ❌ <<A ==> B> ==> C> | <<A <=> B> ==> C>
+            return null;
+        if (predicate instanceof Equivalence)
+            // ! ❌ <A ==> <B <=> C>>
             return null;
         if (predicate instanceof Implication) {
+            /** B in <A ==> <B ==> C>> */
             final Term oldCondition = ((Implication) predicate).getSubject();
-            if ((oldCondition instanceof Conjunction) && ((Conjunction) oldCondition).containComponent(subject)) {
+            if (oldCondition instanceof Conjunction && ((Conjunction) oldCondition).containComponent(subject)) {
+                // ! ❌ <A ==> <(&&, A, B) ==> C>>
+                // ? ❓为何不能合并：实际上A && (&&, A, B) = (&&, A, B)
                 return null;
             }
+            // * ♻️ <A ==> <B ==> C>> ⇒ <(&&, A, B) ==> C>
             final Term newCondition = makeConjunction(subject, oldCondition);
             return makeImplication(newCondition, ((Implication) predicate).getPredicate());
         } else {
@@ -780,14 +789,17 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from two components. Called by the inference
      * rules.
+     * * 📝此处只检查有效性（重言式、反推式，等等），无需做其它约简/检验
      *
      * @param subject   The first component
      * @param predicate The second component
      * @return A compound generated or null
      */
     public static Inheritance makeInheritance(Term subject, Term predicate) {
-        if (Inheritance.invalidStatement(subject, predicate))
+        // * 🚩检查有效性
+        if (Statement.invalidStatement(subject, predicate))
             return null;
+        // * 🚩直接构造
         final ArrayList<Term> argument = argumentsToList(subject, predicate);
         return new Inheritance(argument);
     }
@@ -804,6 +816,7 @@ public abstract class MakeTerm {
      * rules.
      * <p>
      * A {-- B becomes {A} --> B
+     * * 📝实例 = {主项} --> 谓项
      *
      * @param subject   The first component
      * @param predicate The second component
@@ -811,6 +824,27 @@ public abstract class MakeTerm {
      */
     public static Statement makeInstance(Term subject, Term predicate) {
         return makeInheritance(makeSetExt(subject), predicate);
+    }
+
+    /*
+     * Property
+     * A Statement about a Property relation, which is used only in Narsese for I/O,
+     * and translated into Inheritance for internal use.
+     */
+
+    /**
+     * Try to make a new compound from two components. Called by the inference
+     * rules.
+     * <p>
+     * A --] B becomes A --> [B]
+     * * 📝属性 = 主项 --> [谓项]
+     *
+     * @param subject   The first component
+     * @param predicate The second component
+     * @return A compound generated or null
+     */
+    public static Inheritance makeProperty(Term subject, Term predicate) {
+        return makeInheritance(subject, makeSetInt(predicate));
     }
 
     /*
@@ -826,6 +860,7 @@ public abstract class MakeTerm {
      * rules.
      * <p>
      * A {-] B becomes {A} --> [B]
+     * * 📝实例属性 = {主项} --> [谓项]
      *
      * @param subject   The first component
      * @param predicate The second component
@@ -847,42 +882,73 @@ public abstract class MakeTerm {
      */
     public static Term makeIntersectionExt(Term term1, Term term2) {
         final TreeSet<Term> set;
-        if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
+        final CompoundTerm s1, s2;
+        // * 🚩两个内涵集取外延交 ⇒ 外延交=内涵并 ⇒ 取并集
+        // * 📄[A,B] & [C,D] = [A,B,C,D]
+        if (term1 instanceof SetInt && term2 instanceof SetInt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            set.addAll(s2.cloneComponents()); // set union
             return makeSetInt(set);
         }
-        if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
+        // * 🚩两个外延集取外延交 ⇒ 取交集
+        // * 📄{A,B} & {B,C} = {B}
+        else if (term1 instanceof SetExt && term2 instanceof SetExt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            set.retainAll(s2.cloneComponents()); // set intersection
             return makeSetExt(set);
         }
-        if (term1 instanceof IntersectionExt) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            if (term2 instanceof IntersectionExt) {
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            } // (&,(&,P,Q),(&,R,S)) = (&,P,Q,R,S)
-            else {
+        // * 🚩左边是外延交 ⇒ 选择性取交集
+        else if (term1 instanceof IntersectionExt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            // * 📄(&,P,Q) & (&,R,S) = (&,P,Q,R,S)
+            if (term2 instanceof IntersectionExt)
+                set.addAll(s2.cloneComponents());
+            // * 📄(&,P,Q) & R = (&,P,Q,R)
+            else
                 set.add(term2.clone());
-            } // (&,(&,P,Q),R) = (&,P,Q,R)
-        } else if (term2 instanceof IntersectionExt) {
-            set = new TreeSet<Term>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone()); // (&,R,(&,P,Q)) = (&,P,Q,R)
-        } else {
+        }
+        // * 🚩左边不是外延交，右边是外延交 ⇒ 直接并入到右边
+        // * 📄R & (&,P,Q) = (&,P,Q,R)
+        else if (term2 instanceof IntersectionExt) {
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s2.cloneComponents());
+            set.add(term1.clone());
+        }
+        // * 🚩纯默认 ⇒ 直接添加
+        // * 📄P & Q = (&,P,Q)
+        else {
             set = new TreeSet<Term>();
             set.add(term1.clone());
             set.add(term2.clone());
         }
+        // * 🚩构造
         return makeIntersectionExt(set);
     }
 
     /**
      * Try to make a new IntersectionExt. Called by StringParser.
+     * * 🚩用户输入的集合不作操作
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
     public static Term makeIntersectionExt(ArrayList<Term> argList) {
+        // TODO: 后续有待验证可行性
+        // if (argList.isEmpty())
+        // return null;
+        // // * 🚩做一个reduce的操作
+        // Term term = argList.get(0).clone();
+        // for (Term t : argList.subList(1, argList.size())) {
+        // final Term new_term = makeIntersectionExt(term, t.clone());
+        // term = new_term;
+        // }
+        // return term;
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
         return makeIntersectionExt(set);
     }
@@ -890,22 +956,27 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
+     * * 🚩只依照集合数量进行化简
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeIntersectionExt(TreeSet<Term> set) {
-        if (set.size() == 1) {
+    private static Term makeIntersectionExt(TreeSet<Term> set) {
+        // special case: single component
+        // * 🚩单个元素⇒直接取元素
+        // * 📄(&, A) = A
+        if (set.size() == 1)
             return set.first();
-        } // special case: single component
         final ArrayList<Term> argument = new ArrayList<Term>(set);
         return new IntersectionExt(argument);
     }
 
     /* IntersectionInt */
+
     /**
      * Try to make a new compound from two components. Called by the inference
      * rules.
+     * * 📝类似「外延交」对应方法，但一些地方是对偶的
      *
      * @param term1 The first component
      * @param term2 The first component
@@ -913,28 +984,47 @@ public abstract class MakeTerm {
      */
     public static Term makeIntersectionInt(Term term1, Term term2) {
         final TreeSet<Term> set;
-        if ((term1 instanceof SetExt) && (term2 instanceof SetExt)) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.addAll(((CompoundTerm) term2).cloneComponents()); // set union
+        final CompoundTerm s1, s2;
+        // * 🚩两个外延集取内涵交 ⇒ 内涵交=外延并 ⇒ 取并集
+        // * 📄{A,B} | {C,D} = {A,B,C,D}
+        if (term1 instanceof SetExt && term2 instanceof SetExt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            set.addAll(s2.cloneComponents()); // set union
             return makeSetExt(set);
         }
-        if ((term1 instanceof SetInt) && (term2 instanceof SetInt)) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            set.retainAll(((CompoundTerm) term2).cloneComponents()); // set intersection
+        // * 🚩两个内涵集取内涵交 ⇒ 取交集
+        // * 📄[A,B] | [B,C] = [B]
+        else if (term1 instanceof SetInt && term2 instanceof SetInt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            set.retainAll(s2.cloneComponents()); // set intersection
             return makeSetInt(set);
         }
-        if (term1 instanceof IntersectionInt) {
-            set = new TreeSet<Term>(((CompoundTerm) term1).cloneComponents());
-            if (term2 instanceof IntersectionInt) {
-                set.addAll(((CompoundTerm) term2).cloneComponents());
-            } // (|,(|,P,Q),(|,R,S)) = (|,P,Q,R,S)
-            else {
+        // * 🚩左边是内涵交 ⇒ 选择性取交集
+        else if (term1 instanceof IntersectionInt) {
+            s1 = (CompoundTerm) term1;
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s1.cloneComponents());
+            // * 📄(|,P,Q) | (|,R,S) = (|,P,Q,R,S)
+            if (term2 instanceof IntersectionInt)
+                set.addAll(s2.cloneComponents());
+            // * 📄(|,P,Q) | R = (|,P,Q,R)
+            else
                 set.add(term2.clone());
-            } // (|,(|,P,Q),R) = (|,P,Q,R)
-        } else if (term2 instanceof IntersectionInt) {
-            set = new TreeSet<Term>(((CompoundTerm) term2).cloneComponents());
-            set.add(term1.clone()); // (|,R,(|,P,Q)) = (|,P,Q,R)
-        } else {
+        }
+        // * 🚩左边不是内涵交，右边是内涵交 ⇒ 直接并入到右边
+        // * 📄R | (|,P,Q) = (|,P,Q,R)
+        else if (term2 instanceof IntersectionInt) {
+            s2 = (CompoundTerm) term2;
+            set = new TreeSet<Term>(s2.cloneComponents());
+            set.add(term1.clone());
+        }
+        // * 🚩纯默认 ⇒ 直接添加
+        // * 📄P | Q = (|,P,Q)
+        else {
             set = new TreeSet<Term>();
             set.add(term1.clone());
             set.add(term2.clone());
@@ -943,12 +1033,23 @@ public abstract class MakeTerm {
     }
 
     /**
-     * Try to make a new IntersectionExt. Called by StringParser.
+     * Try to make a new IntersectionInt. Called by StringParser.
+     * * 🚩用户输入的集合不作操作
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
     public static Term makeIntersectionInt(ArrayList<Term> argList) {
+        // TODO: 后续有待验证可行性
+        // if (argList.isEmpty())
+        // return null;
+        // // * 🚩做一个reduce的操作
+        // Term term = argList.get(0).clone();
+        // for (Term t : argList.subList(1, argList.size())) {
+        // final Term new_term = makeIntersectionInt(term, t.clone());
+        // term = new_term;
+        // }
+        // return term;
         final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
         return makeIntersectionInt(set);
     }
@@ -956,14 +1057,17 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
+     * * 🚩只依照集合数量进行化简
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
     public static Term makeIntersectionInt(TreeSet<Term> set) {
-        if (set.size() == 1) {
+        // special case: single component
+        // * 🚩单个元素⇒直接取元素
+        // * 📄(&, A) = A
+        if (set.size() == 1)
             return set.first();
-        } // special case: single component
         final ArrayList<Term> argument = new ArrayList<Term>(set);
         return new IntersectionInt(argument);
     }
@@ -977,9 +1081,10 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Term makeNegation(Term t) {
-        if (t instanceof Negation) {
+        // * 🚩双重否定⇒肯定
+        // * 📄-- (--,P) = P
+        if (t instanceof Negation)
             return ((CompoundTerm) t).cloneComponents().get(0);
-        } // (--,(--,P)) = P
         final ArrayList<Term> argument = new ArrayList<>();
         argument.add(t);
         return makeNegation(argument);
@@ -987,14 +1092,14 @@ public abstract class MakeTerm {
 
     /**
      * Try to make a new Negation. Called by StringParser.
+     * * 🚩仅检查长度
      *
      * @return the Term generated from the arguments
      * @param argument The list of components
      */
     public static Term makeNegation(ArrayList<Term> argument) {
-        if (argument.size() != 1) {
+        if (argument.size() != 1)
             return null;
-        }
         return new Negation(argument);
     }
 
@@ -1002,6 +1107,7 @@ public abstract class MakeTerm {
 
     /**
      * Try to make a new compound. Called by StringParser.
+     * * 🚩直接构造，无需检查内部参数
      *
      * @return the Term generated from the arguments
      * @param argument The list of components
@@ -1013,6 +1119,8 @@ public abstract class MakeTerm {
     /**
      * Try to make a Product from an ImageExt/ImageInt and a component. Called by
      * the inference rules.
+     * * 🚩从「外延像/内涵像」构造，用某个词项替换掉指定索引处的元素
+     * * 📝<a --> (/, R, _, b)> => <(*, a, b) --> R>，其中就要用 a 替换 [R,b] 中的R
      *
      * @param image     The existing Image
      * @param component The component to be added into the component list
@@ -1026,30 +1134,11 @@ public abstract class MakeTerm {
         return makeProduct(argument);
     }
 
-    /*
-     * Property
-     * A Statement about a Property relation, which is used only in Narsese for I/O,
-     * and translated into Inheritance for internal use.
-     */
-
-    /**
-     * Try to make a new compound from two components. Called by the inference
-     * rules.
-     * <p>
-     * A --] B becomes A --> [B]
-     *
-     * @param subject   The first component
-     * @param predicate The second component
-     * @return A compound generated or null
-     */
-    public static Inheritance makeProperty(Term subject, Term predicate) {
-        return makeInheritance(subject, makeSetInt(predicate));
-    }
-
     /* SetExt */
 
     /**
      * Try to make a new set from one component. Called by the inference rules.
+     * * 🚩单个词项⇒直接从一元集构造
      *
      * @param t The component
      * @return A compound generated or a term it reduced to
@@ -1062,6 +1151,7 @@ public abstract class MakeTerm {
 
     /**
      * Try to make a new SetExt. Called by StringParser.
+     * * 🚩单个列表⇒转换为集合（此时去重&排序）
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
@@ -1074,14 +1164,14 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
+     * * 🚩单个集合⇒排序后数组⇒构造
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
     public static Term makeSetExt(TreeSet<Term> set) {
-        if (set.isEmpty()) {
+        if (set.isEmpty())
             return null;
-        }
         final ArrayList<Term> argument = new ArrayList<Term>(set);
         return new SetExt(argument);
     }
@@ -1090,6 +1180,7 @@ public abstract class MakeTerm {
 
     /**
      * Try to make a new set from one component. Called by the inference rules.
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
      * @param t The component
      * @return A compound generated or a term it reduced to
@@ -1101,7 +1192,8 @@ public abstract class MakeTerm {
     }
 
     /**
-     * Try to make a new SetExt. Called by StringParser.
+     * Try to make a new SetInt. Called by StringParser.
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
@@ -1114,14 +1206,14 @@ public abstract class MakeTerm {
     /**
      * Try to make a new compound from a set of components. Called by the public
      * make methods.
+     * * 📝类似{@link MakeTerm#makeSetExt}的做法
      *
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
     public static Term makeSetInt(TreeSet<Term> set) {
-        if (set.isEmpty()) {
+        if (set.isEmpty())
             return null;
-        }
         final ArrayList<Term> argument = new ArrayList<Term>(set);
         return new SetInt(argument);
     }
@@ -1137,12 +1229,13 @@ public abstract class MakeTerm {
      * @return A compound generated or null
      */
     public static Similarity makeSimilarity(Term subject, Term predicate) {
-        if (Similarity.invalidStatement(subject, predicate)) {
+        // * 🚩仅检查有效性
+        if (Statement.invalidStatement(subject, predicate))
             return null;
-        }
-        if (subject.compareTo(predicate) > 0) {
+        // * 🚩调整顺序（递归）
+        if (subject.compareTo(predicate) > 0)
             return makeSimilarity(predicate, subject);
-        }
+        // * 🚩从二元数组构造
         final ArrayList<Term> argument = argumentsToList(subject, predicate);
         return new Similarity(argument);
     }
