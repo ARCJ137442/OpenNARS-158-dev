@@ -174,7 +174,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
     @Override
     public String toString() { // called from concept bag
         if (NARSBatch.isStandAlone()) {
-            return (this.token.toStringBrief() + " " + getKey());
+            final String superString = getBudget().toString() + " " + getKey().toString();
+            return (superString + " " + getKey());
         } else {
             return getKey();
         }
@@ -196,6 +197,14 @@ public final class Concept implements Item, ToStringBriefAndLong {
         }
         // TODO other details?
         return res;
+    }
+
+    /**
+     * 🆕原版没有，此处仅重定向
+     */
+    @Override
+    public String toStringBrief() {
+        return toString();
     }
 
     public String toStringIfNotNull(Object item, String title) {

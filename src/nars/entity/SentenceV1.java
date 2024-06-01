@@ -156,4 +156,12 @@ public class SentenceV1 implements Sentence {
     public String toStringBrief() {
         return toKey() + stamp.toString();
     }
+
+    /**
+     * 🆕原版没有，此处仅重定向
+     */
+    @Override
+    public String toStringLong() {
+        return toString();
+    }
 }

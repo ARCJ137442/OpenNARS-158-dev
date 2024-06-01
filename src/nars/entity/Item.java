@@ -71,14 +71,17 @@ public interface Item {
             return getBudget() + " " + getKey();
         }
 
-        /**
-         * Return a String representation of the Item after simplification
-         *
-         * @return A simplified String representation of the content
-         */
         @Override
         public String toStringBrief() {
             return getBudget().toStringBrief() + " " + getKey();
+        }
+
+        /**
+         * 🆕原版没有，此处仅重定向
+         */
+        @Override
+        public String toStringLong() {
+            return toString();
         }
     }
 
@@ -87,22 +90,14 @@ public interface Item {
      *
      * @return Current key value
      */
-    public String getKey(); /*
-                             * {
-                             * return key;
-                             * }
-                             */
+    public String getKey();
 
     /**
      * Get BudgetValue
      *
      * @return Current BudgetValue
      */
-    public BudgetValue getBudget(); /*
-                                     * {
-                                     * return budget;
-                                     * }
-                                     */
+    public BudgetValue getBudget();
 
     /**
      * Get priority value

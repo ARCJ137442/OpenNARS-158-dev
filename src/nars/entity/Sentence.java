@@ -123,7 +123,7 @@ public interface Sentence extends ToStringBriefAndLong {
      * @return The String
      */
     public default String toKey() {
-        StringBuilder s = new StringBuilder();
+        final StringBuilder s = new StringBuilder();
         s.append(__content().toString());
         s.append(__punctuation()).append(" ");
         if (__truth() != null) {

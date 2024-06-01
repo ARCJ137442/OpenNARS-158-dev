@@ -93,7 +93,7 @@ public abstract class StringParser extends Symbols {
             final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content.getName()));
             final Sentence sentence = new SentenceV1(content, punctuation, truth, stamp, revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
-            return new Task(sentence, budget);
+            return new TaskV1(sentence, budget);
         } catch (final InvalidInputException e) {
             final String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
             System.out.println(message);

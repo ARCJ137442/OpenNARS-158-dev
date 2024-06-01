@@ -25,7 +25,7 @@ public class RuleTables {
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task.getSentence();
+        final Sentence taskSentence = task;
         final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Sentence belief = context.getCurrentBelief();
@@ -39,7 +39,7 @@ public class RuleTables {
         // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
         // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
         // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
-        if (!context.getMemory().noResult() && task.getSentence().isJudgment()) {
+        if (!context.getMemory().noResult() && task.isJudgment()) {
             return;
         }
         // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
@@ -56,12 +56,12 @@ public class RuleTables {
                         break;
                     case TermLink.COMPONENT_STATEMENT:
                         if (belief != null) {
-                            SyllogisticRules.detachment(task.getSentence(), belief, bIndex, context);
+                            SyllogisticRules.detachment(task, belief, bIndex, context);
                         }
                         break;
                     case TermLink.COMPOUND_STATEMENT:
                         if (belief != null) {
-                            SyllogisticRules.detachment(belief, task.getSentence(), bIndex, context);
+                            SyllogisticRules.detachment(belief, task, bIndex, context);
                         }
                         break;
                     case TermLink.COMPONENT_CONDITION:
@@ -147,7 +147,7 @@ public class RuleTables {
                             if (taskTerm instanceof Implication) {
                                 Term subj = ((Implication) taskTerm).getSubject();
                                 if (subj instanceof Negation) {
-                                    if (task.getSentence().isJudgment()) {
+                                    if (task.isJudgment()) {
                                         componentAndStatement((CompoundTerm) subj, bIndex, (Statement) taskTerm, tIndex,
                                                 context);
                                     } else {
@@ -179,7 +179,7 @@ public class RuleTables {
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm,
             DerivationContextReason context) {
-        final Sentence taskSentence = context.getCurrentTask().getSentence();
+        final Sentence taskSentence = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
         final int figure;
         if (taskTerm instanceof Inheritance) {
@@ -434,7 +434,7 @@ public class RuleTables {
             } else if (Variable.unify(Symbols.VAR_INDEPENDENT, component, content, statement, content)) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
-                    && (context.getCurrentTask().getSentence().isJudgment())) {
+                    && (context.getCurrentTask().isJudgment())) {
                 final Statement s2 = (Statement) statement.getPredicate();
                 if (s2.getSubject().equals(((Statement) content).getSubject())) {
                     CompositionalRules.introVarInner((Statement) content, s2, statement, context);
@@ -442,7 +442,7 @@ public class RuleTables {
                 CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
                         index, context);
             } else if ((statement instanceof Equivalence) && (statement.getPredicate() instanceof Statement)
-                    && (context.getCurrentTask().getSentence().isJudgment())) {
+                    && (context.getCurrentTask().isJudgment())) {
                 CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
                         index, context);
             }
@@ -547,15 +547,15 @@ public class RuleTables {
             if ((compound instanceof Conjunction) && (context.getCurrentBelief() != null)) {
                 if (Variable.unify(Symbols.VAR_DEPENDENT, component, statement, compound, statement)) {
                     SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), context);
-                } else if (task.getSentence().isJudgment()) { // && !compound.containComponent(component)) {
+                } else if (task.isJudgment()) { // && !compound.containComponent(component)) {
                     CompositionalRules.introVarInner(statement, (Statement) component, compound, context);
                 } else if (Variable.unify(Symbols.VAR_QUERY, component, statement, compound, statement)) {
                     CompositionalRules.decomposeStatement(compound, component, true, context);
                 }
             }
         } else {
-            // if (!task.isStructural() && task.getSentence().isJudgment()) {
-            if (task.getSentence().isJudgment()) {
+            // if (!task.isStructural() && task.isJudgment()) {
+            if (task.isJudgment()) {
                 if (statement instanceof Inheritance) {
                     StructuralRules.structuralCompose1(compound, index, statement, context);
                     // if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
@@ -597,7 +597,7 @@ public class RuleTables {
             }
         } else if ((statement instanceof Implication) && (compound instanceof Negation)) {
             if (index == 0) {
-                StructuralRules.contraposition(statement, context.getCurrentTask().getSentence(), context);
+                StructuralRules.contraposition(statement, context.getCurrentTask(), context);
             } else {
                 StructuralRules.contraposition(statement, context.getCurrentBelief(), context);
             }
