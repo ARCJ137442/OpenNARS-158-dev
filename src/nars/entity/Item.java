@@ -1,6 +1,6 @@
 package nars.entity;
 
-import util.ToStringBriefAndLong;
+import nars.io.ToStringBriefAndLong;
 
 /**
  * An item is an object that can be put into a Bag,
@@ -11,6 +11,40 @@ import util.ToStringBriefAndLong;
 public interface Item {
 
     /**
+     * * 📝【2024-06-01 20:35:41】回答{@link Token}中的考虑——困难重重：
+     * * 虽然设计上确实能在最后通过复合对象「BagItem<Task>」等解耦存储，
+     * * 但实际上仍然解决不了「随时更新预算值」的耦合
+     * * ⚠️亦即：不能完全将「推理机制」和「存储控制机制」在代码上隔离开来——二者
+     * * ❌即便能通过「钩子调用」让各处「预算更新」得到call，这也有很大耦合度
+     * * 💭乃至不如最开始的「抽象接口」好使
+     */
+    public static final class BagItem<T> implements Item {
+        private final T value;
+        private final String key;
+        private final BudgetValue budget;
+
+        public BagItem(T value, String key, BudgetValue budget) {
+            this.value = value;
+            this.key = key;
+            this.budget = budget;
+        }
+
+        public T getValue() {
+            return this.value;
+        }
+
+        @Override
+        public String getKey() {
+            return this.key;
+        }
+
+        @Override
+        public BudgetValue getBudget() {
+            return this.budget;
+        }
+    }
+
+    /**
      * 🆕一个基于「复合」而非「继承」的{@link Item}默认实现
      * * 🚩使用`final`强制使用复合手段（而非继承）
      */
@@ -18,7 +52,7 @@ public interface Item {
 
         /**
          * The key of the Item, unique in a Bag
-         * * ❓TODO: 后续可以放入「袋」中，使用「Key → Item(T, Budget)」的结构将「预算值」完全合并入「袋」中
+         * * ❓后续可以放入「袋」中，使用「Key → Item(T, Budget)」的结构将「预算值」完全合并入「袋」中
          *
          * * ️📝可空性：可空 | 仅「词项链模板」
          * * 📝可变性：不变 | 仅构造时，无需可变

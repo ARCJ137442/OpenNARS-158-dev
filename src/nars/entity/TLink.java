@@ -4,8 +4,9 @@ import nars.io.Symbols;
 
 /**
  * 🆕任务链与词项链共有的「T链接」
+ * * 🚩【2024-06-01 20:56:49】现在不再实现{@link Item}接口，交由后续「词项链」「任务链」「词项链模板」自由组合
  */
-public abstract class TLink<Target> implements Item {
+public abstract class TLink<Target> {
     /** At C, point to C; TaskLink only */
     public static final short SELF = 0;
     /** At (&&, A, C), point to C */
@@ -22,21 +23,6 @@ public abstract class TLink<Target> implements Item {
     public static final short COMPOUND_CONDITION = 6;
     /** At C, point to <(*, C, B) --> A>; TaskLink only */
     public static final short TRANSFORM = 8;
-
-    /**
-     * 🆕Item令牌
-     */
-    private final Token token;
-
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
-
-    @Override
-    public BudgetValue getBudget() {
-        return token.getBudget();
-    }
 
     /**
      * The linked Target
@@ -79,11 +65,8 @@ public abstract class TLink<Target> implements Item {
      */
     protected TLink(
             final Target target,
-            final String key,
-            final BudgetValue budget,
             final short type,
             final short[] indices) {
-        this.token = new Token(key, budget);
         this.target = target;
         this.type = type;
         this.index = indices;

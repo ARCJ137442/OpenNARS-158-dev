@@ -25,8 +25,8 @@ public abstract class ConceptLinking {
      *
      * @return A list of TermLink templates
      */
-    public static ArrayList<TermLink> prepareComponentLinks(CompoundTerm self) {
-        final ArrayList<TermLink> componentLinks = new ArrayList<>();
+    public static ArrayList<TermLinkTemplate> prepareComponentLinks(CompoundTerm self) {
+        final ArrayList<TermLinkTemplate> componentLinks = new ArrayList<>();
         // * 🚩预备「默认类型」：自身为陈述⇒陈述，自身为复合⇒复合
         final short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
         // * 🚩建立连接：从自身到自身开始
@@ -47,7 +47,7 @@ public abstract class ConceptLinking {
      */
     private static void prepareComponentLinks(
             final CompoundTerm self,
-            final ArrayList<TermLink> componentLinks,
+            final ArrayList<TermLinkTemplate> componentLinks,
             final short type,
             final CompoundTerm term) {
         // * 🚩从目标第一层元素出发
@@ -56,7 +56,7 @@ public abstract class ConceptLinking {
             final Term t1 = term.componentAt(i);
             // * 🚩「常量」词项⇒直接链接
             if (t1.isConstant()) {
-                componentLinks.add(new TermLink(t1, type, new int[] { i }));
+                componentLinks.add(new TermLinkTemplate(t1, type, new int[] { i }));
                 // * 📝【2024-05-15 18:21:25】案例笔记 概念="<(&&,A,B) ==> D>"：
                 // * 📄self="<(&&,A,B) ==> D>" ~> "(&&,A,B)" [i=0]
                 // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
@@ -103,10 +103,10 @@ public abstract class ConceptLinking {
                                     ? new int[] { 0, i, j }
                                     // * 📝否则就还是第二层
                                     : new int[] { i, j };
-                            componentLinks.add(new TermLink(t2, TermLink.TRANSFORM, indexes));
+                            componentLinks.add(new TermLinkTemplate(t2, TermLink.TRANSFORM, indexes));
                         } else {
                             // * 🚩非「转换」相关：直接按类型添加
-                            componentLinks.add(new TermLink(t2, type, new int[] { i, j }));
+                            componentLinks.add(new TermLinkTemplate(t2, type, new int[] { i, j }));
                         }
                     }
                     // * 🚩直接处理 @ 第三层
@@ -122,7 +122,7 @@ public abstract class ConceptLinking {
                                         ? new int[] { 0, i, j, k }
                                         // * 📝否则仅第三层
                                         : new int[] { i, j, k };
-                                componentLinks.add(new TermLink(t3, TermLink.TRANSFORM, indexes));
+                                componentLinks.add(new TermLinkTemplate(t3, TermLink.TRANSFORM, indexes));
                             }
                         }
                     }
@@ -162,17 +162,17 @@ public abstract class ConceptLinking {
         if (!subBudget.aboveThreshold())
             return;
         // * 🚩仅在「预算达到阈值」时：遍历预先构建好的所有「子项词项链模板」，递归链接到任务
-        for (final TermLink termLink : self.getTermLinkTemplates()) {
+        for (final TermLinkTemplate template : self.getTermLinkTemplates()) {
             // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM)))
             // continue;
             // // avoid circular transform
-            final Term componentTerm = termLink.getTarget();
+            final Term componentTerm = template.getTarget();
             // ! 📝数据竞争：不能在「其它概念被拿出去后」并行推理，会导致重复创建概念
             final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
             if (componentConcept == null)
                 continue;
             // * 🚩为子项的概念构造新词项链，并在其中使用模板
-            final TaskLink tLink = new TaskLink(task, termLink, subBudget);
+            final TaskLink tLink = new TaskLink(task, template, subBudget);
             // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
             insertTaskLink(componentConcept, memory, tLink);
         }
@@ -216,7 +216,7 @@ public abstract class ConceptLinking {
         if (!subBudget.aboveThreshold())
             return;
         // * 🚩仅在超过阈值时：遍历所有「词项链模板」
-        for (final TermLink template : self.getTermLinkTemplates()) {
+        for (final TermLinkTemplate template : self.getTermLinkTemplates()) {
             if (template.getType() == TermLink.TRANSFORM)
                 continue;
             // * 🚩仅在链接类型不是「转换」时

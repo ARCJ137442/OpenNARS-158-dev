@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import nars.control.ConceptLinking;
 import nars.inference.UtilityFunctions;
+import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main_nogui.NARSBatch;
@@ -13,7 +14,6 @@ import nars.storage.Memory;
 import nars.storage.NullBagObserver;
 import nars.storage.TaskLinkBag;
 import nars.storage.TermLinkBag;
-import util.ToStringBriefAndLong;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -56,7 +56,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * Link templates of TermLink, only in concepts with CompoundTerm
      * TODO(jmv) explain more
      */
-    private final ArrayList<TermLink> termLinkTemplates;
+    private final ArrayList<TermLinkTemplate> termLinkTemplates;
     /**
      * Question directly asked about the term
      */
@@ -136,9 +136,14 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     /**
-     * 🆕API方法 @ 链接建立
+     * API方法 @ 链接建立
+     *
+     * Return the templates for TermLinks, only called in
+     * Memory.continuedProcess
+     *
+     * @return The template get
      */
-    public ArrayList<TermLink> getTermLinkTemplates(TermLink termLink) {
+    public ArrayList<TermLinkTemplate> getTermLinkTemplates() {
         return this.termLinkTemplates;
     }
 
@@ -221,16 +226,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
         final float linkPriority = termLinks.averagePriority();
         final float termComplexityFactor = 1.0f / term.getComplexity();
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
-    }
-
-    /**
-     * Return the templates for TermLinks, only called in
-     * Memory.continuedProcess
-     *
-     * @return The template get
-     */
-    public ArrayList<TermLink> getTermLinkTemplates() {
-        return termLinkTemplates;
     }
 
     /**

@@ -4,8 +4,8 @@ import java.util.*;
 
 import nars.entity.Item;
 import nars.inference.BudgetFunctions;
+import nars.io.ToStringBriefAndLong;
 import nars.main_nogui.Parameters;
-import util.ToStringBriefAndLong;
 
 /**
  * A Bag is a storage with a constant capacity and maintains an internal

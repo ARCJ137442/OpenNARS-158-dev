@@ -336,11 +336,10 @@ public abstract class MakeTerm {
         // * 🚩左边是外延交 ⇒ 选择性取交集
         else if (term1 instanceof IntersectionExt) {
             s1 = (CompoundTerm) term1;
-            s2 = (CompoundTerm) term2;
             set = new TreeSet<Term>(s1.cloneComponents());
             // * 📄(&,P,Q) & (&,R,S) = (&,P,Q,R,S)
             if (term2 instanceof IntersectionExt)
-                set.addAll(s2.cloneComponents());
+                set.addAll(((CompoundTerm) term2).cloneComponents());
             // * 📄(&,P,Q) & R = (&,P,Q,R)
             else
                 set.add(term2.clone());
@@ -438,11 +437,10 @@ public abstract class MakeTerm {
         // * 🚩左边是内涵交 ⇒ 选择性取交集
         else if (term1 instanceof IntersectionInt) {
             s1 = (CompoundTerm) term1;
-            s2 = (CompoundTerm) term2;
             set = new TreeSet<Term>(s1.cloneComponents());
             // * 📄(|,P,Q) | (|,R,S) = (|,P,Q,R,S)
             if (term2 instanceof IntersectionInt)
-                set.addAll(s2.cloneComponents());
+                set.addAll(((CompoundTerm) term2).cloneComponents());
             // * 📄(|,P,Q) | R = (|,P,Q,R)
             else
                 set.add(term2.clone());

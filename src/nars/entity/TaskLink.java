@@ -9,10 +9,26 @@ import nars.main_nogui.Parameters;
  * The reason to separate a Task and a TaskLink is that the same Task can be
  * linked from multiple Concepts, with different BudgetValue.
  */
-public class TaskLink extends TLink<Task> {
+public class TaskLink extends TLink<Task> implements Item {
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    @Override
+    public BudgetValue getBudget() {
+        return token.getBudget();
+    }
 
     /**
      * Remember the TermLinks that has been used recently with this TaskLink
+     * TODO: 字段性质笔记
      */
     private final String recordedLinks[];
     /**
@@ -32,7 +48,8 @@ public class TaskLink extends TLink<Task> {
      * @param v
      */
     private TaskLink(final Task target, final BudgetValue budget, final short type, final short[] indices) {
-        super(target, generateKey(target, type, indices), budget, type, indices);
+        super(target, type, indices);
+        this.token = new Token(generateKey(target, type, indices), budget);
         this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
         this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
         this.counter = 0;
@@ -48,7 +65,7 @@ public class TaskLink extends TLink<Task> {
      * @param template The TermLink template
      * @param budget   The budget
      */
-    public TaskLink(final Task target, final TermLink template, final BudgetValue budget) {
+    public TaskLink(final Task target, final TLink<Term> template, final BudgetValue budget) {
         this(target, budget,
                 template == null ? TermLink.SELF : template.getType(),
                 template == null ? null : template.getIndices());

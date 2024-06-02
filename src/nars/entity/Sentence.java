@@ -1,8 +1,8 @@
 package nars.entity;
 
 import nars.io.Symbols;
+import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
-import util.ToStringBriefAndLong;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
