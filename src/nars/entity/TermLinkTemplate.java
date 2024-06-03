@@ -52,19 +52,23 @@ public class TermLinkTemplate extends TLink<Term> {
      * @param indices
      * @return
      */
-    protected static final short[] generateIndices(
+    private static final short[] generateIndices(
             final short type,
             final int[] indices) {
+        // * 🚩假定此处是「COMPOUND」系列类型——从复合词项链接到内部元素
         if (type % 2 != 0)
             throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
         final short[] index;
+        // * 🚩原数组为「复合条件」⇒头部添加`0`
         if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
             index = new short[indices.length + 1];
             index[0] = 0;
             for (int i = 0; i < indices.length; i++) {
                 index[i + 1] = (short) indices[i];
             }
-        } else {
+        }
+        // * 🚩否则：逐个转换并复制原索引数组
+        else {
             index = new short[indices.length];
             for (int i = 0; i < index.length; i++) {
                 index[i] = (short) indices[i];

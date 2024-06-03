@@ -4,6 +4,8 @@ import nars.io.Symbols;
 
 /**
  * Frequency and confidence.
+ * * 📌真值类型：频率 & 信度
+ * * 📝此类型接近一种「值类型」：所有值只读、写入时复制/重新构造
  */
 public class TruthValue implements Cloneable { // implements Cloneable {
 
@@ -17,50 +19,68 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     private static final char SEPARATOR = Symbols.VALUE_SEPARATOR;
     /**
      * The frequency factor of the truth value
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
     private final ShortFloat frequency;
     /**
      * The confidence factor of the truth value
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
     private final ShortFloat confidence;
     /**
      * Whether the truth value is derived from a definition
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
      */
-    private boolean isAnalytic = false;
+    private final boolean isAnalytic;
 
     /**
      * Constructor with two ShortFloats
+     * * 🚩默认是「非分析性的」
      *
      * @param f The frequency value
      * @param c The confidence value
      */
     public TruthValue(float f, float c) {
-        frequency = new ShortFloat(f);
-        confidence = (c < 1) ? new ShortFloat(c) : new ShortFloat(0.9999f);
+        this(f, c, false);
     }
 
     /**
      * Constructor with two ShortFloats
+     * * 📌完全参数构造函数
+     * * 🚩限制其中的「信度」在[0,1)之间
      *
      * @param f The frequency value
      * @param c The confidence value
      *
      */
-    public TruthValue(float f, float c, boolean b) {
-        frequency = new ShortFloat(f);
-        confidence = (c < 1) ? new ShortFloat(c) : new ShortFloat(0.9999f);
-        isAnalytic = b;
+    public TruthValue(float f, float c, boolean analytic) {
+        // * 🚩约束信度：必须小于1
+        final float c_ = (c < 1) ? c : 0.9999f;
+        // * 🚩逐一赋值
+        this.frequency = new ShortFloat(f);
+        this.confidence = new ShortFloat(c_);
+        this.isAnalytic = analytic;
     }
 
     /**
      * Constructor with a TruthValue to clone
+     * * 📌复制构造函数
      *
      * @param v The truth value to be cloned
      */
-    public TruthValue(TruthValue v) {
-        frequency = new ShortFloat(v.getFrequency());
-        confidence = new ShortFloat(v.getConfidence());
-        isAnalytic = v.getAnalytic();
+    public TruthValue(final TruthValue v) {
+        this.frequency = v.frequency.clone();
+        this.confidence = v.confidence.clone();
+        this.isAnalytic = v.isAnalytic;
     }
 
     /**
@@ -91,14 +111,8 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     }
 
     /**
-     * Set the isAnalytic flag
-     */
-    public void setAnalytic() {
-        isAnalytic = true;
-    }
-
-    /**
      * Calculate the expectation value of the truth value
+     * * 📝从0.5开始逐渐逼近其「频率」，信度越大，越接近真实的「频率」
      *
      * @return The expectation value
      */
@@ -109,6 +123,7 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     /**
      * Calculate the absolute difference of the expectation value and that of a
      * given truth value
+     * * ️📝期望绝对差
      *
      * @param t The given value
      * @return The absolute difference
@@ -135,8 +150,9 @@ public class TruthValue implements Cloneable { // implements Cloneable {
     @Override
     public boolean equals(Object that) {
         return ((that instanceof TruthValue)
-                && (getFrequency() == ((TruthValue) that).getFrequency())
-                && (getConfidence() == ((TruthValue) that).getConfidence()));
+                // * 🚩【2024-06-03 08:41:50】弃用浮点判等，转为短浮点判等
+                && (frequency.equals(((TruthValue) that).frequency))
+                && (confidence.equals(((TruthValue) that).confidence)));
     }
 
     /**
@@ -161,22 +177,24 @@ public class TruthValue implements Cloneable { // implements Cloneable {
      */
     @Override
     public String toString() {
+        // * 🚩格式化字符串"%【频率】;【信度】%"，没有`Brief`
         return DELIMITER + frequency.toString() + SEPARATOR + confidence.toString() + DELIMITER;
     }
 
     /**
      * A simplified String representation of a TruthValue, where each factor is
      * accurate to 1%
+     * * 📝保留两位小数
      *
      * @return The String
      */
     public String toStringBrief() {
-        String s1 = DELIMITER + frequency.toStringBrief() + SEPARATOR;
-        String s2 = confidence.toStringBrief();
-        if (s2.equals("1.00")) {
-            return s1 + "0.99" + DELIMITER;
-        } else {
-            return s1 + s2 + DELIMITER;
-        }
+        // * 🚩格式化字符串"%【频率】;"
+        final String s1 = DELIMITER + frequency.toStringBrief() + SEPARATOR;
+        // * 🚩准备「信度」字符串：1⇒0.99；其它⇒不变
+        final String s2 = confidence.toStringBrief();
+        final String c = s2.equals("1.00") ? "0.99" : s2;
+        // * 🚩格式化字符串"%【频率】;【信度】%"
+        return s1 + c + DELIMITER;
     }
 }

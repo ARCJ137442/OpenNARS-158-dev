@@ -76,7 +76,7 @@ public class TransformRules {
      * @param task       The task
      * @param context    Reference to the derivation context
      */
-    static void transformProductImage(
+    private static void transformProductImage(
             Inheritance inh, CompoundTerm oldContent,
             short[] indices,
             DerivationContextTransform context) {
