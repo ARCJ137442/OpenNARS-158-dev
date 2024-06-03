@@ -7,21 +7,22 @@ import nars.io.Symbols;
  * * 🚩【2024-06-01 20:56:49】现在不再实现{@link Item}接口，交由后续「词项链」「任务链」「词项链模板」自由组合
  */
 public abstract class TLink<Target> {
-    /** At C, point to C; TaskLink only */
+    // TODO: 使用枚举而非不稳定的短整数
+    /** Targeted to C, from C; TaskLink only */
     public static final short SELF = 0;
-    /** At (&&, A, C), point to C */
+    /** Targeted to (&&, A, C), from C */
     public static final short COMPONENT = 1;
-    /** At C, point to (&&, A, C) */
+    /** Targeted to C, from (&&, A, C) */
     public static final short COMPOUND = 2;
-    /** At <C --> A>, point to C */
+    /** Targeted to <C --> A>, from C */
     public static final short COMPONENT_STATEMENT = 3;
-    /** At C, point to <C --> A> */
+    /** Targeted to C, from <C --> A> */
     public static final short COMPOUND_STATEMENT = 4;
-    /** At <(&&, C, B) ==> A>, point to C */
+    /** Targeted to <(&&, C, B) ==> A>, from C */
     public static final short COMPONENT_CONDITION = 5;
-    /** At C, point to <(&&, C, B) ==> A> */
+    /** Targeted to C, from <(&&, C, B) ==> A> */
     public static final short COMPOUND_CONDITION = 6;
-    /** At C, point to <(*, C, B) --> A>; TaskLink only */
+    /** Targeted to C, from <(*, C, B) --> A>; TaskLink only */
     public static final short TRANSFORM = 8;
 
     /**
@@ -67,9 +68,50 @@ public abstract class TLink<Target> {
             final Target target,
             final short type,
             final short[] indices) {
+        // * 🚩动态检查可空性
+        if (target == null)
+            throw new IllegalArgumentException("target cannot be null");
+        if (indices == null)
+            throw new IllegalArgumentException("indices cannot be null");
+        // * 🚩对位赋值
         this.target = target;
         this.type = type;
         this.index = indices;
+    }
+
+    /**
+     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+     *
+     * @param type
+     * @return
+     */
+    public static boolean isFromComponent(short type) {
+        return type % 2 == 1;
+    }
+
+    public boolean isFromComponent() {
+        return isFromComponent(this.type);
+    }
+
+    /**
+     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+     *
+     * @param type
+     * @return
+     */
+    public static boolean isFromCompound(short type) {
+        return type > 0 && type % 2 == 0;
+    }
+
+    public boolean isFromCompound() {
+        return isFromCompound(this.type);
+    }
+
+    /**
+     * 🆕从「整体→元素」变成「元素→整体」
+     */
+    public static short changeLinkIntoFromComponent(final short type) {
+        return (short) (type - 1);
     }
 
     /**
@@ -79,8 +121,9 @@ public abstract class TLink<Target> {
      * * 📌原`setKey()`要变成`this.key = generateKey(this.type, this.index)`
      */
     protected static final String generateKey(short type, short[] index) {
+        // * 🚩先添加左右括弧，分
         final String at1, at2;
-        if ((type % 2) == 1) { // to component
+        if (isFromComponent(type)) { // to component
             at1 = Symbols.TO_COMPONENT_1;
             at2 = Symbols.TO_COMPONENT_2;
         } else { // to compound

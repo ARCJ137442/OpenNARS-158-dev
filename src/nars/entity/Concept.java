@@ -269,7 +269,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
      */
     public TermLink __takeOutTermLink(TaskLink currentTaskLink, long time) {
-        return this.termLinks.takeOut(currentTaskLink, time);
+        return this.termLinks.takeOutFromTaskLink(currentTaskLink, time);
     }
 
     /**

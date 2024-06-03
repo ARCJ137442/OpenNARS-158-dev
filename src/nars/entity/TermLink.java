@@ -37,6 +37,7 @@ public class TermLink extends TLink<Term> implements Item {
      * <p>
      * called in Concept.buildTermLinks only
      * * 🚩【2024-05-30 20:31:47】现在直接调用超类的「完全构造函数」
+     * * 📌经断言，必定是「从整体链接到子项」
      *
      * @param target   Target Term
      * @param template TermLink template previously prepared
@@ -67,10 +68,12 @@ public class TermLink extends TLink<Term> implements Item {
      * @return
      */
     private static final String generateKey(final Term target, final short type, final short[] indices) {
+        // * 🚩先生成标准T链接子串
         String key = TLink.generateKey(type, indices);
-        if (target != null) {
-            key += target;
-        }
+        // * 🚩此处假定「目标」不为空
+        if (target == null) 
+            throw new Error("target is null");
+        key += target;
         return key;
     }
 
@@ -78,15 +81,22 @@ public class TermLink extends TLink<Term> implements Item {
      * 🆕从「目标」与「模板」中产生链接类型
      *
      * @param <Target>
-     * @param t
+     * @param target
      * @param template
      * @return
      */
-    private static short generateTypeFromTemplate(final Term t, final TLink<Term> template) {
-        short type = template.getType();
-        if (template.getTarget().equals(t)) {
-            type--; // point to component
-        }
-        return type;
+    private static short generateTypeFromTemplate(final Term target, final TLink<Term> template) {
+        final short type = template.getType();
+        // * 🚩断言此时「链接模板」的链接类型
+        if (!isFromCompound(type))
+            throw new IllegalArgumentException("模板必定是「从整体链接到元素」");
+        // * 🚩开始计算类型
+        final short result;
+        if (template.getTarget().equals(target))
+            result = changeLinkIntoFromComponent(type); // point to component
+        else
+            result = type;
+        // * 🚩到此处可能是「元素→整体」也可能是「整体→元素」
+        return result;
     }
 }

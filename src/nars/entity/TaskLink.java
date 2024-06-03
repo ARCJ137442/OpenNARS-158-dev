@@ -13,6 +13,10 @@ public class TaskLink extends TLink<Task> implements Item {
 
     /**
      * 🆕Item令牌
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 需要在「预算值」中被修改
+     * * 📝所有权：具所有权
      */
     private final Token token;
 
@@ -28,15 +32,32 @@ public class TaskLink extends TLink<Task> implements Item {
 
     /**
      * Remember the TermLinks that has been used recently with this TaskLink
-     * TODO: 字段性质笔记
+     * * 📌记忆【曾经匹配过的词项链】的key
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 内部可变
+     * * 📝所有权：具所有权
      */
     private final String recordedLinks[];
     /**
      * Remember the time when each TermLink is used with this TaskLink
+     * * 📌记忆【曾经匹配过的词项链】的时间（序列号）
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 内部可变
+     * * 📝所有权：具所有权
      */
     private final long recordingTime[];
     /**
      * The number of TermLinks remembered
+     * * 📌记忆【曾经匹配过的词项链】的个数
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private int counter;
 
@@ -67,12 +88,26 @@ public class TaskLink extends TLink<Task> implements Item {
      */
     public TaskLink(final Task target, final TLink<Term> template, final BudgetValue budget) {
         this(target, budget,
-                template == null ? TermLink.SELF : template.getType(),
-                template == null ? null : template.getIndices());
+                template.getType(), template.getIndices());
+    }
 
+    /**
+     * 🆕专用于创建「自身」链接
+     * * 🎯用于推理中识别并分派
+     * * 🚩使用「SELF」类型，并使用空数组
+     *
+     * @param target
+     * @param budget
+     * @return
+     */
+    public static final TaskLink newSelf(final Task target, final BudgetValue budget) {
+        return new TaskLink(
+                target, budget,
+                TermLink.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组
     }
 
     private static final String generateKey(final Task target, final short type, final short[] indices) {
+        // * 🚩生成最基础的
         String key = generateKey(type, indices); // as defined in TermLink
         if (target != null)
             key += target.getContent();
@@ -85,9 +120,9 @@ public class TaskLink extends TLink<Task> implements Item {
      * interacted recently
      * <p>
      * called in TermLinkBag only
+     * * 🎯用于从「新近任务袋」中获取「新近任务」：根据「新近」调配优先级
      * * 📝在「概念推理」的「准备待推理词项链」的过程中用到
      * * 🔗ProcessReason.chooseTermLinksToReason
-     * * TODO: 有待笔记注释
      *
      * @param termLink    The TermLink to be checked
      * @param currentTime The current time
@@ -95,28 +130,30 @@ public class TaskLink extends TLink<Task> implements Item {
      */
     public boolean novel(final TermLink termLink, final long currentTime) {
         final Term bTerm = termLink.getTarget();
-        if (bTerm.equals(target.getContent())) {
+        // * 🚩重复目标⇒非新近
+        if (bTerm.equals(this.target.getContent()))
             return false;
-        }
+        // * 🚩检查所有已被记录的词项链
         final String linkKey = termLink.getKey();
-        int next;
         for (int i = 0; i < counter; i++) {
-            next = i % Parameters.TERM_LINK_RECORD_LENGTH;
-            if (linkKey.equals(recordedLinks[next])) {
-                if (currentTime < recordingTime[next] + Parameters.TERM_LINK_RECORD_LENGTH) {
+            final int existedI = i % Parameters.TERM_LINK_RECORD_LENGTH;
+            // * 🚩重复key⇒检查时间
+            if (linkKey.equals(recordedLinks[existedI])) {
+                if (currentTime < recordingTime[existedI] + Parameters.TERM_LINK_RECORD_LENGTH) {
                     return false;
                 } else {
-                    recordingTime[next] = currentTime;
+                    recordingTime[existedI] = currentTime;
                     return true;
                 }
             }
         }
         // * 📝此处`i`必定为`counter`
-        next = counter % Parameters.TERM_LINK_RECORD_LENGTH;
+        // * 🚩没检查到已有的：记录新匹配的词项链 | ️📝有可能覆盖
+        final int next = counter % Parameters.TERM_LINK_RECORD_LENGTH;
         recordedLinks[next] = linkKey; // add knowledge reference to recordedLinks
         recordingTime[next] = currentTime;
         if (counter < Parameters.TERM_LINK_RECORD_LENGTH) { // keep a constant length
-            counter++;
+            counter++; // * 💭只增不减？似乎会导致「信念固化」（or 始终覆盖最新的，旧的得不到修改）
         }
         return true;
     }

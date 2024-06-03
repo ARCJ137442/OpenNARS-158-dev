@@ -47,6 +47,8 @@ public class TermLinkTemplate extends TLink<Term> {
     /**
      * 🆕将构造方法中的「生成索引部分」独立出来
      * * ⚠️仅在「复合词项→元素」中使用
+     * * 📄Concept@57 "<{tim} --> (/,livingIn,_,{graz})>"
+     * * --[COMPOUND_STATEMENT]--> SetExt@20 "{tim}"
      *
      * @param type
      * @param indices
@@ -56,7 +58,7 @@ public class TermLinkTemplate extends TLink<Term> {
             final short type,
             final int[] indices) {
         // * 🚩假定此处是「COMPOUND」系列类型——从复合词项链接到内部元素
-        if (type % 2 != 0)
+        if (!isFromCompound(type))
             throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
         final short[] index;
         // * 🚩原数组为「复合条件」⇒头部添加`0`

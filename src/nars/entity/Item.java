@@ -86,6 +86,11 @@ public interface Item {
          * @param budget The initial budget
          */
         public Token(final String key, final BudgetValue budget) {
+            // * 🚩动态检查可空性
+            if (key == null)
+                throw new IllegalArgumentException("key cannot be null");
+            if (budget == null)
+                throw new IllegalArgumentException("budget cannot be null");
             this.key = key;
             this.budget = new BudgetValue(budget); // clone, not assignment
         }

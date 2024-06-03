@@ -148,9 +148,9 @@ public abstract class ConceptLinking {
         final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
         final Task task = context.getCurrentTask();
         final BudgetValue taskBudget = task.getBudget();
-        // * 🚩对当前任务构造任务链，链接到传入的任务
-        final TaskLink taskLink = new TaskLink(task, null, taskBudget); // link type: SELF
-        insertTaskLink(self, memory, taskLink);
+        // * 🚩对当前任务构造任务链，链接到传入的任务 | 构造「自身」
+        final TaskLink selfLink = TaskLink.newSelf(task, taskBudget); // link type: SELF
+        insertTaskLink(self, memory, selfLink);
         // * 🚩仅在「自身为复合词项」且「词项链模板非空」时准备
         // * 📝只有复合词项会有「对子项的词项链」，子项不会持有「对所属词项的词项链」
         if (!(self.getTerm() instanceof CompoundTerm && self.getTermLinkTemplates().size() > 0))
@@ -225,7 +225,7 @@ public abstract class ConceptLinking {
             // * 🚩仅在「元素词项所对应概念」存在时
             if (concept == null)
                 continue;
-            // * 🚩建立双向链接
+            // * 🚩建立双向链接：元素⇒整体
             final TermLink termLink1 = new TermLink(component, template, subBudget);
             insertTermLink(self, termLink1); // this termLink to that
             final TermLink termLink2 = new TermLink(self.getTerm(), template, subBudget);
