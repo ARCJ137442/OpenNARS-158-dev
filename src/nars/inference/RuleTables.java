@@ -46,13 +46,17 @@ public class RuleTables {
         if (!context.getMemory().noResult() && task.isJudgment()) {
             return;
         }
+
         // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);
         final short bIndex = bLink.getIndex(0);
         final TLinkType tLinkType = tLink.getType();
         final TLinkType bLinkType = bLink.getType();
+
         // * 📝【2024-06-04 19:33:10】实质上这里的「链接类型分派」就是基于「词项链/任务链」的「内容相关性信息」分派
         // * 📄A @ (&&, A, B) => 点火「A」将以`COMPOUND`（从元素指向复合词项整体）
+        // ! ❌尝试「摊平switch」失败：枚举变种无法被视作「常量」使用
+        // * 报错信息：case expressions must be constant expressionsJava(536871065)
         switch (tLinkType) { // dispatch first by TaskLink type
             // * 🚩只有「从复合词项」
             default:
@@ -262,44 +266,63 @@ public class RuleTables {
         final Sentence taskSentence = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
         final int figure;
-        if (taskTerm instanceof Inheritance) {
-            if (beliefTerm instanceof Inheritance) {
+        switch (taskTerm.operator() + beliefTerm.operator()) {
+            // * 🚩继承 +
+            case INHERITANCE_RELATION + INHERITANCE_RELATION: // * 🚩继承
                 figure = indexToFigure(tLink, bLink);
                 asymmetricAsymmetric(taskSentence, belief, figure, context);
-            } else if (beliefTerm instanceof Similarity) {
+                return;
+            case INHERITANCE_RELATION + SIMILARITY_RELATION: // * 🚩相似
                 figure = indexToFigure(tLink, bLink);
                 asymmetricSymmetric(taskSentence, belief, figure, context);
-            } else {
+                return;
+            case INHERITANCE_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
+            case INHERITANCE_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
                 detachmentWithVar(belief, taskSentence, bLink.getIndex(0), context);
-            }
-        } else if (taskTerm instanceof Similarity) {
-            if (beliefTerm instanceof Inheritance) {
+                return;
+            // * 🚩相似 +
+            case SIMILARITY_RELATION + INHERITANCE_RELATION: // * 🚩继承
                 figure = indexToFigure(bLink, tLink);
                 asymmetricSymmetric(belief, taskSentence, figure, context);
-            } else if (beliefTerm instanceof Similarity) {
+                return;
+            case SIMILARITY_RELATION + SIMILARITY_RELATION: // * 🚩相似
                 figure = indexToFigure(bLink, tLink);
                 symmetricSymmetric(belief, taskSentence, figure, context);
-            }
-        } else if (taskTerm instanceof Implication) {
-            if (beliefTerm instanceof Implication) {
+                return;
+            case SIMILARITY_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
+            case SIMILARITY_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
+                return;
+            // * 🚩蕴含 +
+            case IMPLICATION_RELATION + INHERITANCE_RELATION: // * 🚩继承
+                detachmentWithVar(taskSentence, belief, tLink.getIndex(0), context);
+                return;
+            case IMPLICATION_RELATION + SIMILARITY_RELATION: // * 🚩相似
+                return;
+            case IMPLICATION_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
                 figure = indexToFigure(tLink, bLink);
                 asymmetricAsymmetric(taskSentence, belief, figure, context);
-            } else if (beliefTerm instanceof Equivalence) {
+                return;
+            case IMPLICATION_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
                 figure = indexToFigure(tLink, bLink);
                 asymmetricSymmetric(taskSentence, belief, figure, context);
-            } else if (beliefTerm instanceof Inheritance) {
+                return;
+            // * 🚩等价 +
+            case EQUIVALENCE_RELATION + INHERITANCE_RELATION: // * 🚩继承
                 detachmentWithVar(taskSentence, belief, tLink.getIndex(0), context);
-            }
-        } else if (taskTerm instanceof Equivalence) {
-            if (beliefTerm instanceof Implication) {
+                return;
+            case EQUIVALENCE_RELATION + SIMILARITY_RELATION: // * 🚩相似
+                return;
+            case EQUIVALENCE_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
                 figure = indexToFigure(bLink, tLink);
                 asymmetricSymmetric(belief, taskSentence, figure, context);
-            } else if (beliefTerm instanceof Equivalence) {
+                return;
+            case EQUIVALENCE_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
                 figure = indexToFigure(bLink, tLink);
                 symmetricSymmetric(belief, taskSentence, figure, context);
-            } else if (beliefTerm instanceof Inheritance) {
-                detachmentWithVar(taskSentence, belief, tLink.getIndex(0), context);
-            }
+                return;
+            // * ❌域外情况
+            default:
+                throw new IllegalArgumentException("未知的陈述类型：" + tLink + "; " + bLink);
         }
     }
 
@@ -339,8 +362,7 @@ public class RuleTables {
                     CompositionalRules.composeCompound(s1, s2, 0, context);
                     SyllogisticRules.abdIndCom(t1, t2, sentence, belief, figure, context);
                 }
-
-                break;
+                return;
             case 12: // deduction
                 if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
                     if (s1.equals(s2)) {
@@ -354,7 +376,7 @@ public class RuleTables {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
                     }
                 }
-                break;
+                return;
             case 21: // exemplification
                 if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
                     if (s1.equals(s2)) {
@@ -368,7 +390,7 @@ public class RuleTables {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
                     }
                 }
-                break;
+                return;
             case 22: // abduction
                 if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
                     if (s1.equals(s2)) {
@@ -382,8 +404,9 @@ public class RuleTables {
                         SyllogisticRules.abdIndCom(t1, t2, sentence, belief, figure, context);
                     }
                 }
-                break;
+                return;
             default:
+                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 
@@ -411,7 +434,7 @@ public class RuleTables {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
                     }
                 }
-                break;
+                return;
             case 12:
                 if (Variable.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getPredicate(), asymSt, symSt)) {
                     t1 = asymSt.getPredicate();
@@ -422,7 +445,7 @@ public class RuleTables {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
                     }
                 }
-                break;
+                return;
             case 21:
                 if (Variable.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getSubject(), asymSt, symSt)) {
                     t1 = asymSt.getSubject();
@@ -433,7 +456,7 @@ public class RuleTables {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
                     }
                 }
-                break;
+                return;
             case 22:
                 if (Variable.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getPredicate(), asymSt,
                         symSt)) {
@@ -445,7 +468,9 @@ public class RuleTables {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
                     }
                 }
-                break;
+                return;
+            default:
+                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 
@@ -467,25 +492,27 @@ public class RuleTables {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
-                break;
+                return;
             case 12:
                 if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
-                break;
+                return;
             case 21:
                 if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
-                break;
+                return;
             case 22:
                 if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
-                break;
+                return;
+            default:
+                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 
@@ -507,25 +534,32 @@ public class RuleTables {
         final Statement statement = (Statement) mainSentence.getContent();
         final Term component = statement.componentAt(index);
         final CompoundTerm content = (CompoundTerm) subSentence.getContent();
-        if (((component instanceof Inheritance) || (component instanceof Negation))
-                && (context.getCurrentBelief() != null)) {
-            if (component.isConstant()) {
-                SyllogisticRules.detachment(mainSentence, subSentence, index, context);
-            } else if (Variable.unify(VAR_INDEPENDENT, component, content, statement, content)) {
-                SyllogisticRules.detachment(mainSentence, subSentence, index, context);
-            } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
-                    && (context.getCurrentTask().isJudgment())) {
-                final Statement s2 = (Statement) statement.getPredicate();
-                if (s2.getSubject().equals(((Statement) content).getSubject())) {
-                    CompositionalRules.introVarInner((Statement) content, s2, statement, context);
-                }
-                CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
-                        index, context);
-            } else if ((statement instanceof Equivalence) && (statement.getPredicate() instanceof Statement)
-                    && (context.getCurrentTask().isJudgment())) {
-                CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
-                        index, context);
+        if (!context.hasCurrentBelief())
+            return;
+        if (!(component instanceof Inheritance || component instanceof Negation))
+            return;
+        if (component.isConstant()) {
+            SyllogisticRules.detachment(mainSentence, subSentence, index, context);
+            return;
+        } else if (Variable.unify(VAR_INDEPENDENT, component, content, statement, content)) {
+            SyllogisticRules.detachment(mainSentence, subSentence, index, context);
+            return;
+        } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
+                && (context.getCurrentTask().isJudgment())) {
+            final Statement s2 = (Statement) statement.getPredicate();
+            if (s2.getSubject().equals(((Statement) content).getSubject())) {
+                CompositionalRules.introVarInner((Statement) content, s2, statement, context);
             }
+            CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
+                    index, context);
+            return;
+        } else if ((statement instanceof Equivalence) && (statement.getPredicate() instanceof Statement)
+                && (context.getCurrentTask().isJudgment())) {
+            CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence, subSentence, component, content,
+                    index, context);
+            return;
+        } else {
+            return;
         }
     }
 
@@ -552,14 +586,15 @@ public class RuleTables {
         } else {
             component2 = null;
         }
-        if (component2 != null) {
-            boolean unifiable = Variable.unify(VAR_INDEPENDENT, component, component2, conditional, statement);
-            if (!unifiable) {
-                unifiable = Variable.unify(VAR_DEPENDENT, component, component2, conditional, statement);
-            }
-            if (unifiable) {
-                SyllogisticRules.conditionalDedInd(conditional, index, statement, side, context);
-            }
+        if (component2 == null)
+            return;
+        boolean unifiable = Variable.unify(VAR_INDEPENDENT, component, component2, conditional, statement);
+        if (!unifiable) {
+            // * 🚩惰性求值：第一次替换成功，就无需再次替换
+            unifiable = Variable.unify(VAR_DEPENDENT, component, component2, conditional, statement);
+        }
+        if (unifiable) {
+            SyllogisticRules.conditionalDedInd(conditional, index, statement, side, context);
         }
     }
 
@@ -575,19 +610,28 @@ public class RuleTables {
     private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
         if ((compound instanceof Conjunction) || (compound instanceof Disjunction)) {
-            if (context.getCurrentBelief() != null) {
+            if (context.hasCurrentBelief()) {
                 CompositionalRules.decomposeStatement(compound, component, compoundTask, context);
+                return;
             } else if (compound.containComponent(component)) {
                 StructuralRules.structuralCompound(compound, component, compoundTask, context);
+                return;
             }
             // } else if ((compound instanceof Negation) &&
             // !context.getCurrentTask().isStructural()) {
+            else {
+                return;
+            }
         } else if (compound instanceof Negation) {
             if (compoundTask) {
                 StructuralRules.transformNegation(((Negation) compound).componentAt(0), context);
+                return;
             } else {
                 StructuralRules.transformNegation(compound, context);
+                return;
             }
+        } else {
+            return;
         }
     }
 
@@ -600,12 +644,16 @@ public class RuleTables {
      */
     private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm,
             DerivationContextReason context) {
-        if (taskTerm.getClass() == beliefTerm.getClass()) {
-            if (taskTerm.size() > beliefTerm.size()) {
-                compoundAndSelf(taskTerm, beliefTerm, true, context);
-            } else if (taskTerm.size() < beliefTerm.size()) {
-                compoundAndSelf(beliefTerm, taskTerm, false, context);
-            }
+        if (taskTerm.getClass() != beliefTerm.getClass())
+            return;
+        if (taskTerm.size() > beliefTerm.size()) {
+            compoundAndSelf(taskTerm, beliefTerm, true, context);
+            return;
+        } else if (taskTerm.size() < beliefTerm.size()) {
+            compoundAndSelf(beliefTerm, taskTerm, false, context);
+            return;
+        } else {
+            return;
         }
     }
 
@@ -624,7 +672,7 @@ public class RuleTables {
         final Term component = compound.componentAt(index);
         final Task task = context.getCurrentTask();
         if (component.getClass() == statement.getClass()) {
-            if ((compound instanceof Conjunction) && (context.getCurrentBelief() != null)) {
+            if ((compound instanceof Conjunction) && (context.hasCurrentBelief())) {
                 if (Variable.unify(VAR_DEPENDENT, component, statement, compound, statement)) {
                     SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), context);
                 } else if (task.isJudgment()) { // && !compound.containComponent(component)) {
@@ -664,25 +712,30 @@ public class RuleTables {
         if (statement instanceof Inheritance) {
             StructuralRules.structuralDecompose1(compound, index, statement, context);
             if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
-                StructuralRules.structuralDecompose2(statement, index, context); // {(C-B) --> (C-A), A @ (C-A)} |- A
-                                                                                 // -->
-                                                                                 // B
+                // {(C-B) --> (C-A), A @ (C-A)} |- A --> B
+                StructuralRules.structuralDecompose2(statement, index, context);
+                return;
             } else {
                 StructuralRules.transformSetRelation(compound, statement, side, context);
+                return;
             }
         } else if (statement instanceof Similarity) {
             StructuralRules.structuralDecompose2(statement, index, context); // {(C-B) --> (C-A), A @ (C-A)} |- A --> B
             if ((compound instanceof SetExt) || (compound instanceof SetInt)) {
                 StructuralRules.transformSetRelation(compound, statement, side, context);
             }
+            return;
         } else if ((statement instanceof Implication) && (compound instanceof Negation)) {
             if (index == 0) {
                 StructuralRules.contraposition(statement, context.getCurrentTask(), context);
+                return;
             } else {
                 StructuralRules.contraposition(statement, context.getCurrentBelief(), context);
+                return;
             }
+        } else {
+            return;
         }
         // }
     }
-
 }

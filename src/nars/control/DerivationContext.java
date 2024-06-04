@@ -188,6 +188,11 @@ public abstract class DerivationContext {
         return currentBelief;
     }
 
+    /** 🆕实用方法：用于简化「推理规则分派」的代码 */
+    public boolean hasCurrentBelief() {
+        return currentBelief != null;
+    }
+
     /**
      * 设置当前任务
      * * 📝在「概念推理」仅在准备阶段设置
