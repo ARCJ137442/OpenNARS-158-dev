@@ -205,7 +205,8 @@ public abstract class ProcessDirect {
             default:
                 throw new Error("Unknown punctuation of task: " + task.toStringLong());
         }
-        // * 🚩在推理后做链接
+
+        // * 🚩在推理后做链接 | 若预算值够就链接，若预算值不够就丢掉
         if (task.getBudget().aboveThreshold()) { // still need to be processed
             ConceptLinking.linkConceptToTask(context);
         }
@@ -225,6 +226,9 @@ public abstract class ProcessDirect {
         final Concept self = context.getCurrentConcept();
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
+        // * 🚩断言传入任务的「语句」一定是「判断」
+        if (!task.isJudgment())
+            throw new Error("task " + task + "is not a judgment");
         final Sentence judgment = task;
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
@@ -277,25 +281,28 @@ public abstract class ProcessDirect {
      */
     private static void processQuestion(final DerivationContextDirect context) {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
-        final Task task = context.getCurrentTask();
+        final Task taskQuestion = context.getCurrentTask();
+        // * 🚩断言传入任务的「语句」一定是「问题」
+        if (!taskQuestion.isQuestion())
+            throw new Error("task " + taskQuestion + "is not a judgment");
         // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         final Concept self = context.getCurrentConcept();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Task existedQuestion = findExistedQuestion(self, task.getContent());
+        final Task existedQuestion = findExistedQuestion(self, taskQuestion.getContent());
         final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? task : existedQuestion;
+        final Sentence question = newQuestion ? taskQuestion : existedQuestion;
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Sentence newAnswer = evaluation(question, self.getBeliefs());
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
-            LocalRules.trySolution(newAnswer, task, context);
+            LocalRules.trySolution(newAnswer, taskQuestion, context);
         }
         // * 🚩新增问题
         if (newQuestion) {
-            self.addQuestion(task);
+            self.addQuestion(taskQuestion);
         }
     }
 

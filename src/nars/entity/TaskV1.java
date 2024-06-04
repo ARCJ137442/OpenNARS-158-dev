@@ -34,27 +34,27 @@ public class TaskV1 implements Task {
 
     @Override
     public Term __content() {
-        return sentence.__content();
+        return this.sentence.__content();
     }
 
     @Override
     public char __punctuation() {
-        return sentence.__punctuation();
+        return this.sentence.__punctuation();
     }
 
     @Override
     public TruthValue __truth() {
-        return sentence.__truth();
+        return this.sentence.__truth();
     }
 
     @Override
     public Stamp __stamp() {
-        return sentence.__stamp();
+        return this.sentence.__stamp();
     }
 
     @Override
     public boolean __revisable() {
-        return sentence.__revisable();
+        return this.sentence.__revisable();
     }
 
     @Override
@@ -89,11 +89,6 @@ public class TaskV1 implements Task {
      * * 📝所有权：具所有权 | 「语句」类型
      */
     private Sentence bestSolution;
-
-    @Override
-    public Token __token() {
-        return this.token;
-    }
 
     @Override
     public Task __parentTask() {

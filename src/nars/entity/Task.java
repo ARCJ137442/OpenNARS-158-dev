@@ -6,11 +6,6 @@ package nars.entity;
 public interface Task extends Sentence, Item {
 
     /**
-     * 🆕Item令牌
-     */
-    Token __token();
-
-    /**
      * Task from which the Task is derived, or null if input
      *
      * * ️📝可空性：可空
@@ -76,7 +71,8 @@ public interface Task extends Sentence, Item {
         if (getCreationTime() >= ((Task) that).getCreationTime())
             // * 📝此处需要对内部令牌执行「合并」，以便调用默认方法
             // * ⚠️改成接口后无法使用`super.method`调用默认方法
-            this.__token().merge(that);
+            // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
+            this.getBudget().merge(that.getBudget());
         else
             that.merge(this);
     }
@@ -94,10 +90,13 @@ public interface Task extends Sentence, Item {
      * Set the best-so-far solution for a Question or Goal, and report answer
      * for input question
      * * 📝【2024-05-30 17:59:59】仅在「本地规则」中调用
+     * * 📌【2024-06-05 00:59:55】只在「用『判断』回答『疑问』」中使用
      *
      * @param judgment The solution to be remembered
      */
     public default void setBestSolution(final Sentence judgment) {
+        if (!this.isQuestion())
+            throw new IllegalArgumentException(this + " is not question");
         if (judgment == null)
             throw new NullPointerException("judgment == null");
         if (!judgment.isJudgment())

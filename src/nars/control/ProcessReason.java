@@ -103,7 +103,11 @@ public abstract class ProcessReason {
         // for debugging
         if (currentTaskLink.getType() == TLinkType.TRANSFORM) {
             // * 🚩创建「转换推理上下文」
-            // * ⚠️此处「当前信念链」为空，可空情况不一致，可能需要一个专门的「推理上下文」类型
+            // * ⚠️此处「当前信念链」为空，可空情况不一致，使用一个专门的「推理上下文」类型
+            // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+            // * @ C="livingIn"
+            // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+            // * @ C="{graz}"
             final DerivationContextTransform context = new DerivationContextTransform(
                     self,
                     currentConcept,

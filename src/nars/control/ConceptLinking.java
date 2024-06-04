@@ -173,7 +173,7 @@ public abstract class ConceptLinking {
             if (componentConcept == null)
                 continue;
             // * 🚩为子项的概念构造新词项链，并在其中使用模板（的类型和索引）
-            final TaskLink tLink = new TaskLink(task, template, subBudget);
+            final TaskLink tLink = TaskLink.fromTemplate(task, template, subBudget);
             // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
             insertTaskLink(componentConcept, memory, tLink);
         }

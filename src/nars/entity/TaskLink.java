@@ -59,7 +59,12 @@ public class TaskLink extends TLink<Task> implements Item {
      * * 📝可变性：可变
      * * 📝所有权：具所有权
      */
-    private int counter;
+    private int nRecordedTermLinks;
+
+    /**
+     * 🆕统一收归的「任务链记录长度」
+     */
+    private static final int RECORD_LENGTH = Parameters.TERM_LINK_RECORD_LENGTH;
 
     /**
      * 🆕完全构造函数
@@ -68,30 +73,50 @@ public class TaskLink extends TLink<Task> implements Item {
      * @param template
      * @param v
      */
-    private TaskLink(final Task target, final BudgetValue budget, final TLinkType type, final short[] indices) {
+    private TaskLink(
+            final Task target,
+            final BudgetValue budget,
+            final TLinkType type,
+            final short[] indices,
+            final int recordLength) {
         super(target, type, indices);
-        this.token = new Token(generateKey(target, type, indices), budget);
-        this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
-        this.recordingTime = new long[Parameters.TERM_LINK_RECORD_LENGTH];
-        this.counter = 0;
+        final String key = generateKey(target, type, indices);
+        this.token = new Token(key, budget);
+        this.recordedLinks = new String[recordLength];
+        this.recordingTime = new long[recordLength];
+        this.nRecordedTermLinks = 0;
+    }
+
+    /** 🆕传递「链接记录长度」的默认值 */
+    private TaskLink(
+            final Task target,
+            final BudgetValue budget,
+            final TLinkType type,
+            final short[] indices) {
+        this(target, budget, type, indices, RECORD_LENGTH);
     }
 
     /**
      * Constructor
      * <p>
      * only called in Memory.continuedProcess
+     * * 🚩【2024-06-05 01:05:16】唯二的公开构造函数（入口），基于「词项链模板」构造
      * * 📝【2024-05-30 00:46:38】只在「链接概念到任务」中使用
      *
      * @param target   The target Task
      * @param template The TermLink template
      * @param budget   The budget
      */
-    public TaskLink(final Task target, final TermLinkTemplate template, final BudgetValue budget) {
-        this(target, budget, template.getType(), template.getIndices());
+    public static final TaskLink fromTemplate(
+            final Task target,
+            final TermLinkTemplate template,
+            final BudgetValue budget) {
+        return new TaskLink(target, budget, template.getType(), template.getIndices());
     }
 
     /**
      * 🆕专用于创建「自身」链接
+     * * 📝仅在「链接到任务」时被构造一次
      * * 🎯用于推理中识别并分派
      * * 🚩使用「SELF」类型，并使用空数组
      *
@@ -108,8 +133,8 @@ public class TaskLink extends TLink<Task> implements Item {
     private static final String generateKey(final Task target, final TLinkType type, final short[] indices) {
         // * 🚩生成最基础的
         String key = generateKey(type, indices); // as defined in TermLink
-        if (target != null)
-            key += target.getContent();
+        // if (target != null) // ! 🚩【2024-06-05 01:06:21】此处「目标」绝对非空
+        // key += target.getContent(); // * ✅target.getKey()已经存在词项，无需重复生成
         key += target.getKey();
         return key;
     }
@@ -134,13 +159,16 @@ public class TaskLink extends TLink<Task> implements Item {
             return false;
         // * 🚩检查所有已被记录的词项链
         final String linkKey = termLink.getKey();
-        for (int i = 0; i < counter; i++) {
-            final int existedI = i % Parameters.TERM_LINK_RECORD_LENGTH;
+        for (int i = 0; i < nRecordedTermLinks; i++) {
+            final int existedI = i % recordedLinks.length;
             // * 🚩重复key⇒检查时间
             if (linkKey.equals(recordedLinks[existedI])) {
-                if (currentTime < recordingTime[existedI] + Parameters.TERM_LINK_RECORD_LENGTH) {
+                // * 🚩并未足够「滞后」⇒非新近 | 💭或许是一种「短期记忆」的表示
+                if (currentTime < recordingTime[existedI] + recordedLinks.length) {
                     return false;
-                } else {
+                }
+                // * 🚩足够「滞后」⇒更新时间，判定为「新近」
+                else {
                     recordingTime[existedI] = currentTime;
                     return true;
                 }
@@ -148,11 +176,11 @@ public class TaskLink extends TLink<Task> implements Item {
         }
         // * 📝此处`i`必定为`counter`
         // * 🚩没检查到已有的：记录新匹配的词项链 | ️📝有可能覆盖
-        final int next = counter % Parameters.TERM_LINK_RECORD_LENGTH;
+        final int next = nRecordedTermLinks % recordedLinks.length;
         recordedLinks[next] = linkKey; // add knowledge reference to recordedLinks
         recordingTime[next] = currentTime;
-        if (counter < Parameters.TERM_LINK_RECORD_LENGTH) { // keep a constant length
-            counter++; // * 💭只增不减？似乎会导致「信念固化」（or 始终覆盖最新的，旧的得不到修改）
+        if (nRecordedTermLinks < recordedLinks.length) { // keep a constant length
+            nRecordedTermLinks++; // * 💭只增不减？似乎会导致「信念固化」（or 始终覆盖最新的，旧的得不到修改）
         }
         return true;
     }

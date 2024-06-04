@@ -19,6 +19,10 @@ public class TermLink extends TLink<Term> implements Item {
 
     /**
      * 🆕Item令牌
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 需要在「预算值」中被修改
+     * * 📝所有权：具所有权
      */
     private final Token token;
 
@@ -44,7 +48,10 @@ public class TermLink extends TLink<Term> implements Item {
      * @param template TermLink template previously prepared
      * @param budget   Budget value of the link
      */
-    public static TermLink fromTemplate(final Term target, final TermLinkTemplate template, final BudgetValue budget) {
+    public static final TermLink fromTemplate(
+            final Term target,
+            final TermLinkTemplate template,
+            final BudgetValue budget) {
         // * 🚩生成类型与索引
         final TLinkType type = generateTypeFromTemplate(target, template);
         final short[] indices = template.getIndices();

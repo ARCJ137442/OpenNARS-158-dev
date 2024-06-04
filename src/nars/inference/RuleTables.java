@@ -87,7 +87,9 @@ public class RuleTables {
                             SyllogisticRules.detachment(task, belief, bIndex, context);
                         return;
                     case COMPOUND_STATEMENT:
-                        // ? 🚩【2024-06-04 20:49:33】未有案例
+                        // *📄T="<{tim} --> (/,own,_,sunglasses)>"
+                        // * + B="<<{tim} --> (/,own,_,sunglasses)> ==> <{tim} --> murder>>"
+                        // * @ C=T
                         if (belief != null)
                             SyllogisticRules.detachment(belief, task, bIndex, context);
                         return;
@@ -102,10 +104,15 @@ public class RuleTables {
                         }
                         return;
                     case COMPOUND_CONDITION:
-                        // ? 🚩【2024-06-04 20:50:02】未有案例
+                        // * 📄T="<(*,{tim},{graz}) --> livingIn>"
+                        // * + B="<(&&,<{tim} --> [aggressive]>,<(*,{tim},{graz}) --> livingIn>) ==>
+                        // <{tim} --> murder>>"
+                        // * @ C=T
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
-                            SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex2, taskTerm, tIndex,
+                            SyllogisticRules.conditionalDedInd(
+                                    (Implication) beliefTerm, bIndex2,
+                                    taskTerm, tIndex,
                                     context);
                         }
                         return;
@@ -251,6 +258,7 @@ public class RuleTables {
      */
     private static void syllogisms(TaskLink tLink, TermLink bLink, Statement taskTerm, Statement beliefTerm,
             DerivationContextReason context) {
+        // * ❌【2024-06-04 21:21:08】放弃使用switch「case 常量+常量」方式：无法「部分default」
         final Sentence taskSentence = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
         final int figure;
