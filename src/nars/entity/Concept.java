@@ -54,9 +54,12 @@ public final class Concept implements Item, ToStringBriefAndLong {
     private final TermLinkBag termLinks;
     /**
      * Link templates of TermLink, only in concepts with CompoundTerm
-     * TODO(jmv) explain more
+     * * 🎯用于「复合词项构建词项链」如「链接到任务」
+     * * 📌【2024-06-04 20:14:09】目前确定为「所有『内部元素』链接到自身的可能情况」的模板集
+     * * 📝只会创建「从内部元素链接到自身」（target=）
+     * * 📝在{@link ConceptLinking#prepareTermLinkTemplates}中被准备，随后不再变化
      */
-    private final ArrayList<TermLinkTemplate> termLinkTemplates;
+    private final ArrayList<TermLinkTemplate> linkTemplatesToSelf;
     /**
      * Question directly asked about the term
      */
@@ -90,11 +93,12 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
         if (term instanceof CompoundTerm) {
-            // * 🚩只有「复合词项→其内元素」的链接
-            // * 📝「复合词项→其内元素」是有限的，而「元素→复合词项」是无限的
-            this.termLinkTemplates = ConceptLinking.prepareComponentLinks(((CompoundTerm) term));
+            // * 🚩只有「复合词项←其内元素」的链接模板
+            // * 📝所有信息基于「内容包含」关系
+            // * 📝
+            this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(((CompoundTerm) term));
         } else {
-            this.termLinkTemplates = null;
+            this.linkTemplatesToSelf = null;
         }
     }
 
@@ -143,8 +147,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
      *
      * @return The template get
      */
-    public ArrayList<TermLinkTemplate> getTermLinkTemplates() {
-        return this.termLinkTemplates;
+    public ArrayList<TermLinkTemplate> getLinkTemplatesToSelf() {
+        return this.linkTemplatesToSelf;
     }
 
     /**

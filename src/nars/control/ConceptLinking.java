@@ -3,6 +3,7 @@ package nars.control;
 import java.util.ArrayList;
 
 import nars.entity.*;
+import nars.entity.TLink.TLinkType;
 import nars.inference.*;
 import nars.language.*;
 import nars.storage.Memory;
@@ -25,38 +26,38 @@ public abstract class ConceptLinking {
      *
      * @return A list of TermLink templates
      */
-    public static ArrayList<TermLinkTemplate> prepareComponentLinks(CompoundTerm self) {
-        final ArrayList<TermLinkTemplate> componentLinks = new ArrayList<>();
+    public static ArrayList<TermLinkTemplate> prepareTermLinkTemplates(CompoundTerm self) {
+        final ArrayList<TermLinkTemplate> linksToSelf = new ArrayList<>();
         // * 🚩预备「默认类型」：自身为陈述⇒陈述，自身为复合⇒复合
-        final short type = (self instanceof Statement) ? TermLink.COMPOUND_STATEMENT : TermLink.COMPOUND; // default
-        // * 🚩建立连接：从自身到自身开始
-        prepareComponentLinks(self, componentLinks, type, self);
-        return componentLinks;
+        final TLinkType type = (self instanceof Statement) ? TLinkType.COMPOUND_STATEMENT : TLinkType.COMPOUND; // default
+        // * 🚩建立连接：从「自身到自身」开始
+        prepareComponentLinks(self, linksToSelf, type, self);
+        return linksToSelf;
     }
 
     /**
      * Collect TermLink templates into a list, go down one level except in
      * special cases
      * <p>
-     * * ❗重要逻辑：词项链的构造
+     * * ❗重要逻辑：词项链的构造 | ❓看似构造了「从元素链接到自身」但实际上「目标」却是「元素」
      *
-     * @param self           The CompoundTerm for which the links are built
-     * @param componentLinks The list of TermLink templates built so far
-     * @param type           The type of TermLink to be built
-     * @param term           The CompoundTerm for which the links are built
+     * @param self        The CompoundTerm for which the links are built
+     * @param linksToSelf The list of TermLink templates built so far
+     * @param type        The type of TermLink to be built
+     * @param term        The CompoundTerm for which the links are built
      */
     private static void prepareComponentLinks(
             final CompoundTerm self,
-            final ArrayList<TermLinkTemplate> componentLinks,
-            final short type,
+            final ArrayList<TermLinkTemplate> linksToSelf,
+            final TLinkType type,
             final CompoundTerm term) {
         // * 🚩从目标第一层元素出发
         for (int i = 0; i < term.size(); i++) { // first level components
             /** 第一层元素 */
             final Term t1 = term.componentAt(i);
-            // * 🚩「常量」词项⇒直接链接
+            // * 🚩「常量」词项⇒直接链接 | 构建「元素→自身」的「到复合词项」类型
             if (t1.isConstant()) {
-                componentLinks.add(new TermLinkTemplate(t1, type, new int[] { i }));
+                linksToSelf.add(new TermLinkTemplate(t1, type, new int[] { i }));
                 // * 📝【2024-05-15 18:21:25】案例笔记 概念="<(&&,A,B) ==> D>"：
                 // * 📄self="<(&&,A,B) ==> D>" ~> "(&&,A,B)" [i=0]
                 // * @ 4=COMPOUND_STATEMENT "At C, point to <C --> A>"
@@ -83,8 +84,8 @@ public abstract class ConceptLinking {
                 // * 📝递归深入，将作为「入口」的「自身向自身建立链接」缩小到「组分」区域
                 prepareComponentLinks(
                         (CompoundTerm) t1,
-                        componentLinks,
-                        TermLink.COMPOUND_CONDITION, // * 🚩改变「默认类型」为「复合条件」
+                        linksToSelf,
+                        TLinkType.COMPOUND_CONDITION, // * 🚩改变「默认类型」为「复合条件」
                         (CompoundTerm) t1);
             // * 🚩其它情况⇒若元素为复合词项，再度深入
             else if (t1 instanceof CompoundTerm) {
@@ -97,32 +98,32 @@ public abstract class ConceptLinking {
                         final boolean transformT1 = t1 instanceof Product || t1 instanceof ImageExt
                                 || t1 instanceof ImageInt;
                         if (transformT1) {
-                            // * 🚩NAL-4「转换」相关
-                            final int[] indexes = type == TermLink.COMPOUND_CONDITION
+                            // * 🚩NAL-4「转换」相关 | 构建「复合→复合」的「转换」类型（仍然到复合词项）
+                            final int[] indexes = type == TLinkType.COMPOUND_CONDITION
                                     // * 📝若背景的「链接类型」已经是「复合条件」⇒已经深入了一层，并且一定在「主项」位置
                                     ? new int[] { 0, i, j }
                                     // * 📝否则就还是第二层
                                     : new int[] { i, j };
-                            componentLinks.add(new TermLinkTemplate(t2, TermLink.TRANSFORM, indexes));
+                            linksToSelf.add(new TermLinkTemplate(t2, TLinkType.TRANSFORM, indexes));
                         } else {
-                            // * 🚩非「转换」相关：直接按类型添加
-                            componentLinks.add(new TermLinkTemplate(t2, type, new int[] { i, j }));
+                            // * 🚩非「转换」相关：直接按类型添加 | 构建「元素→自身」的「到复合词项」类型
+                            linksToSelf.add(new TermLinkTemplate(t2, type, new int[] { i, j }));
                         }
                     }
                     // * 🚩直接处理 @ 第三层
                     final boolean transformT2 = t2 instanceof Product || t2 instanceof ImageExt
                             || t2 instanceof ImageInt;
                     if (transformT2) {
-                        // * 🚩NAL-4「转换」相关
+                        // * 🚩NAL-4「转换」相关 | 构建「复合→复合」的「转换」类型（仍然到复合词项）
                         for (int k = 0; k < ((CompoundTerm) t2).size(); k++) {
                             final Term t3 = ((CompoundTerm) t2).componentAt(k);
                             if (t3.isConstant()) { // third level
-                                final int[] indexes = type == TermLink.COMPOUND_CONDITION
+                                final int[] indexes = type == TLinkType.COMPOUND_CONDITION
                                         // * 📝此处若是「复合条件」即为最深第四层
                                         ? new int[] { 0, i, j, k }
                                         // * 📝否则仅第三层
                                         : new int[] { i, j, k };
-                                componentLinks.add(new TermLinkTemplate(t3, TermLink.TRANSFORM, indexes));
+                                linksToSelf.add(new TermLinkTemplate(t3, TLinkType.TRANSFORM, indexes));
                             }
                         }
                     }
@@ -153,17 +154,17 @@ public abstract class ConceptLinking {
         insertTaskLink(self, memory, selfLink);
         // * 🚩仅在「自身为复合词项」且「词项链模板非空」时准备
         // * 📝只有复合词项会有「对子项的词项链」，子项不会持有「对所属词项的词项链」
-        if (!(self.getTerm() instanceof CompoundTerm && self.getTermLinkTemplates().size() > 0))
+        if (!(self.getTerm() instanceof CompoundTerm && self.getLinkTemplatesToSelf().size() > 0))
             return;
         // * 🚩分发并指数递减预算值
         final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
                 taskBudget,
-                self.getTermLinkTemplates().size());
+                self.getLinkTemplatesToSelf().size());
         if (!subBudget.aboveThreshold())
             return;
         // * 🚩仅在「预算达到阈值」时：遍历预先构建好的所有「子项词项链模板」，递归链接到任务
-        for (final TermLinkTemplate template : self.getTermLinkTemplates()) {
-            // if (!(task.isStructural() && (termLink.getType() == TermLink.TRANSFORM)))
+        for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {
+            // if (!(task.isStructural() && (termLink.getType() == TLinkType.TRANSFORM)))
             // continue;
             // // avoid circular transform
             final Term componentTerm = template.getTarget();
@@ -171,7 +172,7 @@ public abstract class ConceptLinking {
             final Concept componentConcept = memory.getConceptOrCreate(componentTerm);
             if (componentConcept == null)
                 continue;
-            // * 🚩为子项的概念构造新词项链，并在其中使用模板
+            // * 🚩为子项的概念构造新词项链，并在其中使用模板（的类型和索引）
             final TaskLink tLink = new TaskLink(task, template, subBudget);
             // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
             insertTaskLink(componentConcept, memory, tLink);
@@ -206,33 +207,35 @@ public abstract class ConceptLinking {
      */
     private static void buildTermLinks(final Concept self, final Memory memory, final BudgetValue taskBudget) {
         // * 🚩仅在有「词项链模板」时
-        if (self.getTermLinkTemplates().isEmpty())
+        if (self.getLinkTemplatesToSelf().isEmpty())
             return;
         // * 🚩分派链接，更新预算值，继续
         // * 📝太大的词项、太远的链接 根据AIKR有所取舍
         final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
                 taskBudget,
-                self.getTermLinkTemplates().size());
+                self.getLinkTemplatesToSelf().size());
         if (!subBudget.aboveThreshold())
             return;
         // * 🚩仅在超过阈值时：遍历所有「词项链模板」
-        for (final TermLinkTemplate template : self.getTermLinkTemplates()) {
-            if (template.getType() == TermLink.TRANSFORM)
+        for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {
+            if (template.getType() == TLinkType.TRANSFORM)
                 continue;
             // * 🚩仅在链接类型不是「转换」时
             final Term component = template.getTarget();
-            final Concept concept = memory.getConceptOrCreate(component);
+            final Term selfTerm = self.getTerm();
+            final Concept componentConcept = memory.getConceptOrCreate(component);
             // * 🚩仅在「元素词项所对应概念」存在时
-            if (concept == null)
+            if (componentConcept == null)
                 continue;
-            // * 🚩建立双向链接：元素⇒整体
-            final TermLink termLink1 = new TermLink(component, template, subBudget);
+            // * 🚩建立双向链接：整体⇒元素
+            final TermLink termLink1 = TermLink.fromTemplate(component, template, subBudget);
             insertTermLink(self, termLink1); // this termLink to that
-            final TermLink termLink2 = new TermLink(self.getTerm(), template, subBudget);
-            insertTermLink(concept, termLink2); // that termLink to this
+            // * 🚩建立双向链接：元素⇒整体
+            final TermLink termLink2 = TermLink.fromTemplate(selfTerm, template, subBudget);
+            insertTermLink(componentConcept, termLink2); // that termLink to this
             // * 🚩对复合子项 继续深入递归
             if (component instanceof CompoundTerm) {
-                buildTermLinks(concept, memory, subBudget);
+                buildTermLinks(componentConcept, memory, subBudget);
             }
         }
     }

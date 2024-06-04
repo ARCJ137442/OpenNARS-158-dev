@@ -68,7 +68,7 @@ public class TaskLink extends TLink<Task> implements Item {
      * @param template
      * @param v
      */
-    private TaskLink(final Task target, final BudgetValue budget, final short type, final short[] indices) {
+    private TaskLink(final Task target, final BudgetValue budget, final TLinkType type, final short[] indices) {
         super(target, type, indices);
         this.token = new Token(generateKey(target, type, indices), budget);
         this.recordedLinks = new String[Parameters.TERM_LINK_RECORD_LENGTH];
@@ -86,9 +86,8 @@ public class TaskLink extends TLink<Task> implements Item {
      * @param template The TermLink template
      * @param budget   The budget
      */
-    public TaskLink(final Task target, final TLink<Term> template, final BudgetValue budget) {
-        this(target, budget,
-                template.getType(), template.getIndices());
+    public TaskLink(final Task target, final TermLinkTemplate template, final BudgetValue budget) {
+        this(target, budget, template.getType(), template.getIndices());
     }
 
     /**
@@ -103,10 +102,10 @@ public class TaskLink extends TLink<Task> implements Item {
     public static final TaskLink newSelf(final Task target, final BudgetValue budget) {
         return new TaskLink(
                 target, budget,
-                TermLink.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组
+                TLinkType.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组
     }
 
-    private static final String generateKey(final Task target, final short type, final short[] indices) {
+    private static final String generateKey(final Task target, final TLinkType type, final short[] indices) {
         // * 🚩生成最基础的
         String key = generateKey(type, indices); // as defined in TermLink
         if (target != null)
@@ -162,5 +161,20 @@ public class TaskLink extends TLink<Task> implements Item {
     public String toString() {
         final String superString = getBudget().toString() + " " + getKey().toString();
         return superString + " " + getTarget().getStamp();
+    }
+
+    // 📌自原`abstract class Item`中继承而来 //
+
+    /**
+     * Return a String representation of the Item after simplification
+     *
+     * @return A simplified String representation of the content
+     */
+    public String toStringBrief() {
+        return getBudget().toStringBrief() + " " + getKey();
+    }
+
+    public String toStringLong() {
+        return toString();
     }
 }

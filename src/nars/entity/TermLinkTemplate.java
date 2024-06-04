@@ -30,18 +30,28 @@ public class TermLinkTemplate extends TLink<Term> {
      * <p>
      * called in CompoundTerm.prepareComponentLinks only
      * * 🚩直接调用超类构造函数
+     * * ⚠️此处的「目标」非彼「目标」，而是「模板」：针对「目标词项」构建「从元素到自身的词项链/任务链」
+     * * 📌【2024-06-04 20:19:33】所以此处才会存在「虽然『目标』是『元素』，但『链接类型』是『链接到自身』」的情况
      *
      * @param target  Target Term
      * @param type    Link type
      * @param indices Component indices in compound, may be 1 to 4
      */
-    public TermLinkTemplate(final Term target, final short type, final int[] indices) {
+    public TermLinkTemplate(final Term target, final TLinkType type, final int[] indices) {
         super( // * 🚩直接传递到「完全构造方法」
                 target,
                 type,
                 // * ✅现在不再需要传入null作为key了，因为TermLinkTemplate不需要key
                 // template types all point to compound, though the target is component
                 generateIndices(type, indices));
+    }
+
+    /**
+     * 🆕获取这个「词项链模板」所【基于】的「目标」词项
+     * * 📝后续
+     */
+    public final Term willFromSelfTo() {
+        return getTarget();
     }
 
     /**
@@ -55,14 +65,14 @@ public class TermLinkTemplate extends TLink<Term> {
      * @return
      */
     private static final short[] generateIndices(
-            final short type,
+            final TLinkType type,
             final int[] indices) {
-        // * 🚩假定此处是「COMPOUND」系列类型——从复合词项链接到内部元素
-        if (!isFromCompound(type))
-            throw new AssertionError("type % 2 == " + type + " % 2 == " + (type % 2) + " != 0");
+        // * 🚩假定此处是「COMPOUND」系列或「TRANSFORM」类型——链接到复合词项
+        if (!(isToCompound(type) || type == TLinkType.TRANSFORM))
+            throw new AssertionError("type " + type + " isn't from compound");
         final short[] index;
         // * 🚩原数组为「复合条件」⇒头部添加`0`
-        if (type == TermLink.COMPOUND_CONDITION) { // the first index is 0 by default
+        if (type == TLinkType.COMPOUND_CONDITION) { // the first index is 0 by default
             index = new short[indices.length + 1];
             index[0] = 0;
             for (int i = 0; i < indices.length; i++) {

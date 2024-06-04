@@ -2,8 +2,9 @@ package nars.inference;
 
 import nars.control.DerivationContextReason;
 import nars.entity.*;
+import nars.entity.TLink.TLinkType;
 import nars.language.*;
-import nars.io.Symbols;
+import static nars.io.Symbols.*;
 
 /**
  * Table of inference rules, indexed by the TermLinks for the task and the
@@ -22,6 +23,7 @@ public class RuleTables {
      * @param context Reference to the derivation context
      */
     public static void reason(DerivationContextReason context) {
+        final Term conceptTerm = context.getCurrentTerm();
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
@@ -39,61 +41,106 @@ public class RuleTables {
         // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
         // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
         // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
+        // * 📝目前的结果是：`ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}`
+        // * 🚩
         if (!context.getMemory().noResult() && task.isJudgment()) {
             return;
         }
         // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);
         final short bIndex = bLink.getIndex(0);
-        switch (tLink.getType()) { // dispatch first by TaskLink type
-            case TermLink.SELF:
-                switch (bLink.getType()) {
-                    case TermLink.COMPONENT:
+        final TLinkType tLinkType = tLink.getType();
+        final TLinkType bLinkType = bLink.getType();
+        // * 📝【2024-06-04 19:33:10】实质上这里的「链接类型分派」就是基于「词项链/任务链」的「内容相关性信息」分派
+        // * 📄A @ (&&, A, B) => 点火「A」将以`COMPOUND`（从元素指向复合词项整体）
+        switch (tLinkType) { // dispatch first by TaskLink type
+            // * 🚩只有「从复合词项」
+            default:
+                // System.out.println("RuleTables.reason: unexpected TLinkType: " + tLinkType +
+                // "," + bLinkType + " @ ("
+                // + tLink + ";" + bLink + ")");
+                return;
+            case SELF: // * 🚩conceptTerm = taskTerm
+                switch (bLinkType) {
+                    default:
+                        // System.out.println("RuleTables.reason: unexpected TLinkType: " + tLinkType +
+                        // "," + bLinkType
+                        // + " @ (" + tLink + ";" + bLink + ")");
+                        return;
+                    case COMPONENT:
+                        // * 📄T="(&&,<#1 --> object>,<#1 --> (/,made_of,_,plastic)>)"
+                        // * + B="object"
+                        // * @ C="(&&,<#1 --> object>,<#1 --> (/,made_of,_,plastic)>)"
                         compoundAndSelf((CompoundTerm) taskTerm, beliefTerm, true, context);
-                        break;
-                    case TermLink.COMPOUND:
+                        return;
+                    case COMPOUND:
+                        // * 📄T="<<$1 --> [aggressive]> ==> <$1 --> murder>>"
+                        // * + B="[aggressive]"
+                        // * @ C="<<$1 --> [aggressive]> ==> <$1 --> murder>>"
                         compoundAndSelf((CompoundTerm) beliefTerm, taskTerm, false, context);
-                        break;
-                    case TermLink.COMPONENT_STATEMENT:
-                        if (belief != null) {
+                        return;
+                    case COMPONENT_STATEMENT:
+                        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+                        // * + B="{tim}"
+                        // * @ C="<{tim} --> (/,livingIn,_,{graz})>"
+                        if (belief != null)
                             SyllogisticRules.detachment(task, belief, bIndex, context);
-                        }
-                        break;
-                    case TermLink.COMPOUND_STATEMENT:
-                        if (belief != null) {
+                        return;
+                    case COMPOUND_STATEMENT:
+                        // ? 🚩【2024-06-04 20:49:33】未有案例
+                        if (belief != null)
                             SyllogisticRules.detachment(belief, task, bIndex, context);
-                        }
-                        break;
-                    case TermLink.COMPONENT_CONDITION:
+                        return;
+                    case COMPONENT_CONDITION:
+                        // *📄T="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
+                        // * + B="[aggressive]"
+                        // * @ C=T
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
                             SyllogisticRules.conditionalDedInd((Implication) taskTerm, bIndex2, beliefTerm, tIndex,
                                     context);
                         }
-                        break;
-                    case TermLink.COMPOUND_CONDITION:
+                        return;
+                    case COMPOUND_CONDITION:
+                        // ? 🚩【2024-06-04 20:50:02】未有案例
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
                             SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex2, taskTerm, tIndex,
                                     context);
                         }
-                        break;
+                        return;
                 }
-                break;
-            case TermLink.COMPOUND:
-                switch (bLink.getType()) {
-                    case TermLink.COMPOUND:
+            case COMPOUND: // * 🚩conceptTerm ∈ taskTerm (normal)
+                switch (bLinkType) {
+                    default:
+                        // System.out.println("RuleTables.reason: unexpected TLinkType: " + tLinkType +
+                        // "," + bLinkType
+                        // + " @ (" + tLink + ";" + bLink + ")");
+                        return;
+                    case COMPOUND: // * 🚩conceptTerm ∈ taskTerm, conceptTerm ∈ beliefTerm
+                        // * 📄T="(&&,<cup --> #1>,<toothbrush --> #1>)"
+                        // * + B="<cup --> [bendable]>"
+                        // * @ C="cup"
                         compoundAndCompound((CompoundTerm) taskTerm, (CompoundTerm) beliefTerm, context);
-                        break;
-                    case TermLink.COMPOUND_STATEMENT:
+                        return;
+                    case COMPOUND_STATEMENT: // * 🚩conceptTerm ∈ taskTerm, conceptTerm ∈ beliefTerm isa Statement
+                        // * 📄T="(&&,<{tim} --> #1>,<{tom} --> #1>)"
+                        // * + B="<{tom} --> murder>"
+                        // * @ C="{tom}"
                         compoundAndStatement((CompoundTerm) taskTerm, tIndex, (Statement) beliefTerm, bIndex,
                                 beliefTerm, context);
-                        break;
-                    case TermLink.COMPOUND_CONDITION:
+                        return;
+                    case COMPOUND_CONDITION:
+                        // *📄T="(||,<{tom}-->[aggressive]>,<{tom}-->(/,livingIn,_,{graz})>)"
+                        // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
+                        // * @ C="(/,livingIn,_,{graz})"
                         if (belief != null) {
                             if (beliefTerm instanceof Implication) {
-                                if (Variable.unify(Symbols.VAR_INDEPENDENT, ((Implication) beliefTerm).getSubject(),
-                                        taskTerm, beliefTerm, taskTerm)) {
+                                final boolean canDetach = Variable.unify(
+                                        VAR_INDEPENDENT,
+                                        ((Implication) beliefTerm).getSubject(), taskTerm,
+                                        beliefTerm, taskTerm);
+                                if (canDetach) {
                                     detachmentWithVar(belief, taskSentence, bIndex, context);
                                 } else {
                                     SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex, taskTerm, -1,
@@ -104,26 +151,41 @@ public class RuleTables {
                                         context);
                             }
                         }
-                        break;
+                        return;
                 }
-                break;
-            case TermLink.COMPOUND_STATEMENT:
-                switch (bLink.getType()) {
-                    case TermLink.COMPONENT:
-                        componentAndStatement((CompoundTerm) context.getCurrentTerm(), bIndex, (Statement) taskTerm,
+            case COMPOUND_STATEMENT: // * 🚩conceptTerm ∈ taskTerm (statement)
+                switch (bLinkType) {
+                    default:
+                        // System.out.println("RuleTables.reason: unexpected TLinkType: " + tLinkType +
+                        // "," + bLinkType
+                        // + " @ (" + tLink + ";" + bLink + ")");
+                        return;
+                    case COMPONENT:
+                        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+                        // * + B="tim"
+                        // * @ C="{tim}"
+                        componentAndStatement((CompoundTerm) conceptTerm, bIndex, (Statement) taskTerm,
                                 tIndex,
                                 context);
-                        break;
-                    case TermLink.COMPOUND:
+                        return;
+                    case COMPOUND:
+                        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+                        // * + B="{tim}"
+                        // * @ C="tim"
                         compoundAndStatement((CompoundTerm) beliefTerm, bIndex, (Statement) taskTerm, tIndex,
                                 beliefTerm, context);
-                        break;
-                    case TermLink.COMPOUND_STATEMENT:
-                        if (belief != null) {
-                            syllogisms(tLink, bLink, taskTerm, beliefTerm, context);
-                        }
-                        break;
-                    case TermLink.COMPOUND_CONDITION:
+                        return;
+                    case COMPOUND_STATEMENT:
+                        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+                        // * + B="<<$1 --> (/,livingIn,_,{graz})> ==> <$1 --> murder>>"
+                        // * @ C="(/,livingIn,_,{graz})"
+                        if (belief != null)
+                            syllogisms(tLink, bLink, (Statement) taskTerm, (Statement) beliefTerm, context);
+                        return;
+                    case COMPOUND_CONDITION:
+                        // * 📄T="<<$1 --> [aggressive]> ==> <$1 --> (/,livingIn,_,{graz})>>"
+                        // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
+                        // * @ C="(/,livingIn,_,{graz})"
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
                             if (beliefTerm instanceof Implication) {
@@ -131,17 +193,27 @@ public class RuleTables {
                                         tIndex, context);
                             }
                         }
-                        break;
+                        return;
                 }
-                break;
-            case TermLink.COMPOUND_CONDITION:
-                switch (bLink.getType()) {
-                    case TermLink.COMPOUND:
-                        if (belief != null) {
+            case COMPOUND_CONDITION: // * 🚩conceptTerm ∈ taskTerm (condition in statement)
+                switch (bLinkType) {
+                    default:
+                        // System.out.println("RuleTables.reason: unexpected TLinkType: " + tLinkType +
+                        // "," + bLinkType
+                        // + " @ (" + tLink + ";" + bLink + ")");
+                        return;
+                    case COMPOUND:
+                        // * 📄T="<(&&,<{graz} --> (/,livingIn,$1,_)>,(||,<$1 -->
+                        // [aggressive]>,<sunglasses --> (/,own,$1,_)>)) ==> <$1 --> murder>>"
+                        // * + B="(/,livingIn,_,{graz})"
+                        // * @ C="{graz}"
+                        if (belief != null)
                             detachmentWithVar(taskSentence, belief, tIndex, context);
-                        }
-                        break;
-                    case TermLink.COMPOUND_STATEMENT:
+                        return;
+                    case COMPOUND_STATEMENT:
+                        // *📄T="<(&&,<$1-->[aggressive]>,<sunglasses-->(/,own,$1,_)>)==><$1-->murder>>"
+                        // * + B="<sunglasses --> glasses>"
+                        // * @ C="sunglasses"
                         if (belief != null) {
                             // TODO maybe put instanceof test within conditionalDedIndWithVar()
                             if (taskTerm instanceof Implication) {
@@ -159,11 +231,11 @@ public class RuleTables {
                                             bIndex, context);
                                 }
                             }
-                            break;
                         }
-                        break;
+                        return;
                 }
         }
+        // ! unreachable
     }
 
     /* ----- syllogistic inferences ----- */
@@ -177,7 +249,7 @@ public class RuleTables {
      * @param beliefTerm The content of belief
      * @param context    Reference to the derivation context
      */
-    private static void syllogisms(TaskLink tLink, TermLink bLink, Term taskTerm, Term beliefTerm,
+    private static void syllogisms(TaskLink tLink, TermLink bLink, Statement taskTerm, Statement beliefTerm,
             DerivationContextReason context) {
         final Sentence taskSentence = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
@@ -250,7 +322,7 @@ public class RuleTables {
         final Term t1, t2;
         switch (figure) {
             case 11: // induction
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
                     if (s1.equals(s2)) {
                         return;
                     }
@@ -262,13 +334,13 @@ public class RuleTables {
 
                 break;
             case 12: // deduction
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
                     if (s1.equals(s2)) {
                         return;
                     }
                     t1 = s2.getSubject();
                     t2 = s1.getPredicate();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, s1, s2)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, s1, s2)) {
                         LocalRules.matchReverse(context);
                     } else {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
@@ -276,13 +348,13 @@ public class RuleTables {
                 }
                 break;
             case 21: // exemplification
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
                     if (s1.equals(s2)) {
                         return;
                     }
                     t1 = s1.getSubject();
                     t2 = s2.getPredicate();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, s1, s2)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, s1, s2)) {
                         LocalRules.matchReverse(context);
                     } else {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
@@ -290,7 +362,7 @@ public class RuleTables {
                 }
                 break;
             case 22: // abduction
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
                     if (s1.equals(s2)) {
                         return;
                     }
@@ -322,10 +394,10 @@ public class RuleTables {
         final Term t1, t2;
         switch (figure) {
             case 11:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, asymSt.getSubject(), symSt.getSubject(), asymSt, symSt)) {
+                if (Variable.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getSubject(), asymSt, symSt)) {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getPredicate();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, asymSt, symSt)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
                         LocalRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
@@ -333,10 +405,10 @@ public class RuleTables {
                 }
                 break;
             case 12:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, asymSt.getSubject(), symSt.getPredicate(), asymSt, symSt)) {
+                if (Variable.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getPredicate(), asymSt, symSt)) {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getSubject();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, asymSt, symSt)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
                         LocalRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
@@ -344,10 +416,10 @@ public class RuleTables {
                 }
                 break;
             case 21:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getSubject(), asymSt, symSt)) {
+                if (Variable.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getSubject(), asymSt, symSt)) {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getPredicate();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, asymSt, symSt)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
                         LocalRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
@@ -355,11 +427,11 @@ public class RuleTables {
                 }
                 break;
             case 22:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getPredicate(), asymSt,
+                if (Variable.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getPredicate(), asymSt,
                         symSt)) {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getSubject();
-                    if (Variable.unify(Symbols.VAR_QUERY, t1, t2, asymSt, symSt)) {
+                    if (Variable.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
                         LocalRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
@@ -383,25 +455,25 @@ public class RuleTables {
         final Statement s2 = (Statement) taskSentence.cloneContent();
         switch (figure) {
             case 11:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
                 break;
             case 12:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
                 break;
             case 21:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
                 break;
             case 22:
-                if (Variable.unify(Symbols.VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
+                if (Variable.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
@@ -431,7 +503,7 @@ public class RuleTables {
                 && (context.getCurrentBelief() != null)) {
             if (component.isConstant()) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, context);
-            } else if (Variable.unify(Symbols.VAR_INDEPENDENT, component, content, statement, content)) {
+            } else if (Variable.unify(VAR_INDEPENDENT, component, content, statement, content)) {
                 SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
                     && (context.getCurrentTask().isJudgment())) {
@@ -473,9 +545,9 @@ public class RuleTables {
             component2 = null;
         }
         if (component2 != null) {
-            boolean unifiable = Variable.unify(Symbols.VAR_INDEPENDENT, component, component2, conditional, statement);
+            boolean unifiable = Variable.unify(VAR_INDEPENDENT, component, component2, conditional, statement);
             if (!unifiable) {
-                unifiable = Variable.unify(Symbols.VAR_DEPENDENT, component, component2, conditional, statement);
+                unifiable = Variable.unify(VAR_DEPENDENT, component, component2, conditional, statement);
             }
             if (unifiable) {
                 SyllogisticRules.conditionalDedInd(conditional, index, statement, side, context);
@@ -545,11 +617,11 @@ public class RuleTables {
         final Task task = context.getCurrentTask();
         if (component.getClass() == statement.getClass()) {
             if ((compound instanceof Conjunction) && (context.getCurrentBelief() != null)) {
-                if (Variable.unify(Symbols.VAR_DEPENDENT, component, statement, compound, statement)) {
+                if (Variable.unify(VAR_DEPENDENT, component, statement, compound, statement)) {
                     SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), context);
                 } else if (task.isJudgment()) { // && !compound.containComponent(component)) {
                     CompositionalRules.introVarInner(statement, (Statement) component, compound, context);
-                } else if (Variable.unify(Symbols.VAR_QUERY, component, statement, compound, statement)) {
+                } else if (Variable.unify(VAR_QUERY, component, statement, compound, statement)) {
                     CompositionalRules.decomposeStatement(compound, component, true, context);
                 }
             }

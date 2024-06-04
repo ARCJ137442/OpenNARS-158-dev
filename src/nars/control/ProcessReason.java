@@ -3,6 +3,7 @@ package nars.control;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
+import nars.entity.TLink.TLinkType;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
@@ -100,7 +101,7 @@ public abstract class ProcessReason {
         final Task currentTask = currentTaskLink.getTarget();
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
-        if (currentTaskLink.getType() == TermLink.TRANSFORM) {
+        if (currentTaskLink.getType() == TLinkType.TRANSFORM) {
             // * 🚩创建「转换推理上下文」
             // * ⚠️此处「当前信念链」为空，可空情况不一致，可能需要一个专门的「推理上下文」类型
             final DerivationContextTransform context = new DerivationContextTransform(
