@@ -349,14 +349,19 @@ public abstract class MakeTerm {
         else if (term2 instanceof IntersectionExt) {
             s2 = (CompoundTerm) term2;
             set = new TreeSet<Term>(s2.cloneComponents());
-            set.add(term1.clone());
+            // * 📌防止有一个null ⇒ 对null均忽略
+            if (term1 != null)
+                set.add(term1.clone());
         }
         // * 🚩纯默认 ⇒ 直接添加
+        // * 📌防止有一个null ⇒ 对null均忽略
         // * 📄P & Q = (&,P,Q)
         else {
             set = new TreeSet<Term>();
-            set.add(term1.clone());
-            set.add(term2.clone());
+            if (term1 != null)
+                set.add(term1.clone());
+            if (term2 != null)
+                set.add(term2.clone());
         }
         // * 🚩构造
         return makeIntersectionExt(set);
@@ -364,7 +369,9 @@ public abstract class MakeTerm {
 
     /**
      * Try to make a new IntersectionExt. Called by StringParser.
-     * * 🚩用户输入的集合不作操作
+     * * 📝同时包括「用户输入」与「从参数构造」两种来源
+     * * 📄来源1：结构规则「structuralCompose2」
+     * * 🆕现在构造时也会用reduce逻辑尝试合并
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
@@ -372,8 +379,10 @@ public abstract class MakeTerm {
     public static Term makeIntersectionExt(ArrayList<Term> argList) {
         if (argList.isEmpty())
             return null;
-        // * 🚩做一个reduce的操作
+        // * 🆕🚩做一个reduce的操作
         Term term = argList.get(0).clone();
+        if (term == null)
+            return null;
         for (Term t : argList.subList(1, argList.size())) {
             final Term new_term = makeIntersectionExt(term, t.clone());
             term = new_term;
@@ -449,21 +458,28 @@ public abstract class MakeTerm {
         else if (term2 instanceof IntersectionInt) {
             s2 = (CompoundTerm) term2;
             set = new TreeSet<Term>(s2.cloneComponents());
-            set.add(term1.clone());
+            // * 📌防止有一个null ⇒ 对null均忽略
+            if (term1 != null)
+                set.add(term1.clone());
         }
         // * 🚩纯默认 ⇒ 直接添加
+        // * 📌防止有一个null ⇒ 对null均忽略
         // * 📄P | Q = (|,P,Q)
         else {
             set = new TreeSet<Term>();
-            set.add(term1.clone());
-            set.add(term2.clone());
+            if (term1 != null)
+                set.add(term1.clone());
+            if (term2 != null)
+                set.add(term2.clone());
         }
         return makeIntersectionInt(set);
     }
 
     /**
      * Try to make a new IntersectionInt. Called by StringParser.
-     * * 🚩用户输入的集合不作操作
+     * * 📝同时包括「用户输入」与「从参数构造」两种来源
+     * * 📄来源1：结构规则「structuralCompose2」
+     * * 🆕现在构造时也会用reduce逻辑尝试合并
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
@@ -471,8 +487,10 @@ public abstract class MakeTerm {
     public static Term makeIntersectionInt(ArrayList<Term> argList) {
         if (argList.isEmpty())
             return null;
-        // * 🚩做一个reduce的操作
+        // * 🆕🚩做一个reduce的操作
         Term term = argList.get(0).clone();
+        if (term == null)
+            return null;
         for (Term t : argList.subList(1, argList.size())) {
             final Term new_term = makeIntersectionInt(term, t.clone());
             term = new_term;

@@ -99,6 +99,7 @@ public abstract class ProcessDirect {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
+        // * 🚩从「新近任务袋」中拿出一个任务，若有⇒添加进列表
         final Task task = self.mut_novelTasks().takeOut();
         if (task != null)
             tasksToProcess.add(task);
