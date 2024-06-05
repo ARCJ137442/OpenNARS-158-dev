@@ -13,7 +13,6 @@ import nars.io.Symbols;
 import nars.language.Term;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
-import nars.storage.NovelTaskBag;
 
 public abstract class ProcessDirect {
 
@@ -43,7 +42,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNewTask(final Memory self) {
         // * 🚩获取新任务
-        final LinkedList<Task> tasksToProcess = getNewTasks(self);
+        final LinkedList<Task> tasksToProcess = loadFromNewTasks(self);
         // * 🚩处理新任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -56,7 +55,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNovelTask(final Memory self) {
         // * 🚩获取新近任务
-        final LinkedList<Task> tasksToProcess = getNovelTasks(self);
+        final LinkedList<Task> tasksToProcess = loadFromNovelTasks(self);
         // * 🚩处理新近任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -67,22 +66,23 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新任务」列表
      */
-    private static LinkedList<Task> getNewTasks(final Memory self) {
+    private static LinkedList<Task> loadFromNewTasks(final Memory self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
+        // TODO: 过程笔记注释
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final LinkedList<Task> mut_newTasks = self.mut_newTasks();
-        final NovelTaskBag mut_novelTasks = self.mut_novelTasks();
         // don't include new tasks produced in the current workCycle
         for (int counter = mut_newTasks.size(); counter > 0; counter--) {
             final Task task = mut_newTasks.removeFirst();
             if (task.isInput() || self.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
             } else {
-                final Sentence s = task;
-                if (s.isJudgment()) {
-                    final double d = s.getTruth().getExpectation();
+                final Sentence taskSentence = task;
+                // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
+                if (taskSentence.isJudgment()) {
+                    final double d = taskSentence.getTruth().getExpectation();
                     if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
-                        mut_novelTasks.putIn(task); // new concept formation
+                        self.mut_novelTasks().putIn(task); // new concept formation
                     } else {
                         self.getRecorder().append("!!! Neglected: " + task + "\n");
                     }
@@ -95,7 +95,7 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新近任务」列表
      */
-    private static LinkedList<Task> getNovelTasks(final Memory self) {
+    private static LinkedList<Task> loadFromNovelTasks(final Memory self) {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
@@ -230,7 +230,7 @@ public abstract class ProcessDirect {
         // * 🚩断言传入任务的「语句」一定是「判断」
         if (!task.isJudgment())
             throw new Error("task " + task + "is not a judgment");
-        final Sentence judgment = task;
+        final Sentence judgment = task.cloneSentence(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
         if (oldBelief != null) {
@@ -267,7 +267,7 @@ public abstract class ProcessDirect {
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」
-            addBeliefToTable(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
+            addBelief(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
         }
     }
 
@@ -282,28 +282,28 @@ public abstract class ProcessDirect {
      */
     private static void processQuestion(final DerivationContextDirect context) {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
-        final Task taskQuestion = context.getCurrentTask();
+        final Task questionTask = context.getCurrentTask();
         // * 🚩断言传入任务的「语句」一定是「问题」
-        if (!taskQuestion.isQuestion())
-            throw new Error("task " + taskQuestion + "is not a judgment");
+        if (!questionTask.isQuestion())
+            throw new Error("task " + questionTask + "is not a judgment");
         // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         final Concept self = context.getCurrentConcept();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Task existedQuestion = findExistedQuestion(self, taskQuestion.getContent());
+        final Task existedQuestion = findExistedQuestion(self, questionTask.getContent());
         final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? taskQuestion : existedQuestion;
+        final Sentence question = newQuestion ? questionTask : existedQuestion;
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Sentence newAnswer = evaluation(question, self.getBeliefs());
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
-            LocalRules.trySolution(newAnswer, taskQuestion, context);
+            LocalRules.trySolution(newAnswer, questionTask, context);
         }
         // * 🚩新增问题
         if (newQuestion) {
-            self.addQuestion(taskQuestion);
+            self.addQuestion(questionTask);
         }
     }
 
@@ -315,10 +315,11 @@ public abstract class ProcessDirect {
      * @param table       The table to be revised
      * @param capacity    The capacity of the table
      */
-    public static void addBeliefToTable(
+    public static void addBelief(
             final Sentence newSentence,
             final ArrayList<Sentence> table,
             final int capacity) {
+        // TODO: 过程笔记注释
         final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
         int i;
         for (i = 0; i < table.size(); i++) {
@@ -332,6 +333,7 @@ public abstract class ProcessDirect {
                 break;
             }
         }
+        // * 🚩缓冲区溢出
         if (table.size() >= capacity) {
             while (table.size() > capacity) {
                 table.remove(table.size() - 1);
@@ -350,6 +352,7 @@ public abstract class ProcessDirect {
      * @return 已有的问题，或为空
      */
     private static Task findExistedQuestion(final Concept self, final Term taskContent) {
+        // TODO: 过程笔记注释
         final Iterable<Task> questions = self.getQuestions();
         if (questions == null)
             return null;
@@ -369,6 +372,7 @@ public abstract class ProcessDirect {
      * @return The best candidate belief selected
      */
     private static Sentence evaluation(final Sentence query, final Iterable<Sentence> list) {
+        // TODO: 过程笔记注释
         if (list == null)
             return null;
         float currentBest = 0;

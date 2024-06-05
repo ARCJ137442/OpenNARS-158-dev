@@ -35,7 +35,8 @@ public interface Sentence extends ToStringBriefAndLong {
      * @return Whether the two are equivalent
      */
     public default boolean equivalentTo(Sentence that) {
-        assert __content().equals(that.__content()) && __punctuation() == that.__punctuation();
+        if (!(__content().equals(that.__content()) && __punctuation() == that.__punctuation()))
+            throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
         return (__truth().equals(that.__truth()) && __stamp().equals(that.__stamp()));
     }
 

@@ -8,6 +8,7 @@ import nars.language.*;
 
 /**
  * Budget functions for resources allocation
+ * TODO: 过程笔记注释
  */
 public final class BudgetFunctions extends UtilityFunctions {
 

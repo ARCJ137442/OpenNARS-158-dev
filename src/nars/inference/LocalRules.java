@@ -37,6 +37,7 @@ public class LocalRules {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
         final Sentence belief = context.getCurrentBelief();
 
+        // TODO: 过程笔记注释
         final Sentence sentence = task.cloneSentence();
         if (sentence.isJudgment()) {
             if (revisable(sentence, belief)) {
