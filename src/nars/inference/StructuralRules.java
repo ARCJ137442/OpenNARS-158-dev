@@ -33,6 +33,7 @@ public final class StructuralRules {
      */
     static void structuralCompose2(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (compound.equals(statement.componentAt(side))) {
             return;
         }
@@ -93,6 +94,7 @@ public final class StructuralRules {
      * @param context   Reference to the derivation context
      */
     static void structuralDecompose2(Statement statement, int index, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (subj.getClass() != pred.getClass()) {
@@ -138,6 +140,7 @@ public final class StructuralRules {
      * @return Whether the direction of inheritance should be revised
      */
     private static boolean switchOrder(CompoundTerm compound, short index) {
+        // TODO: 过程笔记注释
         return ((((compound instanceof DifferenceExt) || (compound instanceof DifferenceInt)) && (index == 1))
                 || ((compound instanceof ImageExt) && (index != ((ImageExt) compound).getRelationIndex()))
                 || ((compound instanceof ImageInt) && (index != ((ImageInt) compound).getRelationIndex())));
@@ -151,8 +154,9 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
+    public static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
             return;
         }
@@ -199,8 +203,9 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
+    public static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
             return;
         }
@@ -249,6 +254,7 @@ public final class StructuralRules {
      */
     private static void structuralStatement(Term subject, Term predicate, TruthValue truth,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Term oldContent = task.getContent();
         if (oldContent instanceof Statement) {
@@ -269,8 +275,9 @@ public final class StructuralRules {
      * @param side      The location of the indicated term in the premise
      * @param context   Reference to the derivation context
      */
-    static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
+    public static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (compound.size() > 1) {
             return;
         }
@@ -316,8 +323,9 @@ public final class StructuralRules {
      * @param compoundTask Whether the compound comes from the task
      * @param context      Reference to the derivation context
      */
-    static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
+    public static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (!component.isConstant()) {
             return;
         }
@@ -350,6 +358,7 @@ public final class StructuralRules {
      * @param context Reference to the derivation context
      */
     public static void transformNegation(Term content, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence sentence = task;
         TruthValue truth = sentence.getTruth();
@@ -371,7 +380,8 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
+    public static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         final Term content = makeStatement(statement, makeNegation(pred),

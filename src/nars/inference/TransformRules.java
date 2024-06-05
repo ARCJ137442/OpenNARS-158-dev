@@ -38,6 +38,7 @@ public class TransformRules {
      * @param context Reference to the derivation context
      */
     public static void transformTask(TaskLink tLink, DerivationContextTransform context) {
+        // TODO: 过程笔记注释
         // * 🚩预处理
         final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();
@@ -80,14 +81,15 @@ public class TransformRules {
             Inheritance inh, CompoundTerm oldContent,
             short[] indices,
             DerivationContextTransform context) {
-        Term inhSubject = inh.getSubject();
-        Term inhPredicate = inh.getPredicate();
+        // TODO: 过程笔记注释
+        final Term inhSubject = inh.getSubject();
+        final Term inhPredicate = inh.getPredicate();
         if (inh.equals(oldContent)) {
             if (inhSubject instanceof CompoundTerm) {
-                transformSubjectPI((CompoundTerm) inhSubject, inhPredicate, context);
+                transformSubjectProductImage((CompoundTerm) inhSubject, inhPredicate, context);
             }
             if (inhPredicate instanceof CompoundTerm) {
-                transformPredicatePI(inhSubject, (CompoundTerm) inhPredicate, context);
+                transformPredicateProductImage(inhSubject, (CompoundTerm) inhPredicate, context);
             }
             return;
         }
@@ -173,7 +175,9 @@ public class TransformRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformSubjectPI(CompoundTerm subject, Term predicate, DerivationContextTransform context) {
+    private static void transformSubjectProductImage(CompoundTerm subject, Term predicate,
+            DerivationContextTransform context) {
+        // TODO: 过程笔记注释
         final TruthValue truth = context.getCurrentTask().getTruth();
         BudgetValue budget;
         Inheritance inheritance;
@@ -228,7 +232,9 @@ public class TransformRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformPredicatePI(Term subject, CompoundTerm predicate, DerivationContextTransform context) {
+    private static void transformPredicateProductImage(Term subject, CompoundTerm predicate,
+            DerivationContextTransform context) {
+        // TODO: 过程笔记注释
         final TruthValue truth = context.getCurrentTask().getTruth();
         BudgetValue budget;
         Inheritance inheritance;

@@ -17,6 +17,7 @@ class Distributor {
      * @param range Range of valid numbers
      */
     public Distributor(int range) {
+        // TODO: 过程笔记注释
         int index, rank, time;
         capacity = (range * (range + 1)) / 2;
         order = new int[capacity];

@@ -125,6 +125,7 @@ public class Variable extends Term {
      * @return Whether the unification is possible
      */
     public static boolean unify(char type, Term t1, Term t2, Term compound1, Term compound2) {
+        // TODO: 过程笔记注释
         HashMap<Term, Term> map1 = new HashMap<>();
         HashMap<Term, Term> map2 = new HashMap<>();
         boolean hasSubs = findSubstitute(type, t1, t2, map1, map2); // find substitution
@@ -156,6 +157,7 @@ public class Variable extends Term {
      */
     private static boolean findSubstitute(char type, Term term1, Term term2,
             HashMap<Term, Term> map1, HashMap<Term, Term> map2) {
+        // TODO: 过程笔记注释
         Term t;
         if ((term1 instanceof Variable) && (((Variable) term1).getType() == type)) {
             Variable var1 = (Variable) term1;

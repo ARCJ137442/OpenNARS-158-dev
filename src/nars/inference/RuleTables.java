@@ -15,7 +15,7 @@ public class RuleTables {
 
     /**
      * Entry point of the inference engine
-     * 
+     *
      * TODO: 追溯调用是否均以「导出结论」终止（若有）
      *
      * @param tLink   The selected TaskLink, which will provide a task
@@ -348,6 +348,7 @@ public class RuleTables {
      */
     private static void asymmetricAsymmetric(Sentence sentence, Sentence belief, int figure,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Statement s1 = (Statement) sentence.cloneContent();
         final Statement s2 = (Statement) belief.cloneContent();
         final Term t1, t2;
@@ -420,6 +421,7 @@ public class RuleTables {
      * @param context Reference to the derivation context
      */
     private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Statement asymSt = (Statement) asym.cloneContent();
         final Statement symSt = (Statement) sym.cloneContent();
         final Term t1, t2;
@@ -484,6 +486,7 @@ public class RuleTables {
      */
     private static void symmetricSymmetric(Sentence belief, Sentence taskSentence, int figure,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Statement s1 = (Statement) belief.cloneContent();
         final Statement s2 = (Statement) taskSentence.cloneContent();
         switch (figure) {
@@ -530,6 +533,7 @@ public class RuleTables {
      */
     private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Sentence mainSentence = originalMainSentence.cloneSentence(); // for substitution
         final Statement statement = (Statement) mainSentence.getContent();
         final Term component = statement.componentAt(index);
@@ -575,6 +579,7 @@ public class RuleTables {
      */
     private static void conditionalDedIndWithVar(Implication conditional, short index, Statement statement, short side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final CompoundTerm condition = (CompoundTerm) conditional.getSubject();
         final Term component = condition.componentAt(index);
         final Term component2;
@@ -609,6 +614,7 @@ public class RuleTables {
      */
     private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if ((compound instanceof Conjunction) || (compound instanceof Disjunction)) {
             if (context.hasCurrentBelief()) {
                 CompositionalRules.decomposeStatement(compound, component, compoundTask, context);
@@ -644,6 +650,7 @@ public class RuleTables {
      */
     private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (taskTerm.getClass() != beliefTerm.getClass())
             return;
         if (taskTerm.size() > beliefTerm.size()) {
@@ -669,6 +676,7 @@ public class RuleTables {
      */
     private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             Term beliefTerm, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Term component = compound.componentAt(index);
         final Task task = context.getCurrentTask();
         if (component.getClass() == statement.getClass()) {
@@ -708,6 +716,7 @@ public class RuleTables {
      */
     private static void componentAndStatement(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         // if (!context.getCurrentTask().isStructural()) {
         if (statement instanceof Inheritance) {
             StructuralRules.structuralDecompose1(compound, index, statement, context);

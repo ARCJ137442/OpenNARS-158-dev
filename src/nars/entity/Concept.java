@@ -227,6 +227,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @return The quality value
      */
     public float getTotalQuality() {
+        // TODO: 过程笔记注释
         final float linkPriority = termLinks.averagePriority();
         final float termComplexityFactor = 1.0f / term.getComplexity();
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
@@ -246,6 +247,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @return The selected isBelief
      */
     public Sentence getBelief(Sentence taskSentence) {
+        // TODO: 过程笔记注释
         for (final Sentence belief : beliefs) {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：

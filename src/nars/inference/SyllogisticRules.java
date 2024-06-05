@@ -28,7 +28,9 @@ public final class SyllogisticRules {
      * @param belief   The second premise
      * @param context  Reference to the derivation context
      */
-    static void dedExe(Term term1, Term term2, Sentence sentence, Sentence belief, DerivationContextReason context) {
+    public static void dedExe(Term term1, Term term2, Sentence sentence, Sentence belief,
+            DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2)) {
             return;
         }
@@ -63,8 +65,9 @@ public final class SyllogisticRules {
      * @param figure       Locations of the shared term in premises
      * @param context      Reference to the derivation context
      */
-    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Sentence belief, int figure,
+    public static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Sentence belief, int figure,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
             return;
         }
@@ -105,8 +108,9 @@ public final class SyllogisticRules {
      * @param figure     Locations of the shared term in premises
      * @param context    Reference to the derivation context
      */
-    static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, int figure,
+    public static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, int figure,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (Statement.invalidStatement(subj, pred)) {
             return;
         }
@@ -140,8 +144,9 @@ public final class SyllogisticRules {
      * @param figure   Locations of the shared term in premises
      * @param context  Reference to the derivation context
      */
-    static void resemblance(Term term1, Term term2, Sentence belief, Sentence sentence, int figure,
+    public static void resemblance(Term term1, Term term2, Sentence belief, Sentence sentence, int figure,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2)) {
             return;
         }
@@ -171,7 +176,9 @@ public final class SyllogisticRules {
      * @param side         The location of s2 in s1
      * @param context      Reference to the derivation context
      */
-    static void detachment(Sentence mainSentence, Sentence subSentence, int side, DerivationContextReason context) {
+    public static void detachment(Sentence mainSentence, Sentence subSentence, int side,
+            DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Statement statement = (Statement) mainSentence.getContent();
         if (!(statement instanceof Implication) && !(statement instanceof Equivalence)) {
             return;
@@ -234,8 +241,9 @@ public final class SyllogisticRules {
      *                 for predicate, -1 for the whole term
      * @param context  Reference to the derivation context
      */
-    static void conditionalDedInd(Implication premise1, short index, Term premise2, int side,
+    public static void conditionalDedInd(Implication premise1, short index, Term premise2, int side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence taskSentence = task;
         final Sentence belief = context.getCurrentBelief();
@@ -320,8 +328,9 @@ public final class SyllogisticRules {
      *                 for predicate, -1 for the whole term
      * @param context  Reference to the derivation context
      */
-    static void conditionalAna(Equivalence premise1, short index, Term premise2, int side,
+    public static void conditionalAna(Equivalence premise1, short index, Term premise2, int side,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence taskSentence = task;
         final Sentence belief = context.getCurrentBelief();
@@ -394,8 +403,9 @@ public final class SyllogisticRules {
      * @param context Reference to the derivation context
      * @return Whether there are derived tasks
      */
-    static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2,
+    public static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if (!(st1 instanceof Implication) || !(st2 instanceof Implication)) {
             return false;
         }
@@ -473,8 +483,9 @@ public final class SyllogisticRules {
      * @param compoundTask Whether the compound comes from the task
      * @param context      Reference to the derivation context
      */
-    static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask,
+    public static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Term content = reduceComponents(compound, component);
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;

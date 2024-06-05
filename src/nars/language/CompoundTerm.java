@@ -404,6 +404,7 @@ public abstract class CompoundTerm extends Term {
      */
     @Override
     public void renameVariables() {
+        // TODO: 过程笔记注释
         if (containVar()) {
             renameVariables(new HashMap<Variable, Variable>());
         }
@@ -417,6 +418,7 @@ public abstract class CompoundTerm extends Term {
      * @param map The substitution established so far
      */
     private void renameVariables(HashMap<Variable, Variable> map) {
+        // TODO: 过程笔记注释
         if (containVar()) {
             for (int i = 0; i < components.size(); i++) {
                 Term term = componentAt(i);
@@ -448,6 +450,7 @@ public abstract class CompoundTerm extends Term {
      * @param subs
      */
     public void applySubstitute(HashMap<Term, Term> subs) {
+        // TODO: 过程笔记注释
         Term t1, t2;
         for (int i = 0; i < size(); i++) {
             t1 = componentAt(i);

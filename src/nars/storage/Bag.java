@@ -212,6 +212,7 @@ public abstract class Bag<E extends Item> {
      * @return Whether the new Item is added into the Bag
      */
     public boolean putIn(E newItem) {
+        // TODO: 过程笔记注释
         validateIn(newItem);
         String newKey = newItem.getKey();
         E oldItem = nameTable.put(newKey, newItem);
@@ -238,6 +239,7 @@ public abstract class Bag<E extends Item> {
      * @return Whether the new Item is added into the Bag
      */
     public boolean putBack(E oldItem) {
+        // TODO: 过程笔记注释
         validateIn(oldItem);
         forget(oldItem);
         return putIn(oldItem);
@@ -254,6 +256,7 @@ public abstract class Bag<E extends Item> {
      * @return The selected Item
      */
     public E takeOut() {
+        // TODO: 过程笔记注释
         if (nameTable.isEmpty()) { // empty bag
             return null;
         }
@@ -285,6 +288,7 @@ public abstract class Bag<E extends Item> {
      * @return The Item with the key
      */
     public E pickOut(String key) {
+        // TODO: 过程笔记注释
         E picked = nameTable.get(key);
         if (picked != null) {
             outOfBase(picked);
@@ -311,6 +315,7 @@ public abstract class Bag<E extends Item> {
      * @return The put-in level
      */
     private int getLevel(E item) {
+        // TODO: 过程笔记注释
         float fl = item.getPriority() * TOTAL_LEVEL;
         int level = (int) Math.ceil(fl) - 1;
         return (level < 0) ? 0 : level; // cannot be -1
@@ -323,6 +328,7 @@ public abstract class Bag<E extends Item> {
      * @return The overflow Item
      */
     private E intoBase(E newItem) {
+        // TODO: 过程笔记注释
         E oldItem = null;
         int inLevel = getLevel(newItem);
         if (size() > capacity) { // the bag is full
@@ -349,6 +355,7 @@ public abstract class Bag<E extends Item> {
      * @return The first Item
      */
     private E takeOutFirst(int level) {
+        // TODO: 过程笔记注释
         E selected = itemTable.get(level).getFirst();
         itemTable.get(level).removeFirst();
         mass -= (level + 1);
@@ -362,6 +369,7 @@ public abstract class Bag<E extends Item> {
      * @param oldItem The Item to be removed
      */
     protected void outOfBase(E oldItem) {
+        // TODO: 过程笔记注释
         int level = getLevel(oldItem);
         itemTable.get(level).remove(oldItem);
         mass -= (level + 1);

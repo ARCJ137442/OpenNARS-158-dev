@@ -20,6 +20,7 @@ public final class CompositionalRules {
             Sentence subSentence, Term component,
             CompoundTerm content, int index,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Sentence cloned = originalMainSentence.cloneSentence();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
@@ -81,6 +82,7 @@ public final class CompositionalRules {
             Statement beliefContent,
             int index,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if ((!context.getCurrentTask().isJudgment())
                 || (taskContent.getClass() != beliefContent.getClass())) {
             return;
@@ -164,6 +166,7 @@ public final class CompositionalRules {
             Statement statement,
             Term subject, Term predicate, TruthValue truth,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if ((subject == null) || (predicate == null)) {
             return;
         }
@@ -192,6 +195,7 @@ public final class CompositionalRules {
             CompoundTerm compound, Term component,
             Term term1, int index,
             boolean compoundTask, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
         }
@@ -288,6 +292,7 @@ public final class CompositionalRules {
     static void decomposeStatement(
             CompoundTerm compound, Term component,
             boolean compoundTask, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
@@ -367,6 +372,7 @@ public final class CompositionalRules {
             Statement taskContent,
             Statement beliefContent,
             int index, DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final TruthValue truthT = context.getCurrentTask().getTruth();
         final TruthValue truthB = context.getCurrentBelief().getTruth();
         final Variable varInd = new Variable("$varInd1");
@@ -465,6 +471,7 @@ public final class CompositionalRules {
      */
     static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
             DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence taskSentence = task;
         if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())
@@ -521,6 +528,7 @@ public final class CompositionalRules {
      * @param index The index of the terms in their statement
      */
     private static Term secondCommonTerm(Term term1, Term term2, int index) {
+        // TODO: 过程笔记注释
         Term commonTerm = null;
         if (index == 0) {
             if ((term1 instanceof ImageExt) && (term2 instanceof ImageExt)) {
