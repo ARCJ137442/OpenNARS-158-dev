@@ -126,6 +126,8 @@ public class TaskV1 implements Task {
         this.sentence = s;
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
+        if (parentBelief != null && parentBelief.isQuestion())
+            throw new IllegalArgumentException("父信念只能是「判断句」");
         this.parentBelief = parentBelief;
         this.bestSolution = solution;
     }

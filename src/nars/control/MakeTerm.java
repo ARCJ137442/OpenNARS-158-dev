@@ -370,18 +370,17 @@ public abstract class MakeTerm {
      * @param argList The list of components
      */
     public static Term makeIntersectionExt(ArrayList<Term> argList) {
-        // TODO: 后续有待验证可行性
-        // if (argList.isEmpty())
-        // return null;
-        // // * 🚩做一个reduce的操作
-        // Term term = argList.get(0).clone();
-        // for (Term t : argList.subList(1, argList.size())) {
-        // final Term new_term = makeIntersectionExt(term, t.clone());
-        // term = new_term;
-        // }
-        // return term;
-        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeIntersectionExt(set);
+        if (argList.isEmpty())
+            return null;
+        // * 🚩做一个reduce的操作
+        Term term = argList.get(0).clone();
+        for (Term t : argList.subList(1, argList.size())) {
+            final Term new_term = makeIntersectionExt(term, t.clone());
+            term = new_term;
+        }
+        return term;
+        // final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
+        // return makeIntersectionExt(set);
     }
 
     /**
@@ -470,18 +469,17 @@ public abstract class MakeTerm {
      * @param argList The list of components
      */
     public static Term makeIntersectionInt(ArrayList<Term> argList) {
-        // TODO: 后续有待验证可行性
-        // if (argList.isEmpty())
-        // return null;
-        // // * 🚩做一个reduce的操作
-        // Term term = argList.get(0).clone();
-        // for (Term t : argList.subList(1, argList.size())) {
-        // final Term new_term = makeIntersectionInt(term, t.clone());
-        // term = new_term;
-        // }
-        // return term;
-        final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
-        return makeIntersectionInt(set);
+        if (argList.isEmpty())
+            return null;
+        // * 🚩做一个reduce的操作
+        Term term = argList.get(0).clone();
+        for (Term t : argList.subList(1, argList.size())) {
+            final Term new_term = makeIntersectionInt(term, t.clone());
+            term = new_term;
+        }
+        return term;
+        // final TreeSet<Term> set = new TreeSet<Term>(argList); // sort/merge arguments
+        // return makeIntersectionInt(set);
     }
 
     /**
@@ -546,7 +544,7 @@ public abstract class MakeTerm {
             return null;
         // * 🚩否则⇒直接从二元列表构造
         final ArrayList<Term> list = argumentsToList(t1, t2);
-        return makeConjunction(list);
+        return makeDifferenceExt(list);
     }
 
     /* DifferenceInt */
