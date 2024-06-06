@@ -59,6 +59,16 @@ public class UtilityFunctions {
         return sum / arr.length;
     }
 
+    /** 🆕特别优化 */
+    public static final float aveAri(final float f) {
+        return f;
+    }
+
+    /** 🆕特别优化 */
+    public static final float aveAri(final float f1, final float f2) {
+        return (f1 + f2) / 2;
+    }
+
     /**
      * A function where the output is the geometric average the inputs
      *

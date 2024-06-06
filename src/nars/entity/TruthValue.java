@@ -63,11 +63,9 @@ public class TruthValue implements Cloneable { // implements Cloneable {
      *
      */
     public TruthValue(float f, float c, boolean analytic) {
-        // * 🚩约束信度：必须小于1
-        final float c_ = (c < 1) ? c : 0.9999f;
         // * 🚩逐一赋值
         this.frequency = new ShortFloat(f);
-        this.confidence = new ShortFloat(c_);
+        this.confidence = new ShortFloat(c);
         this.isAnalytic = analytic;
     }
 
@@ -193,8 +191,7 @@ public class TruthValue implements Cloneable { // implements Cloneable {
         final String s1 = DELIMITER + frequency.toStringBrief() + SEPARATOR;
         // * 🚩准备「信度」字符串：1⇒0.99；其它⇒不变
         final String s2 = confidence.toStringBrief();
-        final String c = s2.equals("1.00") ? "0.99" : s2;
         // * 🚩格式化字符串"%【频率】;【信度】%"
-        return s1 + c + DELIMITER;
+        return s1 + s2 + DELIMITER;
     }
 }

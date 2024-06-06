@@ -61,15 +61,32 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue revision(TruthValue v1, TruthValue v2) {
-        float f1 = v1.getFrequency();
-        float f2 = v2.getFrequency();
-        float c1 = v1.getConfidence();
-        float c2 = v2.getConfidence();
-        float w1 = c2w(c1);
-        float w2 = c2w(c2);
-        float w = w1 + w2;
-        float f = (w1 * f1 + w2 * f2) / w;
-        float c = w2c(w);
+        final float f1 = v1.getFrequency();
+        final float f2 = v2.getFrequency();
+        final float c1 = v1.getConfidence();
+        final float c2 = v2.getConfidence();
+        final float f, c;
+        final boolean isInf1 = c1 == 1.0;
+        final boolean isInf2 = c2 == 1.0;
+        // * 1 & 2
+        if (isInf1 && isInf2) {
+            c = aveAri(c1, c2);
+            f = aveAri(f1, f2);
+        }
+        // * 1
+        else if (isInf1) {
+            c = c1;
+            f = f1;
+        } else if (isInf2) {
+            c = c2;
+            f = f2;
+        } else {
+            final float w1 = c2w(c1);
+            final float w2 = c2w(c2);
+            final float w = w1 + w2;
+            f = (w1 * f1 + w2 * f2) / w;
+            c = w2c(w);
+        }
         return new TruthValue(f, c);
     }
 
