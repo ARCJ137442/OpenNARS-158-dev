@@ -1,13 +1,7 @@
 package test;
 
-import java.io.InputStream;
-import java.util.LinkedList;
-
-import nars.main_nogui.SimpleShell;
-
 /**
- * 🆕一个更简单的交互终端
- * * 📌单线程，仅输入输出
+ * 🎯🆕复刻OpenNARS `long_term_stability.nal`测试
  *
  * @author tc, ARCJ137442
  */
@@ -17,39 +11,6 @@ public class LongTermStability {
             .split("\n");
 
     public static void main(final String[] args) {
-        // * 🚩复用「简单终端」但将输入通道更改
-        final SimpleShell shell = new SimpleShell(System.out);
-        shell.setIOChannel(
-                new TestInput(shell, TEST_LINES),
-                new SimpleShell.ShellOutput(System.out)).main();
-    }
-
-    /**
-     * 终端输入通道
-     * * 🚩【2024-05-21 21:02:14】经过一定的特别修改，只对推理器输入指定文本
-     */
-    public static final class TestInput extends SimpleShell.ShellInput {
-        private final LinkedList<String> bufIn;
-
-        public TestInput(final SimpleShell shell, String[] lines) {
-            // * 🚩不使用SimpleShell的`bufIn`变量
-            super(shell, InputStream.nullInputStream());
-            this.bufIn = new LinkedList<>();
-            for (final String line : lines) {
-                bufIn.add(line);
-            }
-        }
-
-        @Override
-        public boolean nextInput() {
-            try {
-                final String line = bufIn.poll();
-                if (line != null && !line.isEmpty())
-                    inputLine(line);
-            } catch (final Exception e) {
-                throw new IllegalStateException("Could not read line.", e);
-            }
-            return true;
-        }
+        new TestCommon(TEST_LINES);
     }
 }
