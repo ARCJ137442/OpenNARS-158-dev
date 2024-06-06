@@ -72,21 +72,30 @@ public abstract class ProcessDirect {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final LinkedList<Task> mut_newTasks = self.mut_newTasks();
         // don't include new tasks produced in the current workCycle
-        for (int counter = mut_newTasks.size(); counter > 0; counter--) {
+        // * 🚩处理「新任务缓冲区」中的所有任务
+        while (!mut_newTasks.isEmpty()) {
+            // * 🚩拿出第一个
             final Task task = mut_newTasks.removeFirst();
+            // * 🚩是输入 或 已有对应概念 ⇒ 将参与「直接推理」
             if (task.isInput() || self.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
-            } else {
+            }
+            // * 🚩否则：继续筛选以放进「新近任务」
+            else {
+                // * 🚩筛选
                 final Sentence taskSentence = task;
-                // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
+                final boolean shouldAddToNovelTasks;
                 if (taskSentence.isJudgment()) {
-                    final double d = taskSentence.getTruth().getExpectation();
-                    if (d > Parameters.DEFAULT_CREATION_EXPECTATION) {
-                        self.mut_novelTasks().putIn(task); // new concept formation
-                    } else {
-                        self.getRecorder().append("!!! Neglected: " + task + "\n");
-                    }
-                }
+                    // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
+                    final double exp = taskSentence.getTruth().getExpectation();
+                    shouldAddToNovelTasks = exp > Parameters.DEFAULT_CREATION_EXPECTATION;
+                } else
+                    shouldAddToNovelTasks = false;
+                // * 🚩添加
+                if (shouldAddToNovelTasks)
+                    self.mut_novelTasks().putIn(task);
+                else
+                    self.getRecorder().append("!!! Neglected: " + task + "\n");
             }
         }
         return tasksToProcess;
