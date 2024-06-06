@@ -6,7 +6,6 @@ import nars.entity.*;
  * All truth-value (and desire-value) functions used in inference rules
  * * 🚩【2024-05-30 09:21:34】此处不加`final`：逻辑最简
  * * 📝所有函数均【返回新真值对象】且【不修改所传入参数】
- * TODO: 过程笔记注释
  */
 public final class TruthFunctions extends UtilityFunctions {
 
@@ -20,6 +19,9 @@ public final class TruthFunctions extends UtilityFunctions {
     public static TruthValue conversion(TruthValue v1) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
+        // * 📝总频数=频率、信度之合取
+        // * 📝频率=1（完全正面之猜测）
+        // * 📝信度=总频数转换（保证弱推理）
         float w = and(f1, c1);
         float c = w2c(w);
         return new TruthValue(1, c);
@@ -111,6 +113,7 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率二者合取，信度四者合取
         float f = and(f1, f2);
         float c = and(c1, c2, f);
         return new TruthValue(f, c);
@@ -126,6 +129,8 @@ public final class TruthFunctions extends UtilityFunctions {
     public static TruthValue deduction(TruthValue v1, float reliance) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
+        // * 📌对于第二个「分析性前提」使用「依赖度」衡量
+        // * 📝频率采用前者，信度合取以前者频率、依赖度，并标明这是「分析性」真值
         float c = and(f1, c1, reliance);
         return new TruthValue(f1, c, true);
     }
@@ -142,6 +147,7 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝类比：频率为二者合取，信度为双方信度、第二方频率三者合取
         float f = and(f1, f2);
         float c = and(c1, c2, f2);
         return new TruthValue(f, c);
@@ -159,6 +165,7 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝类比：频率为二者合取，信度为「双方频率之析取」与「双方信度之合取」之合取
         float f = and(f1, f2);
         float c = and(c1, c2, or(f1, f2));
         return new TruthValue(f, c);
@@ -172,13 +179,16 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue abduction(TruthValue v1, TruthValue v2) {
-        if (v1.getAnalytic() || v2.getAnalytic()) {
+        // * 🚩分析性⇒无意义（信度清零）
+        if (v1.getAnalytic() || v2.getAnalytic())
             return new TruthValue(0.5f, 0f);
-        }
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝总频数=第二方频率与双方信度之合取
+        // * 📝频率=第一方频率
+        // * 📝信度=总频数转换（总是弱推理）
         float w = and(f2, c1, c2);
         float c = w2c(w);
         return new TruthValue(f1, c);
@@ -192,11 +202,14 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue abduction(TruthValue v1, float reliance) {
-        if (v1.getAnalytic()) {
+        // * 🚩分析性⇒无意义（信度清零）
+        if (v1.getAnalytic())
             return new TruthValue(0.5f, 0f);
-        }
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
+        // * 📝总频数=频率与「依赖度」之合取
+        // * 📝频率=第一方频率
+        // * 📝信度=总频数转换（总是弱推理）
         float w = and(c1, reliance);
         float c = w2c(w);
         return new TruthValue(f1, c, true);
@@ -210,6 +223,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue induction(TruthValue v1, TruthValue v2) {
+        // * 📝归纳是倒过来的归因
         return abduction(v2, v1);
     }
 
@@ -221,13 +235,16 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue exemplification(TruthValue v1, TruthValue v2) {
-        if (v1.getAnalytic() || v2.getAnalytic()) {
+        // * 🚩分析性⇒无意义（信度清零）
+        if (v1.getAnalytic() || v2.getAnalytic())
             return new TruthValue(0.5f, 0f);
-        }
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝总频数=四方值综合
+        // * 📝频率=1（无中生有）
+        // * 📝信度=总频数转换（总是弱推理）
         float w = and(f1, f2, c1, c2);
         float c = w2c(w);
         return new TruthValue(1, c);
@@ -245,6 +262,9 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝总频数=「双频之析取」与「双信之合取」之合取
+        // * 📝频率=「双频之合取」/「双频之析取」（📌根据函数图像，可以取"(0,0) -> 0"为可去间断点）
+        // * 📝信度=总频数转换（总是弱推理）
         float f0 = or(f1, f2);
         float f = (f0 == 0) ? 0 : (and(f1, f2) / f0);
         float w = and(f0, c1, c2);
@@ -261,10 +281,13 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue desireStrong(TruthValue v1, TruthValue v2) {
+        // ? 此函数似乎是用在「目标」上的
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率=双频之合取
+        // * 📝信度=双方信度 合取 第二方频率
         float f = and(f1, f2);
         float c = and(c1, c2, f2);
         return new TruthValue(f, c);
@@ -282,6 +305,8 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率=双频之合取
+        // * 📝信度=双方信度 合取 第二方频率 合取 单位数目信度（保证弱推理）
         float f = and(f1, f2);
         float c = and(c1, c2, f2, w2c(1.0f));
         return new TruthValue(f, c);
@@ -299,6 +324,8 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率=双频之合取
+        // * 📝信度=双信之合取
         float f = and(f1, f2);
         float c = and(c1, c2);
         return new TruthValue(f, c);
@@ -316,6 +343,9 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝总频数=第二方频率 合取 双信之合取
+        // * 📝频率=第一方频率
+        // * 📝信度=总频数转换（保证弱推理）
         float w = and(f2, c1, c2);
         float c = w2c(w);
         return new TruthValue(f1, c);
@@ -334,6 +364,8 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率=双频之析取
+        // * 📝信度=双信之合取
         float f = or(f1, f2);
         float c = and(c1, c2);
         return new TruthValue(f, c);
@@ -351,6 +383,8 @@ public final class TruthFunctions extends UtilityFunctions {
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
         float c2 = v2.getConfidence();
+        // * 📝频率=双频之合取
+        // * 📝信度=双信之合取
         float f = and(f1, f2);
         float c = and(c1, c2);
         return new TruthValue(f, c);
@@ -364,6 +398,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue reduceDisjunction(TruthValue v1, TruthValue v2) {
+        // * 🚩演绎（反向交集，依赖度=1）
         TruthValue v0 = intersection(v1, negation(v2));
         return deduction(v0, 1f);
     }
@@ -376,6 +411,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue reduceConjunction(TruthValue v1, TruthValue v2) {
+        // * 🚩否定演绎（反向交集（内部取反），依赖度=1）
         TruthValue v0 = intersection(negation(v1), v2);
         return negation(deduction(v0, 1f));
     }
@@ -388,6 +424,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue reduceConjunctionNeg(TruthValue v1, TruthValue v2) {
+        // * 🚩消取，但对第二方套否定
         return reduceConjunction(v1, negation(v2));
     }
 
@@ -401,7 +438,10 @@ public final class TruthFunctions extends UtilityFunctions {
     public static TruthValue anonymousAnalogy(TruthValue v1, TruthValue v2) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
+        // * 📝中间频率=第一方频
+        // * 📝中间信度=第一方信度作为「总频数」（弱推理）
         TruthValue v0 = new TruthValue(f1, w2c(c1));
+        // * 🚩再参与「类比」（弱中之弱）
         return analogy(v2, v0);
     }
 }

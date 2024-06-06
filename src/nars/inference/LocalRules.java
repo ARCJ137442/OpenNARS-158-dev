@@ -267,7 +267,8 @@ public class LocalRules {
     }
 
     /**
-     * {<S --> P>} |- <S <-> P> {<S <-> P>} |- <S --> P> Switch between
+     * {<S --> P>} |- <S <-> P>
+     * {<S <-> P>} |- <S --> P> Switch between
      * Inheritance/Implication and Similarity/Equivalence
      *
      * @param context Reference to the derivation context
