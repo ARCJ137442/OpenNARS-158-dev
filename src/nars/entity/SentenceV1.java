@@ -81,6 +81,9 @@ public class SentenceV1 implements Sentence {
         if (stamp == null) {
             throw new NullPointerException("Stamp is null!");
         }
+        if (this.isQuestion() && truth != null) {
+            throw new NullPointerException("Questions has truth!");
+        }
     }
 
     /**

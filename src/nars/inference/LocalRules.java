@@ -5,6 +5,7 @@ import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
 import static nars.control.MakeTerm.*;
+import static nars.io.Symbols.*;
 
 import nars.control.DerivationContext;
 import nars.control.DerivationContextReason;
@@ -33,18 +34,36 @@ public class LocalRules {
      */
     public static void match(DerivationContextReason context) {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
-        final Task task = context.getCurrentTask();
+        final Task currentTask = context.getCurrentTask();
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
         final Sentence belief = context.getCurrentBelief();
 
-        // TODO: 过程笔记注释
-        final Sentence sentence = task.cloneSentence();
-        if (sentence.isJudgment()) {
-            if (revisable(sentence, belief)) {
-                revision(sentence, belief, context);
-            }
-        } else if (Variable.unify(Symbols.VAR_QUERY, sentence.getContent(), belief.getContent().clone())) {
-            trySolution(belief, task, context);
+        // * 🚩按照标点分派
+        final Sentence sentence = currentTask.cloneSentence();
+        switch (sentence.getPunctuation()) {
+            // * 🚩判断⇒尝试修正
+            case JUDGMENT_MARK:
+                if (revisable(sentence, belief))
+                    revision(sentence, belief, context);
+                return;
+            // * 🚩问题⇒尝试回答「特殊疑问」（此处用「变量替换」解决查询变量）
+            case QUESTION_MARK:
+                // * 🚩尝试替换查询变量，具体替换从「特殊疑问」转变为「一般疑问」
+                // * 📄Task :: SentenceV1@49 "<{?1} --> murder>? {105 : 6} "
+                // * & Belief: SentenceV1@39 "<{tom} --> murder>. %1.0000;0.7290% {147 : 3;4;2}"
+                // * ⇒ Unified SentenceV1@23 "<{tom} --> murder>? {105 : 6} "
+                final boolean hasUnified = Variable.unify(
+                        Symbols.VAR_QUERY,
+                        sentence.getContent(),
+                        belief.getContent().clone());
+                // * ⚠️只针对「特殊疑问」：传入的只有「带变量问题」，因为「一般疑问」通过直接推理就完成了
+                if (hasUnified)
+                    trySolution(belief, currentTask, context);
+                return;
+            // * 🚩其它
+            default:
+                System.err.println("未知的语句类型：" + sentence.getPunctuation());
+                return;
         }
     }
 
@@ -52,17 +71,18 @@ public class LocalRules {
      * Check whether two sentences can be used in revision
      * * 📝【2024-05-19 13:09:40】这里的`s1`、`s2`必定是「判断」类型
      *
-     * @param s1 The first sentence
-     * @param s2 The second sentence
+     * @param newBelief  The first sentence
+     * @param baseBelief The second sentence
      * @return If revision is possible between the two sentences
      */
-    public static boolean revisable(Sentence s1, Sentence s2) {
-        // TODO: 过程笔记注释
-        if (s1.isJudgment() && s2.isJudgment()) {
-            return (s1.getContent().equals(s2.getContent()) && s1.getRevisable());
-        } else {
+    public static boolean revisable(Sentence newBelief, Sentence baseBelief) {
+        // * 🚩只有两个「判断句」才有可能「被用于修正」
+        if (!newBelief.isJudgment() || !baseBelief.isJudgment())
             throw new Error("Function revisable is only applicable for judgments");
-        }
+        // * 🚩如果两个「判断句」的「内容」相同，并且新的「判断句」是可（参与）修正的，那么第二个「判断句」可以修正第一个「判断句」
+        final boolean contentEq = newBelief.getContent().equals(baseBelief.getContent());
+        final boolean baseRevisable = newBelief.getRevisable();
+        return contentEq && baseRevisable;
     }
 
     /**
@@ -83,37 +103,50 @@ public class LocalRules {
         final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
-        context.doublePremiseTask(content, truth, budget);
+        // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
+        final Stamp currentStamp = newBelief.getStamp();
+        final Stamp oldStamp = oldBelief.getStamp();
+        final Stamp newStamp = Stamp.merge(currentStamp, oldStamp, context.getTime());
+        // context.setNewStamp(newStamp);
+        context.doublePremiseTask(context.getCurrentTask(), content, truth, budget, newStamp);
     }
 
     /**
      * Check if a Sentence provide a better answer to a Question or Goal
      *
-     * @param belief  The proposed answer
-     * @param task    The task to be processed
-     * @param context Reference to the derivation context
+     * @param belief       The proposed answer
+     * @param questionTask The task to be processed
+     * @param context      Reference to the derivation context
      */
-    public static void trySolution(Sentence belief, Task task, DerivationContext context) {
-        final Sentence problem = task;
-        final Sentence oldBest = task.getBestSolution();
+    public static void trySolution(Sentence belief, Task questionTask, DerivationContext context) {
+        // * 🚩预设&断言
+        final Sentence problem = questionTask;
+        final Sentence oldBest = questionTask.getBestSolution();
+        if (belief == null || !belief.isJudgment())
+            throw new IllegalArgumentException("将解答的必须是「判断」");
+        if (problem == null || !problem.isQuestion())
+            throw new IllegalArgumentException("要解决的必须是「问题」");
+        if (questionTask == null || !questionTask.isQuestion())
+            throw new IllegalArgumentException("当前任务必须是「问题」");
         // * 🚩验证这个信念是否为「解决问题的最优解」
         final float newQ = solutionQuality(problem, belief);
         if (oldBest != null) {
             final float oldQ = solutionQuality(problem, oldBest);
+            // * 🚩新解比旧解还差⇒驳回
             if (oldQ >= newQ)
                 return;
         }
         // * 🚩若比先前「最优解」还优，那就确立新的「最优解」
-        task.setBestSolution(belief);
-        if (task.isInput()) { // moved from Sentence
+        questionTask.setBestSolution(belief);
+        if (questionTask.isInput()) { // moved from Sentence
             // * 🚩同时在此确立「回答」：只在回应「输入的任务」时反映
             context.report(belief, Memory.ReportType.ANSWER);
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
-        final BudgetValue budget = BudgetFunctions.solutionEval(problem, belief, task, context);
+        final BudgetValue budget = BudgetFunctions.solutionEval(problem, belief, questionTask/* , context */);
         if (budget != null && budget.aboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
-            context.activatedTask(budget, belief, task.getParentBelief());
+            context.activatedTask(budget, belief, questionTask.getParentBelief());
         }
     }
 

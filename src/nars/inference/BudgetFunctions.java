@@ -22,6 +22,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The quality of the judgment, according to truth value only
      */
     public static float truthToQuality(TruthValue t) {
+        // * 🚩真值⇒质量：期望与「0.75(1-期望)」的最大值
+        // * 📝函数：max(c * (f - 0.5) + 0.5, 0.375 - 0.75 * c * (f - 0.5))
+        // * 📍最小值：当exp=3/7时，全局最小值为3/7（max的两端相等）
+        // * 🔑max(x,y) = (x+y+|x-y|)/2
         final float exp = t.getExpectation();
         return (float) Math.max(exp, not(exp) * 0.75);
     }
@@ -34,6 +38,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The rank of the judgment, according to truth value only
      */
     public static float rankBelief(Sentence judgment) {
+        // * 🚩两个指标：信度 + 原创性（时间戳长度）
         final float confidence = judgment.getTruth().getConfidence();
         final float originality = 1.0f / (judgment.getStamp().length() + 1);
         return or(confidence, originality);
@@ -43,48 +48,64 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Evaluate the quality of a belief as a solution to a problem, then reward
      * the belief and de-prioritize the problem
-     * 
+     *
      * TODO: 后续或许需要依「直接推理」「概念推理」拆分
      *
-     * @param problem  The problem (question or goal) to be solved
-     * @param solution The belief as solution
-     * @param task     The task to be immediately processed, or null for continued
-     *                 process
+     * @param problem      The problem (question or goal) to be solved
+     * @param solution     The belief as solution
+     * @param questionTask The task to be immediately processed, or null for
+     *                     continued
+     *                     process
      * @return The budget for the new task which is the belief activated, if
      *         necessary
      */
     static BudgetValue solutionEval(
-            Sentence problem,
-            Sentence solution,
-            Task task,
-            DerivationContext context) {
-        final BudgetValue budget;
-        final boolean feedbackToLinks;
-        if (task == null) { // called in continued processing
-            task = context.getCurrentTask();
-            feedbackToLinks = true;
-        } else {
-            feedbackToLinks = false;
+            final Sentence problem,
+            final Sentence solution,
+            final Task questionTask/*
+                                    * ,
+                                    * final DerivationContext context
+                                    */) {
+        // final BudgetValue budget;
+        // final boolean feedbackToLinks;
+        if (problem == null || !problem.isQuestion())
+            throw new NullPointerException("待解决的问题必须是疑问句");
+        if (solution == null || !solution.isJudgment())
+            throw new NullPointerException("解决方案必须是「判断」");
+        if (questionTask == null || !questionTask.isQuestion())
+            // * 🚩实际上不会有「feedbackToLinks=true」的情况（当前任务非空）
+            throw new IllegalArgumentException("问题任务必须为「问题」 | solutionEval is Never called in continued processing");
+        // feedbackToLinks = true;
+        // else
+        // feedbackToLinks = false;
+        // * 🚩【2024-06-06 10:32:15】断言judgmentTask为false
+        // final boolean judgmentTask = questionTask.isJudgment();
+        final float solutionQuality = LocalRules.solutionQuality(problem, solution);
+        /*
+         * if (judgmentTask) {
+         * budget = null;
+         * questionTask.incPriority(quality);
+         * } else
+         */ {
+            final float taskPriority = questionTask.getPriority();
+            final float newP = or(taskPriority, solutionQuality);
+            final float newD = questionTask.getDurability();
+            final float newQ = truthToQuality(solution.getTruth());
+            final BudgetValue budget = new BudgetValue(newP, newD, newQ);
+            // 更新「源任务」的预算值（优先级）
+            final float updatedQuestionPriority = Math.min(not(solutionQuality), taskPriority);
+            questionTask.setPriority(updatedQuestionPriority);
+            return budget;
         }
-        final boolean judgmentTask = task.isJudgment();
-        final float quality = LocalRules.solutionQuality(problem, solution);
-        if (judgmentTask) {
-            budget = null;
-            task.incPriority(quality);
-        } else {
-            float taskPriority = task.getPriority();
-            budget = new BudgetValue(or(taskPriority, quality), task.getDurability(),
-                    truthToQuality(solution.getTruth()));
-            task.setPriority(Math.min(not(quality), taskPriority));
-        }
-        if (feedbackToLinks && context instanceof DerivationContextReason) {
-            final DerivationContextReason contextReason = (DerivationContextReason) context;
-            final TaskLink tLink = contextReason.getCurrentTaskLink();
-            tLink.setPriority(Math.min(not(quality), tLink.getPriority()));
-            final TermLink bLink = contextReason.getCurrentBeliefLink();
-            bLink.incPriority(quality);
-        }
-        return budget;
+        // if (feedbackToLinks && context instanceof DerivationContextReason) {
+        // final DerivationContextReason contextReason = (DerivationContextReason)
+        // context;
+        // final TaskLink tLink = contextReason.getCurrentTaskLink();
+        // tLink.setPriority(Math.min(not(quality), tLink.getPriority()));
+        // final TermLink bLink = contextReason.getCurrentBeliefLink();
+        // bLink.incPriority(quality);
+        // }
+        // return budget;
     }
 
     /**
@@ -103,6 +124,7 @@ public final class BudgetFunctions extends UtilityFunctions {
             final DerivationContext context) {
         // * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
         final float difT = truth.getExpDifAbs(tTruth);
+        // TODO: 🎯将「预算反馈」延迟处理（❓可以返回「推理结果」等，然后用专门的「预算更新」再处理预算）
         final Task task = context.getCurrentTask();
         task.decPriority(not(difT));
         task.decDurability(not(difT));

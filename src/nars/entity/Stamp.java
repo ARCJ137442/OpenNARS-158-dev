@@ -158,7 +158,8 @@ public class Stamp implements Cloneable {
      * @param time   The new creation time
      * @return The merged Stamp, or null
      */
-    public static Stamp make(final Stamp first, final Stamp second, final long time) {
+    public static Stamp merge(final Stamp first, final Stamp second, final long time) {
+        // * 🚩有重合证据⇒返回空；无重合证据⇒合并证据
         return haveOverlap(first, second)
                 ? null
                 : uncheckedMerge(first, second, time);

@@ -418,6 +418,7 @@ public abstract class DerivationContext {
             return; // to avoid circular structural inference
         final Sentence taskSentence = this.getCurrentTask();
         // * 🚩构造新时间戳
+        // TODO: 📌研究断言「是否会重复设置」（🎯同义删去newStamp字段）
         // final Stamp newStamp; // * 📝实际上并不需要动
         if (taskSentence.isJudgment() || currentBelief == null) {
             this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
@@ -425,7 +426,9 @@ public abstract class DerivationContext {
             this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
         // * 🚩使用新内容构造新语句
-        final Sentence newSentence = new SentenceV1(newContent, punctuation, newTruth, newStamp,
+        final Sentence newSentence = new SentenceV1(
+                newContent, punctuation,
+                newTruth, newStamp,
                 taskSentence.getRevisable());
         // * 🚩构造新任务
         final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import nars.control.DerivationContextReason;
 import nars.entity.*;
-import nars.io.Symbols;
+import static nars.io.Symbols.*;
 import nars.language.*;
 import nars.main_nogui.Parameters;
 import static nars.control.MakeTerm.*;
@@ -381,26 +381,39 @@ public final class StructuralRules {
      * @param context   Reference to the derivation context
      */
     public static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Term subj = statement.getSubject();
-        final Term pred = statement.getPredicate();
-        final Term content = makeStatement(statement, makeNegation(pred),
-                makeNegation(subj));
-        TruthValue truth = sentence.getTruth();
+        final Term subject = statement.getSubject();
+        final Term predicate = statement.getPredicate();
+        // * 🚩生成新内容
+        final Term content = makeStatement(
+                statement,
+                makeNegation(predicate),
+                makeNegation(subject));
+        // * 🚩计算真值、预算值
+        final TruthValue truth;
         final BudgetValue budget;
-        if (sentence.isQuestion()) {
-            if (content instanceof Implication) {
-                budget = BudgetFunctions.compoundBackwardWeak(content, context);
-            } else {
-                budget = BudgetFunctions.compoundBackward(content, context);
-            }
-            context.singlePremiseTask(content, Symbols.QUESTION_MARK, truth, budget);
-        } else {
-            if (content instanceof Implication) {
-                truth = TruthFunctions.contraposition(truth);
-            }
-            budget = BudgetFunctions.compoundForward(truth, content, context);
-            context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, truth, budget);
+        final char punctuation = sentence.getPunctuation();
+        switch (punctuation) {
+            // * 🚩判断
+            case JUDGMENT_MARK:
+                truth = content instanceof Implication
+                        // * 🚩蕴含⇒双重否定
+                        ? TruthFunctions.contraposition(sentence.getTruth())
+                        : sentence.getTruth();
+                budget = BudgetFunctions.compoundForward(truth, content, context);
+                break;
+            // * 🚩问题
+            case QUESTION_MARK:
+                truth = sentence.getTruth();
+                budget = content instanceof Implication
+                        // * 🚩蕴含⇒弱推理
+                        ? BudgetFunctions.compoundBackwardWeak(content, context)
+                        : BudgetFunctions.compoundBackward(content, context);
+                break;
+            default:
+                System.err.println("未知的标点类型：" + punctuation);
+                return;
         }
+        // * 🚩导出任务
+        context.singlePremiseTask(content, punctuation, truth, budget);
     }
 }
