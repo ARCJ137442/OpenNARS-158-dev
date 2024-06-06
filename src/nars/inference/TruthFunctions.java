@@ -33,6 +33,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue negation(TruthValue v1) {
+        // * 📝频率相反，信度相等
         float f = not(v1.getFrequency());
         float c = v1.getConfidence();
         return new TruthValue(f, c);
@@ -45,6 +46,7 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue contraposition(TruthValue v1) {
+        // * 📝频率为零，信度是弱
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
         float w = and(not(f1), c1);
@@ -61,6 +63,8 @@ public final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     public static TruthValue revision(TruthValue v1, TruthValue v2) {
+        // * 📝转换为「频数视角」，频数相加，并转换回（频率，信度）二元组
+        // * ✅特别兼容「信度为1」的「无穷证据量」情况：覆盖 or 取平均
         final float f1 = v1.getFrequency();
         final float f2 = v2.getFrequency();
         final float c1 = v1.getConfidence();
