@@ -77,10 +77,14 @@ public final class TruthFunctions extends UtilityFunctions {
         else if (isInf1) {
             c = c1;
             f = f1;
-        } else if (isInf2) {
+        }
+        // * 2
+        else if (isInf2) {
             c = c2;
             f = f2;
-        } else {
+        }
+        // * _
+        else {
             final float w1 = c2w(c1);
             final float w2 = c2w(c2);
             final float w = w1 + w2;
