@@ -202,27 +202,29 @@ public abstract class DerivationContext {
         this.currentBelief = currentBelief;
     }
 
-    /**
-     * The new Stamp
-     *
-     * * ️📝可空性：可空
-     * * 📝可变性：可变 | 仅切换值，不修改内部 @ 切换信念/修正
-     * * 📝所有权：具所有权
-     */
-    private Stamp newStamp;
+    // ! 📌删除「新时间戳」：只需在推理的最后「导出结论」时构造
 
-    public Stamp getNewStamp() {
-        return newStamp;
+    /** 🆕产生新时间戳 from 单前提 */
+    protected Stamp generateNewStampSingle() {
+        if (this.getCurrentTask().isJudgment() || !this.hasCurrentBelief()) {
+            return new Stamp(this.getCurrentTask().getStamp(), memory.getTime());
+        } else { // to answer a question with negation in NAL-5 --- move to activated task?
+            return new Stamp(this.getCurrentBelief().getStamp(), memory.getTime());
+        }
     }
 
-    /**
-     * 设置新时间戳
-     * * 🚩【2024-05-30 09:30:25】现在仅在「内部修正」与「切换当前信念」时使用
-     *
-     * @param newStamp
-     */
-    protected void setNewStamp(Stamp newStamp) {
-        this.newStamp = newStamp;
+    /** 🆕产生新时间戳 from 双前提 */
+    protected Stamp generateNewStampDouble() {
+        // * 🚩使用「当前任务」和「当前信念」产生新时间戳
+        return this.hasCurrentBelief()
+                // * 🚩具有「当前信念」⇒直接合并
+                ? Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
+                        this.getCurrentTask().getStamp(),
+                        // * 📌此处的「时间戳」一定是「当前信念」的时间戳
+                        // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
+                        this.getCurrentBelief().getStamp(),
+                        this.getTime())
+                : null;
     }
 
     /**
@@ -329,20 +331,6 @@ public abstract class DerivationContext {
     }
 
     /* --------------- new task building --------------- */
-    /** 产生新时间戳 */
-    protected Stamp generateNewStamp() {
-        // * 🚩使用「当前任务」和「当前信念」产生新时间戳
-        return this.hasCurrentBelief()
-                // * 🚩具有「当前信念」⇒直接合并
-                ? Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
-                        this.getCurrentTask().getStamp(),
-                        // * 📌此处的「时间戳」一定是「当前信念」的时间戳
-                        // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
-                        this.getCurrentBelief().getStamp(),
-                        this.getTime())
-                : null;
-    }
-
     /**
      * Shared final operations by all double-premise rules, called from the
      * rules except StructuralRules
@@ -354,7 +342,7 @@ public abstract class DerivationContext {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
         // * 🚩引入「当前任务」与「新时间戳」
-        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.generateNewStamp());
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.generateNewStampDouble());
     }
 
     /**
@@ -385,7 +373,7 @@ public abstract class DerivationContext {
 
     /** 🆕重定向 */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
-        doublePremiseTask(newContent, generateNewStamp(), newTruth, newBudget, revisable);
+        doublePremiseTask(newContent, generateNewStampDouble(), newTruth, newBudget, revisable);
     }
 
     /**
@@ -444,13 +432,7 @@ public abstract class DerivationContext {
             return; // to avoid circular structural inference
         final Sentence taskSentence = this.getCurrentTask();
         // * 🚩构造新时间戳
-        // TODO: 📌研究断言「是否会重复设置」（🎯同义删去newStamp字段）
-        final Stamp newStamp;
-        if (taskSentence.isJudgment() || currentBelief == null) {
-            newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
-        } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
-        }
+        final Stamp newStamp = this.generateNewStampSingle();
         // * 🚩使用新内容构造新语句
         final Sentence newSentence = new SentenceV1(
                 newContent, punctuation,
@@ -490,10 +472,8 @@ public abstract class DerivationContext {
      * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
      */
     public void absorbedByMemory(final Memory memory) {
-        // * 🚩销毁「新时间戳」 | 变量值仅临时推理用
-        this.newStamp = null;
         // * 🚩销毁「当前信念」 | 变量值仅临时推理用
-        this.newStamp = null;
+        this.currentBelief = null;
         // * 🚩将「当前概念」归还到「记忆区」中
         memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）

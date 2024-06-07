@@ -28,7 +28,6 @@ public class DerivationContextTransform extends DerivationContext {
          * currentTask
          * currentTaskLink
          * currentBelief?
-         * newStamp?
          * }
          */
         if (self.getCurrentConcept() == null)
@@ -41,9 +40,6 @@ public class DerivationContextTransform extends DerivationContext {
             throw new Error("currentTaskLink: 不符预期的可空情况");
         if (self.getCurrentBelief() == null && self.getCurrentBelief() != null) // * 📝可空
             throw new Error("currentBelief: 不符预期的可空情况");
-        if (self.getNewStamp() != null && self.getNewStamp() == null)
-            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
-            throw new Error("newStamp: 不符预期的可空情况");
         if (self.getSubstitute() != null)
             throw new Error("substitute: 不符预期的可空情况");
     }

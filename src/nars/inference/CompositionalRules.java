@@ -311,7 +311,6 @@ public final class CompositionalRules {
                 if (contentConcept == null) {
                     return;
                 }
-                // * ⚠️↓又会在此修改`newStamp`
                 final Sentence contentBelief = contentConcept.getBelief(task);
                 if (contentBelief == null) {
                     return;

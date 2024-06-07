@@ -254,13 +254,11 @@ public abstract class ProcessDirect {
             }
             // * 🚩不重复 && 可修正 ⇒ 修正
             else if (LocalRules.revisable(judgment, oldBelief)) {
-                // * 📝OpenNARS 3.0.4亦有覆盖：
-                // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
-                // * 🚩现在移入「修正」调用中
+                // * 🚩现在将「当前信念」「新时间戳」移入「修正」调用中
                 final boolean hasOverlap = Stamp.haveOverlap(currentStamp, oldStamp);
                 if (!hasOverlap) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
-                    context.setCurrentBelief(oldBelief);
+                    context.setCurrentBelief(oldBelief); // TODO: 拔除此处
                     // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
                     // * 📝↑用法仅限于「父信念」
                     LocalRules.revision(judgment, oldBelief, context);

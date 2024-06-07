@@ -252,8 +252,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
             memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
             // * 📝在OpenNARS 3.0.4中也会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
-            // context.newStamp = Stamp.make(taskSentence.getStamp(),
-            // belief.getStamp(), memory.getTime());
             if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
                 final Sentence belief2 = belief.cloneSentence(); // will this mess up priority adjustment?
                 return belief2;

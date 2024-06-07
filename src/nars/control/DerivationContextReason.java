@@ -4,7 +4,6 @@ import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Sentence;
-import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
@@ -32,7 +31,6 @@ public class DerivationContextReason extends DerivationContextTransform {
          * currentTaskLink
          * currentBelief?
          * currentBeliefLink
-         * newStamp?
          * }
          */
         if (self.getCurrentTask() == null)
@@ -47,9 +45,6 @@ public class DerivationContextReason extends DerivationContextTransform {
             throw new Error("currentBeliefLink: 不符预期的可空情况");
         if (self.getCurrentTaskLink() == null)
             throw new Error("currentTaskLink: 不符预期的可空情况");
-        if (self.getNewStamp() != null && self.getNewStamp() == null)
-            // * 📝溯源其在这之前被赋值的场所：getBelief⇒processConcept
-            throw new Error("newStamp: 不符预期的可空情况");
         if (self.getSubstitute() != null)
             throw new Error("substitute: 不符预期的可空情况");
         if (self.getTermLinksToReason().isEmpty() && !self.getTermLinksToReason().isEmpty()) // * 📝可空：有可能只有一个词项链
@@ -75,7 +70,7 @@ public class DerivationContextReason extends DerivationContextTransform {
         this.setCurrentBeliefLink(currentBeliefLink);
         this.termLinksToReason = toReasonLinks;
         // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
-        updateCurrentBeliefAndNewStamp();
+        updateCurrentBelief();
         // * 🚩检验
         verify(this);
     }
@@ -101,7 +96,7 @@ public class DerivationContextReason extends DerivationContextTransform {
         this.setCurrentBeliefLink(currentBeliefLink);
 
         // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
-        updateCurrentBeliefAndNewStamp();
+        updateCurrentBelief();
 
         // * ♻️回收弹出的旧词项链（所有权转移）
         this.getCurrentConcept().__putTermLinkBack(oldTermLink);
@@ -114,29 +109,19 @@ public class DerivationContextReason extends DerivationContextTransform {
      * 通过设置好的（非空的）「当前信念链」更新「当前信念」与「新时间戳」
      * * ❓是否要考虑「归还信念链」？此处使用的是值还是引用？所有权如何变更？
      */
-    protected void updateCurrentBeliefAndNewStamp() {
+    protected void updateCurrentBelief() {
         // * 🚩背景变量
         final TermLink newBeliefLink = this.currentBeliefLink;
-        final Sentence newBelief;
-        final Stamp newStamp;
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
         final Term beliefTerm = newBeliefLink.getTarget();
         final Concept beliefConcept = this.termToConcept(beliefTerm);
-        if (beliefConcept != null) {
-            // * 🚩找到新的「信念」充当currentBelief
-            // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」
-            newBelief = beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
-            if (newBelief != null) {
-            } else {
-                newStamp = null;
-            }
-        } else {
-            newBelief = null;
-            newStamp = null;
-        }
+        final Sentence newBelief = beliefConcept == null
+                ? null
+                // * 🚩找到新的「信念」充当currentBelief
+                // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」
+                : beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
         // * 🚩最后设置二者的值（可空性相对独立）
         this.setCurrentBelief(newBelief);
-        // this.setNewStamp(newStamp);
     }
 
     /* ---------- Short-term workspace for a single cycle ---------- */
