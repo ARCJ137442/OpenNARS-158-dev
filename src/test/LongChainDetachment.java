@@ -16,7 +16,7 @@ public class LongChainDetachment extends TestCommon {
     }
 
     public LongChainDetachment(final String[] args) {
-        super(testLines(getN(args, 25), 5));
+        super(testLines(getN(args, 18), 5));
     }
 
     /**

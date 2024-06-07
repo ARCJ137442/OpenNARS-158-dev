@@ -11,8 +11,8 @@ import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
-import nars.main_nogui.Parameters;
-import nars.main_nogui.ReasonerBatch;
+import nars.main.Parameters;
+import nars.main.Reasoner;
 
 /**
  * The memory of the system.
@@ -56,7 +56,7 @@ public class Memory {
     /**
      * Backward pointer to the reasoner
      */
-    private final ReasonerBatch reasoner;
+    private final Reasoner reasoner;
 
     /* ---------- Long-term storage for multiple cycles ---------- */
     /**
@@ -100,7 +100,7 @@ public class Memory {
      *
      * @param reasoner
      */
-    public Memory(ReasonerBatch reasoner) {
+    public Memory(Reasoner reasoner) {
         this.reasoner = reasoner;
         recorder = new NullInferenceRecorder();
         concepts = new ConceptBag(this);
@@ -138,14 +138,14 @@ public class Memory {
     }
 
     /**
-     * 用于转发推理器的{@link ReasonerBatch#getTimer}
+     * 用于转发推理器的{@link Reasoner#getTimer}
      */
     public long getTimer() {
         return reasoner.getTimer();
     }
 
     /**
-     * 用于转发推理器的{@link ReasonerBatch#updateTimer}
+     * 用于转发推理器的{@link Reasoner#updateTimer}
      */
     public long updateTimer() {
         return reasoner.updateTimer();
@@ -316,7 +316,7 @@ public class Memory {
      * add Objects into exportStrings. Currently only Strings are added, though
      * in the future there can be outgoing Tasks; also if exportStrings is empty
      * display the current value of timer ( exportStrings is emptied in
-     * {@link ReasonerBatch#doTick()} - TODO fragile mechanism)
+     * {@link Reasoner#doTick()} - TODO fragile mechanism)
      *
      */
     public void report(Sentence sentence, ReportType type) {
@@ -331,7 +331,7 @@ public class Memory {
      * @param output 要输出的字符串
      */
     public void report(String output) {
-        if (ReasonerBatch.DEBUG) {
+        if (Reasoner.DEBUG) {
             System.out.println("// report( clock " + getTime()
             // + ", input " + input
                     + ", timer " + getTimer()

@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import nars.main_nogui.ReasonerBatch;
+import nars.main.Reasoner;
 
 /**
  * To read and write experience as Task streams
@@ -15,7 +15,7 @@ public class ExperienceReader implements InputChannel {
     /**
      * Reference to the reasoner
      */
-    private ReasonerBatch reasoner;
+    private Reasoner reasoner;
     /**
      * Input experience from a file
      */
@@ -30,7 +30,7 @@ public class ExperienceReader implements InputChannel {
      *
      * @param reasoner Backward link to the reasoner
      */
-    public ExperienceReader(ReasonerBatch reasoner) {
+    public ExperienceReader(Reasoner reasoner) {
         this.reasoner = reasoner;
         inExp = null;
     }

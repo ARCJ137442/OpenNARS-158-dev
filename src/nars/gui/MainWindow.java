@@ -24,10 +24,8 @@ import nars.io.ExperienceReader;
 import nars.io.ExperienceWriter;
 import nars.io.IInferenceRecorder;
 import nars.io.OutputChannel;
-import nars.main.NARS;
+import nars.main.Parameters;
 import nars.main.Reasoner;
-import nars.main_nogui.Parameters;
-import nars.main_nogui.ReasonerBatch;
 import nars.storage.Memory;
 
 /**
@@ -38,7 +36,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
     /**
      * Reference to the reasoner
      */
-    private final ReasonerBatch reasoner;
+    private final Reasoner reasoner;
     /**
      * Reference to the memory
      */
@@ -98,7 +96,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
      * @param reasoner
      * @param title
      */
-    public MainWindow(Reasoner reasoner, String title) {
+    public MainWindow(ReasonerUI reasoner, String title) {
         super(title);
         this.reasoner = reasoner;
         memory = reasoner.getMemory();
@@ -317,10 +315,10 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
                 silentW.setVisible(true);
             } else if (label.equals("Related Information")) {
                 // MessageDialog web =
-                new MessageDialog(this, NARS.WEBSITE);
+                new MessageDialog(this, NARS_UI.WEBSITE);
             } else if (label.equals("About NARS")) {
                 // MessageDialog info =
-                new MessageDialog(this, NARS.INFO);
+                new MessageDialog(this, NARS_UI.INFO);
             } else {
                 // MessageDialog ua =
                 new MessageDialog(this, UNAVAILABLE);

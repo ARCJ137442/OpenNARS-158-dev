@@ -1,7 +1,7 @@
 package nars.storage;
 
 import nars.entity.Concept;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 
 /**
  * Contains Concepts.

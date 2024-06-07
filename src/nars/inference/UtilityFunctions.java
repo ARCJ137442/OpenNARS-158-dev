@@ -1,6 +1,6 @@
 package nars.inference;
 
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 
 /**
  * Common functions on real numbers, mostly in [0,1].

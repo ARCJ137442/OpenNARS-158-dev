@@ -8,7 +8,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 import nars.storage.Memory;
 
 public abstract class ProcessReason {

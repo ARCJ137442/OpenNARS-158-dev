@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nars.main_nogui;
+package nars.main;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,13 +18,14 @@ import nars.io.OutputChannel;
 /**
  * 🆕一个更简单的交互终端
  * * 📌单线程，仅输入输出
+ * * 📝【2024-06-08 00:11:13】经交叉测试，仅适用于Java调试，不适合被外部调用
  *
  * @author tc, ARCJ137442
  */
 public class SimpleShell {
 
     private boolean isRunning = false;
-    private final ReasonerBatch reasoner;
+    private final Reasoner reasoner;
 
     private final PrintStream out;
 
@@ -39,7 +40,7 @@ public class SimpleShell {
 
     public SimpleShell(final PrintStream out) {
         this.out = out;
-        this.reasoner = new ReasonerBatch();
+        this.reasoner = new Reasoner();
     }
 
     public SimpleShell(final InputStream in, final PrintStream out) {
@@ -127,7 +128,7 @@ public class SimpleShell {
         }
 
         public void inputLine(final String input) {
-            final ReasonerBatch reasoner = shell.reasoner;
+            final Reasoner reasoner = shell.reasoner;
             try {
                 // 退出程序
                 // * 🎯【2024-05-09 13:35:47】在其它语言中通过`java -jar`启动OpenNARS时，主动退出不容易——总是有残余进程
@@ -154,7 +155,7 @@ public class SimpleShell {
                 // 开启debug模式
                 else if (input.startsWith("*debug=")) { // volume to be consistent with OpenNARS
                     String param = input.split("\\*debug=")[1];
-                    ReasonerBatch.DEBUG = !param.isEmpty();
+                    Reasoner.DEBUG = !param.isEmpty();
                 }
                 // 输入Narsese
                 else {

@@ -1,4 +1,4 @@
-package nars.main_nogui;
+package nars.main;
 
 /**
  * The parameters used when the system is invoked from command line
@@ -11,7 +11,7 @@ public class CommandLineParameters {
      * @param args Given arguments
      * @param r    The corresponding reasoner
      */
-    public static void decode(String[] args, ReasonerBatch r) {
+    public static void decode(String[] args, Reasoner r) {
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if ("--silence".equals(arg)) {

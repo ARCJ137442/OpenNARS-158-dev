@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import nars.main_nogui.SimpleShell;
+import nars.main.SimpleShell;
 
 /**
  * 🆕测试用

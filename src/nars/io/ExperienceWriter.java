@@ -4,14 +4,14 @@ import java.awt.FileDialog;
 import java.io.*;
 import java.util.*;
 
-import nars.main_nogui.ReasonerBatch;
+import nars.main.Reasoner;
 
 /**
  * To read and write experience as Task streams
  */
 public class ExperienceWriter implements OutputChannel {
 
-    private ReasonerBatch reasoner;
+    private Reasoner reasoner;
     /**
      * Input experience from a file
      */
@@ -22,11 +22,11 @@ public class ExperienceWriter implements OutputChannel {
      *
      * @param reasoner
      */
-    public ExperienceWriter(ReasonerBatch reasoner) {
+    public ExperienceWriter(Reasoner reasoner) {
         this.reasoner = reasoner;
     }
 
-    public ExperienceWriter(ReasonerBatch reasoner, PrintWriter outExp) {
+    public ExperienceWriter(Reasoner reasoner, PrintWriter outExp) {
         this(reasoner);
         this.outExp = outExp;
     }

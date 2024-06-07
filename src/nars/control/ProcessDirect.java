@@ -11,7 +11,7 @@ import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 import nars.storage.Memory;
 
 public abstract class ProcessDirect {

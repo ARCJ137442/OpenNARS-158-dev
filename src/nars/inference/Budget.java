@@ -1,7 +1,7 @@
 package nars.inference;
 
 import nars.entity.ShortFloat;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 
 /**
  * 🆕标记【可预算的】对象

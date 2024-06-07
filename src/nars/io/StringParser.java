@@ -7,7 +7,7 @@ import java.util.*;
 import nars.entity.*;
 import nars.inference.*;
 import nars.language.*;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 import nars.storage.Memory;
 import static nars.control.MakeTerm.*;
 

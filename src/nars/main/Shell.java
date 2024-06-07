@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package nars.main_nogui;
+package nars.main;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +23,7 @@ public class Shell {
     static boolean isRunning = false;
 
     public static void main(String[] args) {
-        ReasonerBatch reasoner = new ReasonerBatch();
+        Reasoner reasoner = new Reasoner();
         reasoner.addOutputChannel(new ShellOutput());
         InputThread thr = new InputThread(System.in, reasoner);
         thr.start();
@@ -37,7 +37,7 @@ public class Shell {
         }
     }
 
-    public static void inputLine(ReasonerBatch reasoner, String inputString) {
+    public static void inputLine(Reasoner reasoner, String inputString) {
 
         if (!"".equals(inputString)) {
             try {
@@ -66,7 +66,7 @@ public class Shell {
                 // 开启debug模式
                 else if (inputString.startsWith("*debug=")) { // volume to be consistent with OpenNARS
                     String param = inputString.split("\\*debug=")[1];
-                    ReasonerBatch.DEBUG = !param.isEmpty();
+                    Reasoner.DEBUG = !param.isEmpty();
                 }
                 // 输入Narsese
                 else {
@@ -111,9 +111,9 @@ public class Shell {
 
     private static class InputThread extends Thread {
         private final BufferedReader bufIn;
-        private final ReasonerBatch reasoner;
+        private final Reasoner reasoner;
 
-        InputThread(final InputStream in, ReasonerBatch reasoner) {
+        InputThread(final InputStream in, Reasoner reasoner) {
             this.bufIn = new BufferedReader(new InputStreamReader(in));
             this.reasoner = reasoner;
         }

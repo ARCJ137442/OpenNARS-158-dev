@@ -1,4 +1,4 @@
-package nars.main_nogui;
+package nars.main;
 
 /**
  * Collected system parameters. To be modified before compiling.

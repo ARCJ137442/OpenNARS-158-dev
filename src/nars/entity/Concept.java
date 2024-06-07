@@ -6,8 +6,7 @@ import nars.control.ConceptLinking;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
-import nars.main_nogui.NARSBatch;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
 import nars.storage.BagObserver;
 import nars.storage.Memory;
 import nars.storage.NullBagObserver;
@@ -184,13 +183,19 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     /**
+     * 🆕是否在{@link Concept#toString}处显示更细致的内容
+     * * 🎯与主类解耦
+     */
+    public static boolean detailedString = false;
+
+    /**
      * Return a string representation of the concept, called in ConceptBag only
      *
      * @return The concept name, with taskBudget in the full version
      */
     @Override
     public String toString() { // called from concept bag
-        if (NARSBatch.isStandAlone()) {
+        if (detailedString) {
             final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
             return (superString + " " + getKey());
         } else {
@@ -199,7 +204,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     /**
-     * called from {@link NARSBatch}
+     * called from {@link NARS}
      *
      * @return A string representation of the concept
      */

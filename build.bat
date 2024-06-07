@@ -15,17 +15,17 @@ javac -source 1.8 -target 1.8 -d classes @sources.txt -Xstdout compile.log
 
 @REM ==后续其它构建代码==
 @REM 1 构建NARS代码（classes）到jar文件（GUI）
-echo Main-Class: nars.main.NARS > manifest.txt
+echo Main-Class: nars.gui.NARS_UI > manifest.txt
 jar -cvfm opennars-158-gui.jar manifest.txt -C classes .
 DEL manifest.txt
 
 @REM 2 构建NARS代码（classes）到jar文件（Shell）
-echo Main-Class: nars.main_nogui.Shell > manifest.txt
+echo Main-Class: nars.main.Shell > manifest.txt
 jar -cvfm opennars-158-shell.jar manifest.txt -C classes .
 DEL manifest.txt
 
 @REM 2 构建NARS代码（classes）到jar文件（Batch）
-echo Main-Class: nars.main_nogui.NARSBatch > manifest.txt
+echo Main-Class: nars.main.NARS > manifest.txt
 jar -cvfm opennars-158-batch.jar manifest.txt -C classes .
 DEL manifest.txt
 

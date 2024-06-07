@@ -6,7 +6,8 @@ import nars.control.DerivationContextReason;
 import nars.entity.*;
 import static nars.io.Symbols.*;
 import nars.language.*;
-import nars.main_nogui.Parameters;
+import nars.main.Parameters;
+
 import static nars.control.MakeTerm.*;
 
 /**
