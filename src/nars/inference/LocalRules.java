@@ -97,10 +97,10 @@ public class LocalRules {
      */
     public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
         // * 🚩计算真值/预算值
-        final TruthValue newTruth = newBelief.getTruth();
-        final TruthValue oldTruth = oldBelief.getTruth();
-        final TruthValue truth = TruthFunctions.revision(newTruth, oldTruth);
-        final BudgetValue budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
+        final Truth newTruth = newBelief;
+        final Truth oldTruth = oldBelief;
+        final Truth truth = TruthFunctions.revision(newTruth, oldTruth);
+        final Budget budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
@@ -159,9 +159,9 @@ public class LocalRules {
     public static float solutionQuality(Sentence problem, Sentence solution) {
         // TODO: 过程笔记注释
         if (problem == null) {
-            return solution.getTruth().getExpectation();
+            return solution.getExpectation();
         }
-        final TruthValue truth = solution.getTruth();
+        final Truth truth = solution;
         if (problem.containQueryVar()) { // "yes/no" question
             return truth.getExpectation() / solution.getContent().getComplexity();
         } else { // "what" question or goal
@@ -225,10 +225,10 @@ public class LocalRules {
         } else {
             content = makeEquivalence(t1, t2);
         }
-        final TruthValue value1 = judgment1.getTruth();
-        final TruthValue value2 = judgment2.getTruth();
-        final TruthValue truth = TruthFunctions.intersection(value1, value2);
-        final BudgetValue budget = BudgetFunctions.forward(truth, context);
+        final Truth value1 = judgment1;
+        final Truth value2 = judgment2;
+        final Truth truth = TruthFunctions.intersection(value1, value2);
+        final Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -246,8 +246,8 @@ public class LocalRules {
         final Term sub = statement.getPredicate();
         final Term pre = statement.getSubject();
         final Statement content = makeStatement(statement, sub, pre);
-        final TruthValue truth = TruthFunctions.reduceConjunction(sym.getTruth(), asym.getTruth());
-        final BudgetValue budget = BudgetFunctions.forward(truth, context);
+        final Truth truth = TruthFunctions.reduceConjunction(sym, asym);
+        final Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -260,8 +260,8 @@ public class LocalRules {
      */
     private static void conversion(DerivationContextReason context) {
         // TODO: 过程笔记注释
-        final TruthValue truth = TruthFunctions.conversion(context.getCurrentBelief().getTruth());
-        final BudgetValue budget = BudgetFunctions.forward(truth, context);
+        final Truth truth = TruthFunctions.conversion(context.getCurrentBelief());
+        final Budget budget = BudgetFunctions.forward(truth, context);
         convertedJudgment(truth, budget, context);
     }
 
@@ -274,14 +274,14 @@ public class LocalRules {
      */
     private static void convertRelation(DerivationContextReason context) {
         // TODO: 过程笔记注释
-        final TruthValue truth = context.getCurrentBelief().getTruth();
-        final TruthValue newTruth;
+        final Truth truth = context.getCurrentBelief();
+        final Truth newTruth;
         if (((Statement) context.getCurrentTask().getContent()).isCommutative()) {
             newTruth = TruthFunctions.abduction(truth, 1.0f);
         } else {
             newTruth = TruthFunctions.deduction(truth, 1.0f);
         }
-        final BudgetValue budget = BudgetFunctions.forward(newTruth, context);
+        final Budget budget = BudgetFunctions.forward(newTruth, context);
         convertedJudgment(newTruth, budget, context);
     }
 
@@ -294,7 +294,7 @@ public class LocalRules {
      * @param truth   The truth value of the new task
      * @param context Reference to the derivation context
      */
-    private static void convertedJudgment(TruthValue newTruth, Budget newBudget, DerivationContext context) {
+    private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContext context) {
         // TODO: 过程笔记注释
         Statement content = (Statement) context.getCurrentTask().getContent();
         final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();

@@ -11,8 +11,8 @@ import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskV1;
-import nars.entity.TruthValue;
 import nars.inference.Budget;
+import nars.inference.Truth;
 import nars.language.Term;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
@@ -320,7 +320,7 @@ public abstract class DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget) {
+    public void doublePremiseTask(Term newContent, Truth newTruth, Budget newBudget) {
         // * 🚩引入「当前任务」与「新时间戳」
         doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.generateNewStampDouble());
     }
@@ -339,7 +339,7 @@ public abstract class DerivationContext {
     public void doublePremiseTask(
             final Task currentTask,
             final Term newContent,
-            final TruthValue newTruth,
+            final Truth newTruth,
             final Budget newBudget,
             final Stamp newStamp) {
         if (newContent == null)
@@ -352,7 +352,7 @@ public abstract class DerivationContext {
     }
 
     /** 🆕重定向 */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget, boolean revisable) {
+    public void doublePremiseTask(Term newContent, Truth newTruth, Budget newBudget, boolean revisable) {
         doublePremiseTask(newContent, generateNewStampDouble(), newTruth, newBudget, revisable);
     }
 
@@ -370,7 +370,7 @@ public abstract class DerivationContext {
     private void doublePremiseTask(
             final Term newContent,
             final Stamp newStamp,
-            final TruthValue newTruth,
+            final Truth newTruth,
             final Budget newBudget,
             final boolean revisable) {
         if (newContent == null)
@@ -392,7 +392,7 @@ public abstract class DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public void singlePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget) {
+    public void singlePremiseTask(Term newContent, Truth newTruth, Budget newBudget) {
         singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
     }
 
@@ -405,7 +405,7 @@ public abstract class DerivationContext {
      * @param newTruth    The truth value of the sentence in task
      * @param newBudget   The budget value in task
      */
-    public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, Budget newBudget) {
+    public void singlePremiseTask(Term newContent, char punctuation, Truth newTruth, Budget newBudget) {
         final Task parentTask = this.getCurrentTask().getParentTask();
         // * 🚩对于「结构转换」的单前提推理，若已有父任务且该任务与父任务相同⇒中止，避免重复推理
         if (parentTask != null && newContent.equals(parentTask.getContent()))

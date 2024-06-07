@@ -3,10 +3,9 @@ package nars.inference;
 import java.util.ArrayList;
 
 import nars.control.DerivationContextTransform;
-import nars.entity.BudgetValue;
 import nars.entity.Sentence;
+import nars.entity.Task;
 import nars.entity.TaskLink;
-import nars.entity.TruthValue;
 import nars.language.CompoundTerm;
 import nars.language.Conjunction;
 import nars.language.Equivalence;
@@ -154,8 +153,8 @@ public class TransformRules {
             return;
         }
         final Sentence sentence = context.getCurrentTask();
-        final TruthValue truth = sentence.getTruth();
-        final BudgetValue budget;
+        final Truth truth = sentence;
+        final Budget budget;
         if (sentence.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
@@ -178,8 +177,8 @@ public class TransformRules {
     private static void transformSubjectProductImage(CompoundTerm subject, Term predicate,
             DerivationContextTransform context) {
         // TODO: 过程笔记注释
-        final TruthValue truth = context.getCurrentTask().getTruth();
-        BudgetValue budget;
+        final Task task = context.getCurrentTask();
+        Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
         if (subject instanceof Product) {
@@ -189,12 +188,12 @@ public class TransformRules {
                 newPred = makeImageExt(product, predicate, i);
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
-                    if (truth == null) {
+                    if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
                     }
-                    context.singlePremiseTask(inheritance, truth, budget);
+                    context.singlePremiseTask(inheritance, task, budget);
                 }
             }
         } else if (subject instanceof ImageInt) {
@@ -210,12 +209,12 @@ public class TransformRules {
                 }
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
-                    if (truth == null) {
+                    if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
                     }
-                    context.singlePremiseTask(inheritance, truth, budget);
+                    context.singlePremiseTask(inheritance, task, budget);
                 }
             }
         }
@@ -235,8 +234,8 @@ public class TransformRules {
     private static void transformPredicateProductImage(Term subject, CompoundTerm predicate,
             DerivationContextTransform context) {
         // TODO: 过程笔记注释
-        final TruthValue truth = context.getCurrentTask().getTruth();
-        BudgetValue budget;
+        final Task task = context.getCurrentTask();
+        Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
         if (predicate instanceof Product) {
@@ -246,12 +245,12 @@ public class TransformRules {
                 newPred = product.componentAt(i);
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) {
-                    if (truth == null) {
+                    if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
                     }
-                    context.singlePremiseTask(inheritance, truth, budget);
+                    context.singlePremiseTask(inheritance, task, budget);
                 }
             }
         } else if (predicate instanceof ImageExt) {
@@ -267,12 +266,12 @@ public class TransformRules {
                 }
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance != null) { // jmv <<<<<
-                    if (truth == null) {
+                    if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(truth, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
                     }
-                    context.singlePremiseTask(inheritance, truth, budget);
+                    context.singlePremiseTask(inheritance, task, budget);
                 }
             }
         }

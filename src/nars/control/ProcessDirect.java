@@ -87,7 +87,7 @@ public abstract class ProcessDirect {
                 final boolean shouldAddToNovelTasks;
                 if (taskSentence.isJudgment()) {
                     // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
-                    final double exp = taskSentence.getTruth().getExpectation();
+                    final double exp = taskSentence.getExpectation();
                     shouldAddToNovelTasks = exp > Parameters.DEFAULT_CREATION_EXPECTATION;
                 } else
                     shouldAddToNovelTasks = false;
@@ -330,7 +330,7 @@ public abstract class ProcessDirect {
             final Sentence judgment2 = table.get(i);
             final float rank2 = BudgetFunctions.rankBelief(judgment2);
             if (rank1 >= rank2) {
-                if (newSentence.equivalentTo(judgment2)) {
+                if (isBeliefEquivalent(newSentence, judgment2)) {
                     return;
                 }
                 table.add(i, newSentence);
@@ -345,6 +345,21 @@ public abstract class ProcessDirect {
         } else if (i == table.size()) {
             table.add(newSentence);
         }
+    }
+
+    /**
+     * Check whether the judgment is equivalent to another one
+     * <p>
+     * The two may have different keys
+     *
+     * @param that The other judgment
+     * @return Whether the two are equivalent
+     */
+    public static boolean isBeliefEquivalent(Sentence self, Sentence that) {
+        // TODO: 过程笔记注释
+        if (!(self.__content().equals(that.__content()) && self.__punctuation() == that.__punctuation()))
+            throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
+        return (self.__truth().equals(that.__truth()) && self.__stamp().equals(that.__stamp()));
     }
 
     /**

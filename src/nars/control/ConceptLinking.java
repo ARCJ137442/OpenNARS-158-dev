@@ -157,7 +157,7 @@ public abstract class ConceptLinking {
         if (!(self.getTerm() instanceof CompoundTerm && self.getLinkTemplatesToSelf().size() > 0))
             return;
         // * 🚩分发并指数递减预算值
-        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
+        final Budget subBudget = BudgetFunctions.distributeAmongLinks(
                 taskBudget,
                 self.getLinkTemplatesToSelf().size());
         if (!subBudget.budgetAboveThreshold())
@@ -202,7 +202,7 @@ public abstract class ConceptLinking {
      * * ❌【2024-05-30 00:49:19】无法断言原先传入的「当前概念」「当前记忆区」「当前任务预算值」都来自「直接推理上下文」
      * * 📝原因：需要递归处理，并在这其中改变self、memory与taskBudget三个参数
      *
-     * @param sourceBudget The BudgetValue of the task
+     * @param sourceBudget The Budget of the task
      */
     private static void buildTermLinks(final Concept self, final Memory memory, final Budget sourceBudget) {
         // * 🚩仅在有「词项链模板」时

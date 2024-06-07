@@ -4,7 +4,7 @@ import nars.inference.Truth;
 import nars.language.Term;
 
 /**
- * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
+ * A Sentence is an abstract class, mainly containing a Term, a Truth, and
  * a Stamp.
  * <p>
  * It is used as the premises and conclusions of all inference rules.
@@ -25,6 +25,7 @@ public class SentenceV1 implements Sentence {
     private final char punctuation;
     /**
      * The truth value of Judgment
+     * TODO: 后续或许考虑「类型分离」（「疑问句」没有真值，那就不要在这儿存储）
      */
     private final TruthValue truth;
     /**
@@ -72,7 +73,7 @@ public class SentenceV1 implements Sentence {
      *                    base
      * @param revisable   Whether the sentence can be revised
      */
-    public SentenceV1(Term content, char punctuation, TruthValue truth, Stamp stamp, boolean revisable) {
+    public SentenceV1(Term content, char punctuation, Truth truth, Stamp stamp, boolean revisable) {
         this.content = content;
         this.content.renameVariables();
         this.punctuation = punctuation;
@@ -82,7 +83,7 @@ public class SentenceV1 implements Sentence {
         if (stamp == null) {
             throw new NullPointerException("Stamp is null!");
         }
-        if (this.isQuestion() && truth != null) {
+        if (this.isQuestion() && this.truth != null) {
             throw new NullPointerException("Questions has truth!");
         }
     }

@@ -101,6 +101,9 @@ public class TruthValue implements Truth {
 
     /** 🎯兼容null的构造函数 */
     public static TruthValue from(Truth v) {
+        if (v instanceof Sentence)
+            // ! 📌【2024-06-07 16:13:34】有可能源自「语句」然后「语句非空但无真值」
+            return TruthValue.from(((Sentence) v).__truth());
         return v == null ? null : new TruthValue(v);
     }
 

@@ -22,7 +22,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param t The truth value of a judgment
      * @return The quality of the judgment, according to truth value only
      */
-    public static float truthToQuality(TruthValue t) {
+    public static float truthToQuality(Truth t) {
         // * 🚩真值⇒质量：期望与「0.75(1-期望)」的最大值
         // * 📝函数：max(c * (f - 0.5) + 0.5, 0.375 - 0.75 * c * (f - 0.5))
         // * 📍最小值：当exp=3/7时，全局最小值为3/7（max的两端相等）
@@ -40,7 +40,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static float rankBelief(Sentence judgment) {
         // * 🚩两个指标：信度 + 原创性（时间戳长度）
-        final float confidence = judgment.getTruth().getConfidence();
+        final float confidence = judgment.getConfidence();
         final float originality = 1.0f / (judgment.getStamp().length() + 1);
         return or(confidence, originality);
     }
@@ -60,14 +60,14 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget for the new task which is the belief activated, if
      *         necessary
      */
-    static BudgetValue solutionEval(
+    static Budget solutionEval(
             final Sentence problem,
             final Sentence solution,
             final Task questionTask/*
                                     * ,
                                     * final DerivationContext context
                                     */) {
-        // final BudgetValue budget;
+        // final Budget budget;
         // final boolean feedbackToLinks;
         if (problem == null || !problem.isQuestion())
             throw new NullPointerException("待解决的问题必须是疑问句");
@@ -91,8 +91,8 @@ public final class BudgetFunctions extends UtilityFunctions {
             final float taskPriority = questionTask.getPriority();
             final float newP = or(taskPriority, solutionQuality);
             final float newD = questionTask.getDurability();
-            final float newQ = truthToQuality(solution.getTruth());
-            final BudgetValue budget = new BudgetValue(newP, newD, newQ);
+            final float newQ = truthToQuality(solution);
+            final Budget budget = new BudgetValue(newP, newD, newQ);
             // 更新「源任务」的预算值（优先级）
             final float updatedQuestionPriority = Math.min(not(solutionQuality), taskPriority);
             questionTask.setPriority(updatedQuestionPriority);
@@ -117,10 +117,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth  The truth value of the conclusion of revision
      * @return The budget for the new task
      */
-    static BudgetValue revise(
-            final TruthValue tTruth,
-            final TruthValue bTruth,
-            final TruthValue truth,
+    static Budget revise(
+            final Truth tTruth,
+            final Truth bTruth,
+            final Truth truth,
             // boolean feedbackToLinks = false,
             final DerivationContext context) {
         // * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
@@ -146,14 +146,14 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param context
      * @return
      */
-    static BudgetValue revise(
-            final TruthValue tTruth,
-            final TruthValue bTruth,
-            final TruthValue truth,
+    static Budget revise(
+            final Truth tTruth,
+            final Truth bTruth,
+            final Truth truth,
             // final boolean feedbackToLinks = true,
             final DerivationContextReason context) {
         final float difT = truth.getExpDifAbs(tTruth); // * 🚩【2024-05-21 10:43:44】此处暂且需要重算一次
-        final BudgetValue revised = revise(tTruth, bTruth, truth, (DerivationContext) context);
+        final Budget revised = revise(tTruth, bTruth, truth, (DerivationContext) context);
         { // * 🚩独有逻辑：反馈到任务链、信念链
             final TaskLink tLink = context.getCurrentTaskLink();
             tLink.decPriority(not(difT));
@@ -173,8 +173,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param bTruth Truth value of the previous belief
      * @return Budget value of the updating task
      */
-    static BudgetValue update(Task task, TruthValue bTruth) {
-        final TruthValue tTruth = task.getTruth();
+    static Budget update(Task task, Truth bTruth) {
+        final Truth tTruth = task;
         final float dif = tTruth.getExpDifAbs(bTruth);
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
@@ -192,7 +192,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param nLinks   Number of links
      * @return Budget value for each link
      */
-    public static BudgetValue distributeAmongLinks(final Budget original, final int nLinks) {
+    public static Budget distributeAmongLinks(final Budget original, final int nLinks) {
         final float priority = (float) (original.getPriority() / Math.sqrt(nLinks));
         return new BudgetValue(priority, original.getDurability(), original.getQuality());
     }
@@ -266,7 +266,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion
      * @return The budget value of the conclusion
      */
-    static BudgetValue forward(TruthValue truth, DerivationContextTransform context) {
+    static Budget forward(Truth truth, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -277,7 +277,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backward(TruthValue truth, DerivationContextTransform context) {
+    public static Budget backward(Truth truth, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -288,7 +288,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static BudgetValue backwardWeak(TruthValue truth, DerivationContextTransform context) {
+    public static Budget backwardWeak(Truth truth, DerivationContextTransform context) {
         return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
@@ -301,7 +301,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundForward(TruthValue truth, Term content, DerivationContextTransform context) {
+    public static Budget compoundForward(Truth truth, Term content, DerivationContextTransform context) {
         return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
@@ -312,7 +312,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackward(Term content, DerivationContextTransform context) {
+    public static Budget compoundBackward(Term content, DerivationContextTransform context) {
         return budgetInference(1, content.getComplexity(), context);
     }
 
@@ -323,7 +323,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static BudgetValue compoundBackwardWeak(
+    public static Budget compoundBackwardWeak(
             final Term content,
             final DerivationContextTransform context) {
         return budgetInference(w2c(1), content.getComplexity(), context);
@@ -337,7 +337,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory     Reference to the memory
      * @return Budget of the conclusion task
      */
-    private static BudgetValue budgetInference(
+    private static Budget budgetInference(
             final float qual,
             final int complexity,
             final DerivationContextTransform context) {

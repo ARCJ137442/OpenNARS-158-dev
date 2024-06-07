@@ -16,7 +16,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v1 Truth value of the premise
      * @return Truth value of the conclusion
      */
-    static TruthValue conversion(TruthValue v1) {
+    static Truth conversion(Truth v1) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
         // * 📝总频数=频率、信度之合取
@@ -34,7 +34,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v1 Truth value of the premise
      * @return Truth value of the conclusion
      */
-    static TruthValue negation(TruthValue v1) {
+    static Truth negation(Truth v1) {
         // * 📝频率相反，信度相等
         float f = not(v1.getFrequency());
         float c = v1.getConfidence();
@@ -47,7 +47,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v1 Truth value of the premise
      * @return Truth value of the conclusion
      */
-    static TruthValue contraposition(TruthValue v1) {
+    static Truth contraposition(Truth v1) {
         // * 📝频率为零，信度是弱
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
@@ -64,7 +64,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue revision(TruthValue v1, TruthValue v2) {
+    static Truth revision(Truth v1, Truth v2) {
         // * 📝转换为「频数视角」，频数相加，并转换回（频率，信度）二元组
         // * ✅特别兼容「信度为1」的「无穷证据量」情况：覆盖 or 取平均
         final float f1 = v1.getFrequency();
@@ -108,7 +108,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue deduction(TruthValue v1, TruthValue v2) {
+    static Truth deduction(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -126,7 +126,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param reliance Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
-    static TruthValue deduction(TruthValue v1, float reliance) {
+    static Truth deduction(Truth v1, float reliance) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
         // * 📌对于第二个「分析性前提」使用「依赖度」衡量
@@ -142,7 +142,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue analogy(TruthValue v1, TruthValue v2) {
+    static Truth analogy(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -160,7 +160,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue resemblance(TruthValue v1, TruthValue v2) {
+    static Truth resemblance(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -178,7 +178,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue abduction(TruthValue v1, TruthValue v2) {
+    static Truth abduction(Truth v1, Truth v2) {
         // * 🚩分析性⇒无意义（信度清零）
         if (v1.getAnalytic() || v2.getAnalytic())
             return new TruthValue(0.5f, 0f);
@@ -201,7 +201,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param reliance Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
-    static TruthValue abduction(TruthValue v1, float reliance) {
+    static Truth abduction(Truth v1, float reliance) {
         // * 🚩分析性⇒无意义（信度清零）
         if (v1.getAnalytic())
             return new TruthValue(0.5f, 0f);
@@ -222,7 +222,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue induction(TruthValue v1, TruthValue v2) {
+    static Truth induction(Truth v1, Truth v2) {
         // * 📝归纳是倒过来的归因
         return abduction(v2, v1);
     }
@@ -234,7 +234,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue exemplification(TruthValue v1, TruthValue v2) {
+    static Truth exemplification(Truth v1, Truth v2) {
         // * 🚩分析性⇒无意义（信度清零）
         if (v1.getAnalytic() || v2.getAnalytic())
             return new TruthValue(0.5f, 0f);
@@ -257,7 +257,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue comparison(TruthValue v1, TruthValue v2) {
+    static Truth comparison(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -280,7 +280,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue desireStrong(TruthValue v1, TruthValue v2) {
+    static Truth desireStrong(Truth v1, Truth v2) {
         // ? 此函数似乎是用在「目标」上的
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
@@ -300,7 +300,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue desireWeak(TruthValue v1, TruthValue v2) {
+    static Truth desireWeak(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -319,7 +319,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue desireDed(TruthValue v1, TruthValue v2) {
+    static Truth desireDed(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -338,7 +338,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue desireInd(TruthValue v1, TruthValue v2) {
+    static Truth desireInd(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -359,7 +359,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue union(TruthValue v1, TruthValue v2) {
+    static Truth union(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -378,7 +378,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue intersection(TruthValue v1, TruthValue v2) {
+    static Truth intersection(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float f2 = v2.getFrequency();
         float c1 = v1.getConfidence();
@@ -397,9 +397,9 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue reduceDisjunction(TruthValue v1, TruthValue v2) {
+    static Truth reduceDisjunction(Truth v1, Truth v2) {
         // * 🚩演绎（反向交集，依赖度=1）
-        TruthValue v0 = intersection(v1, negation(v2));
+        Truth v0 = intersection(v1, negation(v2));
         return deduction(v0, 1f);
     }
 
@@ -410,9 +410,9 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue reduceConjunction(TruthValue v1, TruthValue v2) {
+    static Truth reduceConjunction(Truth v1, Truth v2) {
         // * 🚩否定演绎（反向交集（内部取反），依赖度=1）
-        TruthValue v0 = intersection(negation(v1), v2);
+        Truth v0 = intersection(negation(v1), v2);
         return negation(deduction(v0, 1f));
     }
 
@@ -423,7 +423,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue reduceConjunctionNeg(TruthValue v1, TruthValue v2) {
+    static Truth reduceConjunctionNeg(Truth v1, Truth v2) {
         // * 🚩消取，但对第二方套否定
         return reduceConjunction(v1, negation(v2));
     }
@@ -435,12 +435,12 @@ final class TruthFunctions extends UtilityFunctions {
      * @param v2 Truth value of the second premise
      * @return Truth value of the conclusion
      */
-    static TruthValue anonymousAnalogy(TruthValue v1, TruthValue v2) {
+    static Truth anonymousAnalogy(Truth v1, Truth v2) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
         // * 📝中间频率=第一方频
         // * 📝中间信度=第一方信度作为「总频数」（弱推理）
-        TruthValue v0 = new TruthValue(f1, w2c(c1));
+        Truth v0 = new TruthValue(f1, w2c(c1));
         // * 🚩再参与「类比」（弱中之弱）
         return analogy(v2, v0);
     }

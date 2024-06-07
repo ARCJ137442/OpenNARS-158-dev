@@ -43,21 +43,6 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
     }
 
     /**
-     * Check whether the judgment is equivalent to another one
-     * <p>
-     * The two may have different keys
-     *
-     * @param that The other judgment
-     * @return Whether the two are equivalent
-     */
-    public default boolean equivalentTo(Sentence that) {
-        // TODO: 过程笔记注释
-        if (!(__content().equals(that.__content()) && __punctuation() == that.__punctuation()))
-            throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
-        return (__truth().equals(that.__truth()) && __stamp().equals(that.__stamp()));
-    }
-
-    /**
      * 🆕复制其中的「语句」成分
      * * 🎯为了不让方法实现冲突而构建
      * * ⚠️可能没有
@@ -91,14 +76,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
         return __content().clone();
     }
 
-    /**
-     * Get the truth value of the sentence
-     *
-     * @return Truth value, null for question
-     */
-    public default TruthValue getTruth() {
-        return __truth();
-    }
+    // ! 🚩【2024-06-07 15:40:21】现在将「语句」本身作为「真值」，或者是【能作为真值使用】的对象
 
     /**
      * Get the stamp of the sentence
