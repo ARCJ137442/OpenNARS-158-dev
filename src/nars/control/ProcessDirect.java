@@ -133,7 +133,7 @@ public abstract class ProcessDirect {
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
             // * 🚩调整概念的预算值
-            self.activateConcept(context.getCurrentConcept(), taskInput.getBudget());
+            self.activateConcept(context.getCurrentConcept(), taskInput);
             // * 🔥开始「直接处理」
             directProcess(context);
         }
@@ -217,7 +217,7 @@ public abstract class ProcessDirect {
         }
 
         // * 🚩在推理后做链接 | 若预算值够就链接，若预算值不够就丢掉
-        if (task.getBudget().aboveThreshold()) { // still need to be processed
+        if (task.budgetAboveThreshold()) { // still need to be processed
             ConceptLinking.linkConceptToTask(context);
         }
     }
@@ -248,7 +248,7 @@ public abstract class ProcessDirect {
             if (currentStamp.equals(oldStamp)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().isJudgment()) {
-                    task.getBudget().decPriority(0); // duplicated task
+                    task.decPriority(0); // duplicated task
                 } // else: activated belief
                 return;
             }
@@ -265,7 +265,7 @@ public abstract class ProcessDirect {
         }
         // * 🚩尝试用新的信念解决旧有问题
         // * 📄如：先输入`A?`再输入`A.`
-        if (task.getBudget().aboveThreshold()) {
+        if (task.budgetAboveThreshold()) {
             // * 🚩开始尝试解决「问题表」中的所有问题
             for (final Task existedQuestion : self.getQuestions()) {
                 LocalRules.trySolution(judgment, existedQuestion, context);

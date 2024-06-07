@@ -218,7 +218,7 @@ public abstract class Bag<E extends Item> {
         E oldItem = nameTable.put(newKey, newItem);
         if (oldItem != null) { // merge duplications
             outOfBase(oldItem);
-            newItem.merge(oldItem);
+            newItem.mergeBudget(oldItem);
         }
         E overflowItem = intoBase(newItem); // put the (new or merged) item into itemTable
         if (overflowItem != null) { // remove overflow
@@ -246,7 +246,7 @@ public abstract class Bag<E extends Item> {
     }
 
     public void forget(E oldItem) {
-        BudgetFunctions.forget(oldItem.getBudget(), forgetRate(), RELATIVE_THRESHOLD);
+        BudgetFunctions.forget(oldItem, forgetRate(), RELATIVE_THRESHOLD);
     }
 
     /**

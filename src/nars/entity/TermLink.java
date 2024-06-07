@@ -33,8 +33,18 @@ public class TermLink extends TLink<Term> implements Item {
     }
 
     @Override
-    public Budget getBudget() {
-        return token.getBudget();
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
     }
 
     /**
@@ -56,18 +66,18 @@ public class TermLink extends TLink<Term> implements Item {
         // * 🚩生成类型与索引
         final TLinkType type = generateTypeFromTemplate(target, template);
         final short[] indices = template.getIndices();
-        // * 🚩构造 | 从抽象的「预算」到具体的「预算值」
-        return new TermLink(target, new BudgetValue(budget), type, indices);
+        // * 🚩构造
+        return new TermLink(target, budget, type, indices);
     }
 
     /**
      * 🆕从「模板」中确定好「类型」与「索引」后，再进一步确定「键」
      * * 📌完全参数构造函数
      */
-    private TermLink(final Term target, final BudgetValue budget, final TLinkType type, final short[] indices) {
+    private TermLink(final Term target, final Budget budget, final TLinkType type, final short[] indices) {
         // * 🚩构造
         super(target, type, indices);
-        // * 🚩生成令牌
+        // * 🚩生成令牌 | 从抽象的「预算」到具体的「预算值」
         final String key = generateKey(target, type, indices);
         this.token = new Token(key, budget);
     }
@@ -131,7 +141,7 @@ public class TermLink extends TLink<Term> implements Item {
      */
     @Override
     public String toString() {
-        return getBudget() + " " + getKey();
+        return this.token.getBudgetValue().toString() + " " + getKey();
     }
 
     /**

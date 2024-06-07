@@ -143,7 +143,7 @@ public class LocalRules {
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
         final Budget budget = BudgetFunctions.solutionEval(problem, belief, questionTask/* , context */);
-        if (budget != null && budget.aboveThreshold()) {
+        if (budget != null && budget.budgetAboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, questionTask.getParentBelief());
         }
@@ -294,7 +294,7 @@ public class LocalRules {
      * @param truth   The truth value of the new task
      * @param context Reference to the derivation context
      */
-    private static void convertedJudgment(TruthValue newTruth, BudgetValue newBudget, DerivationContext context) {
+    private static void convertedJudgment(TruthValue newTruth, Budget newBudget, DerivationContext context) {
         // TODO: 过程笔记注释
         Statement content = (Statement) context.getCurrentTask().getContent();
         final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();

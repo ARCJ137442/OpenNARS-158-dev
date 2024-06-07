@@ -27,8 +27,18 @@ public class TaskLink extends TLink<Task> implements Item {
     }
 
     @Override
-    public Budget getBudget() {
-        return token.getBudget();
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
     }
 
     /**
@@ -76,7 +86,7 @@ public class TaskLink extends TLink<Task> implements Item {
      */
     private TaskLink(
             final Task target,
-            final BudgetValue budget,
+            final Budget budget,
             final TLinkType type,
             final short[] indices,
             final int recordLength) {
@@ -91,7 +101,7 @@ public class TaskLink extends TLink<Task> implements Item {
     /** 🆕传递「链接记录长度」的默认值 */
     private TaskLink(
             final Task target,
-            final BudgetValue budget,
+            final Budget budget,
             final TLinkType type,
             final short[] indices) {
         this(target, budget, type, indices, RECORD_LENGTH);
@@ -111,7 +121,7 @@ public class TaskLink extends TLink<Task> implements Item {
     public static final TaskLink fromTemplate(
             final Task target,
             final TermLinkTemplate template,
-            final BudgetValue budget) {
+            final Budget budget) {
         return new TaskLink(target, budget, template.getType(), template.getIndices());
     }
 
@@ -125,9 +135,9 @@ public class TaskLink extends TLink<Task> implements Item {
      * @param budget
      * @return
      */
-    public static final TaskLink newSelf(final Task target, final Budget budget) {
+    public static final TaskLink newSelf(final Task target) {
         return new TaskLink(
-                target, new BudgetValue(budget), // * 🚩此处将抽象的「预算」转换为具体的「预算值」
+                target, new BudgetValue(target), // * 🚩此处将抽象的「预算」转换为具体的「预算值」 | 目前只会取「任务」自身的预算值
                 TLinkType.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组
     }
 
@@ -188,7 +198,7 @@ public class TaskLink extends TLink<Task> implements Item {
 
     @Override
     public String toString() {
-        final String superString = getBudget().toString() + " " + getKey().toString();
+        final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
         return superString + " " + getTarget().getStamp();
     }
 

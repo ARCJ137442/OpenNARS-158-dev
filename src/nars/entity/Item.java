@@ -24,10 +24,11 @@ public interface Item extends Budget {
         private final String key;
         private final BudgetValue budget;
 
-        public BagItem(T value, String key, BudgetValue budget) {
+        public BagItem(T value, String key, Budget budget) {
             this.value = value;
             this.key = key;
-            this.budget = budget;
+            // * 🚩不能直接赋值，必须复制构造
+            this.budget = new BudgetValue(budget);
         }
 
         public T getValue() {
@@ -37,11 +38,6 @@ public interface Item extends Budget {
         @Override
         public String getKey() {
             return this.key;
-        }
-
-        @Override
-        public Budget getBudget() {
-            return this.budget;
         }
 
         @Override
@@ -121,13 +117,14 @@ public interface Item extends Budget {
          * @param key    The key value
          * @param budget The initial budget
          */
-        public Token(final String key, final BudgetValue budget) {
+        public Token(final String key, final Budget budget) {
             // * 🚩动态检查可空性
             if (key == null)
                 throw new IllegalArgumentException("key cannot be null");
             if (budget == null)
                 throw new IllegalArgumentException("budget cannot be null");
             this.key = key;
+            // * 🚩【2024-06-07 13:59:21】现在由于「外部构造均以『可预算的』特征对象传递」更加必须使用「复制构造」，否则会共享引用
             this.budget = new BudgetValue(budget); // clone, not assignment
         }
 
@@ -137,13 +134,8 @@ public interface Item extends Budget {
         }
 
         @Override
-        public Budget getBudget() {
-            return budget;
-        }
-
-        @Override
         public String toString() {
-            return getBudget() + " " + getKey();
+            return getBudgetValue() + " " + getKey();
         }
 
         @Override
@@ -166,122 +158,4 @@ public interface Item extends Budget {
      * @return Current key value
      */
     public String getKey();
-
-    /**
-     * Get BudgetValue
-     *
-     * @return Current BudgetValue
-     */
-    public Budget getBudget();
-
-    public default ShortFloat __priority() {
-        return getBudget().__priority();
-    }
-
-    public default ShortFloat __durability() {
-        return getBudget().__durability();
-    }
-
-    public default ShortFloat __quality() {
-        return getBudget().__quality();
-    }
-
-    /**
-     * Get priority value
-     *
-     * @return Current priority value
-     */
-    default public float getPriority() {
-        return getBudget().getPriority();
-    }
-
-    /**
-     * Set priority value
-     *
-     * @param v Set a new priority value
-     */
-    default public void setPriority(float v) {
-        getBudget().setPriority(v);
-    }
-
-    /**
-     * Increase priority value
-     *
-     * @param v The amount of increase
-     */
-    default public void incPriority(float v) {
-        getBudget().incPriority(v);
-    }
-
-    /**
-     * Decrease priority value
-     *
-     * @param v The amount of decrease
-     */
-    default public void decPriority(float v) {
-        getBudget().decPriority(v);
-    }
-
-    /**
-     * Get durability value
-     *
-     * @return Current durability value
-     */
-    default public float getDurability() {
-        return getBudget().getDurability();
-    }
-
-    /**
-     * Set durability value
-     *
-     * @param v The new durability value
-     */
-    default public void setDurability(float v) {
-        getBudget().setDurability(v);
-    }
-
-    /**
-     * Increase durability value
-     *
-     * @param v The amount of increase
-     */
-    default public void incDurability(float v) {
-        getBudget().incDurability(v);
-    }
-
-    /**
-     * Decrease durability value
-     *
-     * @param v The amount of decrease
-     */
-    default public void decDurability(float v) {
-        getBudget().decDurability(v);
-    }
-
-    /**
-     * Get quality value
-     *
-     * @return The quality value
-     */
-    default public float getQuality() {
-        return getBudget().getQuality();
-    }
-
-    /**
-     * Set quality value
-     *
-     * @param v The new quality value
-     */
-    default public void setQuality(float v) {
-        getBudget().setQuality(v);
-    }
-
-    /**
-     * Merge with another Item with identical key
-     *
-     * @param that The Item to be merged
-     */
-    default public void merge(Item that) {
-        getBudget().merge(that.getBudget());
-    }
 }

@@ -3,7 +3,6 @@ package nars.entity;
 import java.util.ArrayList;
 
 import nars.control.ConceptLinking;
-import nars.inference.Budget;
 import nars.inference.UtilityFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
@@ -37,8 +36,18 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     @Override
-    public Budget getBudget() {
-        return token.getBudget();
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
     }
 
     /**
@@ -96,7 +105,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
         if (term instanceof CompoundTerm) {
             // * 🚩只有「复合词项←其内元素」的链接模板
             // * 📝所有信息基于「内容包含」关系
-            // * 📝
             this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(((CompoundTerm) term));
         } else {
             this.linkTemplatesToSelf = null;
@@ -184,7 +192,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     @Override
     public String toString() { // called from concept bag
         if (NARSBatch.isStandAlone()) {
-            final String superString = getBudget().toString() + " " + getKey().toString();
+            final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
             return (superString + " " + getKey());
         } else {
             return getKey();

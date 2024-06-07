@@ -233,17 +233,17 @@ public final class BudgetFunctions extends UtilityFunctions {
      * of times of access, priority 1 will become d, it is a system parameter
      * adjustable in run time.
      *
-     * @param budget            The previous budget value
+     * @param budgetToBeForget  The previous budget value
      * @param forgetRate        The budget for the new item
      * @param relativeThreshold The relative threshold of the bag
      */
-    public static void forget(Budget budget, float forgetRate, float relativeThreshold) {
-        double quality = budget.getQuality() * relativeThreshold; // re-scaled quality
-        final double p = budget.getPriority() - quality; // priority above quality
+    public static void forget(Budget budgetToBeForget, float forgetRate, float relativeThreshold) {
+        double quality = budgetToBeForget.getQuality() * relativeThreshold; // re-scaled quality
+        final double p = budgetToBeForget.getPriority() - quality; // priority above quality
         if (p > 0) {
-            quality += p * Math.pow(budget.getDurability(), 1.0 / (forgetRate * p));
+            quality += p * Math.pow(budgetToBeForget.getDurability(), 1.0 / (forgetRate * p));
         } // priority Durability
-        budget.setPriority((float) quality);
+        budgetToBeForget.setPriority((float) quality);
     }
 
     /**

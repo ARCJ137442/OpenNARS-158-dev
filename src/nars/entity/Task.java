@@ -1,5 +1,8 @@
 package nars.entity;
 
+import nars.inference.Budget;
+import nars.inference.BudgetFunctions;
+
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
  */
@@ -67,14 +70,17 @@ public interface Task extends Sentence, Item {
      * @param that The other Task
      */
     @Override
-    public default void merge(final Item that) {
+    public default void mergeBudget(final Budget that) {
+        if (!(that instanceof Task))
+            throw new IllegalArgumentException(that + " isn't a Task");
+        // * 🚩均为「任务」⇒按照「发生时间」决定「谁并入谁」
         if (getCreationTime() >= ((Task) that).getCreationTime())
-            // * 📝此处需要对内部令牌执行「合并」，以便调用默认方法
             // * ⚠️改成接口后无法使用`super.method`调用默认方法
             // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
-            this.getBudget().merge(that.getBudget());
+            // * 🚩【2024-06-07 13:52:15】目前直接内联接口的默认方法
+            BudgetFunctions.merge(this, that);
         else
-            that.merge(this);
+            BudgetFunctions.merge(that, this);
     }
 
     /**

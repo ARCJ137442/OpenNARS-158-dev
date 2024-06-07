@@ -38,7 +38,7 @@ final class SyllogisticRules {
         final TruthValue value2 = belief.getTruth();
         TruthValue truth1 = null;
         TruthValue truth2 = null;
-        final BudgetValue budget1, budget2;
+        final Budget budget1, budget2;
         if (sentence.isQuestion()) {
             budget1 = BudgetFunctions.backwardWeak(value2, context);
             budget2 = BudgetFunctions.backwardWeak(value2, context);
@@ -75,7 +75,7 @@ final class SyllogisticRules {
         TruthValue truth1 = null;
         TruthValue truth2 = null;
         TruthValue truth3 = null;
-        final BudgetValue budget1, budget2, budget3;
+        final Budget budget1, budget2, budget3;
         final TruthValue value1 = taskSentence.getTruth();
         final TruthValue value2 = belief.getTruth();
         if (taskSentence.isQuestion()) {

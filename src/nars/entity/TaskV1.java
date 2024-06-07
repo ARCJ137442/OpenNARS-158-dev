@@ -19,8 +19,18 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public Budget getBudget() {
-        return token.getBudget();
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
     }
 
     /**
@@ -117,14 +127,14 @@ public class TaskV1 implements Task {
      * 完全构造函数
      * Constructor for an activated task
      *
-     * @param s            The sentence
-     * @param b            The budget
+     * @param sentence     The sentence
+     * @param budget       The budget
      * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
      */
-    public TaskV1(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief, Sentence solution) {
-        this.token = new Token(s.toKey(), b); // change to toKey()
-        this.sentence = s;
+    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Sentence parentBelief, Sentence solution) {
+        this.token = new Token(sentence.toKey(), budget); // change to toKey()
+        this.sentence = sentence;
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
         if (parentBelief != null && parentBelief.isQuestion())
@@ -136,23 +146,23 @@ public class TaskV1 implements Task {
     /**
      * Constructor for input task
      *
-     * @param s The sentence
-     * @param b The budget
+     * @param sentence The sentence
+     * @param budget   The budget
      */
-    public TaskV1(Sentence s, BudgetValue b) {
-        this(s, b, null, null, null);
+    public TaskV1(Sentence sentence, Budget budget) {
+        this(sentence, budget, null, null, null);
     }
 
     /**
      * Constructor for a derived task
      *
-     * @param s            The sentence
-     * @param b            The budget
+     * @param sentence     The sentence
+     * @param budget       The budget
      * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
      */
-    public TaskV1(Sentence s, BudgetValue b, Task parentTask, Sentence parentBelief) {
-        this(s, b, parentTask, parentBelief, null);
+    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Sentence parentBelief) {
+        this(sentence, budget, parentTask, parentBelief, null);
     }
 
     /**
@@ -173,7 +183,7 @@ public class TaskV1 implements Task {
     @Override
     public String toString() {
         final StringBuilder s = new StringBuilder();
-        final String superString = getBudget().toString() + " " + getKey().toString();
+        final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
         s.append(superString).append(" ");
         s.append(getStamp());
         if (parentTask != null) {

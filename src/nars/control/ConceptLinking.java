@@ -148,9 +148,9 @@ public abstract class ConceptLinking {
         final Concept self = context.getCurrentConcept();
         final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
         final Task task = context.getCurrentTask();
-        final Budget taskBudget = task.getBudget();
+        final Budget taskBudget = task;
         // * 🚩对当前任务构造任务链，链接到传入的任务 | 构造「自身」
-        final TaskLink selfLink = TaskLink.newSelf(task, taskBudget); // link type: SELF
+        final TaskLink selfLink = TaskLink.newSelf(task); // link type: SELF
         insertTaskLink(self, memory, selfLink);
         // * 🚩仅在「自身为复合词项」且「词项链模板非空」时准备
         // * 📝只有复合词项会有「对子项的词项链」，子项不会持有「对所属词项的词项链」
@@ -160,7 +160,7 @@ public abstract class ConceptLinking {
         final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
                 taskBudget,
                 self.getLinkTemplatesToSelf().size());
-        if (!subBudget.aboveThreshold())
+        if (!subBudget.budgetAboveThreshold())
             return;
         // * 🚩仅在「预算达到阈值」时：遍历预先构建好的所有「子项词项链模板」，递归链接到任务
         for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {
@@ -189,11 +189,10 @@ public abstract class ConceptLinking {
      * @param taskLink The termLink to be inserted
      */
     private static void insertTaskLink(final Concept self, final Memory memory, final TaskLink taskLink) {
-        final Budget linkBudget = taskLink.getBudget();
         // * 📝注意：任务链の预算 ≠ 任务の预算；「任务链」与「所链接的任务」是不同的Item对象
         self.putInTaskLink(taskLink);
-        // * 🚩插入「任务链」的同时，以「任务链」激活概念
-        memory.activateConcept(self, linkBudget);
+        // * 🚩插入「任务链」的同时，以「任务链」激活概念 | 直接传入【可预算】的任务链
+        memory.activateConcept(self, taskLink);
     }
 
     /**
@@ -214,7 +213,7 @@ public abstract class ConceptLinking {
         final Budget subBudget = BudgetFunctions.distributeAmongLinks(
                 sourceBudget,
                 self.getLinkTemplatesToSelf().size());
-        if (!subBudget.aboveThreshold())
+        if (!subBudget.budgetAboveThreshold())
             return;
         // * 🚩仅在超过阈值时：遍历所有「词项链模板」
         for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {

@@ -133,7 +133,7 @@ public interface Budget {
      *
      * @param that The other Budget
      */
-    public default void merge(Budget that) {
+    public default void mergeBudget(Budget that) {
         BudgetFunctions.merge(this, that);
     }
 
@@ -142,7 +142,7 @@ public interface Budget {
      *
      * @return The summary value
      */
-    public default float summary() {
+    public default float budgetSummary() {
         return UtilityFunctions.aveGeo(__priority().getValue(), __durability().getValue(), __quality().getValue());
     }
 
@@ -153,13 +153,13 @@ public interface Budget {
      *
      * @return The decision on whether to process the Item
      */
-    public default boolean aboveThreshold() {
+    public default boolean budgetAboveThreshold() {
         // * 🚩现在自动用「系统参数」重定向
         return aboveThreshold(Parameters.BUDGET_THRESHOLD);
     }
 
     public default boolean aboveThreshold(float threshold) {
         // * 🚩就是普通的「大于阈值」
-        return summary() >= threshold;
+        return budgetSummary() >= threshold;
     }
 }

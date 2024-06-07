@@ -302,7 +302,7 @@ public class Memory {
      * @param task The input task
      */
     public void inputTask(Task task) {
-        if (task.getBudget().aboveThreshold()) {
+        if (task.budgetAboveThreshold()) {
             recorder.append("!!! Perceived: " + task + "\n");
             this.report(task, ReportType.IN); // report input
             newTasks.add(task); // wait to be processed in the next workCycle

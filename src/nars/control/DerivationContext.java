@@ -276,7 +276,7 @@ public abstract class DerivationContext {
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (sentence.isQuestion()) {
-            final float s = task.getBudget().summary();
+            final float s = task.budgetSummary();
             // float minSilent = memory.getReasoner().getMainWindow().silentW.value() /
             // 100.0f;
             if (s > this.getSilencePercent()) { // only report significant derived Tasks
@@ -294,13 +294,13 @@ public abstract class DerivationContext {
      */
     private void derivedTask(Task task) {
         // * 🚩判断「导出的新任务」是否有价值
-        if (!task.getBudget().aboveThreshold()) {
+        if (!task.budgetAboveThreshold()) {
             memory.getRecorder().append("!!! Ignored: " + task + "\n");
             return;
         }
         // * 🚩报告
         memory.getRecorder().append("!!! Derived: " + task + "\n");
-        final float budget = task.getBudget().summary();
+        final float budget = task.budgetSummary();
         // final float minSilent = memory.getReasoner()
         // .getMainWindow().silentW.value() / 100.0f;
         if (budget > this.getSilencePercent()) { // only report significant derived Tasks
@@ -320,7 +320,7 @@ public abstract class DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
+    public void doublePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget) {
         // * 🚩引入「当前任务」与「新时间戳」
         doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.generateNewStampDouble());
     }
@@ -340,7 +340,7 @@ public abstract class DerivationContext {
             final Task currentTask,
             final Term newContent,
             final TruthValue newTruth,
-            final BudgetValue newBudget,
+            final Budget newBudget,
             final Stamp newStamp) {
         if (newContent == null)
             return;
@@ -352,7 +352,7 @@ public abstract class DerivationContext {
     }
 
     /** 🆕重定向 */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
+    public void doublePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget, boolean revisable) {
         doublePremiseTask(newContent, generateNewStampDouble(), newTruth, newBudget, revisable);
     }
 
@@ -371,7 +371,7 @@ public abstract class DerivationContext {
             final Term newContent,
             final Stamp newStamp,
             final TruthValue newTruth,
-            final BudgetValue newBudget,
+            final Budget newBudget,
             final boolean revisable) {
         if (newContent == null)
             return;
@@ -392,7 +392,7 @@ public abstract class DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public void singlePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
+    public void singlePremiseTask(Term newContent, TruthValue newTruth, Budget newBudget) {
         singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
     }
 
@@ -405,7 +405,7 @@ public abstract class DerivationContext {
      * @param newTruth    The truth value of the sentence in task
      * @param newBudget   The budget value in task
      */
-    public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, BudgetValue newBudget) {
+    public void singlePremiseTask(Term newContent, char punctuation, TruthValue newTruth, Budget newBudget) {
         final Task parentTask = this.getCurrentTask().getParentTask();
         // * 🚩对于「结构转换」的单前提推理，若已有父任务且该任务与父任务相同⇒中止，避免重复推理
         if (parentTask != null && newContent.equals(parentTask.getContent()))
