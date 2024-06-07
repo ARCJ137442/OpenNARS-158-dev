@@ -37,8 +37,6 @@ public class DerivationContextDirect extends DerivationContext {
         // throw new Error("currentBeliefLink: 不符预期的可空情况");
         // if (self.getCurrentTaskLink() != null)
         // throw new Error("currentTaskLink: 不符预期的可空情况");
-        if (self.getSubstitute() != null)
-            throw new Error("substitute: 不符预期的可空情况");
     }
 
     /**

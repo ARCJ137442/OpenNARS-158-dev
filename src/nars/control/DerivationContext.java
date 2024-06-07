@@ -1,7 +1,6 @@
 package nars.control;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -225,24 +224,6 @@ public abstract class DerivationContext {
                         this.getTime())
                 : null;
     }
-
-    /**
-     * The substitution that unify the common term in the Task and the Belief
-     * TODO unused
-     *
-     * * ️📝可空性：？
-     * * 📝可变性：？
-     * * 📝所有权：？
-     */
-    private HashMap<Term, Term> substitute;
-
-    public HashMap<Term, Term> getSubstitute() {
-        return substitute;
-    }
-
-    // public void setSubstitute(HashMap<Term, Term> substitute) {
-    // this.substitute = substitute;
-    // }
 
     /**
      * 构造函数
