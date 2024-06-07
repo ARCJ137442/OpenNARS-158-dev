@@ -148,7 +148,6 @@ public abstract class ConceptLinking {
         final Concept self = context.getCurrentConcept();
         final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
         final Task task = context.getCurrentTask();
-        final Budget taskBudget = task;
         // * 🚩对当前任务构造任务链，链接到传入的任务 | 构造「自身」
         final TaskLink selfLink = TaskLink.newSelf(task); // link type: SELF
         insertTaskLink(self, memory, selfLink);
@@ -158,7 +157,7 @@ public abstract class ConceptLinking {
             return;
         // * 🚩分发并指数递减预算值
         final Budget subBudget = BudgetFunctions.distributeAmongLinks(
-                taskBudget,
+                task,
                 self.getLinkTemplatesToSelf().size());
         if (!subBudget.budgetAboveThreshold())
             return;
@@ -178,7 +177,7 @@ public abstract class ConceptLinking {
             insertTaskLink(componentConcept, memory, tLink);
         }
         // * 🚩从当前词项开始，递归插入词项链 | 📌
-        buildTermLinks(self, memory, taskBudget); // recursively insert TermLink
+        buildTermLinks(self, memory, task); // recursively insert TermLink
     }
 
     /**

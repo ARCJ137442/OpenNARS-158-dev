@@ -83,11 +83,10 @@ public abstract class ProcessDirect {
             // * 🚩否则：继续筛选以放进「新近任务」
             else {
                 // * 🚩筛选
-                final Sentence taskSentence = task;
                 final boolean shouldAddToNovelTasks;
-                if (taskSentence.isJudgment()) {
+                if (task.isJudgment()) {
                     // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
-                    final double exp = taskSentence.getExpectation();
+                    final double exp = task.getExpectation();
                     shouldAddToNovelTasks = exp > Parameters.DEFAULT_CREATION_EXPECTATION;
                 } else
                     shouldAddToNovelTasks = false;
@@ -168,16 +167,15 @@ public abstract class ProcessDirect {
      * * 📌捕获`currentConcept`的所有权
      * * ⚠️不在其中修改实体（预算值 等）
      *
-     * @param taskInput
+     * @param currentTask
      * @return 直接推理上下文 / 空
      */
     private static DerivationContextDirect prepareDirectProcessContext(
             final Memory self,
-            final Task taskInput) {
+            final Task currentTask) {
         // * 🚩准备上下文
         // one of the two places where this variable is set
-        final Task currentTask = taskInput;
-        final Concept taskConcept = self.getConceptOrCreate(taskInput.getContent());
+        final Concept taskConcept = self.getConceptOrCreate(currentTask.getContent());
         if (taskConcept != null) {
             // final Concept currentConcept = taskConcept;
             final Concept currentConcept = self.pickOutConcept(taskConcept.getKey());

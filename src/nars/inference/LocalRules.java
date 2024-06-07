@@ -97,10 +97,8 @@ public class LocalRules {
      */
     public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
         // * 🚩计算真值/预算值
-        final Truth newTruth = newBelief;
-        final Truth oldTruth = oldBelief;
-        final Truth truth = TruthFunctions.revision(newTruth, oldTruth);
-        final Budget budget = BudgetFunctions.revise(newTruth, oldTruth, truth, context);
+        final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
+        final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context);
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
@@ -119,18 +117,17 @@ public class LocalRules {
      */
     public static void trySolution(Sentence belief, Task questionTask, DerivationContext context) {
         // * 🚩预设&断言
-        final Sentence problem = questionTask;
         final Sentence oldBest = questionTask.getBestSolution();
         if (belief == null || !belief.isJudgment())
             throw new IllegalArgumentException("将解答的必须是「判断」");
-        if (problem == null || !problem.isQuestion())
+        if (questionTask == null || !questionTask.isQuestion())
             throw new IllegalArgumentException("要解决的必须是「问题」");
         if (questionTask == null || !questionTask.isQuestion())
             throw new IllegalArgumentException("当前任务必须是「问题」");
         // * 🚩验证这个信念是否为「解决问题的最优解」
-        final float newQ = solutionQuality(problem, belief);
+        final float newQ = solutionQuality(questionTask, belief);
         if (oldBest != null) {
-            final float oldQ = solutionQuality(problem, oldBest);
+            final float oldQ = solutionQuality(questionTask, oldBest);
             // * 🚩新解比旧解还差⇒驳回
             if (oldQ >= newQ)
                 return;
@@ -142,7 +139,7 @@ public class LocalRules {
             context.report(belief, Memory.ReportType.ANSWER);
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
-        final Budget budget = BudgetFunctions.solutionEval(problem, belief, questionTask/* , context */);
+        final Budget budget = BudgetFunctions.solutionEval(questionTask, belief, questionTask/* , context */);
         if (budget != null && budget.budgetAboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, questionTask.getParentBelief());
@@ -179,9 +176,8 @@ public class LocalRules {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
-        final Sentence sentence = task;
-        if (sentence.isJudgment()) {
-            inferToSym((Sentence) sentence, belief, context);
+        if (task.isJudgment()) {
+            inferToSym((Sentence) task, belief, context);
         } else {
             conversion(context);
         }

@@ -3,7 +3,6 @@ package nars.inference;
 import java.util.ArrayList;
 
 import nars.control.DerivationContextTransform;
-import nars.entity.Sentence;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.language.CompoundTerm;
@@ -152,15 +151,14 @@ public class TransformRules {
         if (content == null) {
             return;
         }
-        final Sentence sentence = context.getCurrentTask();
-        final Truth truth = sentence;
+        final Task task = context.getCurrentTask();
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context);
+            budget = BudgetFunctions.compoundForward(task, content, context);
         }
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTask(content, task, budget);
     }
 
     /**

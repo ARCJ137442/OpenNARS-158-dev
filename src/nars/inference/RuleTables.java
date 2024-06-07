@@ -28,8 +28,7 @@ public class RuleTables {
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task;
-        final Term taskTerm = taskSentence.getContent().clone(); // cloning for substitution
+        final Term taskTerm = task.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Sentence belief = context.getCurrentBelief();
         // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
@@ -153,7 +152,7 @@ public class RuleTables {
                                         ((Implication) beliefTerm).getSubject(), taskTerm,
                                         beliefTerm, taskTerm);
                                 if (canDetach) {
-                                    detachmentWithVar(belief, taskSentence, bIndex, context);
+                                    detachmentWithVar(belief, task, bIndex, context);
                                 } else {
                                     SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex, taskTerm, -1,
                                             context);
@@ -220,7 +219,7 @@ public class RuleTables {
                         // * + B="(/,livingIn,_,{graz})"
                         // * @ C="{graz}"
                         if (belief != null)
-                            detachmentWithVar(taskSentence, belief, tIndex, context);
+                            detachmentWithVar(task, belief, tIndex, context);
                         return;
                     case COMPOUND_STATEMENT:
                         // *📄T="<(&&,<$1-->[aggressive]>,<sunglasses-->(/,own,$1,_)>)==><$1-->murder>>"

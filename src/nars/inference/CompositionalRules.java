@@ -204,16 +204,15 @@ public final class CompositionalRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final Statement oldContent = (Statement) task.getContent();
         final Truth v1, v2;
         if (compoundTask) {
-            v1 = sentence;
+            v1 = task;
             v2 = belief;
         } else {
             v1 = belief;
-            v2 = sentence;
+            v2 = task;
         }
         Truth truth = null;
         final Term content;
@@ -294,7 +293,6 @@ public final class CompositionalRules {
             boolean compoundTask, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
         final Sentence belief = context.getCurrentBelief();
         final Term content = reduceComponents(compound, component);
         if (content == null) {
@@ -302,11 +300,11 @@ public final class CompositionalRules {
         }
         Truth truth = null;
         Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
             context.doublePremiseTask(content, truth, budget);
             // special inference to answer conjunctive questions with query variables
-            if (Variable.containVarQ(sentence.getContent().getName())) {
+            if (Variable.containVarQ(task.getContent().getName())) {
                 final Concept contentConcept = context.termToConcept(content);
                 if (contentConcept == null) {
                     return;
@@ -335,18 +333,18 @@ public final class CompositionalRules {
         } else {
             final Truth v1, v2;
             if (compoundTask) {
-                v1 = sentence;
+                v1 = task;
                 v2 = belief;
             } else {
                 v1 = belief;
-                v2 = sentence;
+                v2 = task;
             }
             if (compound instanceof Conjunction) {
-                if (sentence instanceof Sentence) {
+                if (task instanceof Sentence) {
                     truth = TruthFunctions.reduceConjunction(v1, v2);
                 }
             } else if (compound instanceof Disjunction) {
-                if (sentence instanceof Sentence) {
+                if (task instanceof Sentence) {
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
                 }
             } else {
@@ -472,8 +470,7 @@ public final class CompositionalRules {
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence taskSentence = task;
-        if (!taskSentence.isJudgment() || (premise1.getClass() != premise2.getClass())
+        if (!task.isJudgment() || (premise1.getClass() != premise2.getClass())
                 || oldCompound.containComponent(premise1)) {
             return;
         }
@@ -496,7 +493,7 @@ public final class CompositionalRules {
         substitute.put(commonTerm1, new Variable("#varDep2"));
         CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
         content.applySubstitute(substitute);
-        Truth truth = TruthFunctions.intersection(taskSentence, belief);
+        Truth truth = TruthFunctions.intersection(task, belief);
         Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
@@ -509,10 +506,10 @@ public final class CompositionalRules {
             return;
         }
         content.applySubstitute(substitute);
-        if (premise1.equals(taskSentence.getContent())) {
-            truth = TruthFunctions.induction(belief, taskSentence);
+        if (premise1.equals(task.getContent())) {
+            truth = TruthFunctions.induction(belief, task);
         } else {
-            truth = TruthFunctions.induction(taskSentence, belief);
+            truth = TruthFunctions.induction(task, belief);
         }
         budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);

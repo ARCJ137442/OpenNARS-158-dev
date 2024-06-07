@@ -69,18 +69,20 @@ final class StructuralRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        Truth truth = sentence;
+        final Truth truth;
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
+            truth = TruthValue.from(task);
             budget = BudgetFunctions.compoundBackwardWeak(content, context);
         } else {
             if (compound.size() > 1) {
-                if (sentence.isJudgment()) {
-                    truth = TruthFunctions.deduction(truth, RELIANCE);
+                if (task.isJudgment()) {
+                    truth = TruthFunctions.deduction(task, RELIANCE);
                 } else {
                     return;
                 }
+            } else {
+                truth = TruthValue.from(task);
             }
             budget = BudgetFunctions.compoundForward(truth, content, context);
         }
@@ -117,15 +119,16 @@ final class StructuralRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        final Truth truth = sentence;
+        final Truth truth;
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
+            truth = TruthValue.from(task);
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            if (!(sub instanceof Product) && (sub.size() > 1) && (sentence.isJudgment())) {
+            if (!(sub instanceof Product) && (sub.size() > 1) && (task.isJudgment())) {
                 return;
             }
+            truth = TruthValue.from(task);
             budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
@@ -162,10 +165,8 @@ final class StructuralRules {
         }
         final Term component = compound.componentAt(index);
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        final Truth truth = sentence;
-        final Truth truthDed = TruthFunctions.deduction(truth, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(truth, RELIANCE));
+        final Truth truthDed = TruthFunctions.deduction(task, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(task, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (component.equals(subj)) {
@@ -211,10 +212,8 @@ final class StructuralRules {
         }
         final Term component = compound.componentAt(index);
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        final Truth truth = sentence;
-        final Truth truthDed = TruthFunctions.deduction(truth, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(truth, RELIANCE));
+        final Truth truthDed = TruthFunctions.deduction(task, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(task, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (compound.equals(subj)) {
@@ -302,15 +301,13 @@ final class StructuralRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        final Truth truth = sentence;
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context);
+            budget = BudgetFunctions.compoundForward(task, content, context);
         }
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTask(content, task, budget);
     }
 
     /* --------------- Disjunction and Conjunction transform --------------- */
@@ -331,17 +328,17 @@ final class StructuralRules {
         }
         final Term content = (compoundTask ? component : compound);
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        Truth truth = sentence;
+        final Truth truth;
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
+            truth = TruthValue.from(task);
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            if ((sentence.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
-                truth = TruthFunctions.deduction(truth, RELIANCE);
+            if ((task.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
+                truth = TruthFunctions.deduction(task, RELIANCE);
             } else {
                 Truth v1, v2;
-                v1 = TruthFunctions.negation(truth);
+                v1 = TruthFunctions.negation(task);
                 v2 = TruthFunctions.deduction(v1, RELIANCE);
                 truth = TruthFunctions.negation(v2);
             }
@@ -360,16 +357,17 @@ final class StructuralRules {
     static void transformNegation(Term content, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence sentence = task;
-        Truth truth = sentence;
-        if (sentence.isJudgment()) {
-            truth = TruthFunctions.negation(truth);
+        final Truth truth;
+        if (task.isJudgment()) {
+            truth = TruthFunctions.negation(task);
+        } else {
+            truth = TruthValue.from(task);
         }
         final Budget budget;
-        if (sentence.isQuestion()) {
+        if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(truth, content, context);
+            budget = BudgetFunctions.compoundForward(task, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -398,12 +396,12 @@ final class StructuralRules {
                 truth = content instanceof Implication
                         // * 🚩蕴含⇒双重否定
                         ? TruthFunctions.contraposition(sentence)
-                        : sentence;
+                        : TruthValue.from(sentence);
                 budget = BudgetFunctions.compoundForward(truth, content, context);
                 break;
             // * 🚩问题
             case QUESTION_MARK:
-                truth = sentence;
+                truth = TruthValue.from(sentence);
                 budget = content instanceof Implication
                         // * 🚩蕴含⇒弱推理
                         ? BudgetFunctions.compoundBackwardWeak(content, context)

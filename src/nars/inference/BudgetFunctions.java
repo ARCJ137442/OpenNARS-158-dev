@@ -174,8 +174,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return Budget value of the updating task
      */
     static Budget update(Task task, Truth bTruth) {
-        final Truth tTruth = task;
-        final float dif = tTruth.getExpDifAbs(bTruth);
+        final float dif = task.getExpDifAbs(bTruth);
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
         final float quality = truthToQuality(bTruth);
