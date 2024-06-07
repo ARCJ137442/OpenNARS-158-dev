@@ -112,6 +112,14 @@ public class Term implements Cloneable, Comparable<Term> {
     }
 
     /**
+     * 🆕判断是否为「零复杂度」
+     * * 🎯用于部分「除以复杂度」的函数
+     */
+    public boolean zeroComplexity() {
+        return this.getComplexity() == 0;
+    }
+
+    /**
      * Orders among terms: variable < atomic < compound
      *
      * @param that The Term to be compared with the current Term

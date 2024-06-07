@@ -69,6 +69,10 @@ public class Variable extends Term {
         return n.indexOf(Symbols.VAR_INDEPENDENT) >= 0;
     }
 
+    public static boolean containVarI(Term t) {
+        return containVarI(t.getName());
+    }
+
     /**
      * Check whether a string represent a name of a term that contains a
      * dependent variable
@@ -78,6 +82,10 @@ public class Variable extends Term {
      */
     public static boolean containVarD(String n) {
         return n.indexOf(Symbols.VAR_DEPENDENT) >= 0;
+    }
+
+    public static boolean containVarD(Term t) {
+        return containVarD(t.getName());
     }
 
     /**
@@ -91,6 +99,10 @@ public class Variable extends Term {
         return n.indexOf(Symbols.VAR_QUERY) >= 0;
     }
 
+    public static boolean containVarQ(Term t) {
+        return containVarQ(t.getName());
+    }
+
     /**
      * Check whether a string represent a name of a term that contains a
      * variable
@@ -100,6 +112,10 @@ public class Variable extends Term {
      */
     public static boolean containVar(String n) {
         return containVarI(n) || containVarD(n) || containVarQ(n);
+    }
+
+    public static boolean containVar(Term t) {
+        return containVar(t.getName());
     }
 
     /**

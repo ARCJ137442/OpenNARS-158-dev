@@ -299,11 +299,11 @@ public class LocalRules {
         final Term subjB = beliefContent.getSubject();
         final Term predB = beliefContent.getPredicate();
         Term otherTerm;
-        if (Variable.containVarQ(subjT.getName())) {
+        if (Variable.containVarQ(subjT)) {
             otherTerm = (predT.equals(subjB)) ? predB : subjB;
             content = makeStatement(content, otherTerm, predT);
         }
-        if (Variable.containVarQ(predT.getName())) {
+        if (Variable.containVarQ(predT)) {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
             content = makeStatement(content, subjT, otherTerm);
         }

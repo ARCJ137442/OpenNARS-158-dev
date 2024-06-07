@@ -359,9 +359,8 @@ public final class BudgetFunctions extends UtilityFunctions {
         // if (t == null) {
         // t = context.getCurrentTask();
         // }
-        if (tLink == null) {
+        if (tLink == null)
             throw new NullPointerException("t shouldn't be `null`!");
-        }
         float priority = tLink.getPriority();
         float durability = tLink.getDurability() / complexity;
         final float quality = qual / complexity;

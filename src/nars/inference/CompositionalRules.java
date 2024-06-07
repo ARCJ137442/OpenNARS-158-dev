@@ -6,6 +6,8 @@ import nars.control.DerivationContextReason;
 import nars.entity.*;
 import nars.language.*;
 import static nars.control.MakeTerm.*;
+import static nars.io.Symbols.JUDGMENT_MARK;
+import static nars.io.Symbols.QUESTION_MARK;
 
 /**
  * Compound term composition and decomposition rules, with two premises.
@@ -291,29 +293,36 @@ public final class CompositionalRules {
     static void decomposeStatement(
             CompoundTerm compound, Term component,
             boolean compoundTask, DerivationContextReason context) {
-        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
+        // * 🚩删去指定的那个元素
         final Term content = reduceComponents(compound, component);
-        if (content == null) {
+        if (content == null)
             return;
-        }
-        Truth truth = null;
-        Budget budget;
-        if (task.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context);
-            context.doublePremiseTask(content, truth, budget);
-            // special inference to answer conjunctive questions with query variables
-            if (Variable.containVarQ(task.getContent().getName())) {
+        final Truth truth;
+        final Budget budget;
+        switch (task.getPunctuation()) {
+            case QUESTION_MARK:
+                // * 📄(||,A,B)? + A. => B?
+                // * 🚩先将剩余部分作为「问题」提出
+            // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
+                if (!content.zeroComplexity()) {
+                    budget = BudgetFunctions.compoundBackward(content, context);
+                    context.doublePremiseTask(content, null, budget);
+                }
+                // * 🚩再将对应有「概念」与「信念」的内容作为新的「信念」放出
+                // special inference to answer conjunctive questions with query variables
+                if (!Variable.containVarQ(task.getContent()))
+                    return;
+                // * 🚩只有在「回答合取问题」时，取出其中的项构建新任务
                 final Concept contentConcept = context.termToConcept(content);
-                if (contentConcept == null) {
+                if (contentConcept == null)
                     return;
-                }
+                // * 🚩只在「内容对应了概念」时，取出「概念」中的信念
                 final Sentence contentBelief = contentConcept.getBelief(task);
-                if (contentBelief == null) {
+                if (contentBelief == null)
                     return;
-                }
-                // * 💭【2024-05-19 20:48:50】实质上是借助「元素陈述」的内容来修正
+                // * 🚩只在「概念中有信念」时，以这个信念作为「当前信念」构建新任务
                 final Stamp newStamp = Stamp.uncheckedMerge(
                         task.getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
@@ -323,35 +332,36 @@ public final class CompositionalRules {
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
                 final Term conj = makeConjunction(component, content);
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                truth = TruthFunctions.intersection(contentBelief, belief);
+                final Truth truth1 = TruthFunctions.intersection(contentBelief, belief);
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                budget = BudgetFunctions.compoundForward(truth, conj, context);
+                final Budget budget1 = BudgetFunctions.compoundForward(truth1, conj, context);
                 // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
                 // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
-                context.doublePremiseTask(contentTask, conj, truth, budget, newStamp);
-            }
-        } else {
-            final Truth v1, v2;
-            if (compoundTask) {
-                v1 = task;
-                v2 = belief;
-            } else {
-                v1 = belief;
-                v2 = task;
-            }
-            if (compound instanceof Conjunction) {
-                if (task instanceof Sentence) {
-                    truth = TruthFunctions.reduceConjunction(v1, v2);
-                }
-            } else if (compound instanceof Disjunction) {
-                if (task instanceof Sentence) {
-                    truth = TruthFunctions.reduceDisjunction(v1, v2);
-                }
-            } else {
+                context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
                 return;
-            }
-            budget = BudgetFunctions.compoundForward(truth, content, context);
-            context.doublePremiseTask(content, truth, budget);
+            case JUDGMENT_MARK:
+                final Truth v1, v2;
+                if (compoundTask) {
+                    v1 = task;
+                    v2 = belief;
+                } else {
+                    v1 = belief;
+                    v2 = task;
+                }
+                if (!(task instanceof Sentence))
+                    throw new AssertionError("违反前提假定：task不是语句！");
+                if (compound instanceof Conjunction) {
+                    truth = TruthFunctions.reduceConjunction(v1, v2);
+                } else if (compound instanceof Disjunction) {
+                    truth = TruthFunctions.reduceDisjunction(v1, v2);
+                } else {
+                    return;
+                }
+                budget = BudgetFunctions.compoundForward(truth, content, context);
+                context.doublePremiseTask(content, truth, budget);
+                return;
+            default:
+                System.err.println("未知的语句类型: " + task);
         }
     }
 

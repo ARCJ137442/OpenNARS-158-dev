@@ -90,7 +90,7 @@ public abstract class StringParser extends Symbols {
             final Stamp stamp = new Stamp(memory.updateStampCurrentSerial(), time);
             final TruthValue truth = parseTruth(truthString, punctuation);
             final Term content = parseTerm(str.substring(0, last));
-            final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content.getName()));
+            final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content));
             final Sentence sentence = new SentenceV1(content, punctuation, truth, stamp, revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
             return new TaskV1(sentence, budget);

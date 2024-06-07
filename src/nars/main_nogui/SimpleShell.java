@@ -64,6 +64,17 @@ public class SimpleShell {
         return this;
     }
 
+    private void printException(final Exception ex) {
+        String stackTrace = "";
+        for (final StackTraceElement stElement : ex.getStackTrace()) {
+            stackTrace += " @ " + stElement.toString();
+        }
+
+        final String trace = ex.getStackTrace().length > 0 ? stackTrace : "";
+        this.out.println("ERROR: (" + ex.getClass().toGenericString() + ") "
+                + ex.getMessage() + trace);
+    }
+
     /** 欢迎信息 */
     public static final String WELCOME_MESSAGE = "Welcome to the OpenNARS Shell, type some Narsese input and press enter, use questions to get answers, or increase volume with *volume=n with n=0..100";
 
@@ -73,7 +84,11 @@ public class SimpleShell {
         reasoner.getSilenceValue().set(100);
         isRunning = true;
         while (isRunning) {
-            reasoner.tick();
+            try {
+                reasoner.tick();
+            } catch (Exception ex) {
+                this.printException(ex);
+            }
         }
     }
 
@@ -150,23 +165,12 @@ public class SimpleShell {
             }
             // * 🚩异常捕获 & 呈现
             catch (final Exception ex) {
-                printException(ex);
+                shell.printException(ex);
             }
             // * 🚩最终总是「完成输出」
             finally {
                 shell.out.flush();
             }
-        }
-
-        private void printException(final Exception ex) {
-            String stackTrace = "";
-            for (final StackTraceElement stElement : ex.getStackTrace()) {
-                stackTrace += " @ " + stElement.toString();
-            }
-
-            final String trace = ex.getStackTrace().length > 0 ? stackTrace : "";
-            shell.out.println("ERROR: (" + ex.getClass().toGenericString() + ") "
-                    + ex.getMessage() + trace);
         }
     }
 
