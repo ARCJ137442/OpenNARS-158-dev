@@ -12,6 +12,7 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskV1;
 import nars.entity.TruthValue;
+import nars.inference.Budget;
 import nars.language.Term;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
@@ -268,9 +269,10 @@ public abstract class DerivationContext {
      * @param candidateBelief The belief to be used in future inference, for
      *                        forward/backward correspondence
      */
-    public void activatedTask(final BudgetValue budget, final Sentence sentence, final Sentence candidateBelief) {
-        // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以
-        final Task task = new TaskV1(sentence, budget, this.getCurrentTask(), sentence, candidateBelief);
+    public void activatedTask(final Budget budget, final Sentence sentence, final Sentence candidateBelief) {
+        // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
+        final BudgetValue newBudget = new BudgetValue(budget);
+        final Task task = new TaskV1(sentence, newBudget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (sentence.isQuestion()) {

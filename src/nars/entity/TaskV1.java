@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Budget;
 import nars.language.Term;
 
 /**
@@ -18,7 +19,7 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public BudgetValue getBudget() {
+    public Budget getBudget() {
         return token.getBudget();
     }
 
@@ -161,7 +162,7 @@ public class TaskV1 implements Task {
      */
     @Override
     public String toStringBrief() {
-        return getBudget().toStringBrief() + " " + getKey();
+        return this.token.getBudgetValue().toStringBrief() + " " + getKey();
     }
 
     /**

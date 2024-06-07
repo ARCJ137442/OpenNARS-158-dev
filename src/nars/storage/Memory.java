@@ -4,10 +4,10 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.DerivationContext;
-import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
+import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
 import nars.io.IInferenceRecorder;
 import nars.language.Term;
@@ -271,7 +271,7 @@ public class Memory {
      * @param c the concept to be adjusted
      * @param b the new BudgetValue
      */
-    public void activateConcept(final Concept c, final BudgetValue b) {
+    public void activateConcept(final Concept c, final Budget b) {
         // * 🚩存在性检查
         final boolean hasC = concepts.contains(c);
         // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置

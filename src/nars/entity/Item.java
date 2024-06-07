@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Budget;
 import nars.io.ToStringBriefAndLong;
 
 /**
@@ -8,7 +9,7 @@ import nars.io.ToStringBriefAndLong;
  * <p>
  * It has a key and a budget. Cannot be cloned
  */
-public interface Item {
+public interface Item extends Budget {
 
     /**
      * * 📝【2024-06-01 20:35:41】回答{@link Token}中的考虑——困难重重：
@@ -39,8 +40,23 @@ public interface Item {
         }
 
         @Override
-        public BudgetValue getBudget() {
+        public Budget getBudget() {
             return this.budget;
+        }
+
+        @Override
+        public ShortFloat __priority() {
+            return budget.priority;
+        }
+
+        @Override
+        public ShortFloat __durability() {
+            return budget.durability;
+        }
+
+        @Override
+        public ShortFloat __quality() {
+            return budget.quality;
         }
     }
 
@@ -68,6 +84,26 @@ public interface Item {
          * * 📝所有权：始终具所有权
          */
         private final BudgetValue budget;
+
+        /** 🆕用于「预算值」的字符串呈现 */
+        public BudgetValue getBudgetValue() {
+            return budget;
+        }
+
+        @Override
+        public ShortFloat __priority() {
+            return budget.priority;
+        }
+
+        @Override
+        public ShortFloat __durability() {
+            return budget.durability;
+        }
+
+        @Override
+        public ShortFloat __quality() {
+            return budget.quality;
+        }
 
         /**
          * Constructor with default budget
@@ -101,7 +137,7 @@ public interface Item {
         }
 
         @Override
-        public BudgetValue getBudget() {
+        public Budget getBudget() {
             return budget;
         }
 
@@ -112,7 +148,7 @@ public interface Item {
 
         @Override
         public String toStringBrief() {
-            return getBudget().toStringBrief() + " " + getKey();
+            return budget.toStringBrief() + " " + getKey();
         }
 
         /**
@@ -136,7 +172,19 @@ public interface Item {
      *
      * @return Current BudgetValue
      */
-    public BudgetValue getBudget();
+    public Budget getBudget();
+
+    public default ShortFloat __priority() {
+        return getBudget().__priority();
+    }
+
+    public default ShortFloat __durability() {
+        return getBudget().__durability();
+    }
+
+    public default ShortFloat __quality() {
+        return getBudget().__quality();
+    }
 
     /**
      * Get priority value

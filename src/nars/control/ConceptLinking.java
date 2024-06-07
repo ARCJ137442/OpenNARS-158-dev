@@ -148,7 +148,7 @@ public abstract class ConceptLinking {
         final Concept self = context.getCurrentConcept();
         final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
         final Task task = context.getCurrentTask();
-        final BudgetValue taskBudget = task.getBudget();
+        final Budget taskBudget = task.getBudget();
         // * 🚩对当前任务构造任务链，链接到传入的任务 | 构造「自身」
         final TaskLink selfLink = TaskLink.newSelf(task, taskBudget); // link type: SELF
         insertTaskLink(self, memory, selfLink);
@@ -177,7 +177,7 @@ public abstract class ConceptLinking {
             // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
             insertTaskLink(componentConcept, memory, tLink);
         }
-        // * 🚩从当前词项开始，递归插入词项链
+        // * 🚩从当前词项开始，递归插入词项链 | 📌
         buildTermLinks(self, memory, taskBudget); // recursively insert TermLink
     }
 
@@ -189,7 +189,7 @@ public abstract class ConceptLinking {
      * @param taskLink The termLink to be inserted
      */
     private static void insertTaskLink(final Concept self, final Memory memory, final TaskLink taskLink) {
-        final BudgetValue linkBudget = taskLink.getBudget();
+        final Budget linkBudget = taskLink.getBudget();
         // * 📝注意：任务链の预算 ≠ 任务の预算；「任务链」与「所链接的任务」是不同的Item对象
         self.putInTaskLink(taskLink);
         // * 🚩插入「任务链」的同时，以「任务链」激活概念
@@ -203,16 +203,16 @@ public abstract class ConceptLinking {
      * * ❌【2024-05-30 00:49:19】无法断言原先传入的「当前概念」「当前记忆区」「当前任务预算值」都来自「直接推理上下文」
      * * 📝原因：需要递归处理，并在这其中改变self、memory与taskBudget三个参数
      *
-     * @param taskBudget The BudgetValue of the task
+     * @param sourceBudget The BudgetValue of the task
      */
-    private static void buildTermLinks(final Concept self, final Memory memory, final BudgetValue taskBudget) {
+    private static void buildTermLinks(final Concept self, final Memory memory, final Budget sourceBudget) {
         // * 🚩仅在有「词项链模板」时
         if (self.getLinkTemplatesToSelf().isEmpty())
             return;
         // * 🚩分派链接，更新预算值，继续
         // * 📝太大的词项、太远的链接 根据AIKR有所取舍
-        final BudgetValue subBudget = BudgetFunctions.distributeAmongLinks(
-                taskBudget,
+        final Budget subBudget = BudgetFunctions.distributeAmongLinks(
+                sourceBudget,
                 self.getLinkTemplatesToSelf().size());
         if (!subBudget.aboveThreshold())
             return;

@@ -3,6 +3,7 @@ package nars.entity;
 import java.util.ArrayList;
 
 import nars.control.ConceptLinking;
+import nars.inference.Budget;
 import nars.inference.UtilityFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
@@ -36,7 +37,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     @Override
-    public BudgetValue getBudget() {
+    public Budget getBudget() {
         return token.getBudget();
     }
 

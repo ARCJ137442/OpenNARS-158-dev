@@ -320,7 +320,8 @@ public final class CompositionalRules {
                         task.getStamp(),
                         contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
                         context.getTime());
-                final Task contentTask = new TaskV1(contentBelief, task.getBudget());
+                // * 🚩【2024-06-07 13:41:16】现在直接从「任务」构造新的「预算值」
+                final Task contentTask = new TaskV1(contentBelief, new BudgetValue(task));
                 // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
                 final Term conj = makeConjunction(component, content);
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`

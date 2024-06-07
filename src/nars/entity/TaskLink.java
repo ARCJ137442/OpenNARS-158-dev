@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Budget;
 import nars.language.Term;
 import nars.main_nogui.Parameters;
 
@@ -26,7 +27,7 @@ public class TaskLink extends TLink<Task> implements Item {
     }
 
     @Override
-    public BudgetValue getBudget() {
+    public Budget getBudget() {
         return token.getBudget();
     }
 
@@ -124,9 +125,9 @@ public class TaskLink extends TLink<Task> implements Item {
      * @param budget
      * @return
      */
-    public static final TaskLink newSelf(final Task target, final BudgetValue budget) {
+    public static final TaskLink newSelf(final Task target, final Budget budget) {
         return new TaskLink(
-                target, budget,
+                target, new BudgetValue(budget), // * 🚩此处将抽象的「预算」转换为具体的「预算值」
                 TLinkType.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组
     }
 
@@ -199,7 +200,7 @@ public class TaskLink extends TLink<Task> implements Item {
      * @return A simplified String representation of the content
      */
     public String toStringBrief() {
-        return getBudget().toStringBrief() + " " + getKey();
+        return token.getBudgetValue().toStringBrief() + " " + getKey();
     }
 
     public String toStringLong() {

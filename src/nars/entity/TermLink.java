@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Budget;
 import nars.language.Term;
 
 /**
@@ -32,7 +33,7 @@ public class TermLink extends TLink<Term> implements Item {
     }
 
     @Override
-    public BudgetValue getBudget() {
+    public Budget getBudget() {
         return token.getBudget();
     }
 
@@ -51,12 +52,12 @@ public class TermLink extends TLink<Term> implements Item {
     public static final TermLink fromTemplate(
             final Term target,
             final TermLinkTemplate template,
-            final BudgetValue budget) {
+            final Budget budget) {
         // * 🚩生成类型与索引
         final TLinkType type = generateTypeFromTemplate(target, template);
         final short[] indices = template.getIndices();
-        // * 🚩构造
-        return new TermLink(target, budget, type, indices);
+        // * 🚩构造 | 从抽象的「预算」到具体的「预算值」
+        return new TermLink(target, new BudgetValue(budget), type, indices);
     }
 
     /**
@@ -139,7 +140,7 @@ public class TermLink extends TLink<Term> implements Item {
      * @return A simplified String representation of the content
      */
     public String toStringBrief() {
-        return getBudget().toStringBrief() + " " + getKey();
+        return this.token.getBudgetValue().toStringBrief() + " " + getKey();
     }
 
     public String toStringLong() {

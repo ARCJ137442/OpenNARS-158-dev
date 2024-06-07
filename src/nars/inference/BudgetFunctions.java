@@ -192,7 +192,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param nLinks   Number of links
      * @return Budget value for each link
      */
-    public static BudgetValue distributeAmongLinks(final BudgetValue original, final int nLinks) {
+    public static BudgetValue distributeAmongLinks(final Budget original, final int nLinks) {
         final float priority = (float) (original.getPriority() / Math.sqrt(nLinks));
         return new BudgetValue(priority, original.getDurability(), original.getQuality());
     }
@@ -209,7 +209,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param concept The concept
      * @param budget  The budget for the new item
      */
-    public static void activate(final Concept concept, final BudgetValue budget) {
+    public static void activate(final Concept concept, final Budget budget) {
         final float cP = concept.getPriority();
         final float cD = concept.getDurability();
         final float bP = budget.getPriority();
@@ -237,7 +237,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param forgetRate        The budget for the new item
      * @param relativeThreshold The relative threshold of the bag
      */
-    public static void forget(BudgetValue budget, float forgetRate, float relativeThreshold) {
+    public static void forget(Budget budget, float forgetRate, float relativeThreshold) {
         double quality = budget.getQuality() * relativeThreshold; // re-scaled quality
         final double p = budget.getPriority() - quality; // priority above quality
         if (p > 0) {
@@ -253,7 +253,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param baseValue   The budget value to be modified
      * @param adjustValue The budget doing the adjusting
      */
-    public static void merge(BudgetValue baseValue, BudgetValue adjustValue) {
+    public static void merge(Budget baseValue, Budget adjustValue) {
         baseValue.setPriority(Math.max(baseValue.getPriority(), adjustValue.getPriority()));
         baseValue.setDurability(Math.max(baseValue.getDurability(), adjustValue.getDurability()));
         baseValue.setQuality(Math.max(baseValue.getQuality(), adjustValue.getQuality()));

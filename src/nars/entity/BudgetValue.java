@@ -2,13 +2,12 @@ package nars.entity;
 
 import nars.inference.*;
 import nars.io.Symbols;
-import nars.main_nogui.Parameters;
 
 /**
  * A triple of priority (current), durability (decay), and quality (long-term
  * average).
  */
-public class BudgetValue implements Cloneable {
+public class BudgetValue implements Cloneable, Budget {
 
     /** The character that marks the two ends of a budget value */
     private static final char MARK = Symbols.BUDGET_VALUE_MARK;
@@ -25,6 +24,21 @@ public class BudgetValue implements Cloneable {
     protected final ShortFloat durability;
     /** The overall (context-independent) evaluation */
     protected final ShortFloat quality;
+
+    @Override
+    public ShortFloat __priority() {
+        return this.priority;
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.durability;
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.quality;
+    }
 
     /**
      * Default constructor
@@ -53,7 +67,7 @@ public class BudgetValue implements Cloneable {
      *
      * @param v Budget value to be cloned
      */
-    public BudgetValue(BudgetValue v) {
+    public BudgetValue(Budget v) {
         priority = new ShortFloat(v.getPriority());
         durability = new ShortFloat(v.getDurability());
         quality = new ShortFloat(v.getQuality());
@@ -65,143 +79,6 @@ public class BudgetValue implements Cloneable {
     @Override
     public BudgetValue clone() {
         return new BudgetValue(this.getPriority(), this.getDurability(), this.getQuality());
-    }
-
-    /**
-     * Get priority value
-     *
-     * @return The current priority
-     */
-    public float getPriority() {
-        return priority.getValue();
-    }
-
-    /**
-     * Change priority value
-     *
-     * @param v The new priority
-     */
-    public void setPriority(float v) {
-        priority.setValue(v);
-    }
-
-    /**
-     * Increase priority value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public void incPriority(float v) {
-        priority.setValue(UtilityFunctions.or(priority.getValue(), v));
-    }
-
-    /**
-     * Decrease priority value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public void decPriority(float v) {
-        priority.setValue(UtilityFunctions.and(priority.getValue(), v));
-    }
-
-    /**
-     * Get durability value
-     *
-     * @return The current durability
-     */
-    public float getDurability() {
-        return durability.getValue();
-    }
-
-    /**
-     * Change durability value
-     *
-     * @param v The new durability
-     */
-    public void setDurability(float v) {
-        durability.setValue(v);
-    }
-
-    /**
-     * Increase durability value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public void incDurability(float v) {
-        durability.setValue(UtilityFunctions.or(durability.getValue(), v));
-    }
-
-    /**
-     * Decrease durability value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public void decDurability(float v) {
-        durability.setValue(UtilityFunctions.and(durability.getValue(), v));
-    }
-
-    /**
-     * Get quality value
-     *
-     * @return The current quality
-     */
-    public float getQuality() {
-        return quality.getValue();
-    }
-
-    /**
-     * Change quality value
-     *
-     * @param v The new quality
-     */
-    public void setQuality(float v) {
-        quality.setValue(v);
-    }
-
-    /**
-     * Increase quality value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public void incQuality(float v) {
-        quality.setValue(UtilityFunctions.or(quality.getValue(), v));
-    }
-
-    /**
-     * Decrease quality value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public void decQuality(float v) {
-        quality.setValue(UtilityFunctions.and(quality.getValue(), v));
-    }
-
-    /**
-     * Merge one BudgetValue into another
-     *
-     * @param that The other Budget
-     */
-    public void merge(BudgetValue that) {
-        BudgetFunctions.merge(this, that);
-    }
-
-    /**
-     * To summarize a BudgetValue into a single number in [0, 1]
-     *
-     * @return The summary value
-     */
-    public float summary() {
-        return UtilityFunctions.aveGeo(priority.getValue(), durability.getValue(), quality.getValue());
-    }
-
-    /**
-     * Whether the budget should get any processing at all
-     * <p>
-     * to be revised to depend on how busy the system is
-     *
-     * @return The decision on whether to process the Item
-     */
-    public boolean aboveThreshold() {
-        return (summary() >= Parameters.BUDGET_THRESHOLD);
     }
 
     /**
