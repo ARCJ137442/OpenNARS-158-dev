@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Truth;
 import nars.io.Symbols;
 
 /**
@@ -7,7 +8,7 @@ import nars.io.Symbols;
  * * 📌真值类型：频率 & 信度
  * * 📝此类型接近一种「值类型」：所有值只读、写入时复制/重新构造
  */
-public class TruthValue implements Cloneable { // implements Cloneable {
+public class TruthValue implements Truth { // implements Cloneable {
 
     /**
      * The character that marks the two ends of a truth value
@@ -42,6 +43,28 @@ public class TruthValue implements Cloneable { // implements Cloneable {
      */
     private final boolean isAnalytic;
 
+    @Override
+    public ShortFloat __frequency() {
+        return this.frequency;
+    }
+
+    @Override
+    public ShortFloat __confidence() {
+        return this.confidence;
+    }
+
+    @Override
+    public boolean __isAnalytic() {
+        return this.isAnalytic;
+    }
+
+    /** 🆕完全参数构造函数 */
+    private TruthValue(ShortFloat f, ShortFloat c, boolean analytic) {
+        this.frequency = f;
+        this.confidence = c;
+        this.isAnalytic = analytic;
+    }
+
     /**
      * Constructor with two ShortFloats
      * * 🚩默认是「非分析性的」
@@ -55,7 +78,6 @@ public class TruthValue implements Cloneable { // implements Cloneable {
 
     /**
      * Constructor with two ShortFloats
-     * * 📌完全参数构造函数
      * * 🚩限制其中的「信度」在[0,1)之间
      *
      * @param f The frequency value
@@ -63,10 +85,8 @@ public class TruthValue implements Cloneable { // implements Cloneable {
      *
      */
     public TruthValue(float f, float c, boolean analytic) {
-        // * 🚩逐一赋值
-        this.frequency = new ShortFloat(f);
-        this.confidence = new ShortFloat(c);
-        this.isAnalytic = analytic;
+        // * 🚩构造 & 重定向
+        this(new ShortFloat(f), new ShortFloat(c), analytic);
     }
 
     /**
@@ -76,67 +96,7 @@ public class TruthValue implements Cloneable { // implements Cloneable {
      * @param v The truth value to be cloned
      */
     public TruthValue(final TruthValue v) {
-        this.frequency = v.frequency.clone();
-        this.confidence = v.confidence.clone();
-        this.isAnalytic = v.isAnalytic;
-    }
-
-    /**
-     * Get the frequency value
-     *
-     * @return The frequency value
-     */
-    public float getFrequency() {
-        return frequency.getValue();
-    }
-
-    /**
-     * Get the confidence value
-     *
-     * @return The confidence value
-     */
-    public float getConfidence() {
-        return confidence.getValue();
-    }
-
-    /**
-     * Get the isAnalytic flag
-     *
-     * @return The isAnalytic value
-     */
-    public boolean getAnalytic() {
-        return isAnalytic;
-    }
-
-    /**
-     * Calculate the expectation value of the truth value
-     * * 📝从0.5开始逐渐逼近其「频率」，信度越大，越接近真实的「频率」
-     *
-     * @return The expectation value
-     */
-    public float getExpectation() {
-        return (float) (confidence.getValue() * (frequency.getValue() - 0.5) + 0.5);
-    }
-
-    /**
-     * Calculate the absolute difference of the expectation value and that of a
-     * given truth value
-     * * ️📝期望绝对差
-     *
-     * @param t The given value
-     * @return The absolute difference
-     */
-    public float getExpDifAbs(TruthValue t) {
-        return Math.abs(getExpectation() - t.getExpectation());
-    }
-
-    /**
-     * Check if the truth value is negative
-     *
-     * @return True if the frequency is less than 1/2
-     */
-    public boolean isNegative() {
-        return getFrequency() < 0.5;
+        this(v.frequency.clone(), v.confidence.clone(), v.isAnalytic);
     }
 
     /**
