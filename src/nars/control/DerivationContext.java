@@ -329,6 +329,20 @@ public abstract class DerivationContext {
     }
 
     /* --------------- new task building --------------- */
+    /** 产生新时间戳 */
+    protected Stamp generateNewStamp() {
+        // * 🚩使用「当前任务」和「当前信念」产生新时间戳
+        return this.hasCurrentBelief()
+                // * 🚩具有「当前信念」⇒直接合并
+                ? Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
+                        this.getCurrentTask().getStamp(),
+                        // * 📌此处的「时间戳」一定是「当前信念」的时间戳
+                        // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
+                        this.getCurrentBelief().getStamp(),
+                        this.getTime())
+                : null;
+    }
+
     /**
      * Shared final operations by all double-premise rules, called from the
      * rules except StructuralRules
@@ -340,7 +354,7 @@ public abstract class DerivationContext {
      */
     public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget) {
         // * 🚩引入「当前任务」与「新时间戳」
-        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.getNewStamp());
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, this.generateNewStamp());
     }
 
     /**
@@ -369,6 +383,11 @@ public abstract class DerivationContext {
         derivedTask(newTask);
     }
 
+    /** 🆕重定向 */
+    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
+        doublePremiseTask(newContent, generateNewStamp(), newTruth, newBudget, revisable);
+    }
+
     /**
      * Shared final operations by all double-premise rules, called from the
      * rules except StructuralRules
@@ -376,9 +395,16 @@ public abstract class DerivationContext {
      * @param newContent The content of the sentence in task
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
+     * @param newStamp   The stamp in sentence
      * @param revisable  Whether the sentence is revisable
      */
-    public void doublePremiseTask(Term newContent, TruthValue newTruth, BudgetValue newBudget, boolean revisable) {
+
+    private void doublePremiseTask(
+            final Term newContent,
+            final Stamp newStamp,
+            final TruthValue newTruth,
+            final BudgetValue newBudget,
+            final boolean revisable) {
         if (newContent == null)
             return;
 
@@ -419,11 +445,11 @@ public abstract class DerivationContext {
         final Sentence taskSentence = this.getCurrentTask();
         // * 🚩构造新时间戳
         // TODO: 📌研究断言「是否会重复设置」（🎯同义删去newStamp字段）
-        // final Stamp newStamp; // * 📝实际上并不需要动
+        final Stamp newStamp;
         if (taskSentence.isJudgment() || currentBelief == null) {
-            this.newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
+            newStamp = new Stamp(taskSentence.getStamp(), memory.getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            this.newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
+            newStamp = new Stamp(currentBelief.getStamp(), memory.getTime());
         }
         // * 🚩使用新内容构造新语句
         final Sentence newSentence = new SentenceV1(

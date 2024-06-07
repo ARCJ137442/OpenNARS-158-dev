@@ -312,6 +312,7 @@ public class LocalRules {
             otherTerm = (subjT.equals(subjB)) ? predB : subjB;
             content = makeStatement(content, subjT, otherTerm);
         }
+        // * 🚩导出任务
         context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
 }

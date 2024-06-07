@@ -38,10 +38,6 @@ public abstract class ProcessReason {
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
         for (;;) {
-            // * 🚩实际上就是「当前信念」「当前信念链」更改后的「新上下文」
-            // this.context.currentBelief = newBelief;
-            // this.context.currentBeliefLink = newBeliefLink;
-            // this.context.newStamp = newStamp;
             // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
             RuleTables.reason(context);
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
@@ -146,7 +142,6 @@ public abstract class ProcessReason {
                 currentTaskLink,
                 currentBeliefLink,
                 toReasonLinks);
-        // * 🚩终于要轮到「点火」
         return context;
     }
 

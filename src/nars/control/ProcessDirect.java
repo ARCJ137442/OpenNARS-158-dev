@@ -256,6 +256,7 @@ public abstract class ProcessDirect {
             else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 📝OpenNARS 3.0.4亦有覆盖：
                 // * 📄`nal.setTheNewStamp(newStamp, oldStamp, nal.time.time());`
+                // * 🚩现在移入「修正」调用中
                 final boolean hasOverlap = Stamp.haveOverlap(currentStamp, oldStamp);
                 if (!hasOverlap) {
                     // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
