@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -75,7 +76,7 @@ public class SentenceV1 implements Sentence {
         this.content = content;
         this.content.renameVariables();
         this.punctuation = punctuation;
-        this.truth = truth;
+        this.truth = TruthValue.from(truth); // ! 📌【2024-06-07 15:37:46】真值可能为空
         this.stamp = stamp;
         this.revisable = revisable;
         if (stamp == null) {
@@ -96,7 +97,7 @@ public class SentenceV1 implements Sentence {
     public boolean equals(Object that) {
         if (that instanceof Sentence) {
             Sentence t = (Sentence) that;
-            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.getTruth())
+            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.__truth())
                     && stamp.equals(t.getStamp());
         }
         return false;

@@ -8,7 +8,7 @@ import nars.io.Symbols;
  * * 📌真值类型：频率 & 信度
  * * 📝此类型接近一种「值类型」：所有值只读、写入时复制/重新构造
  */
-public class TruthValue implements Truth { // implements Cloneable {
+public class TruthValue implements Truth {
 
     /**
      * The character that marks the two ends of a truth value
@@ -95,8 +95,13 @@ public class TruthValue implements Truth { // implements Cloneable {
      *
      * @param v The truth value to be cloned
      */
-    public TruthValue(final TruthValue v) {
-        this(v.frequency.clone(), v.confidence.clone(), v.isAnalytic);
+    protected TruthValue(final Truth v) {
+        this(v.__frequency().clone(), v.__confidence().clone(), v.__isAnalytic());
+    }
+
+    /** 🎯兼容null的构造函数 */
+    public static TruthValue from(Truth v) {
+        return v == null ? null : new TruthValue(v);
     }
 
     /**

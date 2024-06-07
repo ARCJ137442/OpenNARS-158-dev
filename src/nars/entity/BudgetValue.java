@@ -44,22 +44,24 @@ public class BudgetValue implements Cloneable, Budget {
      * Default constructor
      */
     public BudgetValue() {
-        priority = new ShortFloat(0.01f);
-        durability = new ShortFloat(0.01f);
-        quality = new ShortFloat(0.01f);
+        // priority = new ShortFloat(0.01f);
+        // durability = new ShortFloat(0.01f);
+        // quality = new ShortFloat(0.01f);
+        this(0.01f, 0.01f, 0.01f);
     }
 
     /**
      * Constructor with initialization
+     * * 📌完全参数构造函数
      *
      * @param p Initial priority
      * @param d Initial durability
      * @param q Initial quality
      */
-    public BudgetValue(float p, float d, float q) {
-        priority = new ShortFloat(p);
-        durability = new ShortFloat(d);
-        quality = new ShortFloat(q);
+    public BudgetValue(final float p, final float d, final float q) {
+        this.priority = new ShortFloat(p);
+        this.durability = new ShortFloat(d);
+        this.quality = new ShortFloat(q);
     }
 
     /**
@@ -67,10 +69,16 @@ public class BudgetValue implements Cloneable, Budget {
      *
      * @param v Budget value to be cloned
      */
-    public BudgetValue(Budget v) {
-        priority = new ShortFloat(v.getPriority());
-        durability = new ShortFloat(v.getDurability());
-        quality = new ShortFloat(v.getQuality());
+    protected BudgetValue(Budget v) {
+        // priority = new ShortFloat(v.getPriority());
+        // durability = new ShortFloat(v.getDurability());
+        // quality = new ShortFloat(v.getQuality());
+        this(v.getPriority(), v.getDurability(), v.getQuality());
+    }
+
+    /** 🎯兼容null的构造函数 */
+    public static BudgetValue from(Budget v) {
+        return v == null ? null : new BudgetValue(v);
     }
 
     /**

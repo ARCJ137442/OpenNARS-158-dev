@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Truth;
 import nars.io.Symbols;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
@@ -13,18 +14,33 @@ import nars.language.Term;
  * * 🚩作为一个接口，仅对其中的字段做抽象要求（实现者只要求在这些方法里返回字段或其它表达式）
  * * 🚩所有「字段类接口方法」均【以双下划线开头】并【不带public】
  */
-public interface Sentence extends ToStringBriefAndLong {
+public interface Sentence extends ToStringBriefAndLong, Truth {
 
     // 所有抽象字段
     Term __content();
 
     char __punctuation();
 
-    TruthValue __truth();
+    TruthValue __truth(); // * 🚩【2024-06-07 15:17:47】仍然保留，要用于「生成密钥」
 
     Stamp __stamp();
 
     boolean __revisable();
+
+    @Override
+    default ShortFloat __frequency() {
+        return this.__truth().__frequency();
+    }
+
+    @Override
+    default ShortFloat __confidence() {
+        return this.__truth().__confidence();
+    }
+
+    @Override
+    default boolean __isAnalytic() {
+        return this.__truth().__isAnalytic();
+    }
 
     /**
      * Check whether the judgment is equivalent to another one

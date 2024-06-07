@@ -23,8 +23,8 @@ public class ShortFloat implements Cloneable {
      *
      * @param v The initial value
      */
-    public ShortFloat(short v) {
-        value = v;
+    private ShortFloat(final short v) {
+        this.value = v;
     }
 
     /**
@@ -33,8 +33,8 @@ public class ShortFloat implements Cloneable {
      *
      * @param v The initial value in float
      */
-    public ShortFloat(float v) {
-        setValue(v);
+    public ShortFloat(final float v) {
+        this.setValue(v);
     }
 
     /**

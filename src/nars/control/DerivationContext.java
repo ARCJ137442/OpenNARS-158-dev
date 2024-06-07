@@ -271,7 +271,7 @@ public abstract class DerivationContext {
      */
     public void activatedTask(final Budget budget, final Sentence sentence, final Sentence candidateBelief) {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
-        final BudgetValue newBudget = new BudgetValue(budget);
+        final BudgetValue newBudget = BudgetValue.from(budget);
         final Task task = new TaskV1(sentence, newBudget, this.getCurrentTask(), sentence, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
