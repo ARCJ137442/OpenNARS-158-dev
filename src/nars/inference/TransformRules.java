@@ -32,7 +32,7 @@ public class TransformRules {
      * The TaskLink is of type TRANSFORM,
      * and the conclusion is an equivalent transformation
      * * 📝【2024-05-20 11:46:32】在「直接推理」之后、「概念推理」之前使用
-     * * 📌非空变量：
+     * * 📌「转换推理」唯一入口
      *
      * @param tLink   The task link
      * @param context Reference to the derivation context

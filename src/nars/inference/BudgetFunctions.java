@@ -8,6 +8,7 @@ import nars.language.*;
 
 /**
  * Budget functions for resources allocation
+ * * 📌【2024-06-07 13:15:14】暂时还不能封闭：具体推理控制中要用到
  * TODO: 过程笔记注释
  */
 public final class BudgetFunctions extends UtilityFunctions {

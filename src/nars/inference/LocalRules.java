@@ -32,7 +32,7 @@ public class LocalRules {
      * @param belief  The belief
      * @param context Reference to the derivation context
      */
-    public static void match(DerivationContextReason context) {
+    static void match(DerivationContextReason context) {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
         final Task currentTask = context.getCurrentTask();
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
@@ -175,7 +175,7 @@ public class LocalRules {
      *
      * @param context Reference to the derivation context
      */
-    public static void matchReverse(DerivationContextReason context) {
+    static void matchReverse(DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence belief = context.getCurrentBelief();
@@ -195,7 +195,7 @@ public class LocalRules {
      * @param figure  location of the shared term
      * @param context Reference to the derivation context
      */
-    public static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
+    static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (context.getCurrentTask().isJudgment()) {
             inferToAsym((Sentence) asym, (Sentence) sym, context);

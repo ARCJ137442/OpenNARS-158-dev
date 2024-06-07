@@ -268,7 +268,6 @@ public abstract class ProcessDirect {
         if (task.getBudget().aboveThreshold()) {
             // * 🚩开始尝试解决「问题表」中的所有问题
             for (final Task existedQuestion : self.getQuestions()) {
-                // LocalRules.trySolution(ques, judgment, ques, memory);
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」

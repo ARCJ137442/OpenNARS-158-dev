@@ -13,7 +13,7 @@ import static nars.control.MakeTerm.*;
  * Single-premise inference rules involving compound terms. Input are one
  * sentence (the premise) and one TermLink (indicating a component)
  */
-public final class StructuralRules {
+final class StructuralRules {
 
     private static final float RELIANCE = Parameters.RELIANCE;
 
@@ -154,7 +154,7 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    public static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
+    static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
@@ -203,7 +203,7 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    public static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
+    static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
@@ -275,7 +275,7 @@ public final class StructuralRules {
      * @param side      The location of the indicated term in the premise
      * @param context   Reference to the derivation context
      */
-    public static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
+    static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (compound.size() > 1) {
@@ -323,7 +323,7 @@ public final class StructuralRules {
      * @param compoundTask Whether the compound comes from the task
      * @param context      Reference to the derivation context
      */
-    public static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
+    static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!component.isConstant()) {
@@ -357,7 +357,7 @@ public final class StructuralRules {
      * @param content The premise
      * @param context Reference to the derivation context
      */
-    public static void transformNegation(Term content, DerivationContextReason context) {
+    static void transformNegation(Term content, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Sentence sentence = task;
@@ -380,7 +380,7 @@ public final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    public static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
+    static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
         final Term subject = statement.getSubject();
         final Term predicate = statement.getPredicate();
         // * 🚩生成新内容

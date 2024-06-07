@@ -15,6 +15,7 @@ public class RuleTables {
 
     /**
      * Entry point of the inference engine
+     * * 📌推理引擎「概念推理」的入口
      *
      * TODO: 追溯调用是否均以「导出结论」终止（若有）
      *

@@ -4,6 +4,7 @@ import nars.main_nogui.Parameters;
 
 /**
  * Common functions on real numbers, mostly in [0,1].
+ * * 📌【2024-06-07 13:15:14】暂时还不能封闭：「预算值」和「概念」需要用到
  */
 public class UtilityFunctions {
 
