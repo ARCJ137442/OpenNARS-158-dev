@@ -68,7 +68,6 @@ public abstract class ProcessDirect {
      */
     private static LinkedList<Task> loadFromNewTasks(final Memory self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
-        // TODO: 过程笔记注释
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final LinkedList<Task> mut_newTasks = self.mut_newTasks();
         // don't include new tasks produced in the current workCycle
@@ -94,6 +93,7 @@ public abstract class ProcessDirect {
                 if (shouldAddToNovelTasks)
                     self.mut_novelTasks().putIn(task);
                 else
+                    // * 🚩忽略
                     self.getRecorder().append("!!! Neglected: " + task + "\n");
             }
         }
@@ -328,7 +328,10 @@ public abstract class ProcessDirect {
             final Sentence judgment2 = table.get(i);
             final float rank2 = BudgetFunctions.rankBelief(judgment2);
             if (rank1 >= rank2) {
-                if (isBeliefEquivalent(newSentence, judgment2)) {
+                if (!(newSentence.getContent().equals(judgment2.getContent())
+                        && newSentence.getPunctuation() == judgment2.getPunctuation()))
+                    throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
+                if (Sentence.isBeliefEquivalent(newSentence, judgment2)) {
                     return;
                 }
                 table.add(i, newSentence);
@@ -343,21 +346,6 @@ public abstract class ProcessDirect {
         } else if (i == table.size()) {
             table.add(newSentence);
         }
-    }
-
-    /**
-     * Check whether the judgment is equivalent to another one
-     * <p>
-     * The two may have different keys
-     *
-     * @param that The other judgment
-     * @return Whether the two are equivalent
-     */
-    public static boolean isBeliefEquivalent(Sentence self, Sentence that) {
-        // TODO: 过程笔记注释
-        if (!(self.__content().equals(that.__content()) && self.__punctuation() == that.__punctuation()))
-            throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
-        return (self.__truth().equals(that.__truth()) && self.__stamp().equals(that.__stamp()));
     }
 
     /**

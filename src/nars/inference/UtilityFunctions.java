@@ -6,7 +6,7 @@ import nars.main_nogui.Parameters;
  * Common functions on real numbers, mostly in [0,1].
  * * 📌【2024-06-07 13:15:14】暂时还不能封闭：「预算值」和「概念」需要用到
  */
-public class UtilityFunctions {
+class UtilityFunctions {
 
     /**
      * 🆕扩展逻辑非
@@ -14,7 +14,7 @@ public class UtilityFunctions {
      * @param value
      * @return
      */
-    public static final float not(final float value) {
+    static final float not(final float value) {
         return 1 - value;
     }
 
@@ -24,7 +24,7 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The output that is no larger than each input
      */
-    public static final float and(final float... arr) {
+    static final float and(final float... arr) {
         float product = 1;
         for (final float f : arr) {
             product *= f;
@@ -38,7 +38,7 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The output that is no smaller than each input
      */
-    public static final float or(final float... arr) {
+    static final float or(final float... arr) {
         float product = 1;
         for (final float f : arr) {
             product *= not(f);
@@ -52,7 +52,7 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The arithmetic average the inputs
      */
-    public static final float aveAri(final float... arr) {
+    static final float aveAri(final float... arr) {
         float sum = 0;
         for (final float f : arr) {
             sum += f;
@@ -61,12 +61,12 @@ public class UtilityFunctions {
     }
 
     /** 🆕特别优化 */
-    public static final float aveAri(final float f) {
+    static final float aveAri(final float f) {
         return f;
     }
 
     /** 🆕特别优化 */
-    public static final float aveAri(final float f1, final float f2) {
+    static final float aveAri(final float f1, final float f2) {
         return (f1 + f2) / 2;
     }
 
@@ -76,7 +76,7 @@ public class UtilityFunctions {
      * @param arr The inputs, each in [0, 1]
      * @return The geometric average the inputs
      */
-    public static final float aveGeo(final float... arr) {
+    static final float aveGeo(final float... arr) {
         float product = 1;
         for (final float f : arr) {
             product *= f;
@@ -90,7 +90,7 @@ public class UtilityFunctions {
      * @param w Weight of evidence, a non-negative real number
      * @return The corresponding confidence, in [0, 1)
      */
-    public static final float w2c(final float w) {
+    static final float w2c(final float w) {
         return w / (w + Parameters.HORIZON);
     }
 
@@ -100,7 +100,7 @@ public class UtilityFunctions {
      * @param c confidence, in [0, 1)
      * @return The corresponding weight of evidence, a non-negative real number
      */
-    public static final float c2w(float c) {
+    static final float c2w(float c) {
         return Parameters.HORIZON * c / (1 - c);
     }
 }

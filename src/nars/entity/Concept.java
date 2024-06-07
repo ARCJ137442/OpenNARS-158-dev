@@ -3,7 +3,6 @@ package nars.entity;
 import java.util.ArrayList;
 
 import nars.control.ConceptLinking;
-import nars.inference.UtilityFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
@@ -235,11 +234,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
      *
      * @return The quality value
      */
-    public float getTotalQuality() {
-        // TODO: 过程笔记注释
-        final float linkPriority = termLinks.averagePriority();
-        final float termComplexityFactor = 1.0f / term.getComplexity();
-        return UtilityFunctions.or(linkPriority, termComplexityFactor);
+    public float termLinksAveragePriority() {
+        return this.termLinks.averagePriority();
     }
 
     /**

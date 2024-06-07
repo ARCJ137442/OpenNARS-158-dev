@@ -34,6 +34,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Determine the rank of a judgment by its quality and originality (stamp
      * length), called from Concept
+     * * 📝因为其自身涉及「资源竞争」故放在「预算函数」而非「真值函数」中
      *
      * @param judgment The judgment to be ranked
      * @return The rank of the judgment, according to truth value only
@@ -43,6 +44,19 @@ public final class BudgetFunctions extends UtilityFunctions {
         final float confidence = judgment.getConfidence();
         final float originality = 1.0f / (judgment.getStamp().length() + 1);
         return or(confidence, originality);
+    }
+
+    /**
+     * Recalculate the quality of the concept [to be refined to show
+     * extension/intension balance]
+     *
+     * @return The quality value
+     */
+    public static float conceptTotalQuality(Concept concept) {
+        // TODO: 过程笔记注释
+        final float linkPriority = concept.termLinksAveragePriority();
+        final float termComplexityFactor = 1.0f / concept.getTerm().getComplexity();
+        return UtilityFunctions.or(linkPriority, termComplexityFactor);
     }
 
     /* ----- Functions used both in direct and indirect processing of tasks ----- */
@@ -215,7 +229,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         final float bD = budget.getDurability();
         final float p = or(cP, bP);
         final float d = aveAri(cD, bD);
-        final float q = concept.getTotalQuality(); // ! 📌【2024-05-30 01:25:51】若注释此行，将破坏「同义重构」
+        final float q = conceptTotalQuality(concept); // ! 📌【2024-05-30 01:25:51】若注释此行，将破坏「同义重构」
         concept.setPriority(p);
         concept.setDurability(d);
         concept.setQuality(q);

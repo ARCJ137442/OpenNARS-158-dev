@@ -114,6 +114,22 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
     }
 
     /**
+     * Check whether the judgment is equivalent to another one
+     * <p>
+     * The two may have different keys
+     *
+     * @param that The other judgment
+     * @return Whether the two are equivalent
+     */
+    public static boolean isBeliefEquivalent(Sentence self, Sentence that) {
+        return (
+        // * 🚩真值相等
+        self.__truth().equals(that.__truth())
+                // * 🚩时间戳相等（证据集相同）
+                && self.__stamp().equals(that.__stamp()));
+    }
+
+    /**
      * Get a String representation of the sentence for key of Task and TaskLink
      *
      * @return The String
