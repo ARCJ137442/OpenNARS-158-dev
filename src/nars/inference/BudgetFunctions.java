@@ -77,10 +77,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     static Budget solutionEval(
             final Sentence problem,
             final Sentence solution,
-            final Task questionTask/*
-                                    * ,
-                                    * final DerivationContext context
-                                    */) {
+            final Task questionTask) {
         // final Budget budget;
         // final boolean feedbackToLinks;
         if (problem == null || !problem.isQuestion())
@@ -345,25 +342,22 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Common processing for all inference step
      *
-     * @param qual       Quality of the inference
-     * @param complexity Syntactic complexity of the conclusion
-     * @param memory     Reference to the memory
+     * @param inferenceQuality Quality of the inference
+     * @param complexity       Syntactic complexity of the conclusion
+     * @param memory           Reference to the memory
      * @return Budget of the conclusion task
      */
     private static Budget budgetInference(
-            final float qual,
+            final float inferenceQuality,
             final int complexity,
             final DerivationContextTransform context) {
         final Item tLink = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
-        // if (t == null) {
-        // t = context.getCurrentTask();
-        // }
         if (tLink == null)
             throw new NullPointerException("t shouldn't be `null`!");
         float priority = tLink.getPriority();
         float durability = tLink.getDurability() / complexity;
-        final float quality = qual / complexity;
+        final float quality = inferenceQuality / complexity;
         if (context instanceof DerivationContextReason) {
             final TermLink bLink = ((DerivationContextReason) context).getCurrentBeliefLink();
             if (bLink != null) {

@@ -7,8 +7,7 @@ import nars.entity.TLink.TLinkType;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
-import nars.inference.RuleTables;
-import nars.inference.TransformRules;
+import nars.inference.InferenceEngine;
 import nars.main_nogui.Parameters;
 import nars.storage.Memory;
 
@@ -17,29 +16,32 @@ public abstract class ProcessReason {
     /**
      * 🆕「概念推理」控制机制的入口函数
      */
-    public static void processReason(final Memory self, final boolean noResult) {
+    public static void processReason(final Memory self, final InferenceEngine inferenceEngine, final boolean noResult) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）⇒构建「概念推理上下文」
         final DerivationContextReason context = ProcessReason.preprocessConcept(
                 self,
+                inferenceEngine,
                 noResult);
         if (context == null)
             return;
 
         // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processConcept(context);
+        ProcessReason.processConcept(inferenceEngine, context);
     }
 
     /**
      * Select a concept to fire.
+     * * 📌概念推理 主过程
      */
-    public static void processConcept(final DerivationContextReason context) {
+    public static void processConcept(final InferenceEngine inferenceEngine, final DerivationContextReason context) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
         for (;;) {
             // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
-            RuleTables.reason(context);
+            // * 🚩交给推理引擎做「概念推理」
+            inferenceEngine.reason(context);
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
             final boolean hasNext = context.nextBelief() != null;
             if (!hasNext)
@@ -64,6 +66,7 @@ public abstract class ProcessReason {
      */
     private static DerivationContextReason preprocessConcept(
             final Memory self,
+            final InferenceEngine inferenceEngine,
             final boolean noResult) {
         // * 🚩推理前判断「是否有必要」
         if (!noResult) // necessary?
@@ -108,7 +111,8 @@ public abstract class ProcessReason {
                     self,
                     currentConcept,
                     currentTaskLink);
-            TransformRules.transformTask(currentTaskLink, context);
+            // * 🚩交给「推理引擎」开始做「转换推理」
+            inferenceEngine.transform(context);
             // to turn this into structural inference as below?
             // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
             // * 🚩独立吸收上下文

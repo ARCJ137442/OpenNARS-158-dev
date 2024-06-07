@@ -139,7 +139,7 @@ public class LocalRules {
             context.report(belief, Memory.ReportType.ANSWER);
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
-        final Budget budget = BudgetFunctions.solutionEval(questionTask, belief, questionTask/* , context */);
+        final Budget budget = BudgetFunctions.solutionEval(questionTask, belief, questionTask);
         if (budget != null && budget.budgetAboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, questionTask.getParentBelief());

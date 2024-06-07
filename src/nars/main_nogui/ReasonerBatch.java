@@ -7,6 +7,8 @@ import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
 import nars.entity.Task;
 import nars.gui.MainWindow;
+import nars.inference.InferenceEngine;
+import nars.inference.InferenceEngineV1;
 import nars.io.InputChannel;
 import nars.io.OutputChannel;
 import nars.io.StringParser;
@@ -66,6 +68,11 @@ public class ReasonerBatch {
      * * 🚩从`Stamp.currentSerial`迁移过来
      */
     private long stampCurrentSerial = 0;
+
+    /**
+     * 🆕使用的推理引擎
+     */
+    private final InferenceEngine inferenceEngine = new InferenceEngineV1();
 
     /**
      * 🆕获取自身时间戳序列号，并在此同时更新
@@ -234,7 +241,7 @@ public class ReasonerBatch {
         final boolean noResult = ProcessDirect.processDirect(this.memory);
 
         // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processReason(this.memory, noResult);
+        ProcessReason.processReason(this.memory, this.inferenceEngine, noResult);
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段

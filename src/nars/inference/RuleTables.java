@@ -23,7 +23,7 @@ public class RuleTables {
      * @param bLink   The selected TermLink, which may provide a belief
      * @param context Reference to the derivation context
      */
-    public static void reason(DerivationContextReason context) {
+    static void reason(DerivationContextReason context) {
         final Term conceptTerm = context.getCurrentTerm();
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();

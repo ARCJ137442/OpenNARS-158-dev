@@ -30,14 +30,15 @@ public class TransformRules {
      * The TaskLink is of type TRANSFORM,
      * and the conclusion is an equivalent transformation
      * * 📝【2024-05-20 11:46:32】在「直接推理」之后、「概念推理」之前使用
-     * * 📌「转换推理」唯一入口
+     * * 📌推理引擎「转换推理」的唯一入口
      *
      * @param tLink   The task link
      * @param context Reference to the derivation context
      */
-    public static void transformTask(TaskLink tLink, DerivationContextTransform context) {
+    static void transformTask(DerivationContextTransform context) {
         // TODO: 过程笔记注释
-        // * 🚩预处理
+        // * 🚩预处理 | 📌【2024-06-07 23:12:34】断定其中的「tLink」就是「当前任务链」
+        final TaskLink tLink = context.getCurrentTaskLink();
         final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
         final short[] indices = tLink.getIndices();
         final Term inh;
