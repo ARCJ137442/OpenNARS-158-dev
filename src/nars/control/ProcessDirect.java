@@ -257,10 +257,8 @@ public abstract class ProcessDirect {
                 // * 🚩现在将「当前信念」「新时间戳」移入「修正」调用中
                 final boolean hasOverlap = Stamp.haveOverlap(currentStamp, oldStamp);
                 if (!hasOverlap) {
-                    // ! 📝【2024-05-19 21:35:45】此处导致`currentBelief`不能只读
-                    context.setCurrentBelief(oldBelief); // TODO: 拔除此处
-                    // ! ⚠️会用到`currentBelief` @ LocalRules.revision/doublePremiseTask
-                    // * 📝↑用法仅限于「父信念」
+                    // * 📌【2024-06-07 11:38:02】现在由于「新时间戳」的内置，经检查不再需要设置「当前信念」
+                    // * 📌此处的「当前信念」直接取`oldBelief`，并以此构造时间戳
                     LocalRules.revision(judgment, oldBelief, context);
                 }
             }

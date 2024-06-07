@@ -194,9 +194,8 @@ public abstract class DerivationContext {
     }
 
     /**
-     * 设置当前任务
-     * * 📝在「概念推理」仅在准备阶段设置
-     * * 📝在「直接推理」会在推理过程中设置
+     * 设置当前信念
+     * * 📝仅在「直接推理」之前、「概念推理」切换概念时用到
      */
     protected void setCurrentBelief(Sentence currentBelief) {
         this.currentBelief = currentBelief;
@@ -317,14 +316,12 @@ public abstract class DerivationContext {
             return;
         }
         // * 🚩报告
-        {
-            memory.getRecorder().append("!!! Derived: " + task + "\n");
-            final float budget = task.getBudget().summary();
-            // final float minSilent = memory.getReasoner()
-            // .getMainWindow().silentW.value() / 100.0f;
-            if (budget > this.getSilencePercent()) { // only report significant derived Tasks
-                report(task, ReportType.OUT);
-            }
+        memory.getRecorder().append("!!! Derived: " + task + "\n");
+        final float budget = task.getBudget().summary();
+        // final float minSilent = memory.getReasoner()
+        // .getMainWindow().silentW.value() / 100.0f;
+        if (budget > this.getSilencePercent()) { // only report significant derived Tasks
+            report(task, ReportType.OUT);
         }
         // * 🚩将「导出的新任务」添加到「新任务表」中
         newTasks.add(task);

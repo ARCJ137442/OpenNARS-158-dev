@@ -106,8 +106,7 @@ public class LocalRules {
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp currentStamp = newBelief.getStamp();
         final Stamp oldStamp = oldBelief.getStamp();
-        final Stamp newStamp = Stamp.merge(currentStamp, oldStamp, context.getTime());
-        // context.setNewStamp(newStamp);
+        final Stamp newStamp = Stamp.uncheckedMerge(currentStamp, oldStamp, context.getTime());
         context.doublePremiseTask(context.getCurrentTask(), content, truth, budget, newStamp);
     }
 

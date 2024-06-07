@@ -120,7 +120,7 @@ public class DerivationContextReason extends DerivationContextTransform {
                 // * 🚩找到新的「信念」充当currentBelief
                 // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」
                 : beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
-        // * 🚩最后设置二者的值（可空性相对独立）
+        // * 🚩最后设置当前信念（可空性相对独立）
         this.setCurrentBelief(newBelief);
     }
 
