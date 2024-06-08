@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -163,5 +164,12 @@ public class SentenceV1 implements Sentence {
     public String sentenceToString() {
         // ! 不予实现
         throw new UnsupportedOperationException("Unimplemented method 'sentenceToString'");
+    }
+
+    @Override
+    public Sentence sentenceCloneWithSamePunctuation(Term content, Term newContent, Truth newTruth, Stamp newStamp,
+            boolean revisable) {
+        // ! 不予实现
+        throw new UnsupportedOperationException("Unimplemented method 'sentenceCloneWithSamePunctuation'");
     }
 }

@@ -11,6 +11,16 @@ public interface Judgement extends Sentence, Truth {
     // return JUDGMENT_MARK;
     // }
 
+    @Override
+    default boolean isJudgment() {
+        return true;
+    }
+
+    @Override
+    default Judgement asJudgement() {
+        return this;
+    }
+
     /**
      * Check whether the judgment is equivalent to another one
      * <p>

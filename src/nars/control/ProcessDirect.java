@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
+import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Task;
 import nars.inference.BudgetFunctions;
@@ -84,7 +85,7 @@ public abstract class ProcessDirect {
                 final boolean shouldAddToNovelTasks;
                 if (task.isJudgment()) {
                     // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
-                    final double exp = task.getExpectation();
+                    final double exp = task.asJudgement().getExpectation();
                     shouldAddToNovelTasks = exp > Parameters.DEFAULT_CREATION_EXPECTATION;
                 } else
                     shouldAddToNovelTasks = false;
@@ -236,9 +237,9 @@ public abstract class ProcessDirect {
         // * 🚩断言传入任务的「语句」一定是「判断」
         if (!task.isJudgment())
             throw new Error("task " + task + "is not a judgment");
-        final Sentence judgment = task.sentenceClone(); // ? 此处是否要将「任务」直接作为「信念」存储
+        final Judgement judgment = task.sentenceClone().asJudgement(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
-        final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
+        final Judgement oldBelief = evaluation(judgment, self.getBeliefs());
         if (oldBelief != null) {
             if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
@@ -295,7 +296,7 @@ public abstract class ProcessDirect {
         final Sentence question = newQuestion ? questionTask : existedQuestion;
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
-        final Sentence newAnswer = evaluation(question, self.getBeliefs());
+        final Judgement newAnswer = evaluation(question, self.getBeliefs());
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, questionTask, context);
@@ -315,11 +316,11 @@ public abstract class ProcessDirect {
      * @param table     The table to be revised
      * @param capacity  The capacity of the table
      */
-    public static Sentence addBelief(
+    public static Judgement addBelief(
             final Concept self,
-            final Sentence newBelief) {
+            final Judgement newBelief) {
         // * 🚩固定的参数：朝「信念表」中插入内容，容量来自超参数
-        final ArrayList<Sentence> table = self.getBeliefs();
+        final ArrayList<Judgement> table = self.getBeliefs();
         final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
 
         // * 🚩按排行计算信念应处在的位置
@@ -361,14 +362,14 @@ public abstract class ProcessDirect {
     /** 🆕提取出的「计算排行」函数 */
     private static int getBeliefRank(
             final Concept self,
-            final Sentence newBelief) {
-        final ArrayList<Sentence> table = self.getBeliefs();
+            final Judgement newBelief) {
+        final ArrayList<Judgement> table = self.getBeliefs();
         // * 🚩按排行计算信念应处在的位置
         final float rankNew = BudgetFunctions.rankBelief(newBelief); // for the new isBelief
         int iToAdd = 0;
         for (; iToAdd < table.size(); iToAdd++) {
             // * 🚩获取待比较的信念
-            final Sentence existedBelief = table.get(iToAdd);
+            final Judgement existedBelief = table.get(iToAdd);
             final float rankExisted = BudgetFunctions.rankBelief(existedBelief);
             // * 🚩总体顺序：从大到小（一旦比当前的大，那就在前边插入）
             if (rankNew >= rankExisted) {
@@ -378,7 +379,7 @@ public abstract class ProcessDirect {
                 if (!sameContentAndPunctuation)
                     throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
                 // * 🚩若内容完全等价⇒不予理睬（添加失败）
-                if (Sentence.isBeliefEquivalent(newBelief, existedBelief)) {
+                if (Judgement.isBeliefEquivalent(newBelief, existedBelief)) {
                     return -1; // * 🚩标记为「不予添加」
                 }
                 // * 🚩标记待插入的位置
@@ -417,14 +418,14 @@ public abstract class ProcessDirect {
      * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
-    private static Sentence evaluation(final Sentence query, final Iterable<Sentence> list) {
+    private static Judgement evaluation(final Sentence query, final Iterable<Judgement> list) {
         // TODO: 过程笔记注释
         if (list == null)
             return null;
         float currentBest = 0;
         float beliefQuality;
-        Sentence candidate = null;
-        for (final Sentence judgment : list) {
+        Judgement candidate = null;
+        for (final Judgement judgment : list) {
             beliefQuality = LocalRules.solutionQuality(query, judgment);
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;

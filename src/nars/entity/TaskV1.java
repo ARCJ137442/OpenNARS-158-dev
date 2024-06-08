@@ -1,6 +1,7 @@
 package nars.entity;
 
 import nars.inference.Budget;
+import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -165,12 +166,12 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public Sentence getParentBelief() {
+    public Judgement getParentBelief() {
         return this.parentBelief;
     }
 
     @Override
-    public Sentence getBestSolution() {
+    public Judgement getBestSolution() {
         return this.bestSolution;
     }
 
@@ -204,6 +205,8 @@ public class TaskV1 implements Task {
         return this.taskToStringLong();
     }
 
+    // impl Sentence for TaskV1
+
     @Override
     public String toKey() {
         return this.sentence.toKey();
@@ -212,5 +215,31 @@ public class TaskV1 implements Task {
     @Override
     public String sentenceToString() {
         return this.sentence.sentenceToString();
+    }
+
+    @Override
+    public Sentence sentenceCloneWithSamePunctuation(Term content, Term newContent, Truth newTruth, Stamp newStamp,
+            boolean revisable) {
+        return this.sentence.sentenceCloneWithSamePunctuation(content, newContent, newTruth, newStamp, revisable);
+    }
+
+    @Override
+    public boolean isJudgment() {
+        return this.sentence.isJudgment();
+    }
+
+    @Override
+    public Judgement asJudgement() {
+        return this.sentence.asJudgement();
+    }
+
+    @Override
+    public boolean isQuestion() {
+        return this.sentence.isQuestion();
+    }
+
+    @Override
+    public Question asQuestion() {
+        return this.sentence.asQuestion();
     }
 }

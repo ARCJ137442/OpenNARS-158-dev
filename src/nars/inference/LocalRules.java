@@ -37,14 +37,14 @@ public class LocalRules {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
         final Task currentTask = context.getCurrentTask();
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
 
         // * 🚩按照标点分派
         switch (currentTask.getPunctuation()) {
             // * 🚩判断⇒尝试修正
             case JUDGMENT_MARK:
                 if (revisable(currentTask, belief))
-                    revision(currentTask, belief, context);
+                    revision(currentTask.asJudgement(), belief, context);
                 return;
             // * 🚩问题⇒尝试回答「特殊疑问」（此处用「变量替换」解决查询变量）
             case QUESTION_MARK:
@@ -96,7 +96,7 @@ public class LocalRules {
      * @param feedbackToLinks Whether to send feedback to the links
      * @param context         Reference to the derivation context
      */
-    public static void revision(Sentence newBelief, Sentence oldBelief, DerivationContext context) {
+    public static void revision(Judgement newBelief, Judgement oldBelief, DerivationContext context) {
         // * 🚩计算真值/预算值
         final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
         final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context);
@@ -116,7 +116,7 @@ public class LocalRules {
      */
     public static void trySolution(Judgement belief, Task questionTask, DerivationContext context) {
         // * 🚩预设&断言
-        final Sentence oldBest = questionTask.getBestSolution();
+        final Judgement oldBest = questionTask.getBestSolution();
         if (belief == null || !belief.isJudgment())
             throw new IllegalArgumentException("将解答的必须是「判断」");
         if (questionTask == null || !questionTask.isQuestion())
@@ -138,7 +138,7 @@ public class LocalRules {
             context.report(belief, Memory.ReportType.ANSWER);
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
-        final Budget budget = BudgetFunctions.solutionEval(questionTask, belief, questionTask);
+        final Budget budget = BudgetFunctions.solutionEval(questionTask.asQuestion(), belief, questionTask);
         if (budget != null && budget.budgetAboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, questionTask.getParentBelief());
@@ -152,7 +152,7 @@ public class LocalRules {
      * @param solution The solution to be evaluated
      * @return The quality of the judgment as the solution
      */
-    public static float solutionQuality(Sentence problem, Sentence solution) {
+    public static float solutionQuality(Sentence problem, Judgement solution) {
         // TODO: 过程笔记注释
         if (problem == null) {
             return solution.getExpectation();
@@ -174,9 +174,9 @@ public class LocalRules {
     static void matchReverse(DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         if (task.isJudgment()) {
-            inferToSym((Sentence) task, belief, context);
+            inferToSym(task.asJudgement(), belief, context);
         } else {
             conversion(context);
         }
@@ -190,10 +190,11 @@ public class LocalRules {
      * @param figure  location of the shared term
      * @param context Reference to the derivation context
      */
-    static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
+    static void matchAsymSym(Judgement asym, Judgement sym, int figure, DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (context.getCurrentTask().isJudgment()) {
-            inferToAsym((Sentence) asym, (Sentence) sym, context);
+            // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
+            inferToAsym(asym, sym, context);
         } else {
             convertRelation(context);
         }
@@ -209,7 +210,7 @@ public class LocalRules {
      * @param judgment2 The second premise
      * @param context   Reference to the derivation context
      */
-    private static void inferToSym(Sentence judgment1, Sentence judgment2, DerivationContextReason context) {
+    private static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement s1 = (Statement) judgment1.getContent();
         final Term t1 = s1.getSubject();
@@ -235,7 +236,7 @@ public class LocalRules {
      * @param sym     The symmetric premise
      * @param context Reference to the derivation context
      */
-    private static void inferToAsym(Sentence asym, Sentence sym, DerivationContextReason context) {
+    private static void inferToAsym(Judgement asym, Judgement sym, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement statement = (Statement) asym.getContent();
         final Term sub = statement.getPredicate();

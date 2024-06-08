@@ -1,6 +1,6 @@
 package nars.entity;
 
-import nars.io.Symbols;
+import nars.inference.Truth;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.language.Variable;
@@ -64,7 +64,15 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      * @return Whether the object is a Judgment
      */
     public default boolean isJudgment() {
-        return (this.getPunctuation() == Symbols.JUDGMENT_MARK);
+        return false;
+    }
+
+    /**
+     * 🆕作为一个判断句使用
+     * * 🚩是判断句⇒判断句对象，否⇒报错
+     */
+    public default Judgement asJudgement() {
+        throw new IllegalStateException("不是判断句");
     }
 
     /**
@@ -73,7 +81,15 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      * @return Whether the object is a Question
      */
     public default boolean isQuestion() {
-        return this.getPunctuation() == Symbols.QUESTION_MARK;
+        return false;
+    }
+
+    /**
+     * 🆕作为一个判断句使用
+     * * 🚩是判断句⇒判断句对象，否⇒报错
+     */
+    public default Question asQuestion() {
+        throw new IllegalStateException("不是疑问句");
     }
 
     public default boolean containQueryVar() {
@@ -116,10 +132,14 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
 
     /**
      * 🆕用于「新任务建立」
+     * * 🚩使用最大并集（可设置为空）建立同标点新语句
+     * * 📄判断⇒判断，问题⇒问题
      *
      * @return
      */
-    public Sentence withSamePunctuation(Term content) {
-        // TODO: 【2024-06-08 15:11:31】最后开发断点
-    }
+    public Sentence sentenceCloneWithSamePunctuation(Term content,
+            final Term newContent,
+            final Truth newTruth,
+            final Stamp newStamp,
+            final boolean revisable);
 }

@@ -28,7 +28,7 @@ final class SyllogisticRules {
      * @param belief   The second premise
      * @param context  Reference to the derivation context
      */
-    static void dedExe(Term term1, Term term2, Sentence sentence, Sentence belief,
+    static void dedExe(Term term1, Term term2, Sentence sentence, Judgement belief,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2)) {
@@ -65,7 +65,7 @@ final class SyllogisticRules {
      * @param figure       Locations of the shared term in premises
      * @param context      Reference to the derivation context
      */
-    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Sentence belief, int figure,
+    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Judgement belief, int figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
@@ -144,7 +144,7 @@ final class SyllogisticRules {
      * @param figure   Locations of the shared term in premises
      * @param context  Reference to the derivation context
      */
-    static void resemblance(Term term1, Term term2, Sentence belief, Sentence sentence, int figure,
+    static void resemblance(Term term1, Term term2, Judgement belief, Sentence sentence, int figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2)) {
@@ -198,7 +198,7 @@ final class SyllogisticRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final Truth truth;
         final Budget budget;
         if (task.isQuestion()) {
@@ -242,7 +242,7 @@ final class SyllogisticRules {
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
@@ -328,7 +328,7 @@ final class SyllogisticRules {
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
@@ -427,7 +427,7 @@ final class SyllogisticRules {
             return false;
         }
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         if (term1 != null) {
             final Term content;
             final Truth truth;
@@ -482,7 +482,7 @@ final class SyllogisticRules {
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final Truth v1 = task;
         final Truth v2 = belief;
         final Truth truth;

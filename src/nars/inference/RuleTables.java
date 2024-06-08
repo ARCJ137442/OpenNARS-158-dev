@@ -30,7 +30,7 @@ public class RuleTables {
         final Task task = context.getCurrentTask();
         final Term taskTerm = task.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
         // * 📌依据：`long_term_stability.nal`
         // * 📄ONA中的结果有两个：
@@ -260,7 +260,7 @@ public class RuleTables {
             DerivationContextReason context) {
         // * ❌【2024-06-04 21:21:08】放弃使用switch「case 常量+常量」方式：无法「部分default」
         final Sentence taskSentence = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final int figure;
         switch (taskTerm.operator() + beliefTerm.operator()) {
             // * 🚩继承 +
@@ -342,7 +342,7 @@ public class RuleTables {
      * @param figure   The location of the shared term
      * @param context  Reference to the derivation context
      */
-    private static void asymmetricAsymmetric(Sentence sentence, Sentence belief, int figure,
+    private static void asymmetricAsymmetric(Sentence sentence, Judgement belief, int figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement s1 = (Statement) sentence.cloneContent();
@@ -480,7 +480,7 @@ public class RuleTables {
      * @param figure       The location of the shared term
      * @param context      Reference to the derivation context
      */
-    private static void symmetricSymmetric(Sentence belief, Sentence taskSentence, int figure,
+    private static void symmetricSymmetric(Judgement belief, Sentence taskSentence, int figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement s1 = (Statement) belief.cloneContent();

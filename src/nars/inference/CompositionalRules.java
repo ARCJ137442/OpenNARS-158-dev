@@ -18,8 +18,8 @@ import static nars.io.Symbols.QUESTION_MARK;
 public final class CompositionalRules {
 
     static void IntroVarSameSubjectOrPredicate(
-            Sentence originalMainSentence,
-            Sentence subSentence, Term component,
+            Judgement originalMainSentence,
+            Judgement subSentence, Term component,
             CompoundTerm content, int index,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
@@ -100,7 +100,7 @@ public final class CompositionalRules {
             decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, index, false, context);
             return;
         }
-        final Truth truthT = context.getCurrentTask();
+        final Truth truthT = context.getCurrentTask().asJudgement();
         final Truth truthB = context.getCurrentBelief();
         final Truth truthOr = TruthFunctions.union(truthT, truthB);
         final Truth truthAnd = TruthFunctions.intersection(truthT, truthB);
@@ -205,16 +205,16 @@ public final class CompositionalRules {
         if (term2 == null) {
             return;
         }
-        final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
-        final Statement oldContent = (Statement) task.getContent();
+        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
+        final Judgement belief = context.getCurrentBelief();
+        final Statement oldContent = (Statement) taskJudgement.getContent();
         final Truth v1, v2;
         if (compoundTask) {
-            v1 = task;
+            v1 = taskJudgement;
             v2 = belief;
         } else {
             v1 = belief;
-            v2 = task;
+            v2 = taskJudgement;
         }
         Truth truth = null;
         final Term content;
@@ -294,7 +294,7 @@ public final class CompositionalRules {
             CompoundTerm compound, Term component,
             boolean compoundTask, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         // * 🚩删去指定的那个元素
         final Term content = reduceComponents(compound, component);
         if (content == null)
@@ -319,7 +319,7 @@ public final class CompositionalRules {
                 if (contentConcept == null)
                     return;
                 // * 🚩只在「内容对应了概念」时，取出「概念」中的信念
-                final Sentence contentBelief = contentConcept.getBelief(task);
+                final Judgement contentBelief = contentConcept.getBelief(task);
                 if (contentBelief == null)
                     return;
                 // * 🚩只在「概念中有信念」时，以这个信念作为「当前信念」构建新任务
@@ -342,11 +342,11 @@ public final class CompositionalRules {
             case JUDGMENT_MARK:
                 final Truth v1, v2;
                 if (compoundTask) {
-                    v1 = task;
+                    v1 = task.asJudgement();
                     v2 = belief;
                 } else {
                     v1 = belief;
-                    v2 = task;
+                    v2 = task.asJudgement();
                 }
                 if (!(task instanceof Sentence))
                     throw new AssertionError("违反前提假定：task不是语句！");
@@ -380,7 +380,7 @@ public final class CompositionalRules {
             Statement beliefContent,
             int index, DerivationContextReason context) {
         // TODO: 过程笔记注释
-        final Truth truthT = context.getCurrentTask();
+        final Truth truthT = context.getCurrentTask().asJudgement();
         final Truth truthB = context.getCurrentBelief();
         final Variable varInd = new Variable("$varInd1");
         final Variable varInd2 = new Variable("$varInd2");
@@ -498,12 +498,12 @@ public final class CompositionalRules {
         } else {
             return;
         }
-        final Sentence belief = context.getCurrentBelief();
+        final Judgement belief = context.getCurrentBelief();
         final HashMap<Term, Term> substitute = new HashMap<>();
         substitute.put(commonTerm1, new Variable("#varDep2"));
         CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
         content.applySubstitute(substitute);
-        Truth truth = TruthFunctions.intersection(task, belief);
+        Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
         Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
@@ -517,9 +517,9 @@ public final class CompositionalRules {
         }
         content.applySubstitute(substitute);
         if (premise1.equals(task.getContent())) {
-            truth = TruthFunctions.induction(belief, task);
+            truth = TruthFunctions.induction(belief, task.asJudgement());
         } else {
-            truth = TruthFunctions.induction(task, belief);
+            truth = TruthFunctions.induction(task.asJudgement(), belief);
         }
         budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);

@@ -39,7 +39,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param judgment The judgment to be ranked
      * @return The rank of the judgment, according to truth value only
      */
-    public static float rankBelief(Sentence judgment) {
+    public static float rankBelief(Judgement judgment) {
         // * 🚩两个指标：信度 + 原创性（时间戳长度）
         final float confidence = judgment.getConfidence();
         final float originality = 1.0f / (judgment.evidenceLength() + 1);
@@ -75,8 +75,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      *         necessary
      */
     static Budget solutionEval(
-            final Sentence problem,
-            final Sentence solution,
+            final Question problem,
+            final Judgement solution,
             final Task questionTask) {
         // final Budget budget;
         // final boolean feedbackToLinks;
@@ -179,13 +179,14 @@ public final class BudgetFunctions extends UtilityFunctions {
 
     /**
      * Update a belief
+     * * ⚠️要求此中之「任务」必须是「判断句」
      *
      * @param task   The task containing new belief
      * @param bTruth Truth value of the previous belief
      * @return Budget value of the updating task
      */
     static Budget update(Task task, Truth bTruth) {
-        final float dif = task.getExpDifAbs(bTruth);
+        final float dif = task.asJudgement().getExpDifAbs(bTruth);
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
         final float quality = truthToQuality(bTruth);

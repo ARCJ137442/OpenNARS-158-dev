@@ -57,7 +57,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Sentences directly made about the term, with non-future tense
      */
-    private final ArrayList<Sentence> beliefs;
+    private final ArrayList<Judgement> beliefs;
     /**
      * Reference to the memory
      * TODO: 有待移除
@@ -183,7 +183,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
      */
-    public ArrayList<Sentence> getBeliefs() {
+    public ArrayList<Judgement> getBeliefs() {
         return this.beliefs;
     }
 
@@ -267,15 +267,15 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param taskSentence The selected task
      * @return The selected isBelief
      */
-    public Sentence getBelief(Sentence taskSentence) {
+    public Judgement getBelief(Sentence taskSentence) {
         // * 🚩此处按「信念排名」从大到小遍历；第一个满足「证据基不重复」的信念将被抽取
-        for (final Sentence belief : beliefs) {
+        for (final Judgement belief : beliefs) {
             // * 📝在OpenNARS 3.0.4中会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
             // * ✅【2024-06-08 10:13:46】现在彻底删除newStamp字段，不再需要覆盖了
             if (!taskSentence.evidentialOverlap(belief)) {
                 memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
-                final Sentence selected = belief.sentenceClone(); // will this mess up priority adjustment?
+                final Judgement selected = (Judgement) belief.sentenceClone(); // will this mess up priority adjustment?
                 return selected;
             }
         }

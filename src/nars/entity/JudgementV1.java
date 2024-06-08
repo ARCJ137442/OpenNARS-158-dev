@@ -35,8 +35,6 @@ public class JudgementV1 implements Judgement {
         this.truth = j.truth.clone();
     }
 
-    // impl Judgement for JudgementV1
-
     // impl Truth for JudgementV1
 
     @Override
@@ -52,6 +50,11 @@ public class JudgementV1 implements Judgement {
     @Override
     public boolean __isAnalytic() {
         return this.truth.__isAnalytic();
+    }
+
+    @Override
+    public Truth truthClone() {
+        return this.truth.clone();
     }
 
     // impl Hash for SentenceV1
@@ -131,5 +134,16 @@ public class JudgementV1 implements Judgement {
     @Override
     public long __creationTime() {
         return this.inner.__creationTime();
+    }
+
+    // impl Judgement for JudgementV1
+
+    @Override
+    public Sentence sentenceCloneWithSamePunctuation(Term content,
+            final Term newContent,
+            final Truth newTruth,
+            final Stamp newStamp,
+            final boolean revisable) {
+        return new JudgementV1(content, newTruth, newStamp, revisable);
     }
 }

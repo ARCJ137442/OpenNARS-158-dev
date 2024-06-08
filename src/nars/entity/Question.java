@@ -9,6 +9,16 @@ public interface Question extends Sentence {
     // return QUESTION_MARK;
     // }
 
+    @Override
+    default boolean isQuestion() {
+        return true;
+    }
+
+    @Override
+    default Question asQuestion() {
+        return this;
+    }
+
     /**
      * Get a String representation of the sentence for key of Task and TaskLink
      *

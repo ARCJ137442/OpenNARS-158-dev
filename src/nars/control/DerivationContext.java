@@ -1,5 +1,8 @@
 package nars.control;
 
+import static nars.io.Symbols.JUDGMENT_MARK;
+import static nars.io.Symbols.QUESTION_MARK;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
@@ -7,11 +10,13 @@ import java.util.Random;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Judgement;
+import nars.entity.JudgementV1;
+import nars.entity.QuestionV1;
 import nars.entity.Sentence;
-import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskV1;
+import nars.entity.TruthValue;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
@@ -312,6 +317,25 @@ public abstract class DerivationContext {
     }
 
     /* --------------- new task building --------------- */
+    public static Sentence newSentenceFromPunctuation(
+            final Term newContent,
+            final char punctuation,
+            final Truth newTruth,
+            final Stamp newStamp, boolean revisable) {
+        switch (punctuation) {
+            case JUDGMENT_MARK:
+                return new JudgementV1(newContent, newTruth, newStamp, revisable);
+            case QUESTION_MARK:
+                return new QuestionV1(newContent, newStamp, revisable);
+            default:
+                throw new IllegalArgumentException("未知的标点：" + punctuation);
+        }
+    }
+
+    public static Truth cloneTruthFromTask(final Task task) {
+        return (task instanceof Truth) ? TruthValue.from((Truth) task) : null;
+    }
+
     /**
      * Shared final operations by all double-premise rules, called from the
      * rules except StructuralRules
@@ -347,7 +371,7 @@ public abstract class DerivationContext {
             return;
         // * 🚩仅在「任务内容」可用时构造
         final char newPunctuation = currentTask.getPunctuation();
-        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, true);
+        final Sentence newSentence = newSentenceFromPunctuation(newContent, newPunctuation, newTruth, newStamp, true);
         final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), this.currentBelief);
         derivedTask(newTask);
     }
@@ -380,7 +404,8 @@ public abstract class DerivationContext {
         // * 🚩仅在「任务内容」可用时构造
         final Sentence taskSentence = this.getCurrentTask();
         final char newPunctuation = taskSentence.getPunctuation();
-        final Sentence newSentence = new SentenceV1(newContent, newPunctuation, newTruth, newStamp, revisable);
+        final Sentence newSentence = newSentenceFromPunctuation(newContent, newPunctuation, newTruth, newStamp,
+                revisable);
         final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), currentBelief);
         derivedTask(newTask);
     }
@@ -393,8 +418,13 @@ public abstract class DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public void singlePremiseTask(Term newContent, Truth newTruth, Budget newBudget) {
-        singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
+    public void singlePremiseTask(Term newContent, Task currentTask, Budget newBudget) {
+        singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), currentTask, newBudget);
+    }
+
+    public void singlePremiseTask(Term newContent, char punctuation, Task currentTask, Budget newBudget) {
+        final Truth newTruth = cloneTruthFromTask(currentTask);
+        singlePremiseTask(newContent, punctuation, newTruth, newBudget);
     }
 
     /**
@@ -415,7 +445,7 @@ public abstract class DerivationContext {
         // * 🚩构造新时间戳
         final Stamp newStamp = this.generateNewStampSingle();
         // * 🚩使用新内容构造新语句
-        final Sentence newSentence = new SentenceV1(
+        final Sentence newSentence = newSentenceFromPunctuation(
                 newContent, punctuation,
                 newTruth, newStamp,
                 taskSentence.getRevisable());

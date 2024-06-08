@@ -2,6 +2,7 @@ package nars.entity;
 
 import static nars.io.Symbols.QUESTION_MARK;
 
+import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -102,5 +103,16 @@ public class QuestionV1 implements Question {
     @Override
     public long __creationTime() {
         return this.inner.__creationTime();
+    }
+
+    // impl Judgement for JudgementV1
+
+    @Override
+    public Sentence sentenceCloneWithSamePunctuation(Term content,
+            final Term newContent,
+            final Truth newTruth,
+            final Stamp newStamp,
+            final boolean revisable) {
+        return new QuestionV1(content, newStamp, revisable);
     }
 }

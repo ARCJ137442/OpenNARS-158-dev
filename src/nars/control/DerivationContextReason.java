@@ -3,7 +3,7 @@ package nars.control;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
-import nars.entity.Sentence;
+import nars.entity.Judgement;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
@@ -113,7 +113,7 @@ public class DerivationContextReason extends DerivationContextTransform {
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
         final Term beliefTerm = newBeliefLink.getTarget();
         final Concept beliefConcept = this.termToConcept(beliefTerm);
-        final Sentence newBelief = beliefConcept == null
+        final Judgement newBelief = beliefConcept == null
                 ? null
                 // * 🚩找到新的「信念」充当currentBelief
                 // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」

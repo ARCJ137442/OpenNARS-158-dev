@@ -73,17 +73,17 @@ final class StructuralRules {
         final Truth truth;
         final Budget budget;
         if (task.isQuestion()) {
-            truth = TruthValue.from(task);
+            truth = null;
             budget = BudgetFunctions.compoundBackwardWeak(content, context);
         } else {
             if (compound.size() > 1) {
                 if (task.isJudgment()) {
-                    truth = TruthFunctions.deduction(task, RELIANCE);
+                    truth = TruthFunctions.deduction(task.asJudgement(), RELIANCE);
                 } else {
                     return;
                 }
             } else {
-                truth = TruthValue.from(task);
+                truth = task.asJudgement().truthClone();
             }
             budget = BudgetFunctions.compoundForward(truth, content, context);
         }
@@ -123,13 +123,13 @@ final class StructuralRules {
         final Truth truth;
         final Budget budget;
         if (task.isQuestion()) {
-            truth = TruthValue.from(task);
+            truth = null;
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
             if (!(sub instanceof Product) && (sub.size() > 1) && (task.isJudgment())) {
                 return;
             }
-            truth = TruthValue.from(task);
+            truth = task.asJudgement().truthClone();
             budget = BudgetFunctions.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
@@ -165,9 +165,9 @@ final class StructuralRules {
             return;
         }
         final Term component = compound.componentAt(index);
-        final Task task = context.getCurrentTask();
-        final Truth truthDed = TruthFunctions.deduction(task, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(task, RELIANCE));
+        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
+        final Truth truthDed = TruthFunctions.deduction(taskJudgement, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(taskJudgement, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (component.equals(subj)) {
@@ -212,9 +212,9 @@ final class StructuralRules {
             return;
         }
         final Term component = compound.componentAt(index);
-        final Task task = context.getCurrentTask();
-        final Truth truthDed = TruthFunctions.deduction(task, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(task, RELIANCE));
+        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
+        final Truth truthDed = TruthFunctions.deduction(taskJudgement, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(taskJudgement, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (compound.equals(subj)) {
@@ -306,7 +306,7 @@ final class StructuralRules {
         if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(task, content, context);
+            budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
         }
         context.singlePremiseTask(content, task, budget);
     }

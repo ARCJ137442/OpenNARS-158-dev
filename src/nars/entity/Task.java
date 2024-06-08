@@ -15,7 +15,7 @@ public interface Task extends Sentence, Item {
      *
      * @return The belief from which the task is derived
      */
-    public Sentence getParentBelief();
+    public Judgement getParentBelief();
 
     /**
      * Get the parent task of a task
@@ -31,7 +31,7 @@ public interface Task extends Sentence, Item {
      *
      * @return The stored Sentence or null
      */
-    public Sentence getBestSolution();
+    public Judgement getBestSolution();
 
     /**
      * Set the best-so-far solution for a Question or Goal, and report answer
