@@ -10,7 +10,7 @@ public interface RankTable<E> extends Iterable<E> {
     public int size();
 
     /** 表内最大元素数量（容量） */
-    public int getCapacity();
+    public int capacity();
 
     /**
      * 【核心】排行函数
@@ -71,7 +71,7 @@ public interface RankTable<E> extends Iterable<E> {
             return newElement;
         if (iToAdd == tableSize)
             // * 🚩插入到末尾
-            if (tableSize == this.getCapacity())
+            if (tableSize == this.capacity())
                 // * 🚩超出容量⇒添加失败
                 return newElement;
             else
@@ -82,9 +82,9 @@ public interface RankTable<E> extends Iterable<E> {
 
         // * 🚩排行表溢出 | 📌一次只增加一个
         final int newSize = this.size();
-        if (newSize > this.getCapacity()) {
+        if (newSize > this.capacity()) {
             // * 🚩缩减容量到限定的容量
-            if (newSize - this.getCapacity() > 1)
+            if (newSize - this.capacity() > 1)
                 throw new AssertionError("【2024-06-08 10:07:31】断言：一次只会添加一个，并且容量不会突然变化");
             // * 🚩从末尾移除，返回移除后的元素
             return this.__pop();

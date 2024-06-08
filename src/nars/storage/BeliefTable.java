@@ -9,13 +9,16 @@ import nars.main.Parameters;
 
 public class BeliefTable implements RankTable<Judgement> {
     private final ArrayList<Judgement> inner;
+    private int capacity;
 
     public BeliefTable() {
-        this.inner = new ArrayList<Judgement>();
+        // * 🚩默认使用「超参数」中的长度
+        this(Parameters.MAXIMUM_BELIEF_LENGTH);
     }
 
     public BeliefTable(int capacity) {
-        this.inner = new ArrayList<Judgement>();
+        this.capacity = capacity;
+        this.inner = new ArrayList<Judgement>(capacity);
     }
 
     // impl Iterator<Judgement> for BeliefTable
@@ -33,8 +36,8 @@ public class BeliefTable implements RankTable<Judgement> {
     }
 
     @Override
-    public int getCapacity() {
-        return Parameters.MAXIMUM_BELIEF_LENGTH;
+    public int capacity() {
+        return this.capacity;
     }
 
     @Override
