@@ -107,22 +107,28 @@ public class TaskV1 implements Task {
     private Sentence bestSolution;
 
     @Override
-    public Task __parentTask() {
+    public Task getParentTask() {
         return this.parentTask;
     }
 
     @Override
-    public Sentence __parentBelief() {
+    public Sentence getParentBelief() {
         return this.parentBelief;
     }
 
     @Override
-    public Sentence __bestSolution() {
+    public Sentence getBestSolution() {
         return this.bestSolution;
     }
 
     @Override
-    public void __bestSolution_set(Sentence sentence) {
+    public void setBestSolution(Sentence judgment) {
+        if (!this.isQuestion())
+            throw new IllegalArgumentException(this + " is not question");
+        if (judgment == null)
+            throw new NullPointerException("judgment == null");
+        if (!judgment.isJudgment())
+            throw new IllegalArgumentException(judgment + " is not judgment");
         // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
         this.bestSolution = sentence;
         // this.bestSolution = sentence.cloneSentence();

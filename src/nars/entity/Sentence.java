@@ -21,7 +21,8 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
 
     char __punctuation();
 
-    TruthValue __truth(); // * 🚩【2024-06-07 15:17:47】仍然保留，要用于「生成密钥」
+    // * 🚩【2024-06-07 15:17:47】仍然保留，语句可能没有「真值」
+    TruthValue __truth();
 
     // * ✅【2024-06-08 11:36:18】成功删除：通过`stampToString`成功解耦
 

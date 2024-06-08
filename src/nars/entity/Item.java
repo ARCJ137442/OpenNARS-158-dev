@@ -12,6 +12,13 @@ import nars.io.ToStringBriefAndLong;
 public interface Item extends Budget {
 
     /**
+     * Get the current key
+     *
+     * @return Current key value
+     */
+    public String getKey();
+
+    /**
      * * 📝【2024-06-01 20:35:41】回答{@link Token}中的考虑——困难重重：
      * * 虽然设计上确实能在最后通过复合对象「BagItem<Task>」等解耦存储，
      * * 但实际上仍然解决不了「随时更新预算值」的耦合
@@ -151,11 +158,4 @@ public interface Item extends Budget {
             return toString();
         }
     }
-
-    /**
-     * Get the current key
-     *
-     * @return Current key value
-     */
-    public String getKey();
 }
