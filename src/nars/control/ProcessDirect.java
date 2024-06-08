@@ -269,7 +269,7 @@ public abstract class ProcessDirect {
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」
-            addBelief(judgment, self.getBeliefs(), Parameters.MAXIMUM_BELIEF_LENGTH);
+            addBelief(self, judgment);
         }
     }
 
@@ -312,40 +312,84 @@ public abstract class ProcessDirect {
     /**
      * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
      * and remove redundant or low rank one
+     * * 🚩添加到固定容量的缓冲区，并返回溢出的那个（溢出==所添加 ⇒ 添加失败）
      *
-     * @param newSentence The judgment to be processed
-     * @param table       The table to be revised
-     * @param capacity    The capacity of the table
+     * @param newBelief The judgment to be processed
+     * @param table     The table to be revised
+     * @param capacity  The capacity of the table
      */
-    public static void addBelief(
-            final Sentence newSentence,
-            final ArrayList<Sentence> table,
-            final int capacity) {
-        // TODO: 过程笔记注释
-        final float rank1 = BudgetFunctions.rankBelief(newSentence); // for the new isBelief
-        int i;
-        for (i = 0; i < table.size(); i++) {
-            final Sentence judgment2 = table.get(i);
-            final float rank2 = BudgetFunctions.rankBelief(judgment2);
-            if (rank1 >= rank2) {
-                if (!(newSentence.getContent().equals(judgment2.getContent())
-                        && newSentence.getPunctuation() == judgment2.getPunctuation()))
+    public static Sentence addBelief(
+            final Concept self,
+            final Sentence newBelief) {
+        // * 🚩固定的参数：朝「信念表」中插入内容，容量来自超参数
+        final ArrayList<Sentence> table = self.getBeliefs();
+        final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
+
+        // * 🚩按排行计算信念应处在的位置
+        final int iToAdd = getBeliefRank(self, newBelief);
+        final int tableSize = table.size();
+
+        // TODO: 将「信念」独立出一个「缓冲区」类型
+
+        // * 🚩将新信念插入到「信念表」的索引i位置（可以是末尾）
+        if (iToAdd < 0)
+            // * 🚩添加失败
+            return newBelief;
+        if (iToAdd == tableSize)
+            // * 🚩插入到末尾
+            if (tableSize == capacity)
+                // * 🚩超出容量⇒添加失败
+                return newBelief;
+            else
+                table.add(newBelief);
+        else
+            // * 🚩插入到中间
+            table.add(iToAdd, newBelief);
+
+        // * 🚩缓冲区溢出 | 📌一次只增加一个
+        final int newSize = table.size();
+        if (newSize > capacity) {
+            // * 🚩缩减容量到限定的容量
+            if (newSize - capacity > 1)
+                throw new AssertionError("【2024-06-08 10:07:31】断言：一次只会添加一个，并且容量不会突然变化");
+            final int iToRemove = newSize - 1;
+            // * 🚩从末尾移除，返回移除后的元素
+            return table.remove(iToRemove);
+        }
+
+        // * 🚩最终添加成功，且没有信念被移除
+        return null;
+    }
+
+    /** 🆕提取出的「计算排行」函数 */
+    private static int getBeliefRank(
+            final Concept self,
+            final Sentence newBelief) {
+        final ArrayList<Sentence> table = self.getBeliefs();
+        // * 🚩按排行计算信念应处在的位置
+        final float rankNew = BudgetFunctions.rankBelief(newBelief); // for the new isBelief
+        int iToAdd = 0;
+        for (; iToAdd < table.size(); iToAdd++) {
+            // * 🚩获取待比较的信念
+            final Sentence existedBelief = table.get(iToAdd);
+            final float rankExisted = BudgetFunctions.rankBelief(existedBelief);
+            // * 🚩总体顺序：从大到小（一旦比当前的大，那就在前边插入）
+            if (rankNew >= rankExisted) {
+                // * 🚩断言内容、标点相等
+                final boolean sameContentAndPunctuation = newBelief.getContent().equals(existedBelief.getContent())
+                        && newBelief.getPunctuation() == existedBelief.getPunctuation();
+                if (!sameContentAndPunctuation)
                     throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
-                if (Sentence.isBeliefEquivalent(newSentence, judgment2)) {
-                    return;
+                // * 🚩若内容完全等价⇒不予理睬（添加失败）
+                if (Sentence.isBeliefEquivalent(newBelief, existedBelief)) {
+                    return -1; // * 🚩标记为「不予添加」
                 }
-                table.add(i, newSentence);
-                break;
+                // * 🚩标记待插入的位置
+                return iToAdd;
             }
         }
-        // * 🚩缓冲区溢出
-        if (table.size() >= capacity) {
-            while (table.size() > capacity) {
-                table.remove(table.size() - 1);
-            }
-        } else if (i == table.size()) {
-            table.add(newSentence);
-        }
+        // * 🚩一直到末尾
+        return iToAdd;
     }
 
     /**

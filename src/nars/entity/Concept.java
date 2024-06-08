@@ -257,14 +257,15 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @return The selected isBelief
      */
     public Sentence getBelief(Sentence taskSentence) {
-        // TODO: 过程笔记注释
+        // * 🚩此处按「信念排名」从大到小遍历；第一个满足「证据基不重复」的信念将被抽取
         for (final Sentence belief : beliefs) {
-            memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
-            // * 📝在OpenNARS 3.0.4中也会被覆盖：
+            // * 📝在OpenNARS 3.0.4中会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
+            // * ✅【2024-06-08 10:13:46】现在彻底删除newStamp字段，不再需要覆盖了
             if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
-                final Sentence belief2 = belief.cloneSentence(); // will this mess up priority adjustment?
-                return belief2;
+                memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
+                final Sentence selected = belief.cloneSentence(); // will this mess up priority adjustment?
+                return selected;
             }
         }
         return null;

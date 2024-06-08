@@ -8,6 +8,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
+import nars.inference.LocalRules;
 import nars.main.Parameters;
 import nars.storage.Memory;
 
@@ -41,6 +42,10 @@ public abstract class ProcessReason {
         for (;;) {
             // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
             // * 🚩交给推理引擎做「概念推理」
+            // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
+            if (context.getCurrentBelief() != null) {
+                LocalRules.matchTaskAndBelief(context);
+            }
             inferenceEngine.reason(context);
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
             final boolean hasNext = context.nextBelief() != null;

@@ -120,6 +120,7 @@ public class Variable extends Term {
 
     /**
      * To unify two terms
+     * * ⚠️会改变词项自身
      *
      * @param type The type of variable that can be substituted
      * @param t1   The first term
@@ -132,6 +133,7 @@ public class Variable extends Term {
 
     /**
      * To unify two terms
+     * * ⚠️会改变词项自身
      *
      * @param type      The type of variable that can be substituted
      * @param t1        The first term to be unified
@@ -142,19 +144,22 @@ public class Variable extends Term {
      */
     public static boolean unify(char type, Term t1, Term t2, Term compound1, Term compound2) {
         // TODO: 过程笔记注释
-        HashMap<Term, Term> map1 = new HashMap<>();
-        HashMap<Term, Term> map2 = new HashMap<>();
-        boolean hasSubs = findSubstitute(type, t1, t2, map1, map2); // find substitution
+        final HashMap<Term, Term> map1 = new HashMap<>();
+        final HashMap<Term, Term> map2 = new HashMap<>();
+        // * 🚩主逻辑：寻找替代
+        final boolean hasSubs = findSubstitute(type, t1, t2, map1, map2); // find substitution
         if (hasSubs) {
             // renameVar(map1, compound1, "-1");
             // renameVar(map2, compound2, "-2");
             if (!map1.isEmpty()) {
-                ((CompoundTerm) compound1).applySubstitute(map1);
-                ((CompoundTerm) compound1).renameVariables();
+                final CompoundTerm c1 = ((CompoundTerm) compound1);
+                c1.applySubstitute(map1);
+                c1.renameVariables();
             }
             if (!map2.isEmpty()) {
-                ((CompoundTerm) compound2).applySubstitute(map2);
-                ((CompoundTerm) compound2).renameVariables();
+                final CompoundTerm c2 = ((CompoundTerm) compound2);
+                c2.applySubstitute(map2);
+                c2.renameVariables();
             }
         }
         return hasSubs;
@@ -174,15 +179,15 @@ public class Variable extends Term {
     private static boolean findSubstitute(char type, Term term1, Term term2,
             HashMap<Term, Term> map1, HashMap<Term, Term> map2) {
         // TODO: 过程笔记注释
-        Term t;
+        final Term t;
         if ((term1 instanceof Variable) && (((Variable) term1).getType() == type)) {
-            Variable var1 = (Variable) term1;
+            final Variable var1 = (Variable) term1;
             t = map1.get(var1);
             if (t != null) { // already mapped
                 return findSubstitute(type, t, term2, map1, map2);
             } else { // not mapped yet
                 if ((term2 instanceof Variable) && (((Variable) term2).getType() == type)) {
-                    Variable CommonVar = makeCommonVariable(term1, term2);
+                    final Variable CommonVar = makeCommonVariable(term1, term2);
                     map1.put(var1, CommonVar); // unify
                     map2.put(term2, CommonVar); // unify
                 } else {
@@ -194,7 +199,7 @@ public class Variable extends Term {
                 return true;
             }
         } else if ((term2 instanceof Variable) && (((Variable) term2).getType() == type)) {
-            Variable var2 = (Variable) term2;
+            final Variable var2 = (Variable) term2;
             t = map2.get(var2);
             if (t != null) { // already mapped
                 return findSubstitute(type, term1, t, map1, map2);
@@ -213,8 +218,8 @@ public class Variable extends Term {
                 return true;
             }
         } else if ((term1 instanceof CompoundTerm) && term1.getClass().equals(term2.getClass())) {
-            CompoundTerm cTerm1 = (CompoundTerm) term1;
-            CompoundTerm cTerm2 = (CompoundTerm) term2;
+            final CompoundTerm cTerm1 = (CompoundTerm) term1;
+            final CompoundTerm cTerm2 = (CompoundTerm) term2;
             if (cTerm1.size() != (cTerm2).size()) {
                 return false;
             }
@@ -224,13 +229,13 @@ public class Variable extends Term {
                             && (((ImageInt) cTerm1).getRelationIndex() != ((ImageInt) cTerm2).getRelationIndex())) {
                 return false;
             }
-            ArrayList<Term> list = cTerm1.cloneComponents();
+            final ArrayList<Term> list = cTerm1.cloneComponents();
             if (cTerm1.isCommutative()) {
                 Collections.shuffle(list, DerivationContext.randomNumber);
             }
             for (int i = 0; i < cTerm1.size(); i++) { // assuming matching order
-                Term t1 = list.get(i);
-                Term t2 = cTerm2.componentAt(i);
+                final Term t1 = list.get(i);
+                final Term t2 = cTerm2.componentAt(i);
                 if (!findSubstitute(type, t1, t2, map1, map2)) {
                     return false;
                 }

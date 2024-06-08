@@ -31,10 +31,6 @@ public class RuleTables {
         final Term taskTerm = task.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Sentence belief = context.getCurrentBelief();
-        // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
-        if (belief != null) {
-            LocalRules.match(context);
-        }
         // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
         // * 📌依据：`long_term_stability.nal`
         // * 📄ONA中的结果有两个：
