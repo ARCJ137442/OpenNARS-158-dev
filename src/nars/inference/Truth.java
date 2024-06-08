@@ -1,6 +1,7 @@
 package nars.inference;
 
 import nars.entity.ShortFloat;
+import nars.io.Symbols;
 
 /**
  * Frequency and __confidence().
@@ -92,5 +93,40 @@ public interface Truth extends Cloneable {
      */
     public default boolean isNegative() {
         return getFrequency() < 0.5;
+    }
+
+    /**
+     * The character that marks the two ends of a truth value
+     */
+    static final char DELIMITER = Symbols.TRUTH_VALUE_MARK;
+    /**
+     * The character that separates the factors in a truth value
+     */
+    static final char SEPARATOR = Symbols.VALUE_SEPARATOR;
+
+    /**
+     * The String representation of a TruthValue
+     *
+     * @return The String
+     */
+    public default String truthToString() {
+        // * 🚩格式化字符串"%【频率】;【信度】%"，没有`Brief`
+        return DELIMITER + __frequency().toString() + SEPARATOR + __confidence().toString() + DELIMITER;
+    }
+
+    /**
+     * A simplified String representation of a TruthValue, where each factor is
+     * accurate to 1%
+     * * 📝保留两位小数
+     *
+     * @return The String
+     */
+    public default String truthToStringBrief() {
+        // * 🚩格式化字符串"%【频率】;"
+        final String s1 = DELIMITER + __frequency().toStringBrief() + SEPARATOR;
+        // * 🚩准备「信度」字符串：1⇒0.99；其它⇒不变
+        final String s2 = __confidence().toStringBrief();
+        // * 🚩格式化字符串"%【频率】;【信度】%"
+        return s1 + s2 + DELIMITER;
     }
 }

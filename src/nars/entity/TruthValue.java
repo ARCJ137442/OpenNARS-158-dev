@@ -1,7 +1,6 @@
 package nars.entity;
 
 import nars.inference.Truth;
-import nars.io.Symbols;
 
 /**
  * Frequency and confidence.
@@ -9,15 +8,6 @@ import nars.io.Symbols;
  * * 📝此类型接近一种「值类型」：所有值只读、写入时复制/重新构造
  */
 public class TruthValue implements Truth {
-
-    /**
-     * The character that marks the two ends of a truth value
-     */
-    private static final char DELIMITER = Symbols.TRUTH_VALUE_MARK;
-    /**
-     * The character that separates the factors in a truth value
-     */
-    private static final char SEPARATOR = Symbols.VALUE_SEPARATOR;
     /**
      * The frequency factor of the truth value
      *
@@ -136,30 +126,12 @@ public class TruthValue implements Truth {
         return new TruthValue(this);
     }
 
-    /**
-     * The String representation of a TruthValue
-     *
-     * @return The String
-     */
     @Override
     public String toString() {
-        // * 🚩格式化字符串"%【频率】;【信度】%"，没有`Brief`
-        return DELIMITER + frequency.toString() + SEPARATOR + confidence.toString() + DELIMITER;
+        return this.truthToString();
     }
 
-    /**
-     * A simplified String representation of a TruthValue, where each factor is
-     * accurate to 1%
-     * * 📝保留两位小数
-     *
-     * @return The String
-     */
     public String toStringBrief() {
-        // * 🚩格式化字符串"%【频率】;"
-        final String s1 = DELIMITER + frequency.toStringBrief() + SEPARATOR;
-        // * 🚩准备「信度」字符串：1⇒0.99；其它⇒不变
-        final String s2 = confidence.toStringBrief();
-        // * 🚩格式化字符串"%【频率】;【信度】%"
-        return s1 + s2 + DELIMITER;
+        return this.truthToStringBrief();
     }
 }
