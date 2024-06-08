@@ -28,6 +28,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     // struct Concept
 
+    // TODO: 字段可空性、可变性、所有权标记
+
     /**
      * 🆕Item令牌
      */

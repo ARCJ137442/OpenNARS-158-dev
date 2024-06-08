@@ -7,6 +7,7 @@ import static nars.control.MakeTerm.*;
 import static nars.io.Symbols.*;
 
 import nars.control.DerivationContext;
+import nars.control.DerivationContextDirect;
 import nars.control.DerivationContextReason;
 import nars.control.ReportType;
 
@@ -94,7 +95,7 @@ public class LocalRules {
      * @param feedbackToLinks Whether to send feedback to the links
      * @param context         Reference to the derivation context
      */
-    public static void revision(Judgement newBelief, Judgement oldBelief, DerivationContext context) {
+    public static void revision(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
         // * 🚩计算真值/预算值
         final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
         final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context);
@@ -102,7 +103,30 @@ public class LocalRules {
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp newStamp = Stamp.uncheckedMerge(newBelief, oldBelief, context.getTime());
-        context.doublePremiseTask(context.getCurrentTask(), content, truth, budget, newStamp);
+        context.doublePremiseTaskRevision(
+                context.getCurrentTask(),
+                content,
+                truth, budget,
+                newStamp);
+    }
+
+    /**
+     * TODO: 修正规则 需要分为「概念推理」（有「当前信念」）和「直接推理」（无「当前信念」）
+     * * 💭【2024-06-09 01:35:41】需要合并逻辑
+     */
+    public static void revision(Judgement newBelief, Judgement oldBelief, DerivationContextReason context) {
+        // * 🚩计算真值/预算值
+        final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
+        final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context);
+        final Term content = newBelief.getContent();
+        // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
+        // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
+        final Stamp newStamp = Stamp.uncheckedMerge(newBelief, oldBelief, context.getTime());
+        context.doublePremiseTask(
+                context.getCurrentTask(),
+                content,
+                truth, budget,
+                newStamp);
     }
 
     /**
@@ -298,7 +322,7 @@ public class LocalRules {
      * @param truth   The truth value of the new task
      * @param context Reference to the derivation context
      */
-    private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContext context) {
+    private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContextReason context) {
         // TODO: 过程笔记注释
         Statement content = (Statement) context.getCurrentTask().getContent();
         final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();

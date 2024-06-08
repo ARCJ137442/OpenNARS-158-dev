@@ -3,6 +3,7 @@ package nars.storage;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+// TODO: 字段可空性、可变性、所有权标记
 /**
  * 🆕使用「变长数组」实现的「缓冲区」类型
  */

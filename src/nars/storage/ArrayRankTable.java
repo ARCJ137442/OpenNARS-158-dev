@@ -3,6 +3,8 @@ package nars.storage;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+// TODO: 字段可空性、可变性、所有权标记
+
 /**
  * 🆕使用「变长数组」实现的「排行表」类型
  * * 📌抽象：需要指定「排行」与「判断是否兼容」两个抽象方法（函数指针）

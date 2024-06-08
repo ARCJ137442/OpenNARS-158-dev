@@ -122,17 +122,6 @@ public class Memory {
         return created ? concept : null;
     }
 
-    /**
-     * Get the current activation level of a concept.
-     *
-     * @param t The Term naming a concept
-     * @return the priority value of the concept
-     */
-    public float getConceptActivation(Term t) {
-        final Concept c = termToConcept(t);
-        return (c == null) ? 0f : c.getPriority();
-    }
-
     /* ---------- adjustment functions ---------- */
     /**
      * Adjust the activation level of a Concept

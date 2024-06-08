@@ -3,6 +3,7 @@ package nars.control;
 import nars.entity.Concept;
 import nars.entity.Task;
 import nars.main.Reasoner;
+import nars.storage.Memory;
 
 /**
  * 🆕新的「直接推理上下文」对象
@@ -19,8 +20,6 @@ public class DerivationContextDirect extends DerivationContext {
          * currentTerm
          * currentConcept
          * currentTask
-         *
-         * currentBelief? | 用于中途推理
          * }
          */
 
@@ -31,8 +30,8 @@ public class DerivationContextDirect extends DerivationContext {
             throw new AssertionError("currentTerm: 不符预期的可空情况");
         if (self.getCurrentConcept() == null)
             throw new AssertionError("currentConcept: 不符预期的可空情况");
-        if (self.getCurrentBelief() != null)
-            throw new AssertionError("currentBelief: 不符预期的可空情况");
+        // if (self.getCurrentBelief() != null)
+        // throw new AssertionError("currentBelief: 不符预期的可空情况");
     }
 
     /**
@@ -42,9 +41,16 @@ public class DerivationContextDirect extends DerivationContext {
      */
     public DerivationContextDirect(final Reasoner reasoner, final Task currentTask, final Concept currentConcept) {
         super(reasoner);
-        setCurrentTask(currentTask);
+        this.currentTask = currentTask;
         setCurrentConcept(currentConcept);
         verify(this);
+    }
+
+    /**
+     * 📝对「记忆区」的可变引用，只在「直接推理」中可变
+     */
+    public Memory mutMemory() {
+        return this.getMemory();
     }
 
     /**
@@ -67,16 +73,6 @@ public class DerivationContextDirect extends DerivationContext {
     @Override
     public Task getCurrentTask() {
         return currentTask;
-    }
-
-    /**
-     * 设置当前任务
-     * * 📝仅在「开始推理」之前设置，但在「直接推理」「概念推理」中均出现
-     * * ⚠️并且，在两种推理中各含不同语义：「直接推理」作为唯一根据（不含任务链），而「概念推理」则是「任务链」的目标
-     * * ✅已解决「在『组合规则』中设置『当前任务』」的例外
-     */
-    protected void setCurrentTask(Task currentTask) {
-        this.currentTask = currentTask;
     }
 
     @Override

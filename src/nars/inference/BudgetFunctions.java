@@ -388,11 +388,23 @@ public final class BudgetFunctions extends UtilityFunctions {
             if (bLink != null) {
                 priority = or(priority, bLink.getPriority());
                 durability = and(durability, bLink.getDurability());
-                final float targetActivation = context.getMemory().getConceptActivation(bLink.getTarget());
+                final float targetActivation = getConceptActivation(bLink.getTarget(), context);
                 bLink.incPriority(or(quality, targetActivation));
                 bLink.incDurability(quality);
             }
         }
         return new BudgetValue(priority, durability, quality);
+    }
+
+    /**
+     * Get the current activation level of a concept.
+     * * 🚩从「概念」中来
+     *
+     * @param t The Term naming a concept
+     * @return the priority value of the concept
+     */
+    private static float getConceptActivation(Term t, DerivationContext context) {
+        final Concept c = context.termToConcept(t);
+        return (c == null) ? 0f : c.getPriority();
     }
 }
