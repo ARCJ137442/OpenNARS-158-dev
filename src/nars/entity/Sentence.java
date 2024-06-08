@@ -19,8 +19,6 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
     // 所有抽象字段
     Term __content();
 
-    char __punctuation();
-
     // * 🚩【2024-06-07 15:17:47】仍然保留，语句可能没有「真值」
     TruthValue __truth();
 
@@ -64,9 +62,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      *
      * @return The character '.' or '?'
      */
-    public default char getPunctuation() {
-        return __punctuation();
-    }
+    public char getPunctuation();
 
     /**
      * Clone the content of the sentence
@@ -87,7 +83,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      * @return Whether the object is a Judgment
      */
     public default boolean isJudgment() {
-        return (__punctuation() == Symbols.JUDGMENT_MARK);
+        return (this.getPunctuation() == Symbols.JUDGMENT_MARK);
     }
 
     /**
@@ -96,11 +92,11 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      * @return Whether the object is a Question
      */
     public default boolean isQuestion() {
-        return (__punctuation() == Symbols.QUESTION_MARK);
+        return (this.getPunctuation() == Symbols.QUESTION_MARK);
     }
 
     public default boolean containQueryVar() {
-        return (__content().getName().indexOf(Symbols.VAR_QUERY) >= 0);
+        return (this.getContent().getName().indexOf(Symbols.VAR_QUERY) >= 0);
     }
 
     public default boolean getRevisable() {
@@ -130,8 +126,8 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      */
     public default String toKey() {
         final StringBuilder s = new StringBuilder();
-        s.append(__content().toString());
-        s.append(__punctuation()).append(" ");
+        s.append(this.getContent().toString());
+        s.append(this.getPunctuation()).append(" ");
         if (__truth() != null) {
             s.append(__truth().toStringBrief());
         }

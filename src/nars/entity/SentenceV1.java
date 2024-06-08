@@ -43,7 +43,7 @@ public class SentenceV1 implements Sentence {
     }
 
     @Override
-    public char __punctuation() {
+    public char getPunctuation() {
         return punctuation;
     }
 

@@ -49,8 +49,8 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public char __punctuation() {
-        return this.sentence.__punctuation();
+    public char getPunctuation() {
+        return this.sentence.getPunctuation();
     }
 
     @Override
