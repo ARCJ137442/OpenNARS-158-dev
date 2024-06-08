@@ -17,7 +17,18 @@ import nars.language.Term;
  * This class is mainly used in inference.RuleTable to dispatch premises to
  * inference rules
  */
-public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong {
+public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
+
+    // struct TermLink
+
+    /**
+     * 🆕纯粹的T链接类型
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不可变
+     * * 📝所有权：具所有权
+     */
+    private final TLinkage<Term> inner;
 
     /**
      * 🆕Item令牌
@@ -28,10 +39,7 @@ public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong 
      */
     private final Token token;
 
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
+    // impl Budget for TermLink
 
     @Override
     public ShortFloat __priority() {
@@ -46,6 +54,30 @@ public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong 
     @Override
     public ShortFloat __quality() {
         return this.token.__quality();
+    }
+
+    // impl Item for TermLink
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    // impl TLink<Term> for TermLink
+
+    @Override
+    public final Term getTarget() {
+        return this.inner.getTarget();
+    }
+
+    @Override
+    public final TLinkType getType() {
+        return this.inner.getType();
+    }
+
+    @Override
+    public final short[] getIndices() {
+        return this.inner.getIndices();
     }
 
     /**
@@ -77,7 +109,7 @@ public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong 
      */
     private TermLink(final Term target, final Budget budget, final TLinkType type, final short[] indices) {
         // * 🚩构造
-        super(target, type, indices);
+        this.inner = new TLinkage<Term>(target, type, indices);
         // * 🚩生成令牌 | 从抽象的「预算」到具体的「预算值」
         final String key = generateKey(target, type, indices);
         this.token = new Token(key, budget);
@@ -113,7 +145,7 @@ public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong 
     private static final TLinkType generateTypeFromTemplate(final Term target, final TermLinkTemplate template) {
         final TLinkType templateType = template.getType();
         // * 🚩断言此时「链接模板」的链接类型
-        if (!isToCompound(templateType))
+        if (!TLink.isToCompound(templateType))
             throw new IllegalArgumentException("模板必定是「从元素链接到整体」");
         // * 🚩开始计算类型
         final TLinkType result;
@@ -126,7 +158,7 @@ public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong 
             // * 📄【2024-06-04 20:35:32】
             // * Concept@52 "<{tim} --> (/,livingIn,_,{graz})>" ~> target="tim"
             // * + template: willFromSelfTo="tim"
-            result = tryChangeLinkToComponent(templateType); // point to component
+            result = templateType.tryPointToComponent(); // point to component
         else
             result = templateType;
         // * 🚩到此处可能是「元素→整体」也可能是「整体→元素」

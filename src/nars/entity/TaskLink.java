@@ -11,9 +11,18 @@ import nars.main.Parameters;
  * The reason to separate a Task and a TaskLink is that the same Task can be
  * linked from multiple Concepts, with different BudgetValue.
  */
-public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong {
+public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
 
     // struct TaskLink
+
+    /**
+     * 🆕纯粹的T链接类型
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不可变
+     * * 📝所有权：具所有权
+     */
+    private final TLinkage<Task> inner;
 
     /**
      * 🆕Item令牌
@@ -81,6 +90,23 @@ public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong 
         return token.getKey();
     }
 
+    // impl TLink<Task> for TaskLink
+
+    @Override
+    public final Task getTarget() {
+        return this.inner.getTarget();
+    }
+
+    @Override
+    public final TLinkType getType() {
+        return this.inner.getType();
+    }
+
+    @Override
+    public final short[] getIndices() {
+        return this.inner.getIndices();
+    }
+
     // impl TaskLink
 
     /**
@@ -101,7 +127,7 @@ public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong 
             final TLinkType type,
             final short[] indices,
             final int recordLength) {
-        super(target, type, indices);
+        this.inner = new TLinkage<Task>(target, type, indices);
         final String key = generateKey(target, type, indices);
         this.token = new Token(key, budget);
         this.recordedLinks = new String[recordLength];
@@ -154,7 +180,7 @@ public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong 
 
     private static final String generateKey(final Task target, final TLinkType type, final short[] indices) {
         // * 🚩生成最基础的
-        String key = generateKey(type, indices); // as defined in TermLink
+        String key = TLink.generateKey(type, indices); // as defined in TermLink
         // if (target != null) // ! 🚩【2024-06-05 01:06:21】此处「目标」绝对非空
         // key += target.getContent(); // * ✅target.getKey()已经存在词项，无需重复生成
         key += target.getKey();
@@ -177,7 +203,7 @@ public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong 
     public boolean novel(final TermLink termLink, final long currentTime) {
         final Term bTerm = termLink.getTarget();
         // * 🚩重复目标⇒非新近
-        if (bTerm.equals(this.target.getContent()))
+        if (bTerm.equals(this.getTarget().getContent()))
             return false;
         // * 🚩检查所有已被记录的词项链
         final String linkKey = termLink.getKey();
