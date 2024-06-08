@@ -9,6 +9,7 @@ import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main.NARS;
 import nars.main.Parameters;
+import nars.storage.ArrayBuffer;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
 import nars.storage.BeliefTable;
@@ -55,7 +56,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Question directly asked about the term
      */
-    private final QuestionBuffer questions;
+    private final ArrayBuffer<Task> questions;
     /**
      * Sentences directly made about the term, with non-future tense
      */
@@ -160,7 +161,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     public Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
         this.token = new Token(term.getName());
         this.term = term;
-        this.questions = new QuestionBuffer();
+        this.questions = new ArrayBuffer<Task>(Parameters.MAXIMUM_QUESTIONS_LENGTH);
         this.beliefs = new BeliefTable();
         this.taskLinks = new Bag<TaskLink>(taskLinkForgettingRate, Parameters.TASK_LINK_BAG_SIZE);
         this.termLinks = new Bag<TermLink>(termLinkForgettingRate, Parameters.TERM_LINK_BAG_SIZE);

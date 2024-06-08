@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import nars.control.DerivationContext;
 import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
+import nars.control.ReportType;
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
@@ -21,7 +22,6 @@ import nars.io.Symbols;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
 import nars.storage.Memory;
-import nars.storage.Memory.ReportType;
 
 /**
  * 主推理器

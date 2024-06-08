@@ -1,6 +1,5 @@
 package nars.inference;
 
-import nars.storage.Memory;
 import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
@@ -9,6 +8,7 @@ import static nars.io.Symbols.*;
 
 import nars.control.DerivationContext;
 import nars.control.DerivationContextReason;
+import nars.control.ReportType;
 
 /**
  * Directly process a task by a oldBelief, with only two Terms in both. In
@@ -131,7 +131,7 @@ public class LocalRules {
         questionTask.setBestSolution(belief);
         if (questionTask.isInput()) { // moved from Sentence
             // * 🚩同时在此确立「回答」：只在回应「输入的任务」时反映
-            context.report(belief, Memory.ReportType.ANSWER);
+            context.report(belief, ReportType.ANSWER);
         }
         // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
         final Budget budget = BudgetFunctions.solutionEval(questionTask.asQuestion(), belief, questionTask);
