@@ -6,7 +6,7 @@ import nars.control.ConceptLinking;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
-import nars.main.Parameters;
+import nars.main.NARS;
 import nars.storage.BagObserver;
 import nars.storage.BeliefTable;
 import nars.storage.Memory;
@@ -54,7 +54,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Question directly asked about the term
      */
-    private final ArrayList<Task> questions;
+    private final QuestionBuffer questions;
     /**
      * Sentences directly made about the term, with non-future tense
      */
@@ -159,7 +159,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.token = new Token(term.getName());
         this.term = term;
         this.memory = memory;
-        this.questions = new ArrayList<>();
+        this.questions = new QuestionBuffer();
         this.beliefs = new BeliefTable();
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
@@ -203,10 +203,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
     public void addQuestion(final Task task) {
         // * 🚩不会添加重复的问题
         this.questions.add(task);
-        // * 🚩问题缓冲区机制 | 📝断言：只有在「问题变动」时处理
-        if (this.questions.size() > Parameters.MAXIMUM_QUESTIONS_LENGTH) {
-            this.questions.remove(0); // FIFO
-        }
     }
 
     /**
