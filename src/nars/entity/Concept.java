@@ -8,6 +8,7 @@ import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main.Parameters;
 import nars.storage.BagObserver;
+import nars.storage.BeliefTable;
 import nars.storage.Memory;
 import nars.storage.NullBagObserver;
 import nars.storage.TaskLinkBag;
@@ -57,7 +58,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Sentences directly made about the term, with non-future tense
      */
-    private final ArrayList<Judgement> beliefs;
+    private final BeliefTable beliefs;
     /**
      * Reference to the memory
      * TODO: 有待移除
@@ -159,7 +160,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.term = term;
         this.memory = memory;
         this.questions = new ArrayList<>();
-        this.beliefs = new ArrayList<>();
+        this.beliefs = new BeliefTable();
         this.taskLinks = new TaskLinkBag(memory);
         this.termLinks = new TermLinkBag(memory);
         if (term instanceof CompoundTerm) {
@@ -183,7 +184,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
      */
-    public ArrayList<Judgement> getBeliefs() {
+    public BeliefTable getBeliefs() {
         return this.beliefs;
     }
 

@@ -1,13 +1,11 @@
 package nars.control;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Task;
-import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
@@ -319,75 +317,7 @@ public abstract class ProcessDirect {
     public static Judgement addBelief(
             final Concept self,
             final Judgement newBelief) {
-        // * 🚩固定的参数：朝「信念表」中插入内容，容量来自超参数
-        final ArrayList<Judgement> table = self.getBeliefs();
-        final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
-
-        // * 🚩按排行计算信念应处在的位置
-        final int iToAdd = getBeliefRank(self, newBelief);
-        final int tableSize = table.size();
-
-        // TODO: 将「信念」独立出一个「缓冲区」类型
-
-        // * 🚩将新信念插入到「信念表」的索引i位置（可以是末尾）
-        if (iToAdd < 0)
-            // * 🚩添加失败
-            return newBelief;
-        if (iToAdd == tableSize)
-            // * 🚩插入到末尾
-            if (tableSize == capacity)
-                // * 🚩超出容量⇒添加失败
-                return newBelief;
-            else
-                table.add(newBelief);
-        else
-            // * 🚩插入到中间
-            table.add(iToAdd, newBelief);
-
-        // * 🚩缓冲区溢出 | 📌一次只增加一个
-        final int newSize = table.size();
-        if (newSize > capacity) {
-            // * 🚩缩减容量到限定的容量
-            if (newSize - capacity > 1)
-                throw new AssertionError("【2024-06-08 10:07:31】断言：一次只会添加一个，并且容量不会突然变化");
-            final int iToRemove = newSize - 1;
-            // * 🚩从末尾移除，返回移除后的元素
-            return table.remove(iToRemove);
-        }
-
-        // * 🚩最终添加成功，且没有信念被移除
-        return null;
-    }
-
-    /** 🆕提取出的「计算排行」函数 */
-    private static int getBeliefRank(
-            final Concept self,
-            final Judgement newBelief) {
-        final ArrayList<Judgement> table = self.getBeliefs();
-        // * 🚩按排行计算信念应处在的位置
-        final float rankNew = BudgetFunctions.rankBelief(newBelief); // for the new isBelief
-        int iToAdd = 0;
-        for (; iToAdd < table.size(); iToAdd++) {
-            // * 🚩获取待比较的信念
-            final Judgement existedBelief = table.get(iToAdd);
-            final float rankExisted = BudgetFunctions.rankBelief(existedBelief);
-            // * 🚩总体顺序：从大到小（一旦比当前的大，那就在前边插入）
-            if (rankNew >= rankExisted) {
-                // * 🚩断言内容、标点相等
-                final boolean sameContentAndPunctuation = newBelief.getContent().equals(existedBelief.getContent())
-                        && newBelief.getPunctuation() == existedBelief.getPunctuation();
-                if (!sameContentAndPunctuation)
-                    throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
-                // * 🚩若内容完全等价⇒不予理睬（添加失败）
-                if (Judgement.isBeliefEquivalent(newBelief, existedBelief)) {
-                    return -1; // * 🚩标记为「不予添加」
-                }
-                // * 🚩标记待插入的位置
-                return iToAdd;
-            }
-        }
-        // * 🚩一直到末尾
-        return iToAdd;
+        return self.getBeliefs().add(newBelief);
     }
 
     /**
