@@ -49,6 +49,12 @@ public abstract class SentenceV1 implements Sentence {
         }
     }
 
+    /** 🆕呈现用字符串显示方案 */
+    @Override
+    public String toString() {
+        return this.sentenceToString();
+    }
+
     // ! 🚩【2024-06-08 23:30:24】经实验，用法上并不需要判等
 
     @Override

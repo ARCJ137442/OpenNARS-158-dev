@@ -119,62 +119,67 @@ public class LocalRules {
             throw new AssertionError("将解答的必须是「判断」");
         if (questionTask == null || !questionTask.isQuestion())
             throw new AssertionError("要解决的必须是「问题」");
+
         // * 🚩验证这个信念是否为「解决问题的最优解」
-        final float newQ = solutionQuality(questionTask, belief);
+        final float newQ = BudgetFunctions.solutionQuality(questionTask, belief);
         if (oldBest != null) {
-            final float oldQ = solutionQuality(questionTask, oldBest);
+            final float oldQ = BudgetFunctions.solutionQuality(questionTask, oldBest);
             // * 🚩新解比旧解还差⇒驳回
             if (oldQ >= newQ)
                 return;
         }
+
         // * 🚩若比先前「最优解」还优，那就确立新的「最优解」
         questionTask.setBestSolution(belief);
         if (questionTask.isInput()) { // moved from Sentence
             // * 🚩同时在此确立「回答」：只在回应「输入的任务」时反映
             context.report(belief, ReportType.ANSWER);
         }
-        // * 🚩后续收尾：预算值更新 | ⚠️在此处改变当前任务的预算值
-        final Budget budget = BudgetFunctions.solutionEval(questionTask.asQuestion(), belief, questionTask);
-        if (budget != null && budget.budgetAboveThreshold()) {
+        // * 🚩计算新预算值
+        final Question problem = questionTask.asQuestion();
+        final Budget budget = BudgetFunctions.solutionEval(problem, belief, questionTask);
+        // * 🚩更新「问题任务」的预算值
+        final float solutionQuality = BudgetFunctions.solutionQuality(problem, belief);
+        final float updatedQuestionPriority = Math.min(
+                UtilityFunctions.not(solutionQuality),
+                questionTask.getPriority());
+        questionTask.setPriority(updatedQuestionPriority);
+
+        // * 🚩尝试「激活任务」
+        if (budget == null)
+            throw new AssertionError("【2024-06-09 00:45:04】计算出的新预算值不可能为空");
+        if (budget.budgetAboveThreshold()) {
             // * 🚩激活任务 | 在此过程中将「当前任务」添加回「新任务」
             context.activatedTask(budget, belief, questionTask.getParentBelief());
-        }
-    }
-
-    /**
-     * Evaluate the quality of the judgment as a solution to a problem
-     *
-     * @param problem  A goal or question
-     * @param solution The solution to be evaluated
-     * @return The quality of the judgment as the solution
-     */
-    public static float solutionQuality(Sentence problem, Judgement solution) {
-        // TODO: 过程笔记注释
-        if (problem == null) {
-            return solution.getExpectation();
-        }
-        final Truth truth = solution;
-        if (problem.containQueryVar()) { // "yes/no" question
-            return truth.getExpectation() / solution.getContent().getComplexity();
-        } else { // "what" question or goal
-            return truth.getConfidence();
         }
     }
 
     /* -------------------- same terms, difference relations -------------------- */
     /**
      * The task and belief match reversely
+     * * 📄<A --> B> + <B --> A>
      *
      * @param context Reference to the derivation context
      */
     static void matchReverse(DerivationContextReason context) {
         // TODO: 过程笔记注释
+        // 📄TaskV1@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
+        // %1.00;0.45% {503 : 38;37}
+        // 📄JudgementV1@43 "<<toothbrush --> $1> ==> <cup --> $1>>. %1.0000;0.4475%
+        // {483 : 36;39} "
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        if (task.isJudgment()) {
-            inferToSym(task.asJudgement(), belief, context);
-        } else {
-            conversion(context);
+        switch (task.getPunctuation()) {
+            // * 🚩判断句⇒尝试合并成对称形式（继承⇒相似，蕴含⇒等价）
+            case JUDGMENT_MARK:
+                inferToSym(task.asJudgement(), belief, context);
+                return;
+            // * 🚩疑问句⇒尝试执行转换规则
+            case QUESTION_MARK:
+                conversion(context);
+                return;
+            default:
+                throw new Error("Unknown punctuation of task: " + task.toStringLong());
         }
     }
 
@@ -187,12 +192,19 @@ public class LocalRules {
      * @param context Reference to the derivation context
      */
     static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (context.getCurrentTask().isJudgment()) {
-            // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
-            inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
-        } else {
-            convertRelation(context);
+        final Task task = context.getCurrentTask();
+        switch (task.getPunctuation()) {
+            // * 🚩判断句⇒尝试合并成对称形式（继承⇒相似，蕴含⇒等价）
+            case JUDGMENT_MARK:
+                // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
+                inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
+                return;
+            // * 🚩疑问句⇒尝试「继承⇄相似」「蕴含⇄等价」
+            case QUESTION_MARK:
+                convertRelation(context);
+                return;
+            default:
+                throw new Error("Unknown punctuation of task: " + task.toStringLong());
         }
     }
 

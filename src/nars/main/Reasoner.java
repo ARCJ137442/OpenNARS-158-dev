@@ -105,10 +105,11 @@ public class Reasoner {
         this.memory = new Memory();
         this.inputChannels = new ArrayList<>();
         this.outputChannels = new ArrayList<>();
-        novelTasks = new Bag<Task>(
-                new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE), Parameters.TASK_BUFFER_SIZE);
-        recorder = new NullInferenceRecorder();
+        this.recorder = new NullInferenceRecorder();
         this.newTasks = new LinkedList<>();
+        this.novelTasks = new Bag<Task>(
+                new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE),
+                Parameters.TASK_BUFFER_SIZE);
         this.exportStrings = new ArrayList<>();
     }
 
@@ -117,16 +118,16 @@ public class Reasoner {
      * from {@link MainWindow}.
      */
     public void reset() {
-        running = false;
-        walkingSteps = 0;
-        clock = 0;
-        memory.init();
+        this.running = false;
+        this.walkingSteps = 0;
+        this.clock = 0;
+        this.memory.init();
         this.initTimer();
-        recorder.append("\n-----RESET-----\n");
-        newTasks.clear();
-        novelTasks.init();
-        exportStrings.clear();
-        stampCurrentSerial = 0;
+        this.recorder.append("\n-----RESET-----\n");
+        this.newTasks.clear();
+        this.novelTasks.init();
+        this.exportStrings.clear();
+        this.stampCurrentSerial = 0;
         // timer = 0;
     }
 
@@ -271,6 +272,7 @@ public class Reasoner {
     /**
      * List of new tasks accumulated in one cycle, to be processed in the next
      * cycle
+     * * 🚩没有上限，不适合作为「缓冲区」使用
      */
     private final LinkedList<Task> newTasks;
     /**

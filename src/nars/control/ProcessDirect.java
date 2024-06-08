@@ -6,6 +6,7 @@ import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Task;
+import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
@@ -358,7 +359,7 @@ public abstract class ProcessDirect {
         float beliefQuality;
         Judgement candidate = null;
         for (final Judgement judgment : list) {
-            beliefQuality = LocalRules.solutionQuality(query, judgment);
+            beliefQuality = BudgetFunctions.solutionQuality(query, judgment);
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;
                 candidate = judgment;

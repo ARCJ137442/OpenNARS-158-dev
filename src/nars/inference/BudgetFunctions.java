@@ -9,7 +9,6 @@ import nars.language.*;
 /**
  * Budget functions for resources allocation
  * * 📌【2024-06-07 13:15:14】暂时还不能封闭：具体推理控制中要用到
- * TODO: 过程笔记注释
  */
 public final class BudgetFunctions extends UtilityFunctions {
 
@@ -41,6 +40,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static float rankBelief(Judgement judgment) {
         // * 🚩两个指标：信度 + 原创性（时间戳长度）
+        // * 📝与信度正相关，与「时间戳长度」负相关；二者有一个好，那就整体好
         final float confidence = judgment.getConfidence();
         final float originality = 1.0f / (judgment.evidenceLength() + 1);
         return or(confidence, originality);
@@ -49,17 +49,45 @@ public final class BudgetFunctions extends UtilityFunctions {
     /**
      * Recalculate the quality of the concept [to be refined to show
      * extension/intension balance]
+     * * 📝用于概念的「激活」函数上
      *
      * @return The quality value
      */
     public static float conceptTotalQuality(Concept concept) {
-        // TODO: 过程笔记注释
+        // * 🚩计算所有词项链的「平均优先级」
         final float linkPriority = concept.termLinksAveragePriority();
+        // * 🚩词项复杂性指标：自身复杂性倒数
         final float termComplexityFactor = 1.0f / concept.getTerm().getComplexity();
+        // * 🚩总体：任意更大就行；结构简单的基本总是最好的；词项越复杂，质量下限越低
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
     }
 
     /* ----- Functions used both in direct and indirect processing of tasks ----- */
+
+    /**
+     * Evaluate the quality of the judgment as a solution to a problem
+     *
+     * @param query    A goal or question
+     * @param solution The solution to be evaluated
+     * @return The quality of the judgment as the solution
+     */
+    public static float solutionQuality(Sentence query, Judgement solution) {
+        // * 🚩断言
+        if (query == null)
+            // return solution.getExpectation();
+            throw new AssertionError("要查询的语句不应为空");
+        if (solution == null)
+            throw new AssertionError("要对应的解不应为空");
+        // * 🚩根据「一般疑问 | 特殊疑问/目标」拆解
+        if (query.containQueryVar()) {
+            // * 🚩【一般疑问】 "yes/no" question
+            return solution.getExpectation() / solution.getContent().getComplexity();
+        } else {
+            // * 🚩【特殊疑问/目标】 "what" question or goal
+            return solution.getConfidence();
+        }
+    }
+
     /**
      * Evaluate the quality of a belief as a solution to a problem, then reward
      * the belief and de-prioritize the problem
@@ -92,7 +120,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         // feedbackToLinks = false;
         // * 🚩【2024-06-06 10:32:15】断言judgmentTask为false
         // final boolean judgmentTask = questionTask.isJudgment();
-        final float solutionQuality = LocalRules.solutionQuality(problem, solution);
+        final float solutionQuality = solutionQuality(problem, solution);
         /*
          * if (judgmentTask) {
          * budget = null;
@@ -103,11 +131,7 @@ public final class BudgetFunctions extends UtilityFunctions {
             final float newP = or(taskPriority, solutionQuality);
             final float newD = questionTask.getDurability();
             final float newQ = truthToQuality(solution);
-            final Budget budget = new BudgetValue(newP, newD, newQ);
-            // 更新「源任务」的预算值（优先级）
-            final float updatedQuestionPriority = Math.min(not(solutionQuality), taskPriority);
-            questionTask.setPriority(updatedQuestionPriority);
-            return budget;
+            return new BudgetValue(newP, newD, newQ);
         }
         // if (feedbackToLinks && context instanceof DerivationContextReason) {
         // final DerivationContextReason contextReason = (DerivationContextReason)
