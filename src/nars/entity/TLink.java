@@ -5,6 +5,9 @@ import nars.io.Symbols;
 /**
  * 🆕任务链与词项链共有的「T链接」
  * * 🚩【2024-06-01 20:56:49】现在不再实现{@link Item}接口，交由后续「词项链」「任务链」「词项链模板」自由组合
+ * 
+ * TODO: 接口化：interface TLink<Target>, TLinkage<Target> implements TLink<Target>
+ * * 🚩用复合代替继承
  */
 public abstract class TLink<Target> {
     /**
@@ -88,6 +91,8 @@ public abstract class TLink<Target> {
      * * 📝所有权：具所有权
      */
     protected final short[] index;
+
+    // impl<Target> TLink<Target>
 
     /**
      * called from TaskLink

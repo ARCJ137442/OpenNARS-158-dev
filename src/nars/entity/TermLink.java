@@ -1,6 +1,7 @@
 package nars.entity;
 
 import nars.inference.Budget;
+import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 
 /**
@@ -16,7 +17,7 @@ import nars.language.Term;
  * This class is mainly used in inference.RuleTable to dispatch premises to
  * inference rules
  */
-public class TermLink extends TLink<Term> implements Item {
+public class TermLink extends TLink<Term> implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕Item令牌
@@ -132,7 +133,7 @@ public class TermLink extends TLink<Term> implements Item {
         return result;
     }
 
-    // 📌自原`abstract class Item`中继承而来 //
+    // impl ToStringBriefAndLong for TermLink
 
     /**
      * Return a String representation of the Item
@@ -149,10 +150,12 @@ public class TermLink extends TLink<Term> implements Item {
      *
      * @return A simplified String representation of the content
      */
+    @Override
     public String toStringBrief() {
         return this.token.getBudgetValue().toStringBrief() + " " + getKey();
     }
 
+    @Override
     public String toStringLong() {
         return toString();
     }

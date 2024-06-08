@@ -1,6 +1,7 @@
 package nars.entity;
 
 import nars.inference.Budget;
+import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.main.Parameters;
 
@@ -10,7 +11,9 @@ import nars.main.Parameters;
  * The reason to separate a Task and a TaskLink is that the same Task can be
  * linked from multiple Concepts, with different BudgetValue.
  */
-public class TaskLink extends TLink<Task> implements Item {
+public class TaskLink extends TLink<Task> implements Item, ToStringBriefAndLong {
+
+    // struct TaskLink
 
     /**
      * 🆕Item令牌
@@ -21,10 +24,40 @@ public class TaskLink extends TLink<Task> implements Item {
      */
     private final Token token;
 
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
+    /**
+     * Remember the TermLinks that has been used recently with this TaskLink
+     * * 📌记忆【曾经匹配过的词项链】的key
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 内部可变
+     * * 📝所有权：具所有权
+     */
+    private final String recordedLinks[];
+
+    /**
+     * Remember the time when each TermLink is used with this TaskLink
+     * * 📌记忆【曾经匹配过的词项链】的时间（序列号）
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变 | 内部可变
+     * * 📝所有权：具所有权
+     */
+    private final long recordingTime[];
+
+    /**
+     * The number of TermLinks remembered
+     * * 📌记忆【曾经匹配过的词项链】的个数
+     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
+     */
+    private int nRecordedTermLinks;
+
+    // impl Budget for TaskLink
 
     @Override
     public ShortFloat __priority() {
@@ -41,36 +74,14 @@ public class TaskLink extends TLink<Task> implements Item {
         return this.token.__quality();
     }
 
-    /**
-     * Remember the TermLinks that has been used recently with this TaskLink
-     * * 📌记忆【曾经匹配过的词项链】的key
-     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 内部可变
-     * * 📝所有权：具所有权
-     */
-    private final String recordedLinks[];
-    /**
-     * Remember the time when each TermLink is used with this TaskLink
-     * * 📌记忆【曾经匹配过的词项链】的时间（序列号）
-     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 内部可变
-     * * 📝所有权：具所有权
-     */
-    private final long recordingTime[];
-    /**
-     * The number of TermLinks remembered
-     * * 📌记忆【曾经匹配过的词项链】的个数
-     * * 🎯用于推理中判断{@link TaskLink#novel}「是否新近」
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变
-     * * 📝所有权：具所有权
-     */
-    private int nRecordedTermLinks;
+    // impl Item for TaskLink
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    // impl TaskLink
 
     /**
      * 🆕统一收归的「任务链记录长度」
@@ -196,23 +207,25 @@ public class TaskLink extends TLink<Task> implements Item {
         return true;
     }
 
+    // impl ToStringBriefAndLong for TaskLink
+
     @Override
     public String toString() {
         final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
         return superString + " " + getTarget().stampToString();
     }
 
-    // 📌自原`abstract class Item`中继承而来 //
-
     /**
      * Return a String representation of the Item after simplification
      *
      * @return A simplified String representation of the content
      */
+    @Override
     public String toStringBrief() {
-        return token.getBudgetValue().toStringBrief() + " " + getKey();
+        return this.budgetToStringBrief() + " " + getKey();
     }
 
+    @Override
     public String toStringLong() {
         return toString();
     }

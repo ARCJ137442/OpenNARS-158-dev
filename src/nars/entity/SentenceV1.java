@@ -14,6 +14,8 @@ import nars.language.Term;
  */
 public class SentenceV1 implements Sentence {
 
+    // struct SentenceV1
+
     /**
      * The content of a Sentence is a Term
      */
@@ -37,68 +39,7 @@ public class SentenceV1 implements Sentence {
      */
     private final boolean revisable;
 
-    // impl Truth for SentenceV1
-
-    @Override
-    public ShortFloat __frequency() {
-        return this.truth.__frequency();
-    }
-
-    @Override
-    public ShortFloat __confidence() {
-        return this.truth.__confidence();
-    }
-
-    @Override
-    public boolean __isAnalytic() {
-        return this.truth.__isAnalytic();
-    }
-
-    // impl Evidential for SentenceV1
-
-    @Override
-    public long[] __evidentialBase() {
-        return this.stamp.__evidentialBase();
-    }
-
-    @Override
-    public long __creationTime() {
-        return this.stamp.__creationTime();
-    }
-
-    // impl Sentence for SentenceV1
-
-    @Override
-    public boolean __revisable() {
-        return revisable;
-    }
-
-    @Override
-    public boolean hasTruth() {
-        return this.truth != null;
-    }
-
-    @Override
-    public Term getContent() {
-        return content;
-    }
-
-    @Override
-    public char getPunctuation() {
-        return punctuation;
-    }
-
-    @Override
-    public Sentence sentenceClone() {
-        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
-        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
-        return new SentenceV1(
-                content.clone(),
-                punctuation,
-                truth == null ? null : truth.clone(),
-                stamp.clone(),
-                revisable);
-    }
+    // impl SentenceV1
 
     /**
      * Create a Sentence with the given fields
@@ -126,6 +67,93 @@ public class SentenceV1 implements Sentence {
         }
     }
 
+    // impl Truth for SentenceV1
+
+    @Override
+    public ShortFloat __frequency() {
+        return this.truth.__frequency();
+    }
+
+    @Override
+    public ShortFloat __confidence() {
+        return this.truth.__confidence();
+    }
+
+    @Override
+    public boolean __isAnalytic() {
+        return this.truth.__isAnalytic();
+    }
+
+    // impl OptionalTruth for SentenceV1
+
+    @Override
+    public boolean hasTruth() {
+        return this.truth != null;
+    }
+
+    // impl Evidential for SentenceV1
+
+    @Override
+    public long[] __evidentialBase() {
+        return this.stamp.__evidentialBase();
+    }
+
+    @Override
+    public long __creationTime() {
+        return this.stamp.__creationTime();
+    }
+
+    // impl Sentence for SentenceV1
+
+    @Override
+    public boolean __revisable() {
+        return revisable;
+    }
+
+    @Override
+    public Term getContent() {
+        return content;
+    }
+
+    @Override
+    public char getPunctuation() {
+        return punctuation;
+    }
+
+    @Override
+    public Sentence sentenceClone() {
+        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
+        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
+        return new SentenceV1(
+                content.clone(),
+                punctuation,
+                truth == null ? null : truth.clone(),
+                stamp.clone(),
+                revisable);
+    }
+
+    // impl ToStringBriefAndLong for SentenceV1
+
+    @Override
+    public String toString() {
+        return this.sentenceToString();
+    }
+
+    @Override
+    public String toStringBrief() {
+        return this.sentenceToStringBrief();
+    }
+
+    /**
+     * 🆕原版没有，此处仅重定向
+     */
+    @Override
+    public String toStringLong() {
+        return toString();
+    }
+
+    // impl Eq for SentenceV1
+
     /**
      * To check whether two sentences are equal
      *
@@ -144,6 +172,8 @@ public class SentenceV1 implements Sentence {
         return false;
     }
 
+    // impl Hash for SentenceV1
+
     /**
      * To produce the hashcode of a sentence
      *
@@ -157,23 +187,5 @@ public class SentenceV1 implements Sentence {
         hash = 67 * hash + (this.truth != null ? this.truth.hashCode() : 0);
         hash = 67 * hash + (this.stamp != null ? this.stamp.hashCode() : 0);
         return hash;
-    }
-
-    @Override
-    public String toString() {
-        return this.sentenceToString();
-    }
-
-    @Override
-    public String toStringBrief() {
-        return this.sentenceToStringBrief();
-    }
-
-    /**
-     * 🆕原版没有，此处仅重定向
-     */
-    @Override
-    public String toStringLong() {
-        return toString();
     }
 }

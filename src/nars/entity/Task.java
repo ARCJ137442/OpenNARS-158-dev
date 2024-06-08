@@ -71,6 +71,11 @@ public interface Task extends Sentence, Item {
             BudgetFunctions.merge(that, this);
     }
 
+    /**
+     * Get a String representation of the Task
+     *
+     * @return The Task as a String
+     */
     public default String taskToString() {
         final StringBuilder s = new StringBuilder();
         final String superString = this.budgetToString() + " " + getKey().toString();
@@ -90,5 +95,14 @@ public interface Task extends Sentence, Item {
 
     public default String taskToStringLong() {
         return taskToString();
+    }
+
+    /**
+     * Return a String representation of the Item after simplification
+     *
+     * @return A simplified String representation of the content
+     */
+    public default String taskToStringBrief() {
+        return this.budgetToStringBrief() + " " + getKey();
     }
 }

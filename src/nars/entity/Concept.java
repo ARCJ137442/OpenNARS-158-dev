@@ -23,30 +23,12 @@ import nars.storage.TermLinkBag;
  */
 public final class Concept implements Item, ToStringBriefAndLong {
 
+    // struct Concept
+
     /**
      * 🆕Item令牌
      */
     private final Token token;
-
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
-
-    @Override
-    public ShortFloat __priority() {
-        return this.token.__priority();
-    }
-
-    @Override
-    public ShortFloat __durability() {
-        return this.token.__durability();
-    }
-
-    @Override
-    public ShortFloat __quality() {
-        return this.token.__quality();
-    }
 
     /**
      * The term is the unique ID of the concept
@@ -78,12 +60,92 @@ public final class Concept implements Item, ToStringBriefAndLong {
     private final ArrayList<Sentence> beliefs;
     /**
      * Reference to the memory
+     * TODO: 有待移除
      */
     final Memory memory;
     /**
      * The display window
      */
     private EntityObserver entityObserver = new NullEntityObserver();
+
+    // impl Budget for Concept
+
+    @Override
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
+    }
+
+    // impl Item for Concept
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    // impl ToStringBriefAndLong for Concept
+
+    /**
+     * 🆕是否在{@link Concept#toString}处显示更细致的内容
+     * * 🎯与主类解耦
+     */
+    public static boolean detailedString = false;
+
+    /**
+     * Return a string representation of the concept, called in ConceptBag only
+     *
+     * @return The concept name, with taskBudget in the full version
+     */
+    @Override
+    public String toString() { // called from concept bag
+        if (detailedString) {
+            final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
+            return (superString + " " + getKey());
+        } else {
+            return getKey();
+        }
+    }
+
+    /**
+     * called from {@link NARS}
+     *
+     * @return A string representation of the concept
+     */
+    @Override
+    public String toStringLong() {
+        String res = toStringBrief() + " " + getKey()
+                + toStringIfNotNull(termLinks, "termLinks")
+                + toStringIfNotNull(taskLinks, "taskLinks");
+        res += toStringIfNotNull(null, "questions");
+        for (Task t : questions) {
+            res += t.toString();
+        }
+        // TODO other details?
+        return res;
+    }
+
+    /**
+     * 🆕原版没有，此处仅重定向
+     */
+    @Override
+    public String toStringBrief() {
+        return toString();
+    }
+
+    public String toStringIfNotNull(Object item, String title) {
+        return item == null ? "" : "\n " + title + ":" + item.toString();
+    }
+
+    // impl Concept
 
     /* ---------- constructor and initialization ---------- */
     /**
@@ -180,57 +242,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
      */
     public Term getTerm() {
         return term;
-    }
-
-    /**
-     * 🆕是否在{@link Concept#toString}处显示更细致的内容
-     * * 🎯与主类解耦
-     */
-    public static boolean detailedString = false;
-
-    /**
-     * Return a string representation of the concept, called in ConceptBag only
-     *
-     * @return The concept name, with taskBudget in the full version
-     */
-    @Override
-    public String toString() { // called from concept bag
-        if (detailedString) {
-            final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
-            return (superString + " " + getKey());
-        } else {
-            return getKey();
-        }
-    }
-
-    /**
-     * called from {@link NARS}
-     *
-     * @return A string representation of the concept
-     */
-    @Override
-    public String toStringLong() {
-        String res = toStringBrief() + " " + getKey()
-                + toStringIfNotNull(termLinks, "termLinks")
-                + toStringIfNotNull(taskLinks, "taskLinks");
-        res += toStringIfNotNull(null, "questions");
-        for (Task t : questions) {
-            res += t.toString();
-        }
-        // TODO other details?
-        return res;
-    }
-
-    /**
-     * 🆕原版没有，此处仅重定向
-     */
-    @Override
-    public String toStringBrief() {
-        return toString();
-    }
-
-    public String toStringIfNotNull(Object item, String title) {
-        return item == null ? "" : "\n " + title + ":" + item.toString();
     }
 
     /**

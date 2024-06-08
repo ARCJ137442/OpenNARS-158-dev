@@ -11,6 +11,16 @@ import nars.io.Symbols;
 public interface Truth extends Cloneable {
 
     /**
+     * 🆕可选的「真值」类型
+     * * 🎯用于「语句」这类「可能没真值」的类型
+     */
+    public interface OptionalTruth extends Truth {
+
+        /** 🆕判断「是否有真值」 */
+        public boolean hasTruth();
+    }
+
+    /**
      * The frequency factor of the truth value
      *
      * * ️📝可空性：非空

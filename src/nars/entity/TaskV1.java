@@ -8,6 +8,8 @@ import nars.language.Term;
  */
 public class TaskV1 implements Task {
 
+    // struct TaskV1
+
     /**
      * The sentence of the Task
      * * 📝任务的「内容」
@@ -22,88 +24,6 @@ public class TaskV1 implements Task {
      * 🆕Item令牌
      */
     private final Token token;
-
-    // impl Truth for SentenceV1
-
-    @Override
-    public ShortFloat __frequency() {
-        return this.sentence.__frequency();
-    }
-
-    @Override
-    public ShortFloat __confidence() {
-        return this.sentence.__confidence();
-    }
-
-    @Override
-    public boolean __isAnalytic() {
-        return this.sentence.__isAnalytic();
-    }
-
-    // impl Budget for TaskV1
-
-    @Override
-    public ShortFloat __priority() {
-        return this.token.__priority();
-    }
-
-    @Override
-    public ShortFloat __durability() {
-        return this.token.__durability();
-    }
-
-    @Override
-    public ShortFloat __quality() {
-        return this.token.__quality();
-    }
-
-    // impl Item for TaskV1
-
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
-
-    // impl Sentence for TaskV1
-
-    @Override
-    public Term getContent() {
-        return this.sentence.getContent();
-    }
-
-    @Override
-    public char getPunctuation() {
-        return this.sentence.getPunctuation();
-    }
-
-    @Override
-    public boolean hasTruth() {
-        return this.sentence.hasTruth();
-    }
-
-    @Override
-    public Sentence sentenceClone() {
-        return this.sentence.sentenceClone();
-    }
-
-    @Override
-    public boolean __revisable() {
-        return this.sentence.__revisable();
-    }
-
-    // impl Stamp for TaskV1
-
-    @Override
-    public long[] __evidentialBase() {
-        return this.sentence.__evidentialBase();
-    }
-
-    @Override
-    public long __creationTime() {
-        return this.sentence.__creationTime();
-    }
-
-    // impl Task for TaskV1
 
     /**
      * Task from which the Task is derived, or null if input
@@ -133,35 +53,7 @@ public class TaskV1 implements Task {
      */
     private Sentence bestSolution;
 
-    @Override
-    public Task getParentTask() {
-        return this.parentTask;
-    }
-
-    @Override
-    public Sentence getParentBelief() {
-        return this.parentBelief;
-    }
-
-    @Override
-    public Sentence getBestSolution() {
-        return this.bestSolution;
-    }
-
-    @Override
-    public void setBestSolution(Sentence judgment) {
-        if (!this.isQuestion())
-            throw new IllegalArgumentException(this + " is not question");
-        if (judgment == null)
-            throw new NullPointerException("judgment == null");
-        if (!judgment.isJudgment())
-            throw new IllegalArgumentException(judgment + " is not judgment");
-        // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
-        this.bestSolution = judgment;
-        // this.bestSolution = judgment.cloneSentence();
-    }
-
-    // other
+    // impl TaskV1
 
     /**
      * 完全构造函数
@@ -205,21 +97,125 @@ public class TaskV1 implements Task {
         this(sentence, budget, parentTask, parentBelief, null);
     }
 
-    /**
-     * Return a String representation of the Item after simplification
-     *
-     * @return A simplified String representation of the content
-     */
+    // impl Truth for Truth
+
     @Override
-    public String toStringBrief() {
-        return this.token.getBudgetValue().toStringBrief() + " " + getKey();
+    public ShortFloat __frequency() {
+        return this.sentence.__frequency();
     }
 
-    /**
-     * Get a String representation of the Task
-     *
-     * @return The Task as a String
-     */
+    @Override
+    public ShortFloat __confidence() {
+        return this.sentence.__confidence();
+    }
+
+    @Override
+    public boolean __isAnalytic() {
+        return this.sentence.__isAnalytic();
+    }
+
+    // impl Budget for TaskV1
+
+    @Override
+    public ShortFloat __priority() {
+        return this.token.__priority();
+    }
+
+    @Override
+    public ShortFloat __durability() {
+        return this.token.__durability();
+    }
+
+    @Override
+    public ShortFloat __quality() {
+        return this.token.__quality();
+    }
+
+    // impl Item for TaskV1
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    // impl OptionalTruth for SentenceV1
+
+    @Override
+    public boolean hasTruth() {
+        return this.sentence.hasTruth();
+    }
+
+    // impl Sentence for TaskV1
+
+    @Override
+    public Term getContent() {
+        return this.sentence.getContent();
+    }
+
+    @Override
+    public char getPunctuation() {
+        return this.sentence.getPunctuation();
+    }
+
+    @Override
+    public Sentence sentenceClone() {
+        return this.sentence.sentenceClone();
+    }
+
+    @Override
+    public boolean __revisable() {
+        return this.sentence.__revisable();
+    }
+
+    // impl Stamp for TaskV1
+
+    @Override
+    public long[] __evidentialBase() {
+        return this.sentence.__evidentialBase();
+    }
+
+    @Override
+    public long __creationTime() {
+        return this.sentence.__creationTime();
+    }
+
+    // impl Task for TaskV1
+
+    @Override
+    public Task getParentTask() {
+        return this.parentTask;
+    }
+
+    @Override
+    public Sentence getParentBelief() {
+        return this.parentBelief;
+    }
+
+    @Override
+    public Sentence getBestSolution() {
+        return this.bestSolution;
+    }
+
+    @Override
+    public void setBestSolution(Sentence judgment) {
+        if (!this.isQuestion())
+            throw new IllegalArgumentException(this + " is not question");
+        if (judgment == null)
+            throw new NullPointerException("judgment == null");
+        if (!judgment.isJudgment())
+            throw new IllegalArgumentException(judgment + " is not judgment");
+        // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
+        this.bestSolution = judgment;
+        // this.bestSolution = judgment.cloneSentence();
+    }
+
+    // impl ToStringBriefAndLong for TaskV1
+
+    @Override
+    public String toStringBrief() {
+        return this.taskToStringBrief();
+    }
+
     @Override
     public String toString() {
         return this.taskToString();

@@ -1,6 +1,6 @@
 package nars.entity;
 
-import nars.inference.Truth;
+import nars.inference.Truth.OptionalTruth;
 import nars.io.Symbols;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
@@ -14,14 +14,11 @@ import nars.language.Term;
  * * 🚩作为一个接口，仅对其中的字段做抽象要求（实现者只要求在这些方法里返回字段或其它表达式）
  * * 🚩所有「字段类接口方法」均【以双下划线开头】并【不带public】
  */
-public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
+public interface Sentence extends ToStringBriefAndLong, OptionalTruth, Evidential {
 
     // 所有抽象字段
 
-    // * 🚩【2024-06-07 15:17:47】仍然保留，语句可能没有「真值」
-    // TruthValue __truth();
-    /** 🆕专用于判断「是否有真值」 */
-    public boolean hasTruth();
+    // * ✅【2024-06-08 13:23:11】成功删除：通过「真值格式化」「真值相等」成功解耦
 
     // * ✅【2024-06-08 11:36:18】成功删除：通过`stampToString`成功解耦
 
