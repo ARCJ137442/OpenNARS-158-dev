@@ -8,12 +8,12 @@ import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main.NARS;
+import nars.main.Parameters;
+import nars.storage.Bag;
 import nars.storage.BagObserver;
 import nars.storage.BeliefTable;
 import nars.storage.Memory;
 import nars.storage.NullBagObserver;
-import nars.storage.TaskLinkBag;
-import nars.storage.TermLinkBag;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -39,11 +39,11 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Task links for indirect processing
      */
-    private final TaskLinkBag taskLinks;
+    private final Bag<TaskLink> taskLinks;
     /**
      * Term links between the term and its components and compounds
      */
-    private final TermLinkBag termLinks;
+    private final Bag<TermLink> termLinks;
     /**
      * Link templates of TermLink, only in concepts with CompoundTerm
      * * 🎯用于「复合词项构建词项链」如「链接到任务」
@@ -162,8 +162,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.term = term;
         this.questions = new QuestionBuffer();
         this.beliefs = new BeliefTable();
-        this.taskLinks = new TaskLinkBag(taskLinkForgettingRate);
-        this.termLinks = new TermLinkBag(termLinkForgettingRate);
+        this.taskLinks = new Bag<TaskLink>(taskLinkForgettingRate, Parameters.TASK_LINK_BAG_SIZE);
+        this.termLinks = new Bag<TermLink>(termLinkForgettingRate, Parameters.TERM_LINK_BAG_SIZE);
         if (term instanceof CompoundTerm) {
             // * 🚩只有「复合词项←其内元素」的链接模板
             // * 📝所有信息基于「内容包含」关系
@@ -294,7 +294,32 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
      */
     public TermLink __takeOutTermLink(TaskLink currentTaskLink, long time) {
-        return this.termLinks.takeOutFromTaskLink(currentTaskLink, time);
+        return this.takeOutTermLinkFromTaskLink(currentTaskLink, time);
+    }
+
+    /**
+     * Replace default to prevent repeated inference, by checking TaskLink
+     * * 📌特殊的「根据任务链拿出词项链（信念链）」
+     * * 🎯在「概念推理」的「准备待推理词项链」的过程中用到
+     * * 🔗ProcessReason.chooseTermLinksToReason
+     *
+     * @param taskLink The selected TaskLink
+     * @param time     The current time
+     * @return The selected TermLink
+     */
+    private TermLink takeOutTermLinkFromTaskLink(TaskLink taskLink, long time) {
+        for (int i = 0; i < Parameters.MAX_MATCHED_TERM_LINK; i++) {
+            // * 🚩尝试拿出词项链 | 📝此间存在资源竞争
+            final TermLink termLink = this.termLinks.takeOut();
+            if (termLink == null)
+                return null;
+            // * 🚩任务链相对词项链「新近」⇒直接返回
+            if (taskLink.novel(termLink, time))
+                return termLink;
+            // * 🚩当即放回
+            this.termLinks.putBack(termLink);
+        }
+        return null;
     }
 
     /**

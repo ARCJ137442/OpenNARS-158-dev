@@ -22,7 +22,7 @@ import nars.main.Parameters;
  *
  * @param <E> The type of the Item in the Bag
  */
-public abstract class Bag<E extends Item> {
+public class Bag<E extends Item> {
 
     /**
      * priority levels
@@ -93,7 +93,7 @@ public abstract class Bag<E extends Item> {
      *
      * @param memory The reference to memory
      */
-    protected Bag(AtomicInteger forgetRate, int capacity) {
+    public Bag(AtomicInteger forgetRate, int capacity) {
         this.capacity = capacity;
         this.forgetRate = forgetRate;
         init();

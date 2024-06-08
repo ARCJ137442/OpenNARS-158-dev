@@ -52,7 +52,7 @@ public class Memory {
     /**
      * Concept bag. Containing all Concepts of the system
      */
-    private final ConceptBag concepts;
+    private final Bag<Concept> concepts;
     private final AtomicInteger conceptForgettingRate = new AtomicInteger(Parameters.CONCEPT_FORGETTING_CYCLE);
     private final AtomicInteger beliefForgettingRate = new AtomicInteger(Parameters.TERM_LINK_FORGETTING_CYCLE);
     private final AtomicInteger taskForgettingRate = new AtomicInteger(Parameters.TASK_LINK_FORGETTING_CYCLE);
@@ -72,7 +72,7 @@ public class Memory {
      * Called in Reasoner.reset only
      */
     public Memory() {
-        this.concepts = new ConceptBag(this.conceptForgettingRate);
+        this.concepts = new Bag<Concept>(this.conceptForgettingRate, Parameters.CONCEPT_BAG_SIZE);
     }
 
     public void init() {
@@ -229,7 +229,7 @@ public class Memory {
      * 🆕对外接口：获取「概念袋」
      * * 🎯显示用
      */
-    public final ConceptBag getConceptBagForDisplay() {
+    public final Bag<Concept> getConceptBagForDisplay() {
         return this.concepts;
     }
 }

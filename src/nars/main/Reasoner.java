@@ -20,10 +20,8 @@ import nars.io.StringParser;
 import nars.io.Symbols;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
-import nars.storage.ConceptBag;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
-import nars.storage.NovelTaskBag;
 
 /**
  * 主推理器
@@ -107,7 +105,8 @@ public class Reasoner {
         this.memory = new Memory();
         this.inputChannels = new ArrayList<>();
         this.outputChannels = new ArrayList<>();
-        novelTasks = new NovelTaskBag(new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE));
+        novelTasks = new Bag<Task>(
+                new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE), Parameters.TASK_BUFFER_SIZE);
         recorder = new NullInferenceRecorder();
         this.newTasks = new LinkedList<>();
         this.exportStrings = new ArrayList<>();
@@ -277,7 +276,7 @@ public class Reasoner {
     /**
      * New tasks with novel composed terms, for delayed and selective processing
      */
-    private final NovelTaskBag novelTasks;
+    private final Bag<Task> novelTasks;
     /**
      * List of Strings or Tasks to be sent to the output channels
      */
@@ -372,7 +371,7 @@ public class Reasoner {
      * * 🚩获取的「新任务」可变
      * * 🎯用于「直接推理」
      */
-    public final NovelTaskBag mut_novelTasks() {
+    public final Bag<Task> mut_novelTasks() {
         return this.novelTasks;
     }
 
