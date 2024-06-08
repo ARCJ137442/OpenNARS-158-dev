@@ -10,6 +10,7 @@ import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
 import nars.main.Parameters;
+import nars.main.Reasoner;
 import nars.storage.Memory;
 
 public abstract class ProcessDirect {
@@ -18,7 +19,7 @@ public abstract class ProcessDirect {
      * 🆕本地直接推理
      * * 🚩最终只和「本地规则」与{@link Concept#directProcess}有关
      */
-    public static boolean processDirect(final Memory self) {
+    public static boolean processDirect(final Reasoner self) {
         // * 🚩处理已有任务（新任务/新近任务）
         boolean noResult = processNewTask(self);
         // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
@@ -38,7 +39,7 @@ public abstract class ProcessDirect {
      * ones and those that corresponding to existing concepts, plus one from the
      * buffer.
      */
-    private static boolean processNewTask(final Memory self) {
+    private static boolean processNewTask(final Reasoner self) {
         // * 🚩获取新任务
         final LinkedList<Task> tasksToProcess = loadFromNewTasks(self);
         // * 🚩处理新任务
@@ -51,7 +52,7 @@ public abstract class ProcessDirect {
     /**
      * Select a novel task to process.
      */
-    private static boolean processNovelTask(final Memory self) {
+    private static boolean processNovelTask(final Reasoner self) {
         // * 🚩获取新近任务
         final LinkedList<Task> tasksToProcess = loadFromNovelTasks(self);
         // * 🚩处理新近任务
@@ -64,9 +65,10 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新任务」列表
      */
-    private static LinkedList<Task> loadFromNewTasks(final Memory self) {
+    private static LinkedList<Task> loadFromNewTasks(final Reasoner self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        final Memory memory = self.getMemory();
         final LinkedList<Task> mut_newTasks = self.mut_newTasks();
         // don't include new tasks produced in the current workCycle
         // * 🚩处理「新任务缓冲区」中的所有任务
@@ -74,7 +76,7 @@ public abstract class ProcessDirect {
             // * 🚩拿出第一个
             final Task task = mut_newTasks.removeFirst();
             // * 🚩是输入 或 已有对应概念 ⇒ 将参与「直接推理」
-            if (task.isInput() || self.hasConcept(task.getContent())) {
+            if (task.isInput() || memory.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
             }
             // * 🚩否则：继续筛选以放进「新近任务」
@@ -101,7 +103,7 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新近任务」列表
      */
-    private static LinkedList<Task> loadFromNovelTasks(final Memory self) {
+    private static LinkedList<Task> loadFromNovelTasks(final Reasoner self) {
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
@@ -119,7 +121,7 @@ public abstract class ProcessDirect {
      *
      * @param taskInput the task to be accepted (owned)
      */
-    private static boolean immediateProcess(final Memory self, final Task taskInput) {
+    private static boolean immediateProcess(final Reasoner self, final Task taskInput) {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
         // * 🚩构建「实际上下文」并断言可空性
@@ -130,7 +132,7 @@ public abstract class ProcessDirect {
         // * 🚩上下文准备完毕⇒开始
         if (context != null) {
             // * 🚩调整概念的预算值
-            self.activateConcept(context.getCurrentConcept(), taskInput);
+            self.getMemory().activateConcept(context.getCurrentConcept(), taskInput);
             // * 🔥开始「直接处理」
             directProcess(context);
         }
@@ -142,7 +144,7 @@ public abstract class ProcessDirect {
         return noResult;
     }
 
-    private static boolean immediateProcess(final Memory self, final Iterable<Task> tasksToProcess) {
+    private static boolean immediateProcess(final Reasoner self, final Iterable<Task> tasksToProcess) {
         boolean noResult = true;
         for (final Task task : tasksToProcess) {
             // final BudgetValue oldBudgetValue = task.getBudget().clone();
@@ -169,14 +171,14 @@ public abstract class ProcessDirect {
      * @return 直接推理上下文 / 空
      */
     private static DerivationContextDirect prepareDirectProcessContext(
-            final Memory self,
+            final Reasoner self,
             final Task currentTask) {
         // * 🚩准备上下文
         // one of the two places where this variable is set
-        final Concept taskConcept = self.getConceptOrCreate(currentTask.getContent());
+        final Concept taskConcept = self.getMemory().getConceptOrCreate(currentTask.getContent());
         if (taskConcept != null) {
             // final Concept currentConcept = taskConcept;
-            final Concept currentConcept = self.pickOutConcept(taskConcept.getKey());
+            final Concept currentConcept = self.getMemory().pickOutConcept(taskConcept.getKey());
             return new DerivationContextDirect(self, currentTask, currentConcept); // * 📌准备就绪
         }
         return null; // * 📌准备失败：没有可供推理的概念

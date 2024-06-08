@@ -2,7 +2,7 @@ package nars.control;
 
 import nars.entity.Concept;
 import nars.entity.Task;
-import nars.storage.Memory;
+import nars.main.Reasoner;
 
 /**
  * 🆕新的「直接推理上下文」对象
@@ -44,8 +44,8 @@ public class DerivationContextDirect extends DerivationContext {
      * * 🚩每次构造后立即检查参数是否为空
      * * 🎯确保内部字段的可空性：当前任务、当前概念 不可能为空
      */
-    public DerivationContextDirect(final Memory memory, final Task currentTask, final Concept currentConcept) {
-        super(memory);
+    public DerivationContextDirect(final Reasoner reasoner, final Task currentTask, final Concept currentConcept) {
+        super(reasoner);
         setCurrentTask(currentTask);
         setCurrentConcept(currentConcept);
         verify(this);
@@ -84,10 +84,10 @@ public class DerivationContextDirect extends DerivationContext {
     }
 
     @Override
-    public void absorbedByMemory(Memory memory) {
+    public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩销毁「当前任务」
         drop(this.currentTask);
         // * 🚩从基类方法继续
-        super.absorbedByMemory(memory);
+        super.absorbedByReasoner(reasoner);
     }
 }

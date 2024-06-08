@@ -42,7 +42,7 @@ public abstract class StringParser extends Symbols {
      * @param time   The current time
      * @return An experienced task
      */
-    public static Task parseExperience(StringBuffer buffer, Memory memory, long time) {
+    public static Task parseExperience(StringBuffer buffer, Memory memory, long stampCurrentSerial, long time) {
         int i = buffer.indexOf(PREFIX_MARK + "");
         if (i > 0) {
             String prefix = buffer.substring(0, i).trim();
@@ -61,7 +61,7 @@ public abstract class StringParser extends Symbols {
             buffer.delete(j - 1, buffer.length());
         }
         try {
-            return parseTask(buffer.toString().trim(), memory, time);
+            return parseTask(buffer.toString().trim(), memory, stampCurrentSerial, time);
         } catch (Exception e) {
             final String message = "ERR: !!! INVALID INPUT: parseExperience: " + buffer + " --- " + e.getMessage();
             System.out.println(message);
@@ -79,7 +79,7 @@ public abstract class StringParser extends Symbols {
      * @param time   The current time
      * @return An experienced task
      */
-    private static Task parseTask(String s, Memory memory, long time) {
+    private static Task parseTask(String s, Memory memory, long stampCurrentSerial, long time) {
         final StringBuffer buffer = new StringBuffer(s);
         try {
             final String budgetString = getBudgetString(buffer);
@@ -87,7 +87,7 @@ public abstract class StringParser extends Symbols {
             final String str = buffer.toString().trim();
             final int last = str.length() - 1;
             final char punctuation = str.charAt(last);
-            final Stamp stamp = new Stamp(memory.updateStampCurrentSerial(), time);
+            final Stamp stamp = new Stamp(stampCurrentSerial, time);
             final TruthValue truth = parseTruth(truthString, punctuation);
             final Term content = parseTerm(str.substring(0, last));
             final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content));

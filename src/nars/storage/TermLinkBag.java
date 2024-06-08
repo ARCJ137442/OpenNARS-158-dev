@@ -1,5 +1,7 @@
 package nars.storage;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import nars.entity.*;
 import nars.main.Parameters;
 
@@ -10,29 +12,9 @@ public class TermLinkBag extends Bag<TermLink> {
 
     /**
      * Constructor
-     *
-     * @param memory The reference of memory
      */
-    public TermLinkBag(Memory memory) {
-        super(memory);
-    }
-
-    /**
-     * Get the (constant) capacity of TermLinkBag
-     *
-     * @return The capacity of TermLinkBag
-     */
-    protected int capacity() {
-        return Parameters.TERM_LINK_BAG_SIZE;
-    }
-
-    /**
-     * Get the (adjustable) forget rate of TermLinkBag
-     *
-     * @return The forget rate of TermLinkBag
-     */
-    protected int forgetRate() {
-        return memory.getBeliefForgettingRate().get();
+    public TermLinkBag(AtomicInteger forgetRate) {
+        super(forgetRate, Parameters.TERM_LINK_BAG_SIZE);
     }
 
     /**

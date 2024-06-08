@@ -1,5 +1,7 @@
 package nars.storage;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import nars.entity.Concept;
 import nars.main.Parameters;
 
@@ -9,31 +11,8 @@ import nars.main.Parameters;
 public class ConceptBag extends Bag<Concept> {
     /**
      * Constructor
-     *
-     * @param memory The reference of memory
      */
-    public ConceptBag(Memory memory) {
-        super(memory);
-    }
-
-    /**
-     *
-     * Get the (constant) capacity of ConceptBag
-     *
-     * @return The capacity of ConceptBag
-     */
-    @Override
-    protected int capacity() {
-        return Parameters.CONCEPT_BAG_SIZE;
-    }
-
-    /**
-     * Get the (adjustable) forget rate of ConceptBag
-     *
-     * @return The forget rate of ConceptBag
-     */
-    @Override
-    protected int forgetRate() {
-        return memory.getConceptForgettingRate().get();
+    public ConceptBag(AtomicInteger forgetRate) {
+        super(forgetRate, Parameters.CONCEPT_BAG_SIZE);
     }
 }

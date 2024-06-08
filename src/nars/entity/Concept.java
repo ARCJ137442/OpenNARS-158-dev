@@ -1,6 +1,7 @@
 package nars.entity;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
 import nars.io.ToStringBriefAndLong;
@@ -59,11 +60,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * Sentences directly made about the term, with non-future tense
      */
     private final BeliefTable beliefs;
-    /**
-     * Reference to the memory
-     * TODO: 有待移除
-     */
-    final Memory memory;
+    // ! 🚩【2024-06-08 17:37:04】现在不再持有反向引用
     /**
      * The display window
      */
@@ -156,13 +153,17 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param memory A reference to the memory
      */
     public Concept(Term term, Memory memory) {
+        this(term, memory.getTaskForgettingRate(),
+                memory.getBeliefForgettingRate());
+    }
+
+    public Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
         this.token = new Token(term.getName());
         this.term = term;
-        this.memory = memory;
         this.questions = new QuestionBuffer();
         this.beliefs = new BeliefTable();
-        this.taskLinks = new TaskLinkBag(memory);
-        this.termLinks = new TermLinkBag(memory);
+        this.taskLinks = new TaskLinkBag(taskLinkForgettingRate);
+        this.termLinks = new TermLinkBag(termLinkForgettingRate);
         if (term instanceof CompoundTerm) {
             // * 🚩只有「复合词项←其内元素」的链接模板
             // * 📝所有信息基于「内容包含」关系
@@ -271,7 +272,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
             // * ✅【2024-06-08 10:13:46】现在彻底删除newStamp字段，不再需要覆盖了
             if (!taskSentence.evidentialOverlap(belief)) {
-                memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
+                // * 🚩现在彻底删除内部memory字段
+                // memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
                 final Judgement selected = (Judgement) belief.sentenceClone(); // will this mess up priority adjustment?
                 return selected;
             }

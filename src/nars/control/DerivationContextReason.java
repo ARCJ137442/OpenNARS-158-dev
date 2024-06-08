@@ -9,7 +9,7 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.RuleTables;
 import nars.language.Term;
-import nars.storage.Memory;
+import nars.main.Reasoner;
 
 /**
  * 🆕新的「概念推理上下文」对象
@@ -52,18 +52,16 @@ public class DerivationContextReason extends DerivationContextTransform {
     /**
      * 🆕带参初始化
      * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
-     *
-     * @param memory
      */
     public DerivationContextReason(
-            final Memory memory,
+            final Reasoner reasoner,
             final Concept currentConcept,
             final Task currentTask,
             final TaskLink currentTaskLink,
             final TermLink currentBeliefLink,
             final LinkedList<TermLink> toReasonLinks) {
         // * 🚩从基类构造，并预先检验
-        super(memory, currentConcept, currentTaskLink);
+        super(reasoner, currentConcept, currentTaskLink);
         // * 🚩赋值
         this.setCurrentBeliefLink(currentBeliefLink);
         this.termLinksToReason = toReasonLinks;
@@ -161,10 +159,10 @@ public class DerivationContextReason extends DerivationContextTransform {
     }
 
     @Override
-    public void absorbedByMemory(Memory memory) {
+    public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
         this.getCurrentConcept().__putTermLinkBack(currentBeliefLink);
         // * 🚩从基类方法继续
-        super.absorbedByMemory(memory);
+        super.absorbedByReasoner(reasoner);
     }
 }

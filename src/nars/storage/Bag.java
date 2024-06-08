@@ -1,6 +1,7 @@
 package nars.storage;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.entity.Item;
 import nars.inference.BudgetFunctions;
@@ -71,10 +72,14 @@ public abstract class Bag<E extends Item> {
      * maximum number of items to be taken out at current level
      */
     private int currentCounter;
+
     /**
-     * reference to memory
+     * The item decay rate, which differs in difference subclass,
+     * and can be changed in run time by the user, so not a constant.
+     *
+     * @return The number of times for a decay factor to be fully applied
      */
-    protected final Memory memory;
+    private final AtomicInteger forgetRate;
 
     private BagObserver<E> bagObserver = new NullBagObserver<>();
 
@@ -88,9 +93,9 @@ public abstract class Bag<E extends Item> {
      *
      * @param memory The reference to memory
      */
-    protected Bag(Memory memory) {
-        this.memory = memory;
-        capacity = capacity();
+    protected Bag(AtomicInteger forgetRate, int capacity) {
+        this.capacity = capacity;
+        this.forgetRate = forgetRate;
         init();
     }
 
@@ -111,15 +116,9 @@ public abstract class Bag<E extends Item> {
      *
      * @return Bag capacity, in number of Items allowed
      */
-    protected abstract int capacity();
-
-    /**
-     * Get the item decay rate, which differs in difference subclass, and can be
-     * changed in run time by the user, so not a constant.
-     *
-     * @return The number of times for a decay factor to be fully applied
-     */
-    protected abstract int forgetRate();
+    public final int capacity() {
+        return capacity;
+    }
 
     /**
      * The number of items in the bag
@@ -246,7 +245,7 @@ public abstract class Bag<E extends Item> {
     }
 
     public void forget(E oldItem) {
-        BudgetFunctions.forget(oldItem, forgetRate(), RELATIVE_THRESHOLD);
+        BudgetFunctions.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
     }
 
     /**

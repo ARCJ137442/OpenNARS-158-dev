@@ -1,18 +1,13 @@
 package nars.storage;
 
-import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.DerivationContext;
 import nars.entity.Concept;
-import nars.entity.Sentence;
-import nars.entity.Task;
 import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
-import nars.io.IInferenceRecorder;
 import nars.language.Term;
 import nars.main.Parameters;
-import nars.main.Reasoner;
 
 /**
  * The memory of the system.
@@ -53,126 +48,37 @@ public class Memory {
         }
     }
 
-    /**
-     * Backward pointer to the reasoner
-     */
-    private final Reasoner reasoner;
-
     /* ---------- Long-term storage for multiple cycles ---------- */
     /**
      * Concept bag. Containing all Concepts of the system
      */
     private final ConceptBag concepts;
-    /**
-     * New tasks with novel composed terms, for delayed and selective processing
-     */
-    private final NovelTaskBag novelTasks;
-    /**
-     * Inference record text to be written into a log file
-     */
-    private IInferenceRecorder recorder;
+    private final AtomicInteger conceptForgettingRate = new AtomicInteger(Parameters.CONCEPT_FORGETTING_CYCLE);
     private final AtomicInteger beliefForgettingRate = new AtomicInteger(Parameters.TERM_LINK_FORGETTING_CYCLE);
     private final AtomicInteger taskForgettingRate = new AtomicInteger(Parameters.TASK_LINK_FORGETTING_CYCLE);
-    private final AtomicInteger conceptForgettingRate = new AtomicInteger(Parameters.CONCEPT_FORGETTING_CYCLE);
 
-    /* ---------- Short-term workspace for a single cycle ---------- */
-    /**
-     * List of new tasks accumulated in one cycle, to be processed in the next
-     * cycle
-     */
-    private final LinkedList<Task> newTasks;
-    /**
-     * List of Strings or Tasks to be sent to the output channels
-     */
-    private final ArrayList<String> exportStrings;
+    public AtomicInteger getTaskForgettingRate() {
+        return taskForgettingRate;
+    }
 
-    // /**
-    // * 🆕新的「推理上下文」对象
-    // * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
-    // */
-    // public DerivationContext context = new DerivationContext(this);
+    public AtomicInteger getBeliefForgettingRate() {
+        return beliefForgettingRate;
+    }
 
     /* ---------- Constructor ---------- */
     /**
      * Create a new memory
      * <p>
      * Called in Reasoner.reset only
-     *
-     * @param reasoner
      */
-    public Memory(Reasoner reasoner) {
-        this.reasoner = reasoner;
-        recorder = new NullInferenceRecorder();
-        concepts = new ConceptBag(this);
-        novelTasks = new NovelTaskBag(this);
-        newTasks = new LinkedList<>();
-        exportStrings = new ArrayList<>();
+    public Memory() {
+        this.concepts = new ConceptBag(this.conceptForgettingRate);
     }
 
     public void init() {
         concepts.init();
-        novelTasks.init();
-        newTasks.clear();
-        exportStrings.clear();
-        reasoner.initTimer();
         DerivationContext.init();
-        recorder.append("\n-----RESET-----\n");
     }
-
-    /* ---------- access utilities ---------- */
-
-    public ArrayList<String> getExportStrings() {
-        return exportStrings;
-    }
-
-    public IInferenceRecorder getRecorder() {
-        return recorder;
-    }
-
-    public void setRecorder(IInferenceRecorder recorder) {
-        this.recorder = recorder;
-    }
-
-    public long getTime() {
-        return reasoner.getTime();
-    }
-
-    /**
-     * 用于转发推理器的{@link Reasoner#getTimer}
-     */
-    public long getTimer() {
-        return reasoner.getTimer();
-    }
-
-    /**
-     * 用于转发推理器的{@link Reasoner#updateTimer}
-     */
-    public long updateTimer() {
-        return reasoner.updateTimer();
-    }
-
-    /**
-     * 获取「静默值」
-     * * 🎯在「推理上下文」中无需获取「推理器」`getReasoner`
-     *
-     * @return 静默值
-     */
-    public AtomicInteger getSilenceValue() {
-        return reasoner.getSilenceValue();
-    }
-
-    /**
-     * 🆕将「更新并获取时间戳序列号」用于「时间戳的建立」中
-     *
-     * @return
-     */
-    public long updateStampCurrentSerial() {
-        return reasoner.updateStampCurrentSerial();
-    }
-
-    // public MainWindow getMainWindow() {
-    // return reasoner.getMainWindow();
-    // }
 
     /* ---------- conversion utilities ---------- */
     /**
@@ -287,93 +193,6 @@ public class Memory {
         }
     }
 
-    /* ---------- new task entries ---------- */
-
-    /*
-     * There are several types of new tasks, all added into the
-     * newTasks list, to be processed in the next workCycle.
-     * Some of them are reported and/or logged.
-     */
-    /**
-     * Input task processing. Invoked by the outside or inside environment.
-     * Outside: StringParser (input); Inside: Operator (feedback). Input tasks
-     * with low priority are ignored, and the others are put into task buffer.
-     *
-     * @param task The input task
-     */
-    public void inputTask(Task task) {
-        if (task.budgetAboveThreshold()) {
-            recorder.append("!!! Perceived: " + task + "\n");
-            this.report(task, ReportType.IN); // report input
-            newTasks.add(task); // wait to be processed in the next workCycle
-        } else {
-            recorder.append("!!! Neglected: " + task + "\n");
-        }
-    }
-
-    /**
-     * Display input/output sentence in the output channels. The only place to
-     * add Objects into exportStrings. Currently only Strings are added, though
-     * in the future there can be outgoing Tasks; also if exportStrings is empty
-     * display the current value of timer ( exportStrings is emptied in
-     * {@link Reasoner#doTick()} - TODO fragile mechanism)
-     *
-     */
-    public void report(Sentence sentence, ReportType type) {
-        report(DerivationContext.generateReportString(sentence, type));
-    }
-
-    /**
-     * 🆕只报告字符串
-     * * 🎯从「吸收上下文」中调用
-     * * 🎯从「直接报告」中转发
-     *
-     * @param output 要输出的字符串
-     */
-    public void report(String output) {
-        if (Reasoner.DEBUG) {
-            System.out.println("// report( clock " + getTime()
-            // + ", input " + input
-                    + ", timer " + getTimer()
-                    + ", output " + output
-                    + ", exportStrings " + exportStrings);
-            System.out.flush();
-        }
-        if (exportStrings.isEmpty()) {
-            long timer = updateTimer();
-            if (timer > 0) {
-                exportStrings.add(String.valueOf(timer));
-            }
-        }
-        exportStrings.add(output);
-    }
-
-    /**
-     * 吸收「推理上下文」
-     * * 🚩【2024-05-21 23:18:55】现在直接调用「推理上下文」的对应方法，以便享受多分派
-     */
-    public void absorbContext(final DerivationContext context) {
-        context.absorbedByMemory(this);
-    }
-
-    /**
-     * 🆕对外接口：获取可变的「新任务」列表
-     * * 🚩获取的「新任务」可变
-     * * 🎯用于「直接推理」
-     */
-    public final LinkedList<Task> mut_newTasks() {
-        return newTasks;
-    }
-
-    /**
-     * 🆕对外接口：获取可变的「新任务」列表
-     * * 🚩获取的「新任务」可变
-     * * 🎯用于「直接推理」
-     */
-    public final NovelTaskBag mut_novelTasks() {
-        return novelTasks;
-    }
-
     /**
      * 🆕对外接口：从「概念袋」中拿出一个概念
      *
@@ -402,122 +221,15 @@ public class Memory {
         this.concepts.putBack(concept);
     }
 
-    /**
-     * Actually means that there are no new Tasks
-     */
-    public boolean noResult() {
-        return newTasks.isEmpty();
-    }
-
-    /* ---------- display ---------- */
-    /**
-     * Start display active concepts on given bagObserver, called from MainWindow.
-     *
-     * we don't want to expose fields concepts and novelTasks, AND we want to
-     * separate GUI and inference, so this method takes as argument a
-     * {@link BagObserver} and calls
-     * {@link ConceptBag#addBagObserver(BagObserver, String)} ;
-     *
-     * see design for {@link Bag} and {@link nars.gui.BagWindow}
-     * in {@link Bag#addBagObserver(BagObserver, String)}
-     *
-     * @param bagObserver bag Observer that will receive notifications
-     * @param title       the window title
-     */
-    public void conceptsStartPlay(BagObserver<Concept> bagObserver, String title) {
-        bagObserver.setBag(concepts);
-        concepts.addBagObserver(bagObserver, title);
-    }
-
-    /**
-     * Display new tasks, called from MainWindow. see
-     * {@link #conceptsStartPlay(BagObserver, String)}
-     *
-     * @param bagObserver
-     * @param s           the window title
-     */
-    public void taskBuffersStartPlay(BagObserver<Task> bagObserver, String s) {
-        bagObserver.setBag(novelTasks);
-        novelTasks.addBagObserver(bagObserver, s);
-    }
-
-    @Override
-    public String toString() {
-        String result = toStringLongIfNotNull(concepts, "concepts")
-                + toStringLongIfNotNull(novelTasks, "novelTasks")
-                + toStringIfNotNull(newTasks, "newTasks");
-        // ! ❌【2024-05-21 10:52:53】因为现在「推理上下文」仅为临时变量，故不再提供其信息
-        // if (context != null) {
-        // result += toStringLongIfNotNull(context.getCurrentTask(), "currentTask")
-        // + toStringLongIfNotNull(context.getCurrentBeliefLink(), "currentBeliefLink")
-        // + toStringIfNotNull(context.getCurrentBelief(), "currentBelief");
-        // }
-        return result;
-    }
-
-    private String toStringLongIfNotNull(Bag<?> item, String title) {
-        return item == null ? ""
-                : "\n " + title + ":\n"
-                        + item.toStringLong();
-    }
-
-    // private String toStringLongIfNotNull(Item item, String title) {
-    // return item == null ? ""
-    // : "\n " + title + ":\n"
-    // + item.toStringLong();
-    // }
-
-    private String toStringIfNotNull(Object item, String title) {
-        return item == null ? ""
-                : "\n " + title + ":\n"
-                        + item.toString();
-    }
-
-    public AtomicInteger getTaskForgettingRate() {
-        return taskForgettingRate;
-    }
-
-    public AtomicInteger getBeliefForgettingRate() {
-        return beliefForgettingRate;
-    }
-
     public AtomicInteger getConceptForgettingRate() {
-        return conceptForgettingRate;
+        return this.conceptForgettingRate;
     }
 
-    class NullInferenceRecorder implements IInferenceRecorder {
-
-        @Override
-        public void init() {
-        }
-
-        @Override
-        public void show() {
-        }
-
-        @Override
-        public void play() {
-        }
-
-        @Override
-        public void stop() {
-        }
-
-        @Override
-        public void append(String s) {
-        }
-
-        @Override
-        public void openLogFile() {
-        }
-
-        @Override
-        public void closeLogFile() {
-        }
-
-        @Override
-        public boolean isLogging() {
-            return false;
-        }
+    /**
+     * 🆕对外接口：获取「概念袋」
+     * * 🎯显示用
+     */
+    public final ConceptBag getConceptBagForDisplay() {
+        return this.concepts;
     }
 }

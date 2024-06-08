@@ -10,14 +10,17 @@ import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
 import nars.inference.LocalRules;
 import nars.main.Parameters;
-import nars.storage.Memory;
+import nars.main.Reasoner;
 
 public abstract class ProcessReason {
 
     /**
      * 🆕「概念推理」控制机制的入口函数
      */
-    public static void processReason(final Memory self, final InferenceEngine inferenceEngine, final boolean noResult) {
+    public static void processReason(
+            final Reasoner self,
+            final InferenceEngine inferenceEngine,
+            final boolean noResult) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）⇒构建「概念推理上下文」
         final DerivationContextReason context = ProcessReason.preprocessConcept(
@@ -28,14 +31,17 @@ public abstract class ProcessReason {
             return;
 
         // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processConcept(inferenceEngine, context);
+        ProcessReason.processConcept(self, inferenceEngine, context);
     }
 
     /**
      * Select a concept to fire.
      * * 📌概念推理 主过程
      */
-    public static void processConcept(final InferenceEngine inferenceEngine, final DerivationContextReason context) {
+    public static void processConcept(
+            final Reasoner self,
+            final InferenceEngine inferenceEngine,
+            final DerivationContextReason context) {
         // * 🚩开始推理；【2024-05-17 17:50:05】此处代码分离仅为更好演示其逻辑
         // * 📝【2024-05-19 18:40:54】目前将这类「仅修改一个变量的推理」视作一组推理，共用一个上下文
         // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
@@ -46,7 +52,19 @@ public abstract class ProcessReason {
             if (context.getCurrentBelief() != null) {
                 LocalRules.matchTaskAndBelief(context);
             }
-            inferenceEngine.reason(context);
+            // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
+            // * 📌依据：`long_term_stability.nal`
+            // * 📄ONA中的结果有两个：
+            // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
+            // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
+            // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
+            // * 📝目前的结果是：`ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}`
+            // * 🚩
+            // if (!context.getMemory().noResult() && task.isJudgment()) {
+            // * 🚩【2024-06-08 19:30:57】目前只能退而求其次，不可能再访问到其它地方的数据了
+            if (self.noResult() || !context.getCurrentTask().isJudgment()) {
+                inferenceEngine.reason(context);
+            }
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
             final boolean hasNext = context.nextBelief() != null;
             if (!hasNext)
@@ -55,7 +73,7 @@ public abstract class ProcessReason {
         }
         // * ✅归还「当前任务链/当前信念链」的工作已经在「吸收上下文」中被执行
         // * 🚩吸收并清空上下文
-        context.absorbedByMemory(context.mutMemory());
+        context.absorbedByReasoner(self);
     }
 
     /* ---------- main loop ---------- */
@@ -70,7 +88,7 @@ public abstract class ProcessReason {
      * @return 预点火结果 {@link PreFireResult}
      */
     private static DerivationContextReason preprocessConcept(
-            final Memory self,
+            final Reasoner self,
             final InferenceEngine inferenceEngine,
             final boolean noResult) {
         // * 🚩推理前判断「是否有必要」
@@ -80,7 +98,7 @@ public abstract class ProcessReason {
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火
-        final Concept currentConcept = self.takeOutConcept();
+        final Concept currentConcept = self.getMemory().takeOutConcept();
         if (currentConcept == null) {
             return null;
         }
@@ -95,7 +113,7 @@ public abstract class ProcessReason {
         final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
         if (currentTaskLink == null) {
             // * 🚩中途返回时要回收
-            self.putBackConcept(currentConcept);
+            self.getMemory().putBackConcept(currentConcept);
             return null;
         }
         // * 📝【2024-05-21 11:54:04】断言：直接推理不会涉及「词项链/信念链」
@@ -136,7 +154,7 @@ public abstract class ProcessReason {
             // ! ❓↓这个「当前任务链」不知为何，按理应该放回，但若放回则推不出结果
             // * 🚩【2024-05-24 22:53:16】目前「维持原判」不放回「当前任务链」
             // currentConcept.__putTaskLinkBack(currentTaskLink);
-            self.putBackConcept(currentConcept);
+            self.getMemory().putBackConcept(currentConcept);
             return null;
         } else {
             // 先将首个元素作为「当前信念链」
@@ -160,8 +178,10 @@ public abstract class ProcessReason {
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
      */
-    private static LinkedList<TermLink> chooseTermLinksToReason(Memory self, Concept concept,
-            TaskLink currentTaskLink) {
+    private static LinkedList<TermLink> chooseTermLinksToReason(
+            final Reasoner self,
+            final Concept concept,
+            final TaskLink currentTaskLink) {
         final LinkedList<TermLink> toReasonLinks = new LinkedList<>();
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
         // while (self.noResult() && (termLinkCount > 0)) {

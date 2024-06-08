@@ -248,7 +248,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param forgetRate        The budget for the new item
      * @param relativeThreshold The relative threshold of the bag
      */
-    public static void forget(Budget budgetToBeForget, float forgetRate, float relativeThreshold) {
+    public static void forget(Budget budgetToBeForget, int forgetRate, float relativeThreshold) {
         double quality = budgetToBeForget.getQuality() * relativeThreshold; // re-scaled quality
         final double p = budgetToBeForget.getPriority() - quality; // priority above quality
         if (p > 0) {

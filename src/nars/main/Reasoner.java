@@ -1,18 +1,29 @@
 package nars.main;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nars.control.DerivationContext;
 import nars.control.ProcessDirect;
 import nars.control.ProcessReason;
+import nars.entity.Concept;
+import nars.entity.Sentence;
 import nars.entity.Task;
+import nars.gui.MainWindow;
 import nars.inference.InferenceEngine;
 import nars.inference.InferenceEngineV1;
+import nars.io.IInferenceRecorder;
 import nars.io.InputChannel;
 import nars.io.OutputChannel;
 import nars.io.StringParser;
 import nars.io.Symbols;
+import nars.storage.Bag;
+import nars.storage.BagObserver;
+import nars.storage.ConceptBag;
 import nars.storage.Memory;
+import nars.storage.Memory.ReportType;
+import nars.storage.NovelTaskBag;
 
 /**
  * 主推理器
@@ -88,17 +99,18 @@ public class Reasoner {
     }
 
     public Reasoner() {
-        name = null;
-        memory = new Memory(this);
-        inputChannels = new ArrayList<>();
-        outputChannels = new ArrayList<>();
+        this(null);
     }
 
     public Reasoner(String name) {
         this.name = name;
-        memory = new Memory(this);
-        inputChannels = new ArrayList<>();
-        outputChannels = new ArrayList<>();
+        this.memory = new Memory();
+        this.inputChannels = new ArrayList<>();
+        this.outputChannels = new ArrayList<>();
+        novelTasks = new NovelTaskBag(new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE));
+        recorder = new NullInferenceRecorder();
+        this.newTasks = new LinkedList<>();
+        this.exportStrings = new ArrayList<>();
     }
 
     /**
@@ -110,6 +122,11 @@ public class Reasoner {
         walkingSteps = 0;
         clock = 0;
         memory.init();
+        this.initTimer();
+        recorder.append("\n-----RESET-----\n");
+        newTasks.clear();
+        novelTasks.init();
+        exportStrings.clear();
         stampCurrentSerial = 0;
         // timer = 0;
     }
@@ -190,7 +207,7 @@ public class Reasoner {
                     + "walkingSteps " + walkingSteps
                     + ", clock " + clock
                     + ", getTimer " + getTimer()
-                    + "\n//    memory.getExportStrings() " + memory.getExportStrings());
+                    + "\n//    exportStrings " + this.exportStrings);
             System.out.flush();
         }
     }
@@ -207,7 +224,7 @@ public class Reasoner {
     }
 
     public void handleOutput() {
-        final ArrayList<String> output = memory.getExportStrings();
+        final ArrayList<String> output = this.exportStrings;
         if (!output.isEmpty()) {
             for (final OutputChannel channelOut : outputChannels) {
                 channelOut.nextOutput(output);
@@ -238,18 +255,139 @@ public class Reasoner {
      * * ✅省掉`clock`参数：本身通过`getTime`方法，仍然能获取到这个参数
      */
     public void workCycle() {
-        this.memory.getRecorder().append(" --- " + this.getTime() + " ---\n");
+        this.recorder.append(" --- " + this.getTime() + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
-        final boolean noResult = ProcessDirect.processDirect(this.memory);
+        final boolean noResult = ProcessDirect.processDirect(this);
 
         // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processReason(this.memory, this.inferenceEngine, noResult);
+        ProcessReason.processReason(this, this.inferenceEngine, noResult);
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段
-        this.memory.mut_novelTasks().refresh();
+        this.mut_novelTasks().refresh();
     }
+
+    /* ---------- Short-term workspace for a single cycle ---------- */
+    /**
+     * List of new tasks accumulated in one cycle, to be processed in the next
+     * cycle
+     */
+    private final LinkedList<Task> newTasks;
+    /**
+     * New tasks with novel composed terms, for delayed and selective processing
+     */
+    private final NovelTaskBag novelTasks;
+    /**
+     * List of Strings or Tasks to be sent to the output channels
+     */
+    private final ArrayList<String> exportStrings;
+
+    // /**
+    // * 🆕新的「推理上下文」对象
+    // * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
+    // */
+    // public DerivationContext context = new DerivationContext(this);
+
+    /* ---------- new task entries ---------- */
+
+    /*
+     * There are several types of new tasks, all added into the
+     * newTasks list, to be processed in the next workCycle.
+     * Some of them are reported and/or logged.
+     */
+    /**
+     * Input task processing. Invoked by the outside or inside environment.
+     * Outside: StringParser (input); Inside: Operator (feedback). Input tasks
+     * with low priority are ignored, and the others are put into task buffer.
+     *
+     * @param task The input task
+     */
+    public void inputTask(Task task) {
+        if (task.budgetAboveThreshold()) {
+            this.recorder.append("!!! Perceived: " + task + "\n");
+            this.report(task, ReportType.IN); // report input
+            newTasks.add(task); // wait to be processed in the next workCycle
+        } else {
+            this.recorder.append("!!! Neglected: " + task + "\n");
+        }
+    }
+
+    /**
+     * Display input/output sentence in the output channels. The only place to
+     * add Objects into exportStrings. Currently only Strings are added, though
+     * in the future there can be outgoing Tasks; also if exportStrings is empty
+     * display the current value of timer ( exportStrings is emptied in
+     * {@link Reasoner#doTick()} - TODO fragile mechanism)
+     *
+     */
+    public void report(Sentence sentence, ReportType type) {
+        report(DerivationContext.generateReportString(sentence, type));
+    }
+
+    /**
+     * 🆕只报告字符串
+     * * 🎯从「吸收上下文」中调用
+     * * 🎯从「直接报告」中转发
+     *
+     * @param output 要输出的字符串
+     */
+    public void report(String output) {
+        if (Reasoner.DEBUG) {
+            System.out.println("// report( clock " + getTime()
+            // + ", input " + input
+                    + ", timer " + getTimer()
+                    + ", output " + output
+                    + ", exportStrings " + exportStrings);
+            System.out.flush();
+        }
+        if (exportStrings.isEmpty()) {
+            long timer = updateTimer();
+            if (timer > 0) {
+                exportStrings.add(String.valueOf(timer));
+            }
+        }
+        exportStrings.add(output);
+    }
+
+    /**
+     * 吸收「推理上下文」
+     * * 🚩【2024-05-21 23:18:55】现在直接调用「推理上下文」的对应方法，以便享受多分派
+     */
+    public void absorbContext(final DerivationContext context) {
+        context.absorbedByReasoner(this);
+    }
+
+    /**
+     * 🆕对外接口：获取可变的「新任务」列表
+     * * 🚩获取的「新任务」可变
+     * * 🎯用于「直接推理」
+     */
+    public final LinkedList<Task> mut_newTasks() {
+        return newTasks;
+    }
+
+    /**
+     * 🆕对外接口：获取可变的「新任务」列表
+     * * 🚩获取的「新任务」可变
+     * * 🎯用于「直接推理」
+     */
+    public final NovelTaskBag mut_novelTasks() {
+        return this.novelTasks;
+    }
+
+    public ArrayList<String> getExportStrings() {
+        return this.exportStrings;
+    }
+
+    /**
+     * Actually means that there are no new Tasks
+     */
+    public boolean noResult() {
+        return this.newTasks.isEmpty();
+    }
+
+    // 输入输出 //
 
     /**
      * determines the end of {@link NARS} program
@@ -270,24 +408,23 @@ public class Reasoner {
         char c = text.charAt(0);
         if (c == Symbols.RESET_MARK) {
             reset();
-            memory.getExportStrings().add(text);
+            this.exportStrings.add(text);
         } else if (c != Symbols.COMMENT_MARK) {
             // read NARS language or an integer : TODO duplicated code
             try {
-                int i = Integer.parseInt(text);
+                final int i = Integer.parseInt(text);
                 walk(i);
             } catch (NumberFormatException e) {
-                Task task = StringParser.parseExperience(new StringBuffer(text), memory, clock);
+                final Task task = StringParser.parseExperience(
+                        new StringBuffer(text),
+                        memory,
+                        this.updateStampCurrentSerial(),
+                        clock);
                 if (task != null) {
-                    memory.inputTask(task);
+                    this.inputTask(task);
                 }
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return memory.toString();
     }
 
     /**
@@ -333,5 +470,122 @@ public class Reasoner {
     /** set System clock : number of cycles since last output */
     private void setTimer(long timer) {
         this.timer = timer;
+    }
+
+    /* ---- display ---- */
+
+    /* ---------- display ---------- */
+    /**
+     * Inference record text to be written into a log file
+     */
+    private IInferenceRecorder recorder;
+
+    /* ---------- access utilities ---------- */
+
+    public IInferenceRecorder getRecorder() {
+        return recorder;
+    }
+
+    public void setRecorder(IInferenceRecorder recorder) {
+        this.recorder = recorder;
+    }
+
+    /**
+     * Start display active concepts on given bagObserver, called from MainWindow.
+     *
+     * we don't want to expose fields concepts and novelTasks, AND we want to
+     * separate GUI and inference, so this method takes as argument a
+     * {@link BagObserver} and calls
+     * {@link ConceptBag#addBagObserver(BagObserver, String)} ;
+     *
+     * see design for {@link Bag} and {@link nars.gui.BagWindow}
+     * in {@link Bag#addBagObserver(BagObserver, String)}
+     *
+     * @param bagObserver bag Observer that will receive notifications
+     * @param title       the window title
+     */
+    public void conceptsStartPlay(BagObserver<Concept> bagObserver, String title) {
+        bagObserver.setBag(this.memory.getConceptBagForDisplay());
+        this.memory.getConceptBagForDisplay().addBagObserver(bagObserver, title);
+    }
+
+    /**
+     * Display new tasks, called from MainWindow. see
+     * {@link #conceptsStartPlay(BagObserver, String)}
+     *
+     * @param bagObserver
+     * @param s           the window title
+     */
+    public void taskBuffersStartPlay(BagObserver<Task> bagObserver, String s) {
+        bagObserver.setBag(novelTasks);
+        novelTasks.addBagObserver(bagObserver, s);
+    }
+
+    @Override
+    public String toString() {
+        String result = toStringLongIfNotNull(this.memory.getConceptBagForDisplay(), "concepts")
+                + toStringLongIfNotNull(novelTasks, "novelTasks")
+                + toStringIfNotNull(newTasks, "newTasks");
+        // ! ❌【2024-05-21 10:52:53】因为现在「推理上下文」仅为临时变量，故不再提供其信息
+        // if (context != null) {
+        // result += toStringLongIfNotNull(context.getCurrentTask(), "currentTask")
+        // + toStringLongIfNotNull(context.getCurrentBeliefLink(), "currentBeliefLink")
+        // + toStringIfNotNull(context.getCurrentBelief(), "currentBelief");
+        // }
+        return result;
+    }
+
+    private String toStringLongIfNotNull(Bag<?> item, String title) {
+        return item == null ? ""
+                : "\n " + title + ":\n"
+                        + item.toStringLong();
+    }
+
+    // private String toStringLongIfNotNull(Item item, String title) {
+    // return item == null ? ""
+    // : "\n " + title + ":\n"
+    // + item.toStringLong();
+    // }
+
+    private String toStringIfNotNull(Object item, String title) {
+        return item == null ? ""
+                : "\n " + title + ":\n"
+                        + item.toString();
+    }
+
+    class NullInferenceRecorder implements IInferenceRecorder {
+
+        @Override
+        public void init() {
+        }
+
+        @Override
+        public void show() {
+        }
+
+        @Override
+        public void play() {
+        }
+
+        @Override
+        public void stop() {
+        }
+
+        @Override
+        public void append(String s) {
+        }
+
+        @Override
+        public void openLogFile() {
+        }
+
+        @Override
+        public void closeLogFile() {
+        }
+
+        @Override
+        public boolean isLogging() {
+            return false;
+        }
     }
 }

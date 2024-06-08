@@ -16,6 +16,7 @@ import nars.entity.TruthValue;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
+import nars.main.Reasoner;
 import nars.storage.Memory;
 import nars.storage.Memory.ReportType;
 
@@ -135,6 +136,11 @@ public abstract class DerivationContext {
     }
 
     /**
+     * * 🆕用于在「被吸收」时加入「推理记录器」的字符串集合
+     */
+    private final ArrayList<String> stringsToRecord;
+
+    /**
      * * 📝在所有使用场景中，均为「当前概念要处理的词项」且只读
      * * 🚩【2024-05-20 09:15:59】故此处仅保留getter，并且不留存多余字段（减少共享引用）
      * * ️📝可空性：非空
@@ -208,9 +214,9 @@ public abstract class DerivationContext {
     /** 🆕产生新时间戳 from 单前提 */
     protected Stamp generateNewStampSingle() {
         if (this.getCurrentTask().isJudgment() || !this.hasCurrentBelief()) {
-            return new Stamp(this.getCurrentTask(), memory.getTime());
+            return new Stamp(this.getCurrentTask(), this.getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            return new Stamp(this.getCurrentBelief(), memory.getTime());
+            return new Stamp(this.getCurrentBelief(), this.getTime());
         }
     }
 
@@ -234,8 +240,8 @@ public abstract class DerivationContext {
      *
      * @param memory 所反向引用的「记忆区」对象
      */
-    public DerivationContext(final Memory memory) {
-        this(memory, new LinkedList<>(), new ArrayList<>());
+    public DerivationContext(final Reasoner reasoner) {
+        this(reasoner, new LinkedList<>(), new ArrayList<>());
     }
 
     /**
@@ -244,14 +250,16 @@ public abstract class DerivationContext {
      *
      * @param memory
      */
-    protected DerivationContext(final Memory memory,
+    protected DerivationContext(
+            final Reasoner reasoner,
             final LinkedList<Task> newTasks,
             final ArrayList<String> exportStrings) {
-        this.memory = memory;
+        this.memory = reasoner.getMemory();
+        this.silenceValue = reasoner.getSilenceValue().get();
+        this.time = reasoner.getTime();
         this.newTasks = newTasks;
         this.exportStrings = exportStrings;
-        this.silenceValue = memory.getSilenceValue().get();
-        this.time = memory.getTime();
+        this.stringsToRecord = new ArrayList<>();
     }
 
     /**
@@ -275,7 +283,7 @@ public abstract class DerivationContext {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
         final BudgetValue newBudget = BudgetValue.from(budget);
         final Task task = new TaskV1(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
-        memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
+        stringsToRecord.add("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (newTask.isQuestion()) {
             final float s = task.budgetSummary();
@@ -297,11 +305,11 @@ public abstract class DerivationContext {
     private void derivedTask(Task task) {
         // * 🚩判断「导出的新任务」是否有价值
         if (!task.budgetAboveThreshold()) {
-            memory.getRecorder().append("!!! Ignored: " + task + "\n");
+            stringsToRecord.add("!!! Ignored: " + task + "\n");
             return;
         }
         // * 🚩报告
-        memory.getRecorder().append("!!! Derived: " + task + "\n");
+        stringsToRecord.add("!!! Derived: " + task + "\n");
         final float budget = task.budgetSummary();
         // final float minSilent = memory.getReasoner()
         // .getMainWindow().silentW.value() / 100.0f;
@@ -461,24 +469,29 @@ public abstract class DerivationContext {
     }
 
     /**
-     * 让「记忆区」吸收「推理上下文」
+     * 让「推理器」吸收「推理上下文」
      * * 🚩【2024-05-19 18:39:44】现在会在每次「准备上下文⇒推理」的过程中执行
      * * 🎯变量隔离，防止「上下文串线」与「重复使用」
      * * 📌传入所有权而非引用
      * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
      */
-    public void absorbedByMemory(final Memory memory) {
+    public void absorbedByReasoner(final Reasoner reasoner) {
+        final Memory memory = reasoner.getMemory();
         // * 🚩销毁「当前信念」 | 变量值仅临时推理用
         this.currentBelief = null;
-        // * 🚩将「当前概念」归还到「记忆区」中
+        // * 🚩将「当前概念」归还到「推理器」中
         memory.putBackConcept(this.getCurrentConcept());
         // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
         for (final Task newTask : this.getNewTasks()) {
-            memory.mut_newTasks().add(newTask);
+            reasoner.mut_newTasks().add(newTask);
         }
         // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
         for (final String output : this.getExportStrings()) {
-            memory.report(output);
+            reasoner.report(output);
+        }
+        // * 🚩将推理导出的「报告字串」添加到自身「报告字串」中（先进先出）
+        for (final String message : this.stringsToRecord) {
+            reasoner.getRecorder().append(message);
         }
         // * 🚩清理上下文防串（同时清理「导出的新任务」与「导出字串」）
         this.getNewTasks().clear();
@@ -488,14 +501,14 @@ public abstract class DerivationContext {
         drop(this.getExportStrings());
     }
 
-    /**
-     * 默认就是被「自身所属记忆区」吸收
-     * * 📝【2024-05-30 08:48:15】此处的「记忆区」可变，因为要从「上下文」中获取结果
-     * * 🚩【2024-05-30 08:48:29】此方法仅为分派需要，实际上要先将引用解耦
-     */
-    public void absorbedByMemory() {
-        absorbedByMemory(this.mutMemory());
-    }
+    // /**
+    // * 默认就是被「自身所属推理器」吸收
+    // * * 📝【2024-05-30 08:48:15】此处的「推理器」可变，因为要从「上下文」中获取结果
+    // * * 🚩【2024-05-30 08:48:29】此方法仅为分派需要，实际上要先将引用解耦
+    // */
+    // public void absorbedByReasoner() {
+    // this.absorbedByReasoner(this.mutMemory());
+    // }
 
     protected void drop(Object any) {
     }

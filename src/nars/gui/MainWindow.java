@@ -100,7 +100,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
         super(title);
         this.reasoner = reasoner;
         memory = reasoner.getMemory();
-        record = memory.getRecorder();
+        record = reasoner.getRecorder();
         experienceWriter = new ExperienceWriter(reasoner);
         inputWindow = reasoner.getInputWindow();
         conceptWin = new TermWindow(memory);
@@ -113,7 +113,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
         silentW = new ParameterWindow("Report Silence Level", Parameters.SILENT_LEVEL, reasoner.getSilenceValue());
 
         record = new InferenceRecorder();
-        memory.setRecorder(record);
+        reasoner.setRecorder(record);
 
         getContentPane().setBackground(MAIN_WINDOW_COLOR);
         JMenuBar menuBar = new JMenuBar();
@@ -157,9 +157,9 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
 
         setJMenuBar(menuBar);
 
-        GridBagLayout gridbag = new GridBagLayout();
+        GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
-        setLayout(gridbag);
+        setLayout(gridBag);
 
         c.ipadx = 3;
         c.ipady = 3;
@@ -173,7 +173,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
         ioText.setBackground(DISPLAY_BACKGROUND_COLOR);
         ioText.setEditable(true);
         JScrollPane scrollPane = new JScrollPane(ioText);
-        gridbag.setConstraints(scrollPane, c);
+        gridBag.setConstraints(scrollPane, c);
         add(scrollPane);
 
         c.weightx = 0.0;
@@ -181,32 +181,32 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
         c.gridwidth = 1;
 
         runButton = new JButton(" Run ");
-        gridbag.setConstraints(runButton, c);
+        gridBag.setConstraints(runButton, c);
         runButton.addActionListener(this);
         add(runButton);
         walkButton = new JButton(" Walk ");
-        gridbag.setConstraints(walkButton, c);
+        gridBag.setConstraints(walkButton, c);
         walkButton.addActionListener(this);
         add(walkButton);
         stopButton = new JButton(" Stop ");
-        gridbag.setConstraints(stopButton, c);
+        gridBag.setConstraints(stopButton, c);
         stopButton.addActionListener(this);
         add(stopButton);
         timerLabel = new JLabel("Clock:", JLabel.RIGHT);
         timerLabel.setBackground(MAIN_WINDOW_COLOR);
-        gridbag.setConstraints(timerLabel, c);
+        gridBag.setConstraints(timerLabel, c);
         add(timerLabel);
 
         c.weightx = 1.0;
         timerText = new JTextField("");
         timerText.setBackground(DISPLAY_BACKGROUND_COLOR);
         timerText.setEditable(false);
-        gridbag.setConstraints(timerText, c);
+        gridBag.setConstraints(timerText, c);
         add(timerText);
 
         c.weightx = 0.0;
         exitButton = new JButton(" Exit ");
-        gridbag.setConstraints(exitButton, c);
+        gridBag.setConstraints(exitButton, c);
         exitButton.addActionListener(this);
         add(exitButton);
 
@@ -239,7 +239,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
      */
     public void initTimer() {
         timer = 0;
-        timerText.setText(memory.getTime() + " :: " + timer);
+        timerText.setText(reasoner.getTime() + " :: " + timer);
     }
 
     /**
@@ -248,7 +248,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
     @Override
     public void tickTimer() {
         timer++;
-        timerText.setText(memory.getTime() + " :: " + timer);
+        timerText.setText(reasoner.getTime() + " :: " + timer);
     }
 
     /**
@@ -292,12 +292,12 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
             } else if (label.equals("Initialize")) {
                 /// TODO mixture of modifier and reporting
                 reasoner.reset();
-                memory.getExportStrings().add("*****RESET*****");
+                reasoner.getExportStrings().add("*****RESET*****");
             } else if (label.equals("Concepts")) {
                 /* see design for Bag and {@link BagWindow} in {@link Bag#startPlay(String)} */
-                memory.conceptsStartPlay(new BagWindow<Concept>(), "Active Concepts");
+                reasoner.conceptsStartPlay(new BagWindow<Concept>(), "Active Concepts");
             } else if (label.equals("Buffered Tasks")) {
-                memory.taskBuffersStartPlay(new BagWindow<Task>(), "Buffered Tasks");
+                reasoner.taskBuffersStartPlay(new BagWindow<Task>(), "Buffered Tasks");
             } else if (label.equals("Concept Content")) {
                 conceptWin.setVisible(true);
             } else if (label.equals("Inference Log")) {

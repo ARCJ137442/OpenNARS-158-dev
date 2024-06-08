@@ -31,17 +31,6 @@ public class RuleTables {
         final Term taskTerm = task.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
         final Judgement belief = context.getCurrentBelief();
-        // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
-        // * 📌依据：`long_term_stability.nal`
-        // * 📄ONA中的结果有两个：
-        // * 1. `Answer: <{tom} --> murder>. %1.000000; 0.729000%`
-        // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
-        // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
-        // * 📝目前的结果是：`ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}`
-        // * 🚩
-        if (!context.getMemory().noResult() && task.isJudgment()) {
-            return;
-        }
 
         // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);

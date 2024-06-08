@@ -4,7 +4,7 @@ import nars.entity.Concept;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.inference.RuleTables;
-import nars.storage.Memory;
+import nars.main.Reasoner;
 
 /**
  * 「转换推理上下文」
@@ -45,15 +45,13 @@ public class DerivationContextTransform extends DerivationContext {
     /**
      * 🆕带参初始化
      * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
-     *
-     * @param memory
      */
     public DerivationContextTransform(
-            final Memory memory,
+            final Reasoner reasoner,
             final Concept currentConcept,
             final TaskLink currentTaskLink) {
         // * 🚩从基类构造
-        super(memory);
+        super(reasoner);
         // * 🚩赋值
         this.setCurrentConcept(currentConcept);
         // this.setCurrentTask(currentTask);
@@ -96,10 +94,10 @@ public class DerivationContextTransform extends DerivationContext {
     }
 
     @Override
-    public void absorbedByMemory(Memory memory) {
+    public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续
-        super.absorbedByMemory(memory);
+        super.absorbedByReasoner(reasoner);
     }
 }
