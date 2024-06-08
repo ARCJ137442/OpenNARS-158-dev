@@ -157,7 +157,7 @@ public class TransformRules {
         if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(task, content, context);
+            budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
         }
         context.singlePremiseTask(content, task, budget);
     }
@@ -190,7 +190,7 @@ public class TransformRules {
                     if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task.asJudgement(), inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, task, budget);
                 }
@@ -211,7 +211,7 @@ public class TransformRules {
                     if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task.asJudgement(), inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, task, budget);
                 }
@@ -247,7 +247,7 @@ public class TransformRules {
                     if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task.asJudgement(), inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, task, budget);
                 }
@@ -268,7 +268,7 @@ public class TransformRules {
                     if (task.isQuestion()) {
                         budget = BudgetFunctions.compoundBackward(inheritance, context);
                     } else {
-                        budget = BudgetFunctions.compoundForward(task, inheritance, context);
+                        budget = BudgetFunctions.compoundForward(task.asJudgement(), inheritance, context);
                     }
                     context.singlePremiseTask(inheritance, task, budget);
                 }

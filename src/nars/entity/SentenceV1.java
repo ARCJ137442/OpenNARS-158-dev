@@ -2,6 +2,7 @@ package nars.entity;
 
 import nars.inference.Truth;
 import nars.language.Term;
+import static nars.io.Symbols.*;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a Truth, and
@@ -13,6 +14,21 @@ import nars.language.Term;
  * * 🚩【2024-06-01 15:51:19】现在作为相应接口的初代实现
  */
 public class SentenceV1 implements Sentence {
+
+    public static Sentence newSentenceFromPunctuation(
+            final Term newContent,
+            final char punctuation,
+            final Truth newTruth,
+            final Stamp newStamp, boolean revisable) {
+        switch (punctuation) {
+            case JUDGMENT_MARK:
+                return new JudgementV1(newContent, newTruth, newStamp, revisable);
+            case QUESTION_MARK:
+                return new QuestionV1(newContent, newStamp, revisable);
+            default:
+                throw new IllegalArgumentException("未知的标点：" + punctuation);
+        }
+    }
 
     // struct SentenceV1
 

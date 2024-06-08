@@ -332,14 +332,14 @@ final class StructuralRules {
         final Truth truth;
         final Budget budget;
         if (task.isQuestion()) {
-            truth = TruthValue.from(task);
+            truth = null;
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
             if ((task.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
-                truth = TruthFunctions.deduction(task, RELIANCE);
+                truth = TruthFunctions.deduction(task.asJudgement(), RELIANCE);
             } else {
                 Truth v1, v2;
-                v1 = TruthFunctions.negation(task);
+                v1 = TruthFunctions.negation(task.asJudgement());
                 v2 = TruthFunctions.deduction(v1, RELIANCE);
                 truth = TruthFunctions.negation(v2);
             }
@@ -360,15 +360,15 @@ final class StructuralRules {
         final Task task = context.getCurrentTask();
         final Truth truth;
         if (task.isJudgment()) {
-            truth = TruthFunctions.negation(task);
+            truth = TruthFunctions.negation(task.asJudgement());
         } else {
-            truth = TruthValue.from(task);
+            truth = null;
         }
         final Budget budget;
         if (task.isQuestion()) {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(task, content, context);
+            budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -396,13 +396,13 @@ final class StructuralRules {
             case JUDGMENT_MARK:
                 truth = content instanceof Implication
                         // * 🚩蕴含⇒双重否定
-                        ? TruthFunctions.contraposition(sentence)
-                        : TruthValue.from(sentence);
+                        ? TruthFunctions.contraposition(sentence.asJudgement())
+                        : TruthValue.from(sentence.asJudgement());
                 budget = BudgetFunctions.compoundForward(truth, content, context);
                 break;
             // * 🚩问题
             case QUESTION_MARK:
-                truth = TruthValue.from(sentence);
+                truth = null;
                 budget = content instanceof Implication
                         // * 🚩蕴含⇒弱推理
                         ? BudgetFunctions.compoundBackwardWeak(content, context)

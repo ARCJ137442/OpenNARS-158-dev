@@ -190,11 +190,11 @@ public class LocalRules {
      * @param figure  location of the shared term
      * @param context Reference to the derivation context
      */
-    static void matchAsymSym(Judgement asym, Judgement sym, int figure, DerivationContextReason context) {
+    static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (context.getCurrentTask().isJudgment()) {
             // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
-            inferToAsym(asym, sym, context);
+            inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
         } else {
             convertRelation(context);
         }
