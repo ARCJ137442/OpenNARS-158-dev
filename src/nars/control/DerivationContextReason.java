@@ -34,19 +34,19 @@ public class DerivationContextReason extends DerivationContextTransform {
          * }
          */
         if (self.getCurrentTask() == null)
-            throw new Error("currentTask: 不符预期的可空情况");
+            throw new AssertionError("currentTask: 不符预期的可空情况");
         if (self.getCurrentTerm() == null)
-            throw new Error("currentTerm: 不符预期的可空情况");
+            throw new AssertionError("currentTerm: 不符预期的可空情况");
         if (self.getCurrentConcept() == null)
-            throw new Error("currentConcept: 不符预期的可空情况");
+            throw new AssertionError("currentConcept: 不符预期的可空情况");
         if (self.getCurrentBelief() == null && self.getCurrentBelief() != null) // * 📝可空
-            throw new Error("currentBelief: 不符预期的可空情况");
+            throw new AssertionError("currentBelief: 不符预期的可空情况");
         if (self.getCurrentBeliefLink() == null)
-            throw new Error("currentBeliefLink: 不符预期的可空情况");
+            throw new AssertionError("currentBeliefLink: 不符预期的可空情况");
         if (self.getCurrentTaskLink() == null)
-            throw new Error("currentTaskLink: 不符预期的可空情况");
+            throw new AssertionError("currentTaskLink: 不符预期的可空情况");
         if (self.getTermLinksToReason().isEmpty() && !self.getTermLinksToReason().isEmpty()) // * 📝可空：有可能只有一个词项链
-            throw new Error("termLinksToReason: 不符预期的可空情况");
+            throw new AssertionError("termLinksToReason: 不符预期的可空情况");
     }
 
     /**

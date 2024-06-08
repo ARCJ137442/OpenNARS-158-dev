@@ -70,8 +70,6 @@ public class TaskV1 implements Task {
         this.sentence = sentence;
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
-        // if (parentBelief != null && parentBelief.isQuestion())
-        // throw new IllegalArgumentException("父信念只能是「判断句」");
         this.parentBelief = parentBelief;
         this.bestSolution = solution;
     }
@@ -178,11 +176,11 @@ public class TaskV1 implements Task {
     @Override
     public void setBestSolution(Judgement judgment) {
         if (!this.isQuestion())
-            throw new IllegalArgumentException(this + " is not question");
+            throw new AssertionError(this + " is not question");
         if (judgment == null)
-            throw new NullPointerException("judgment == null");
+            throw new AssertionError("judgment == null");
         if (!judgment.isJudgment())
-            throw new IllegalArgumentException(judgment + " is not judgment");
+            throw new AssertionError(judgment + " is not judgment");
         // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
         this.bestSolution = judgment;
         // this.bestSolution = judgment.cloneSentence();

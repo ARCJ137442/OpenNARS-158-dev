@@ -54,7 +54,7 @@ public interface TLink<Target> {
                 case TRANSFORM:
                     return 8;
                 default:
-                    throw new IllegalArgumentException("Wrong enum variant @ TLinkType");
+                    throw new Error("Wrong enum variant @ TLinkType");
             }
         }
 
@@ -81,7 +81,7 @@ public interface TLink<Target> {
                     return TLinkType.COMPONENT_CONDITION;
                 // * 🚩其它⇒报错
                 default:
-                    throw new IllegalArgumentException("Unexpected type: " + this + " not to compound");
+                    throw new Error("Unexpected type: " + this + " not to compound");
             }
         }
     }
@@ -140,9 +140,9 @@ public interface TLink<Target> {
                 final short[] indices) {
             // * 🚩动态检查可空性
             if (target == null)
-                throw new IllegalArgumentException("target cannot be null");
+                throw new AssertionError("target cannot be null");
             if (indices == null)
-                throw new IllegalArgumentException("indices cannot be null");
+                throw new AssertionError("indices cannot be null");
             // * 🚩对位赋值
             this.target = target;
             this.type = type;

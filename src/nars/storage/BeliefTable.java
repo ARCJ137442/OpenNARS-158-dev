@@ -72,7 +72,7 @@ public class BeliefTable implements RankTable<Judgement> {
         final boolean sameContentAndPunctuation = newBelief.getContent().equals(existedBelief.getContent())
                 && newBelief.getPunctuation() == existedBelief.getPunctuation();
         if (!sameContentAndPunctuation)
-            throw new IllegalArgumentException("判断等价的前提不成立：需要「内容」和「标点」相同");
+            throw new AssertionError("判断等价的前提不成立：需要「内容」和「标点」相同");
         // * 🚩若内容完全等价⇒不予理睬（添加失败）
         if (Judgement.isBeliefEquivalent(newBelief, existedBelief)) {
             return false; // * 🚩标记为「不予添加」

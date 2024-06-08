@@ -128,7 +128,7 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
         String key = TLink.generateKey(type, indices);
         // * 🚩此处假定「目标」不为空
         if (target == null)
-            throw new Error("target is null");
+            throw new AssertionError("target is null");
         key += target;
         return key;
     }
@@ -146,7 +146,7 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
         final TLinkType templateType = template.getType();
         // * 🚩断言此时「链接模板」的链接类型
         if (!TLink.isToCompound(templateType))
-            throw new IllegalArgumentException("模板必定是「从元素链接到整体」");
+            throw new AssertionError("模板必定是「从元素链接到整体」");
         // * 🚩开始计算类型
         final TLinkType result;
         if (template.willFromSelfTo().equals(target))

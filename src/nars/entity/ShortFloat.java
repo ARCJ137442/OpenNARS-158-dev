@@ -70,7 +70,7 @@ public class ShortFloat implements Cloneable {
             value = (short) (v * 10000.0 + 0.5);
         // * 🚩在范围外⇒报错
         else
-            throw new ArithmeticException("Invalid value: " + v);
+            throw new Error("Invalid value: " + v);
     }
 
     /**

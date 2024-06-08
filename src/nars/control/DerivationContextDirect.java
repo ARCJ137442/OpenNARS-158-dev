@@ -26,17 +26,13 @@ public class DerivationContextDirect extends DerivationContext {
 
         // * 🚩系列断言与赋值（实际使用中可删）
         if (self.getCurrentTask() == null)
-            throw new Error("currentTask: 不符预期的可空情况");
+            throw new AssertionError("currentTask: 不符预期的可空情况");
         if (self.getCurrentTerm() == null)
-            throw new Error("currentTerm: 不符预期的可空情况");
+            throw new AssertionError("currentTerm: 不符预期的可空情况");
         if (self.getCurrentConcept() == null)
-            throw new Error("currentConcept: 不符预期的可空情况");
+            throw new AssertionError("currentConcept: 不符预期的可空情况");
         if (self.getCurrentBelief() != null)
-            throw new Error("currentBelief: 不符预期的可空情况");
-        // if (self.getCurrentBeliefLink() != null)
-        // throw new Error("currentBeliefLink: 不符预期的可空情况");
-        // if (self.getCurrentTaskLink() != null)
-        // throw new Error("currentTaskLink: 不符预期的可空情况");
+            throw new AssertionError("currentBelief: 不符预期的可空情况");
     }
 
     /**

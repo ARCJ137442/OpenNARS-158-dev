@@ -34,7 +34,7 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
 
     public JudgementV1(Term content, Truth truth, Stamp stamp, boolean revisable) {
         if (truth == null)
-            throw new IllegalArgumentException("truth can't be null");
+            throw new AssertionError("truth can't be null");
         this.inner = new SentenceInner(content, stamp, revisable);
         this.truth = TruthValue.from(truth);
     }

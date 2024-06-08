@@ -127,9 +127,9 @@ public interface Item extends Budget {
         public Token(final String key, final Budget budget) {
             // * 🚩动态检查可空性
             if (key == null)
-                throw new IllegalArgumentException("key cannot be null");
+                throw new AssertionError("key cannot be null");
             if (budget == null)
-                throw new IllegalArgumentException("budget cannot be null");
+                throw new AssertionError("budget cannot be null");
             this.key = key;
             // * 🚩【2024-06-07 13:59:21】现在由于「外部构造均以『可预算的』特征对象传递」更加必须使用「复制构造」，否则会共享引用
             this.budget = new BudgetValue(budget); // clone, not assignment

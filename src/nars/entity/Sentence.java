@@ -72,7 +72,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      * * 🚩是判断句⇒判断句对象，否⇒报错
      */
     public default Judgement asJudgement() {
-        throw new IllegalStateException("不是判断句");
+        throw new Error("不是判断句");
     }
 
     /**
@@ -89,7 +89,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      * * 🚩是判断句⇒判断句对象，否⇒报错
      */
     public default Question asQuestion() {
-        throw new IllegalStateException("不是疑问句");
+        throw new Error("不是疑问句");
     }
 
     public default boolean containQueryVar() {
@@ -186,14 +186,13 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          *                    base
          * @param revisable   Whether the sentence can be revised
          */
-        protected SentenceInner(Term content/* , char punctuation */, Stamp stamp, boolean revisable) {
+        protected SentenceInner(Term content, Stamp stamp, boolean revisable) {
             this.content = content;
             this.content.renameVariables();
             this.stamp = stamp;
             this.revisable = revisable;
-            if (stamp == null) {
-                throw new NullPointerException("Stamp is null!");
-            }
+            if (stamp == null)
+                throw new AssertionError("Stamp is null!");
         }
 
         // impl Evidential for SentenceInner

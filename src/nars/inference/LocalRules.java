@@ -43,7 +43,7 @@ public class LocalRules {
         switch (currentTask.getPunctuation()) {
             // * 🚩判断⇒尝试修正
             case JUDGMENT_MARK:
-                if (revisable(currentTask, belief))
+                if (revisable(currentTask.asJudgement(), belief))
                     revision(currentTask.asJudgement(), belief, context);
                 return;
             // * 🚩问题⇒尝试回答「特殊疑问」（此处用「变量替换」解决查询变量）
@@ -71,15 +71,13 @@ public class LocalRules {
     /**
      * Check whether two sentences can be used in revision
      * * 📝【2024-05-19 13:09:40】这里的`s1`、`s2`必定是「判断」类型
+     * * 🚩只有两个「判断句」才有可能「被用于修正」
      *
      * @param newBelief  The first sentence
      * @param baseBelief The second sentence
      * @return If revision is possible between the two sentences
      */
-    public static boolean revisable(Sentence newBelief, Sentence baseBelief) {
-        // * 🚩只有两个「判断句」才有可能「被用于修正」
-        if (!newBelief.isJudgment() || !baseBelief.isJudgment())
-            throw new Error("Function revisable is only applicable for judgments");
+    public static boolean revisable(Judgement newBelief, Judgement baseBelief) {
         // * 🚩如果两个「判断句」的「内容」相同，并且新的「判断句」是可（参与）修正的，那么第二个「判断句」可以修正第一个「判断句」
         final boolean contentEq = newBelief.getContent().equals(baseBelief.getContent());
         final boolean baseRevisable = newBelief.getRevisable();
@@ -117,12 +115,10 @@ public class LocalRules {
     public static void trySolution(Judgement belief, Task questionTask, DerivationContext context) {
         // * 🚩预设&断言
         final Judgement oldBest = questionTask.getBestSolution();
-        if (belief == null || !belief.isJudgment())
-            throw new IllegalArgumentException("将解答的必须是「判断」");
+        if (belief == null)
+            throw new AssertionError("将解答的必须是「判断」");
         if (questionTask == null || !questionTask.isQuestion())
-            throw new IllegalArgumentException("要解决的必须是「问题」");
-        if (questionTask == null || !questionTask.isQuestion())
-            throw new IllegalArgumentException("当前任务必须是「问题」");
+            throw new AssertionError("要解决的必须是「问题」");
         // * 🚩验证这个信念是否为「解决问题的最优解」
         final float newQ = solutionQuality(questionTask, belief);
         if (oldBest != null) {

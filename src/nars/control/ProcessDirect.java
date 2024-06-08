@@ -236,7 +236,7 @@ public abstract class ProcessDirect {
         final Task task = context.getCurrentTask();
         // * 🚩断言传入任务的「语句」一定是「判断」
         if (!task.isJudgment())
-            throw new Error("task " + task + "is not a judgment");
+            throw new AssertionError("task " + task + "is not a judgment");
         final Judgement judgment = task.sentenceClone().asJudgement(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
         final Judgement oldBelief = evaluation(judgment, self.getBeliefs());
@@ -285,7 +285,7 @@ public abstract class ProcessDirect {
         final Task questionTask = context.getCurrentTask();
         // * 🚩断言传入任务的「语句」一定是「问题」
         if (!questionTask.isQuestion())
-            throw new Error("task " + questionTask + "is not a judgment");
+            throw new AssertionError("task " + questionTask + "is not a judgment");
         // * 🚩断言所基于的「当前概念」就是「推理上下文」的「当前概念」
         // * 📝在其被唯一使用的地方，传入的`task`只有可能是`context.currentConcept`
         final Concept self = context.getCurrentConcept();

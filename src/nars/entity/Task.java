@@ -60,7 +60,7 @@ public interface Task extends Sentence, Item {
     @Override
     public default void mergeBudget(final Budget that) {
         if (!(that instanceof Task))
-            throw new IllegalArgumentException(that + " isn't a Task");
+            throw new AssertionError(that + " isn't a Task");
         // * 🚩均为「任务」⇒按照「发生时间」决定「谁并入谁」
         if (getCreationTime() >= ((Task) that).getCreationTime())
             // * ⚠️改成接口后无法使用`super.method`调用默认方法

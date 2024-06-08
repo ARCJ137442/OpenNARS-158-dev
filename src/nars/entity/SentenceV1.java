@@ -24,6 +24,7 @@ public abstract class SentenceV1 implements Sentence {
      * 🆕通过词项、标点、真值、时间戳、可修正 构造 语句
      * * 🚩根据「标点」分发到各具体类型
      * * 💭应该挑出到「语句」之外，但暂且放置于此
+     * * 🎯自「导出结论」和「输入构造」被使用
      *
      * @param newContent
      * @param punctuation

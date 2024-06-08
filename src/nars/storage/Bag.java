@@ -184,9 +184,9 @@ public class Bag<E extends Item> {
      */
     public void validateIn(E in) {
         if (in == null)
-            throw new NullPointerException("尝试放进null");
+            throw new AssertionError("尝试放进null");
         if (this.contains(in))
-            throw new IllegalArgumentException("尝试放进重复的项 " + in);
+            throw new AssertionError("尝试放进重复的项 " + in);
     }
 
     /**
@@ -198,9 +198,9 @@ public class Bag<E extends Item> {
      */
     public E validateOut(E out) {
         // if (out == null)
-        // throw new NullPointerException("尝试放出null");
+        // throw new AssertionError("尝试放出null");
         if (!this.has(out.getKey()))
-            throw new IllegalArgumentException("尝试放出没有的项" + out);
+            throw new AssertionError("尝试放出没有的项" + out);
         return out;
     }
 

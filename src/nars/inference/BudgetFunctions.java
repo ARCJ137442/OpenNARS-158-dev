@@ -80,13 +80,13 @@ public final class BudgetFunctions extends UtilityFunctions {
             final Task questionTask) {
         // final Budget budget;
         // final boolean feedbackToLinks;
-        if (problem == null || !problem.isQuestion())
-            throw new NullPointerException("待解决的问题必须是疑问句");
-        if (solution == null || !solution.isJudgment())
-            throw new NullPointerException("解决方案必须是「判断」");
+        if (problem == null)
+            throw new AssertionError("待解决的问题必须是疑问句");
+        if (solution == null)
+            throw new AssertionError("解决方案必须是「判断」");
         if (questionTask == null || !questionTask.isQuestion())
             // * 🚩实际上不会有「feedbackToLinks=true」的情况（当前任务非空）
-            throw new IllegalArgumentException("问题任务必须为「问题」 | solutionEval is Never called in continued processing");
+            throw new AssertionError("问题任务必须为「问题」 | solutionEval is Never called in continued processing");
         // feedbackToLinks = true;
         // else
         // feedbackToLinks = false;
@@ -355,7 +355,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         final Item tLink = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         if (tLink == null)
-            throw new NullPointerException("t shouldn't be `null`!");
+            throw new AssertionError("t shouldn't be `null`!");
         float priority = tLink.getPriority();
         float durability = tLink.getDurability() / complexity;
         final float quality = inferenceQuality / complexity;
