@@ -12,8 +12,13 @@ import static nars.io.Symbols.*;
  * <p>
  * * 📝【2024-05-22 16:45:08】其中所有字段基本为只读——静态数据，可自由复制
  * * 🚩【2024-06-01 15:51:19】现在作为相应接口的初代实现
+ * * 🚩【2024-06-08 23:11:43】现在基于「复合」作为其它类型「共同字段」的持有者，挪出为{@link SentenceInner}
+ * * 🚩【2024-06-08 23:20:55】目前此类仅提供全局静态方法，用于在全局角度（定义完「判断初代实现」「问题初代实现」后）做公共方法
+ * * 📌【2024-06-08 23:21:11】亦可看作一个枚举类，下辖「判断」「问题」两个变种
  */
-public class SentenceV1 implements Sentence {
+public abstract class SentenceV1 implements Sentence {
+
+    // impl SentenceV1
 
     /**
      * 🆕通过词项、标点、真值、时间戳、可修正 构造 语句
@@ -43,162 +48,33 @@ public class SentenceV1 implements Sentence {
         }
     }
 
-    // struct SentenceV1
+    // ! 🚩【2024-06-08 23:30:24】经实验，用法上并不需要判等
 
-    /**
-     * The content of a Sentence is a Term
-     */
-    private final Term content;
-    /**
-     * The punctuation also indicates the type of the Sentence: Judgment,
-     * Question, or Goal
-     */
-    private final char punctuation;
-    /**
-     * Partial record of the derivation path
-     */
-    private final Stamp stamp;
-    /**
-     * Whether the sentence can be revised
-     */
-    private final boolean revisable;
-
-    // impl SentenceV1
-
-    /**
-     * Create a Sentence with the given fields
-     *
-     * @param content     The Term that forms the content of the sentence
-     * @param punctuation The punctuation indicating the type of the sentence
-     * @param truth       The truth value of the sentence, null for question
-     * @param stamp       The stamp of the sentence indicating its derivation time
-     *                    and
-     *                    base
-     * @param revisable   Whether the sentence can be revised
-     */
-    protected SentenceV1(Term content, char punctuation, Stamp stamp, boolean revisable) {
-        this.content = content;
-        this.content.renameVariables();
-        this.punctuation = punctuation;
-        this.stamp = stamp;
-        this.revisable = revisable;
-        if (stamp == null) {
-            throw new NullPointerException("Stamp is null!");
-        }
-    }
-
-    // impl Evidential for SentenceV1
-
-    @Override
-    public long[] __evidentialBase() {
-        return this.stamp.__evidentialBase();
-    }
-
-    @Override
-    public long __creationTime() {
-        return this.stamp.__creationTime();
-    }
-
-    // impl Sentence for SentenceV1
-
-    @Override
-    public boolean __revisable() {
-        return revisable;
-    }
-
-    @Override
-    public Term getContent() {
-        return content;
-    }
-
-    @Override
-    public char getPunctuation() {
-        return punctuation;
-    }
-
-    @Override
-    public Sentence sentenceClone() {
-        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
-        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
-        return new SentenceV1(
-                content.clone(),
-                punctuation,
-                // truth == null ? null : truth.clone(),
-                stamp.clone(),
-                revisable);
-    }
-
-    // impl ToStringBriefAndLong for SentenceV1
-
-    @Override
-    public String toString() {
-        return this.sentenceToString();
-    }
-
-    @Override
-    public String toStringBrief() {
-        return this.sentenceToStringBrief();
-    }
-
-    @Override
-    public String toStringLong() {
-        return toString();
-    }
-
-    // impl Eq for SentenceV1
-
-    /**
-     * To check whether two sentences are equal
-     *
-     * @param that The other sentence
-     * @return Whether the two sentences have the same content
-     */
     @Override
     public boolean equals(Object that) {
-        if (that instanceof Sentence) {
-            Sentence t = (Sentence) that;
-            return content.equals(t.getContent()) && punctuation == t.getPunctuation()
-            // // * 🚩真值判等：需要考虑「没有真值」的情况
-            // && (this.hasTruth() == t.hasTruth() && this.truthEquals(t))
-                    && this.evidentialEqual(t);
-        }
-        return false;
+        throw new Error("【2024-06-08 23:30:49】语句类型并不需要判等");
     }
 
-    // impl Hash for SentenceV1
+    // ! 🚩【2024-06-08 23:30:24】经实验，只会生成key再加入散列表；因此无需参与散列化
 
-    /**
-     * To produce the hashcode of a sentence
-     * * 🚩【2024-06-08 14:22:55】此处破坏性更新：不再需要「真值」
-     *
-     * @return A hashcode
-     */
+    // // impl Hash for SentenceV1
+
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 67 * hash + (this.content != null ? this.content.hashCode() : 0);
-        hash = 67 * hash + this.punctuation;
-        // hash = 67 * hash + (this.truth != null ? this.truth.hashCode() : 0);
-        hash = 67 * hash + (this.stamp != null ? this.stamp.hashCode() : 0);
-        return hash;
+        throw new Error("【2024-06-08 23:36:49】语句类型并不需要散列化");
     }
 
-    @Override
-    public String toKey() {
-        // ! 不予实现
-        throw new UnsupportedOperationException("Unimplemented method 'toKey'");
-    }
+    // // impl Eq for SentenceV1
 
-    @Override
-    public String sentenceToString() {
-        // ! 不予实现
-        throw new UnsupportedOperationException("Unimplemented method 'sentenceToString'");
-    }
-
-    @Override
-    public Sentence sentenceCloneWithSamePunctuation(Term content, Term newContent, Truth newTruth, Stamp newStamp,
-            boolean revisable) {
-        // ! 不予实现
-        throw new UnsupportedOperationException("Unimplemented method 'sentenceCloneWithSamePunctuation'");
-    }
+    // public static boolean eq(Sentence a, Sentence b) {
+    // if (a instanceof JudgementV1 && b instanceof JudgementV1)
+    // // * 🚩都是「判断」⇒使用「判断」的判等方法
+    // return ((JudgementV1) a).eq((JudgementV1) b);
+    // else if (a instanceof QuestionV1 && b instanceof QuestionV1)
+    // // * 🚩都是「问题」⇒使用「问题」的判等方法
+    // return ((QuestionV1) a).eq((QuestionV1) b);
+    // else
+    // // * 🚩其它情况⇒不等
+    // return false;
+    // }
 }
