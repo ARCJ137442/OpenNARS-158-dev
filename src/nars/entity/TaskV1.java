@@ -59,8 +59,13 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public Stamp __stamp() {
-        return this.sentence.__stamp();
+    public long[] __evidentialBase() {
+        return this.sentence.__evidentialBase();
+    }
+
+    @Override
+    public long __creationTime() {
+        return this.sentence.__creationTime();
     }
 
     @Override
@@ -185,7 +190,7 @@ public class TaskV1 implements Task {
         final StringBuilder s = new StringBuilder();
         final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
         s.append(superString).append(" ");
-        s.append(getStamp());
+        s.append(this.stampToString());
         if (parentTask != null) {
             s.append("  \n from task: ").append(parentTask.toStringBrief());
             if (parentBelief != null) {

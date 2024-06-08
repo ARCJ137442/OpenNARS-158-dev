@@ -14,7 +14,7 @@ import nars.language.Term;
  * * 🚩作为一个接口，仅对其中的字段做抽象要求（实现者只要求在这些方法里返回字段或其它表达式）
  * * 🚩所有「字段类接口方法」均【以双下划线开头】并【不带public】
  */
-public interface Sentence extends ToStringBriefAndLong, Truth {
+public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
 
     // 所有抽象字段
     Term __content();
@@ -23,7 +23,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
 
     TruthValue __truth(); // * 🚩【2024-06-07 15:17:47】仍然保留，要用于「生成密钥」
 
-    Stamp __stamp();
+    // * ✅【2024-06-08 11:36:18】成功删除：通过`stampToString`成功解耦
 
     boolean __revisable();
 
@@ -78,14 +78,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
 
     // ! 🚩【2024-06-07 15:40:21】现在将「语句」本身作为「真值」，或者是【能作为真值使用】的对象
 
-    /**
-     * Get the stamp of the sentence
-     *
-     * @return The stamp
-     */
-    public default Stamp getStamp() {
-        return __stamp();
-    }
+    // ! 🚩【2024-06-08 11:22:16】现在将「语句」本身作为「时间戳」，或者是【能作为时间戳使用】的对象
 
     /**
      * Distinguish Judgment from Goal ("instanceof Judgment" doesn't work)
@@ -126,7 +119,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth {
         // * 🚩真值相等
         self.__truth().equals(that.__truth())
                 // * 🚩时间戳相等（证据集相同）
-                && self.__stamp().equals(that.__stamp()));
+                && self.evidenceEqual(that));
     }
 
     /**

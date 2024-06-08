@@ -5,7 +5,6 @@ import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Sentence;
-import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
@@ -241,9 +240,7 @@ public abstract class ProcessDirect {
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
         if (oldBelief != null) {
-            final Stamp currentStamp = judgment.getStamp();
-            final Stamp oldStamp = oldBelief.getStamp();
-            if (currentStamp.equals(oldStamp)) {
+            if (judgment.evidenceEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().isJudgment()) {
                     task.decPriority(0); // duplicated task
@@ -253,7 +250,7 @@ public abstract class ProcessDirect {
             // * 🚩不重复 && 可修正 ⇒ 修正
             else if (LocalRules.revisable(judgment, oldBelief)) {
                 // * 🚩现在将「当前信念」「新时间戳」移入「修正」调用中
-                final boolean hasOverlap = currentStamp.hasOverlap(oldStamp);
+                final boolean hasOverlap = judgment.evidentialOverlap(oldBelief);
                 if (!hasOverlap) {
                     // * 📌【2024-06-07 11:38:02】现在由于「新时间戳」的内置，经检查不再需要设置「当前信念」
                     // * 📌此处的「当前信念」直接取`oldBelief`，并以此构造时间戳

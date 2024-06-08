@@ -39,15 +39,6 @@ public interface Task extends Sentence, Item {
     void __bestSolution_set(Sentence sentence);
 
     /**
-     * Directly get the creation time of the sentence
-     *
-     * @return The creation time of the sentence
-     */
-    public default long getCreationTime() {
-        return this.getStamp().getCreationTime();
-    }
-
-    /**
      * Check if a Task is a direct input
      *
      * @return Whether the Task is derived from another task

@@ -1,9 +1,5 @@
 package nars.entity;
 
-import java.util.*;
-
-import nars.io.Symbols;
-
 /**
  * Each Sentence has a time stamp, consisting the following components:
  * (1) The creation time of the sentence,
@@ -76,7 +72,20 @@ public class Stamp implements Cloneable, Evidential {
      * @param old The stamp to be cloned
      */
     private Stamp(final Evidential old) {
-        this(old.getEvidentialBase(), old.getCreationTime());
+        this(old, old.getCreationTime());
+    }
+
+    /**
+     * Generate a new stamp from an existing one, with the same evidentialBase but
+     * different creation time
+     * <p>
+     * For single-premise rules
+     *
+     * @param old  The stamp of the single premise
+     * @param time The current time
+     */
+    public Stamp(final Evidential old, final long time) {
+        this(old.getEvidentialBase(), time);
     }
 
     /**
@@ -125,22 +134,6 @@ public class Stamp implements Cloneable, Evidential {
     }
 
     /**
-     * Check if two stamps contains the same content
-     *
-     * @param that The Stamp to be compared
-     * @return Whether the two have contain the same elements
-     */
-    @Override
-    public boolean equals(final Object that) {
-        if (!(that instanceof Stamp)) {
-            return false;
-        }
-        final TreeSet<Long> set1 = this.evidenceSet();
-        final TreeSet<Long> set2 = ((Stamp) that).evidenceSet();
-        return (set1.containsAll(set2) && set2.containsAll(set1));
-    }
-
-    /**
      * The hash code of Stamp
      *
      * @return The hash code
@@ -151,19 +144,6 @@ public class Stamp implements Cloneable, Evidential {
     }
 
     /**
-     * Generate a new stamp from an existing one, with the same evidentialBase but
-     * different creation time
-     * <p>
-     * For single-premise rules
-     *
-     * @param old  The stamp of the single premise
-     * @param time The current time
-     */
-    public Stamp(final Stamp old, final long time) {
-        this(old.evidentialBase, time);
-    }
-
-    /**
      * Get a String form of the Stamp for display
      * Format: {creationTime [: eventTime] : evidentialBase}
      *
@@ -171,19 +151,7 @@ public class Stamp implements Cloneable, Evidential {
      */
     @Override
     public String toString() {
-        final StringBuilder buffer = new StringBuilder(" ")
-                .append(Symbols.STAMP_OPENER)
-                .append(this.creationTime)
-                .append(" ")
-                .append(Symbols.STAMP_STARTER)
-                .append(" ");
-        for (int i = 0; i < this.length(); i++) {
-            buffer.append(Long.toString(this.evidentialBase[i]));
-            if (i < this.length() - 1)
-                buffer.append(Symbols.STAMP_SEPARATOR);
-            else
-                buffer.append(Symbols.STAMP_CLOSER).append(" ");
-        }
-        return buffer.toString();
+        // * 🚩直接转发到默认方法
+        return this.stampToString();
     }
 }

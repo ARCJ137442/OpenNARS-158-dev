@@ -305,7 +305,7 @@ public final class CompositionalRules {
             case QUESTION_MARK:
                 // * 📄(||,A,B)? + A. => B?
                 // * 🚩先将剩余部分作为「问题」提出
-            // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
+                // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
                 if (!content.zeroComplexity()) {
                     budget = BudgetFunctions.compoundBackward(content, context);
                     context.doublePremiseTask(content, null, budget);
@@ -324,8 +324,8 @@ public final class CompositionalRules {
                     return;
                 // * 🚩只在「概念中有信念」时，以这个信念作为「当前信念」构建新任务
                 final Stamp newStamp = Stamp.uncheckedMerge(
-                        task.getStamp(),
-                        contentBelief.getStamp(), // * 🚩实际上就是需要与「已有信念」的证据基合并
+                        task,
+                        contentBelief, // * 🚩实际上就是需要与「已有信念」的证据基合并
                         context.getTime());
                 // * 🚩【2024-06-07 13:41:16】现在直接从「任务」构造新的「预算值」
                 final Task contentTask = new TaskV1(contentBelief, task);

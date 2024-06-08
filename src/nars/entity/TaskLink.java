@@ -199,7 +199,7 @@ public class TaskLink extends TLink<Task> implements Item {
     @Override
     public String toString() {
         final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
-        return superString + " " + getTarget().getStamp();
+        return superString + " " + getTarget().stampToString();
     }
 
     // 📌自原`abstract class Item`中继承而来 //

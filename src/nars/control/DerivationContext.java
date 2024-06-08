@@ -206,9 +206,9 @@ public abstract class DerivationContext {
     /** 🆕产生新时间戳 from 单前提 */
     protected Stamp generateNewStampSingle() {
         if (this.getCurrentTask().isJudgment() || !this.hasCurrentBelief()) {
-            return new Stamp(this.getCurrentTask().getStamp(), memory.getTime());
+            return new Stamp(this.getCurrentTask(), memory.getTime());
         } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            return new Stamp(this.getCurrentBelief().getStamp(), memory.getTime());
+            return new Stamp(this.getCurrentBelief(), memory.getTime());
         }
     }
 
@@ -218,10 +218,10 @@ public abstract class DerivationContext {
         return this.hasCurrentBelief()
                 // * 🚩具有「当前信念」⇒直接合并
                 ? Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
-                        this.getCurrentTask().getStamp(),
+                        this.getCurrentTask(),
                         // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                         // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
-                        this.getCurrentBelief().getStamp(),
+                        this.getCurrentBelief(),
                         this.getTime())
                 : null;
     }

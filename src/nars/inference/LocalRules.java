@@ -103,9 +103,7 @@ public class LocalRules {
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
-        final Stamp currentStamp = newBelief.getStamp();
-        final Stamp oldStamp = oldBelief.getStamp();
-        final Stamp newStamp = Stamp.uncheckedMerge(currentStamp, oldStamp, context.getTime());
+        final Stamp newStamp = Stamp.uncheckedMerge(newBelief, oldBelief, context.getTime());
         context.doublePremiseTask(context.getCurrentTask(), content, truth, budget, newStamp);
     }
 

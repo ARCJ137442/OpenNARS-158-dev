@@ -53,8 +53,13 @@ public class SentenceV1 implements Sentence {
     }
 
     @Override
-    public Stamp __stamp() {
-        return stamp;
+    public long[] __evidentialBase() {
+        return this.stamp.__evidentialBase();
+    }
+
+    @Override
+    public long __creationTime() {
+        return this.stamp.__creationTime();
     }
 
     @Override
@@ -99,7 +104,7 @@ public class SentenceV1 implements Sentence {
         if (that instanceof Sentence) {
             Sentence t = (Sentence) that;
             return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.__truth())
-                    && stamp.equals(t.getStamp());
+                    && this.evidenceEqual(t);
         }
         return false;
     }
@@ -148,7 +153,7 @@ public class SentenceV1 implements Sentence {
         if (truth != null) {
             s.append(truth.toString());
         }
-        s.append(stamp.toString());
+        s.append(this.stampToString());
         return s.toString();
     }
 
@@ -159,7 +164,7 @@ public class SentenceV1 implements Sentence {
      */
     @Override
     public String toStringBrief() {
-        return toKey() + stamp.toString();
+        return toKey() + this.stampToString();
     }
 
     /**

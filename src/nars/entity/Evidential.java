@@ -2,6 +2,7 @@ package nars.entity;
 
 import java.util.TreeSet;
 
+import nars.io.Symbols;
 import nars.main.Parameters;
 
 /**
@@ -53,7 +54,7 @@ public interface Evidential {
      *
      * @return Length of the Stamp
      */
-    public default int length() {
+    public default int evidenceLength() {
         return this.__evidentialBase().length;
     }
 
@@ -138,8 +139,16 @@ public interface Evidential {
         return false;
     }
 
-    public default boolean hasOverlap(final Evidential other) {
-        return haveOverlap(this, other);
+    /**
+     * 🆕判断「证据重复」
+     * * 🎯用于判断「重复推理」等
+     * * 📄参照{@link Evidential#haveOverlap(Evidential, Evidential)}
+     *
+     * @param that
+     * @return 证据基是否重复
+     */
+    public default boolean evidentialOverlap(final Evidential that) {
+        return haveOverlap(this, that);
     }
 
     /**
@@ -153,5 +162,41 @@ public interface Evidential {
             set.add(serial);
         }
         return set;
+    }
+
+    /**
+     * Check if two stamps contains the same content
+     *
+     * @param that The Stamp to be compared
+     * @return Whether the two have contain the same elements
+     */
+    public default boolean evidenceEqual(final Evidential that) {
+        final TreeSet<Long> set1 = this.evidenceSet();
+        final TreeSet<Long> set2 = that.evidenceSet();
+        return (set1.containsAll(set2) && set2.containsAll(set1));
+    }
+
+    /**
+     * Get a String form of the Stamp for display
+     * Format: {creationTime [: eventTime] : evidentialBase}
+     * * 📝实质：作为「时间戳」转换为字符串，只提取其中一部分转换到字符串
+     *
+     * @return The Stamp as a String
+     */
+    public default String stampToString() {
+        final StringBuilder buffer = new StringBuilder(" ")
+                .append(Symbols.STAMP_OPENER)
+                .append(this.getCreationTime())
+                .append(" ")
+                .append(Symbols.STAMP_STARTER)
+                .append(" ");
+        for (int i = 0; i < this.evidenceLength(); i++) {
+            buffer.append(Long.toString(this.get(i)));
+            if (i < this.evidenceLength() - 1)
+                buffer.append(Symbols.STAMP_SEPARATOR);
+            else
+                buffer.append(Symbols.STAMP_CLOSER).append(" ");
+        }
+        return buffer.toString();
     }
 }
