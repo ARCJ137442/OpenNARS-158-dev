@@ -15,18 +15,31 @@ import static nars.io.Symbols.*;
  */
 public class SentenceV1 implements Sentence {
 
+    /**
+     * 🆕通过词项、标点、真值、时间戳、可修正 构造 语句
+     * * 🚩根据「标点」分发到各具体类型
+     * * 💭应该挑出到「语句」之外，但暂且放置于此
+     *
+     * @param newContent
+     * @param punctuation
+     * @param newTruth
+     * @param newStamp
+     * @param revisable
+     * @return
+     */
     public static Sentence newSentenceFromPunctuation(
             final Term newContent,
             final char punctuation,
             final Truth newTruth,
-            final Stamp newStamp, boolean revisable) {
+            final Stamp newStamp,
+            final boolean revisable) {
         switch (punctuation) {
             case JUDGMENT_MARK:
                 return new JudgementV1(newContent, newTruth, newStamp, revisable);
             case QUESTION_MARK:
                 return new QuestionV1(newContent, newStamp, revisable);
             default:
-                throw new IllegalArgumentException("未知的标点：" + punctuation);
+                throw new IllegalArgumentException("unknown punctuation: " + punctuation);
         }
     }
 
