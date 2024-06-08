@@ -262,7 +262,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
             // * 📝在OpenNARS 3.0.4中会被覆盖：
             // * 📄`nal.setTheNewStamp(taskStamp, belief.stamp, currentTime);`
             // * ✅【2024-06-08 10:13:46】现在彻底删除newStamp字段，不再需要覆盖了
-            if (!Stamp.haveOverlap(taskSentence.getStamp(), belief.getStamp())) {
+            if (!taskSentence.getStamp().hasOverlap(belief.getStamp())) {
                 memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
                 final Sentence selected = belief.cloneSentence(); // will this mess up priority adjustment?
                 return selected;
