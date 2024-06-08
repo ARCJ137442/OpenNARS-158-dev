@@ -3,20 +3,34 @@ package nars.storage;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+/**
+ * 🆕使用「变长数组」实现的「缓冲区」类型
+ */
 public class ArrayBuffer<T> implements Buffer<T> {
 
-    private final int capacity;
-    private final ArrayList<T> inner;
+    // struct ArrayBuffer<T>
 
+    /** 内部数组 */
+    private final ArrayList<T> inner;
+    /** 缓冲区容量 */
+    private final int capacity;
+
+    // impl<T> Buffer<T>
+
+    /** 构造函数 */
     public ArrayBuffer(int capacity) {
         this.capacity = capacity;
         this.inner = new ArrayList<T>(capacity);
     }
 
+    // impl<T> Iterator<T> for ArrayBuffer<T>
+
     @Override
     public Iterator<T> iterator() {
         return this.inner.iterator();
     }
+
+    // impl<T> Buffer<T> for ArrayBuffer<T>
 
     @Override
     public void __push(T element) {
@@ -38,5 +52,4 @@ public class ArrayBuffer<T> implements Buffer<T> {
     public int capacity() {
         return this.capacity;
     }
-
 }
