@@ -8,6 +8,38 @@ import nars.language.Term;
  */
 public class TaskV1 implements Task {
 
+    /**
+     * The sentence of the Task
+     * * 📝任务的「内容」
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
+     * * 📝所有权：具所有权
+     */
+    private final Sentence sentence;
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    // impl Truth for SentenceV1
+
+    @Override
+    public ShortFloat __frequency() {
+        return this.sentence.__frequency();
+    }
+
+    @Override
+    public ShortFloat __confidence() {
+        return this.sentence.__confidence();
+    }
+
+    @Override
+    public boolean __isAnalytic() {
+        return this.sentence.__isAnalytic();
+    }
+
     // impl Budget for TaskV1
 
     @Override
@@ -27,27 +59,12 @@ public class TaskV1 implements Task {
 
     // impl Item for TaskV1
 
-    /**
-     * 🆕Item令牌
-     */
-    private final Token token;
-
     @Override
     public String getKey() {
         return token.getKey();
     }
 
     // impl Sentence for TaskV1
-
-    /**
-     * The sentence of the Task
-     * * 📝任务的「内容」
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
-     * * 📝所有权：具所有权
-     */
-    private final Sentence sentence;
 
     @Override
     public Term getContent() {
@@ -60,13 +77,13 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public TruthValue __truth() {
-        return this.sentence.__truth();
+    public boolean hasTruth() {
+        return this.sentence.hasTruth();
     }
 
     @Override
-    public Sentence cloneSentence() {
-        return this.sentence.cloneSentence();
+    public Sentence sentenceClone() {
+        return this.sentence.sentenceClone();
     }
 
     @Override

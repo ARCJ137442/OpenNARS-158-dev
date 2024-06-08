@@ -93,7 +93,8 @@ public class TruthValue implements Truth {
     public static TruthValue from(Truth v) {
         if (v instanceof Sentence)
             // ! 📌【2024-06-07 16:13:34】有可能源自「语句」然后「语句非空但无真值」
-            return TruthValue.from(((Sentence) v).__truth());
+            // TODO: 需要解耦：通过「cloneTruth」等方式
+            return ((Sentence) v).hasTruth() ? new TruthValue(v) : null;
         return v == null ? null : new TruthValue(v);
     }
 
@@ -105,10 +106,9 @@ public class TruthValue implements Truth {
      */
     @Override
     public boolean equals(Object that) {
-        return ((that instanceof TruthValue)
-                // * 🚩【2024-06-03 08:41:50】弃用浮点判等，转为短浮点判等
-                && (frequency.equals(((TruthValue) that).frequency))
-                && (confidence.equals(((TruthValue) that).confidence)));
+        return (that instanceof TruthValue
+                // * 🚩后续直接分派
+                && this.truthEquals(((TruthValue) that)));
     }
 
     /**

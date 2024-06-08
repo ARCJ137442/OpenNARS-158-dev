@@ -37,20 +37,24 @@ public class SentenceV1 implements Sentence {
      */
     private final boolean revisable;
 
+    // impl Truth for SentenceV1
+
     @Override
-    public Term getContent() {
-        return content;
+    public ShortFloat __frequency() {
+        return this.truth.__frequency();
     }
 
     @Override
-    public char getPunctuation() {
-        return punctuation;
+    public ShortFloat __confidence() {
+        return this.truth.__confidence();
     }
 
     @Override
-    public TruthValue __truth() {
-        return truth;
+    public boolean __isAnalytic() {
+        return this.truth.__isAnalytic();
     }
+
+    // impl Evidential for SentenceV1
 
     @Override
     public long[] __evidentialBase() {
@@ -62,9 +66,38 @@ public class SentenceV1 implements Sentence {
         return this.stamp.__creationTime();
     }
 
+    // impl Sentence for SentenceV1
+
     @Override
     public boolean __revisable() {
         return revisable;
+    }
+
+    @Override
+    public boolean hasTruth() {
+        return this.truth != null;
+    }
+
+    @Override
+    public Term getContent() {
+        return content;
+    }
+
+    @Override
+    public char getPunctuation() {
+        return punctuation;
+    }
+
+    @Override
+    public Sentence sentenceClone() {
+        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
+        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
+        return new SentenceV1(
+                content.clone(),
+                punctuation,
+                truth == null ? null : truth.clone(),
+                stamp.clone(),
+                revisable);
     }
 
     /**
@@ -103,8 +136,10 @@ public class SentenceV1 implements Sentence {
     public boolean equals(Object that) {
         if (that instanceof Sentence) {
             Sentence t = (Sentence) that;
-            return content.equals(t.getContent()) && punctuation == t.getPunctuation() && truth.equals(t.__truth())
-                    && this.evidenceEqual(t);
+            return content.equals(t.getContent()) && punctuation == t.getPunctuation()
+            // * 🚩真值判等：需要考虑「没有真值」的情况
+                    && (this.hasTruth() == t.hasTruth() && this.truthEquals(t))
+                    && this.evidentialEqual(t);
         }
         return false;
     }
@@ -124,47 +159,14 @@ public class SentenceV1 implements Sentence {
         return hash;
     }
 
-    /**
-     * Clone the Sentence
-     *
-     * @return The clone
-     */
-    public Sentence cloneSentence() {
-        // * ❓这是否意味着：只在「有真值」时，才需要`revisable`——「问题」不用修订
-        // * 🚩【2024-05-19 12:44:12】实际上直接合并即可——「问题」并不会用到`revisable`
-        return new SentenceV1(
-                content.clone(),
-                punctuation,
-                truth == null ? null : truth.clone(),
-                stamp.clone(),
-                revisable);
-    }
-
-    /**
-     * Get a String representation of the sentence
-     *
-     * @return The String
-     */
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder();
-        s.append(content.toString());
-        s.append(punctuation).append(" ");
-        if (truth != null) {
-            s.append(truth.toString());
-        }
-        s.append(this.stampToString());
-        return s.toString();
+        return this.sentenceToString();
     }
 
-    /**
-     * Get a String representation of the sentence, with 2-digit accuracy
-     *
-     * @return The String
-     */
     @Override
     public String toStringBrief() {
-        return toKey() + this.stampToString();
+        return this.sentenceToStringBrief();
     }
 
     /**

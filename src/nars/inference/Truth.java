@@ -96,6 +96,18 @@ public interface Truth extends Cloneable {
     }
 
     /**
+     * Compare two truth values
+     *
+     * @param that The other TruthValue
+     * @return Whether the two are equivalent
+     */
+    public default boolean truthEquals(Truth that) {
+        // * 🚩【2024-06-03 08:41:50】弃用浮点判等，转为短浮点判等
+        return (__frequency().equals(that.__frequency()))
+                && (__confidence().equals(that.__confidence()));
+    }
+
+    /**
      * The character that marks the two ends of a truth value
      */
     static final char DELIMITER = Symbols.TRUTH_VALUE_MARK;

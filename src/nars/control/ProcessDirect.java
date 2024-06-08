@@ -236,11 +236,11 @@ public abstract class ProcessDirect {
         // * 🚩断言传入任务的「语句」一定是「判断」
         if (!task.isJudgment())
             throw new Error("task " + task + "is not a judgment");
-        final Sentence judgment = task.cloneSentence(); // ? 此处是否要将「任务」直接作为「信念」存储
+        final Sentence judgment = task.sentenceClone(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
         final Sentence oldBelief = evaluation(judgment, self.getBeliefs());
         if (oldBelief != null) {
-            if (judgment.evidenceEqual(oldBelief)) {
+            if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().isJudgment()) {
                     task.decPriority(0); // duplicated task

@@ -170,7 +170,7 @@ public interface Evidential {
      * @param that The Stamp to be compared
      * @return Whether the two have contain the same elements
      */
-    public default boolean evidenceEqual(final Evidential that) {
+    public default boolean evidentialEqual(final Evidential that) {
         final TreeSet<Long> set1 = this.evidenceSet();
         final TreeSet<Long> set2 = that.evidenceSet();
         return (set1.containsAll(set2) && set2.containsAll(set1));

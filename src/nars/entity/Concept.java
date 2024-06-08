@@ -264,7 +264,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
             // * ✅【2024-06-08 10:13:46】现在彻底删除newStamp字段，不再需要覆盖了
             if (!taskSentence.evidentialOverlap(belief)) {
                 memory.getRecorder().append(" * Selected Belief: " + belief + "\n");
-                final Sentence selected = belief.cloneSentence(); // will this mess up priority adjustment?
+                final Sentence selected = belief.sentenceClone(); // will this mess up priority adjustment?
                 return selected;
             }
         }

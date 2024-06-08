@@ -23,7 +23,7 @@ public final class CompositionalRules {
             CompoundTerm content, int index,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
-        final Sentence cloned = originalMainSentence.cloneSentence();
+        final Sentence cloned = originalMainSentence.sentenceClone();
         final Term T1 = cloned.getContent();
         if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
             return;

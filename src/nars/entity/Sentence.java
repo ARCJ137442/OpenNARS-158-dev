@@ -19,33 +19,20 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
     // 所有抽象字段
 
     // * 🚩【2024-06-07 15:17:47】仍然保留，语句可能没有「真值」
-    TruthValue __truth();
+    // TruthValue __truth();
+    /** 🆕专用于判断「是否有真值」 */
+    public boolean hasTruth();
 
     // * ✅【2024-06-08 11:36:18】成功删除：通过`stampToString`成功解耦
 
     boolean __revisable();
 
-    @Override
-    default ShortFloat __frequency() {
-        return this.__truth().__frequency();
-    }
-
-    @Override
-    default ShortFloat __confidence() {
-        return this.__truth().__confidence();
-    }
-
-    @Override
-    default boolean __isAnalytic() {
-        return this.__truth().__isAnalytic();
-    }
-
     /**
      * 🆕复制其中的「语句」成分
-     * * 🎯为了不让方法实现冲突而构建
+     * * 🎯为了不让方法实现冲突而构建（复制出一个「纯粹的」语句对象）
      * * ⚠️可能没有
      */
-    public Sentence cloneSentence();
+    public Sentence sentenceClone();
 
     /**
      * Get the content of the sentence
@@ -111,9 +98,9 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
     public static boolean isBeliefEquivalent(Sentence self, Sentence that) {
         return (
         // * 🚩真值相等
-        self.__truth().equals(that.__truth())
+        self.truthEquals(that)
                 // * 🚩时间戳相等（证据集相同）
-                && self.evidenceEqual(that));
+                && self.evidentialEqual(that));
     }
 
     /**
@@ -125,9 +112,34 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
         final StringBuilder s = new StringBuilder();
         s.append(this.getContent().toString());
         s.append(this.getPunctuation()).append(" ");
-        if (__truth() != null) {
-            s.append(__truth().toStringBrief());
+        if (this.hasTruth()) {
+            s.append(this.truthToStringBrief());
         }
         return s.toString();
+    }
+
+    /**
+     * Get a String representation of the sentence
+     *
+     * @return The String
+     */
+    public default String sentenceToString() {
+        StringBuilder s = new StringBuilder();
+        s.append(this.getContent().toString());
+        s.append(this.getPunctuation()).append(" ");
+        if (this.hasTruth()) {
+            s.append(this.truthToString());
+        }
+        s.append(this.stampToString());
+        return s.toString();
+    }
+
+    /**
+     * Get a String representation of the sentence, with 2-digit accuracy
+     *
+     * @return The String
+     */
+    public default String sentenceToStringBrief() {
+        return toKey() + this.stampToString();
     }
 }
