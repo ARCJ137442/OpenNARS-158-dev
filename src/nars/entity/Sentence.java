@@ -17,7 +17,6 @@ import nars.language.Term;
 public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
 
     // 所有抽象字段
-    Term __content();
 
     // * 🚩【2024-06-07 15:17:47】仍然保留，语句可能没有「真值」
     TruthValue __truth();
@@ -53,9 +52,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      *
      * @return The content Term
      */
-    public default Term getContent() {
-        return __content();
-    }
+    public Term getContent();
 
     /**
      * Get the punctuation of the sentence
@@ -70,7 +67,7 @@ public interface Sentence extends ToStringBriefAndLong, Truth, Evidential {
      * @return A clone of the content Term
      */
     public default Term cloneContent() {
-        return __content().clone();
+        return this.getContent().clone();
     }
 
     // ! 🚩【2024-06-07 15:40:21】现在将「语句」本身作为「真值」，或者是【能作为真值使用】的对象

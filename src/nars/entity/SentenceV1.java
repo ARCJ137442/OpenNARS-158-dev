@@ -38,7 +38,7 @@ public class SentenceV1 implements Sentence {
     private final boolean revisable;
 
     @Override
-    public Term __content() {
+    public Term getContent() {
         return content;
     }
 

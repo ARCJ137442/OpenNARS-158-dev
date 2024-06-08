@@ -44,8 +44,8 @@ public class TaskV1 implements Task {
     private final Sentence sentence;
 
     @Override
-    public Term __content() {
-        return this.sentence.__content();
+    public Term getContent() {
+        return this.sentence.getContent();
     }
 
     @Override
