@@ -91,11 +91,15 @@ public class TruthValue implements Truth {
 
     /** 🎯兼容null的构造函数 */
     public static TruthValue from(Truth v) {
-        if (v instanceof Sentence)
-            // ! 📌【2024-06-07 16:13:34】有可能源自「语句」然后「语句非空但无真值」
-            // TODO: 需要解耦：通过「cloneTruth」等方式
-            return ((Sentence) v).hasTruth() ? new TruthValue(v) : null;
+        // if (v instanceof Sentence)
+        // // ! 📌【2024-06-07 16:13:34】有可能源自「语句」然后「语句非空但无真值」
+        // return ((Sentence) v).hasTruth() ? new TruthValue(v) : null;
         return v == null ? null : new TruthValue(v);
+    }
+
+    @Override
+    public Truth truthClone() {
+        return new TruthValue(this);
     }
 
     /**

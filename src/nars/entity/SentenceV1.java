@@ -1,6 +1,5 @@
 package nars.entity;
 
-import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -26,11 +25,6 @@ public class SentenceV1 implements Sentence {
      */
     private final char punctuation;
     /**
-     * The truth value of Judgment
-     * TODO: 后续或许考虑「类型分离」（「疑问句」没有真值，那就不要在这儿存储）
-     */
-    private final TruthValue truth;
-    /**
      * Partial record of the derivation path
      */
     private final Stamp stamp;
@@ -52,43 +46,15 @@ public class SentenceV1 implements Sentence {
      *                    base
      * @param revisable   Whether the sentence can be revised
      */
-    public SentenceV1(Term content, char punctuation, Truth truth, Stamp stamp, boolean revisable) {
+    protected SentenceV1(Term content, char punctuation, Stamp stamp, boolean revisable) {
         this.content = content;
         this.content.renameVariables();
         this.punctuation = punctuation;
-        this.truth = TruthValue.from(truth); // ! 📌【2024-06-07 15:37:46】真值可能为空
         this.stamp = stamp;
         this.revisable = revisable;
         if (stamp == null) {
             throw new NullPointerException("Stamp is null!");
         }
-        if (this.isQuestion() && this.truth != null) {
-            throw new NullPointerException("Questions has truth!");
-        }
-    }
-
-    // impl Truth for SentenceV1
-
-    @Override
-    public ShortFloat __frequency() {
-        return this.truth.__frequency();
-    }
-
-    @Override
-    public ShortFloat __confidence() {
-        return this.truth.__confidence();
-    }
-
-    @Override
-    public boolean __isAnalytic() {
-        return this.truth.__isAnalytic();
-    }
-
-    // impl OptionalTruth for SentenceV1
-
-    @Override
-    public boolean hasTruth() {
-        return this.truth != null;
     }
 
     // impl Evidential for SentenceV1
@@ -127,7 +93,7 @@ public class SentenceV1 implements Sentence {
         return new SentenceV1(
                 content.clone(),
                 punctuation,
-                truth == null ? null : truth.clone(),
+                // truth == null ? null : truth.clone(),
                 stamp.clone(),
                 revisable);
     }
@@ -144,9 +110,6 @@ public class SentenceV1 implements Sentence {
         return this.sentenceToStringBrief();
     }
 
-    /**
-     * 🆕原版没有，此处仅重定向
-     */
     @Override
     public String toStringLong() {
         return toString();
@@ -165,8 +128,8 @@ public class SentenceV1 implements Sentence {
         if (that instanceof Sentence) {
             Sentence t = (Sentence) that;
             return content.equals(t.getContent()) && punctuation == t.getPunctuation()
-            // * 🚩真值判等：需要考虑「没有真值」的情况
-                    && (this.hasTruth() == t.hasTruth() && this.truthEquals(t))
+            // // * 🚩真值判等：需要考虑「没有真值」的情况
+            // && (this.hasTruth() == t.hasTruth() && this.truthEquals(t))
                     && this.evidentialEqual(t);
         }
         return false;
@@ -176,6 +139,7 @@ public class SentenceV1 implements Sentence {
 
     /**
      * To produce the hashcode of a sentence
+     * * 🚩【2024-06-08 14:22:55】此处破坏性更新：不再需要「真值」
      *
      * @return A hashcode
      */
@@ -184,8 +148,20 @@ public class SentenceV1 implements Sentence {
         int hash = 5;
         hash = 67 * hash + (this.content != null ? this.content.hashCode() : 0);
         hash = 67 * hash + this.punctuation;
-        hash = 67 * hash + (this.truth != null ? this.truth.hashCode() : 0);
+        // hash = 67 * hash + (this.truth != null ? this.truth.hashCode() : 0);
         hash = 67 * hash + (this.stamp != null ? this.stamp.hashCode() : 0);
         return hash;
+    }
+
+    @Override
+    public String toKey() {
+        // ! 不予实现
+        throw new UnsupportedOperationException("Unimplemented method 'toKey'");
+    }
+
+    @Override
+    public String sentenceToString() {
+        // ! 不予实现
+        throw new UnsupportedOperationException("Unimplemented method 'sentenceToString'");
     }
 }

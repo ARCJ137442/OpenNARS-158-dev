@@ -114,7 +114,7 @@ public class LocalRules {
      * @param questionTask The task to be processed
      * @param context      Reference to the derivation context
      */
-    public static void trySolution(Sentence belief, Task questionTask, DerivationContext context) {
+    public static void trySolution(Judgement belief, Task questionTask, DerivationContext context) {
         // * 🚩预设&断言
         final Sentence oldBest = questionTask.getBestSolution();
         if (belief == null || !belief.isJudgment())

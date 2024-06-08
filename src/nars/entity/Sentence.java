@@ -1,9 +1,9 @@
 package nars.entity;
 
-import nars.inference.Truth.OptionalTruth;
 import nars.io.Symbols;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
+import nars.language.Variable;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
@@ -14,7 +14,7 @@ import nars.language.Term;
  * * 🚩作为一个接口，仅对其中的字段做抽象要求（实现者只要求在这些方法里返回字段或其它表达式）
  * * 🚩所有「字段类接口方法」均【以双下划线开头】并【不带public】
  */
-public interface Sentence extends ToStringBriefAndLong, OptionalTruth, Evidential {
+public interface Sentence extends ToStringBriefAndLong, Evidential {
 
     // 所有抽象字段
 
@@ -73,11 +73,11 @@ public interface Sentence extends ToStringBriefAndLong, OptionalTruth, Evidentia
      * @return Whether the object is a Question
      */
     public default boolean isQuestion() {
-        return (this.getPunctuation() == Symbols.QUESTION_MARK);
+        return this.getPunctuation() == Symbols.QUESTION_MARK;
     }
 
     public default boolean containQueryVar() {
-        return (this.getContent().getName().indexOf(Symbols.VAR_QUERY) >= 0);
+        return Variable.containVarQ(this.getContent());
     }
 
     public default boolean getRevisable() {
@@ -85,51 +85,18 @@ public interface Sentence extends ToStringBriefAndLong, OptionalTruth, Evidentia
     }
 
     /**
-     * Check whether the judgment is equivalent to another one
-     * <p>
-     * The two may have different keys
-     *
-     * @param that The other judgment
-     * @return Whether the two are equivalent
-     */
-    public static boolean isBeliefEquivalent(Sentence self, Sentence that) {
-        return (
-        // * 🚩真值相等
-        self.truthEquals(that)
-                // * 🚩时间戳相等（证据集相同）
-                && self.evidentialEqual(that));
-    }
-
-    /**
      * Get a String representation of the sentence for key of Task and TaskLink
      *
      * @return The String
      */
-    public default String toKey() {
-        final StringBuilder s = new StringBuilder();
-        s.append(this.getContent().toString());
-        s.append(this.getPunctuation()).append(" ");
-        if (this.hasTruth()) {
-            s.append(this.truthToStringBrief());
-        }
-        return s.toString();
-    }
+    public String toKey();
 
     /**
      * Get a String representation of the sentence
      *
      * @return The String
      */
-    public default String sentenceToString() {
-        StringBuilder s = new StringBuilder();
-        s.append(this.getContent().toString());
-        s.append(this.getPunctuation()).append(" ");
-        if (this.hasTruth()) {
-            s.append(this.truthToString());
-        }
-        s.append(this.stampToString());
-        return s.toString();
-    }
+    public String sentenceToString();
 
     /**
      * Get a String representation of the sentence, with 2-digit accuracy
@@ -138,5 +105,21 @@ public interface Sentence extends ToStringBriefAndLong, OptionalTruth, Evidentia
      */
     public default String sentenceToStringBrief() {
         return toKey() + this.stampToString();
+    }
+
+    /**
+     * 🆕原版没有，此处仅重定向
+     */
+    public default String sentenceToStringLong() {
+        return this.sentenceToString();
+    }
+
+    /**
+     * 🆕用于「新任务建立」
+     *
+     * @return
+     */
+    public Sentence withSamePunctuation(Term content) {
+        // TODO: 【2024-06-08 15:11:31】最后开发断点
     }
 }

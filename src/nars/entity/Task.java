@@ -41,7 +41,7 @@ public interface Task extends Sentence, Item {
      *
      * @param judgment The solution to be remembered
      */
-    public void setBestSolution(final Sentence judgment);
+    public void setBestSolution(final Judgement judgment);
 
     /**
      * Check if a Task is a direct input

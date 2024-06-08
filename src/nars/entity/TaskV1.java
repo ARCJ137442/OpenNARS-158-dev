@@ -41,7 +41,7 @@ public class TaskV1 implements Task {
      * * 📝可变性：不变 | 仅构造时，无需可变，「语句」类型可随意复制
      * * 📝所有权：具所有权
      */
-    private final Sentence parentBelief;
+    private final Judgement parentBelief;
 
     /**
      * For Question and Goal: best solution found so far
@@ -51,7 +51,7 @@ public class TaskV1 implements Task {
      * * 📝可变性：可变
      * * 📝所有权：具所有权 | 「语句」类型
      */
-    private Sentence bestSolution;
+    private Judgement bestSolution;
 
     // impl TaskV1
 
@@ -64,13 +64,13 @@ public class TaskV1 implements Task {
      * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
      */
-    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Sentence parentBelief, Sentence solution) {
+    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Judgement parentBelief, Judgement solution) {
         this.token = new Token(sentence.toKey(), budget); // change to toKey()
         this.sentence = sentence;
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
         this.parentTask = parentTask;
-        if (parentBelief != null && parentBelief.isQuestion())
-            throw new IllegalArgumentException("父信念只能是「判断句」");
+        // if (parentBelief != null && parentBelief.isQuestion())
+        // throw new IllegalArgumentException("父信念只能是「判断句」");
         this.parentBelief = parentBelief;
         this.bestSolution = solution;
     }
@@ -93,25 +93,8 @@ public class TaskV1 implements Task {
      * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
      */
-    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Sentence parentBelief) {
+    public TaskV1(Sentence sentence, Budget budget, Task parentTask, Judgement parentBelief) {
         this(sentence, budget, parentTask, parentBelief, null);
-    }
-
-    // impl Truth for Truth
-
-    @Override
-    public ShortFloat __frequency() {
-        return this.sentence.__frequency();
-    }
-
-    @Override
-    public ShortFloat __confidence() {
-        return this.sentence.__confidence();
-    }
-
-    @Override
-    public boolean __isAnalytic() {
-        return this.sentence.__isAnalytic();
     }
 
     // impl Budget for TaskV1
@@ -139,11 +122,6 @@ public class TaskV1 implements Task {
     }
 
     // impl OptionalTruth for SentenceV1
-
-    @Override
-    public boolean hasTruth() {
-        return this.sentence.hasTruth();
-    }
 
     // impl Sentence for TaskV1
 
@@ -197,7 +175,7 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public void setBestSolution(Sentence judgment) {
+    public void setBestSolution(Judgement judgment) {
         if (!this.isQuestion())
             throw new IllegalArgumentException(this + " is not question");
         if (judgment == null)
@@ -224,5 +202,15 @@ public class TaskV1 implements Task {
     @Override
     public String toStringLong() {
         return this.taskToStringLong();
+    }
+
+    @Override
+    public String toKey() {
+        return this.sentence.toKey();
+    }
+
+    @Override
+    public String sentenceToString() {
+        return this.sentence.sentenceToString();
     }
 }

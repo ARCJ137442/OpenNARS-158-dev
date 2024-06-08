@@ -6,6 +6,7 @@ import java.util.Random;
 
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
+import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.SentenceV1;
 import nars.entity.Stamp;
@@ -182,9 +183,9 @@ public abstract class DerivationContext {
      *
      * * 🚩【2024-05-30 09:25:15】内部不被修改，同时「语句」允许被随意复制（内容固定，占用小）
      */
-    private Sentence currentBelief;
+    private Judgement currentBelief;
 
-    public Sentence getCurrentBelief() {
+    public Judgement getCurrentBelief() {
         return currentBelief;
     }
 
@@ -197,7 +198,7 @@ public abstract class DerivationContext {
      * 设置当前信念
      * * 📝仅在「直接推理」之前、「概念推理」切换概念时用到
      */
-    protected void setCurrentBelief(Sentence currentBelief) {
+    protected void setCurrentBelief(Judgement currentBelief) {
         this.currentBelief = currentBelief;
     }
 
@@ -265,17 +266,17 @@ public abstract class DerivationContext {
      * * 📝仅被「答问」调用
      *
      * @param budget          The budget value of the new Task
-     * @param sentence        The content of the new Task
+     * @param newTask         The content of the new Task
      * @param candidateBelief The belief to be used in future inference, for
      *                        forward/backward correspondence
      */
-    public void activatedTask(final Budget budget, final Sentence sentence, final Sentence candidateBelief) {
+    public void activatedTask(final Budget budget, final Judgement newTask, final Judgement candidateBelief) {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
         final BudgetValue newBudget = BudgetValue.from(budget);
-        final Task task = new TaskV1(sentence, newBudget, this.getCurrentTask(), sentence, candidateBelief);
+        final Task task = new TaskV1(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
         memory.getRecorder().append("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
-        if (sentence.isQuestion()) {
+        if (newTask.isQuestion()) {
             final float s = task.budgetSummary();
             // float minSilent = memory.getReasoner().getMainWindow().silentW.value() /
             // 100.0f;
