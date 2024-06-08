@@ -1,18 +1,12 @@
 package nars.entity;
 
 import nars.inference.*;
-import nars.io.Symbols;
 
 /**
  * A triple of priority (current), durability (decay), and quality (long-term
  * average).
  */
 public class BudgetValue implements Cloneable, Budget {
-
-    /** The character that marks the two ends of a budget value */
-    private static final char MARK = Symbols.BUDGET_VALUE_MARK;
-    /** The character that separates the factors in a budget value */
-    private static final char SEPARATOR = Symbols.VALUE_SEPARATOR;
     /** The relative share of time resource to be allocated */
     protected final ShortFloat priority;
     /**
@@ -107,7 +101,7 @@ public class BudgetValue implements Cloneable, Budget {
      */
     @Override
     public String toString() {
-        return MARK + priority.toString() + SEPARATOR + durability.toString() + SEPARATOR + quality.toString() + MARK;
+        return this.budgetToString();
     }
 
     /**
@@ -116,7 +110,6 @@ public class BudgetValue implements Cloneable, Budget {
      * @return String representation of the value with 2-digit accuracy
      */
     public String toStringBrief() {
-        return MARK + priority.toStringBrief() + SEPARATOR + durability.toStringBrief() + SEPARATOR
-                + quality.toStringBrief() + MARK;
+        return this.budgetToStringBrief();
     }
 }

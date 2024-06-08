@@ -85,11 +85,12 @@ public class SimpleShell {
         reasoner.getSilenceValue().set(100);
         isRunning = true;
         while (isRunning) {
-            try {
-                reasoner.tick();
-            } catch (Exception ex) {
-                this.printException(ex);
-            }
+            // ! Let it crash
+            // try {
+            reasoner.tick();
+            // } catch (Exception ex) {
+            // this.printException(ex);
+            // }
         }
     }
 

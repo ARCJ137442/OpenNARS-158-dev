@@ -70,4 +70,25 @@ public interface Task extends Sentence, Item {
         else
             BudgetFunctions.merge(that, this);
     }
+
+    public default String taskToString() {
+        final StringBuilder s = new StringBuilder();
+        final String superString = this.budgetToString() + " " + getKey().toString();
+        s.append(superString).append(" ");
+        s.append(this.stampToString());
+        if (this.getParentTask() != null) {
+            s.append("  \n from task: ").append(this.getParentTask().toStringBrief());
+            if (this.getParentBelief() != null) {
+                s.append("  \n from belief: ").append(this.getParentBelief().toStringBrief());
+            }
+        }
+        if (this.getBestSolution() != null) {
+            s.append("  \n solution: ").append(this.getBestSolution().toStringBrief());
+        }
+        return s.toString();
+    }
+
+    public default String taskToStringLong() {
+        return taskToString();
+    }
 }

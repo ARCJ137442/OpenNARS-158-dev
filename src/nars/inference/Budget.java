@@ -1,6 +1,7 @@
 package nars.inference;
 
 import nars.entity.ShortFloat;
+import nars.io.Symbols;
 import nars.main.Parameters;
 
 /**
@@ -161,5 +162,44 @@ public interface Budget {
     public default boolean aboveThreshold(float threshold) {
         // * 🚩就是普通的「大于阈值」
         return budgetSummary() >= threshold;
+    }
+
+    /** The character that marks the two ends of a budget value */
+    static final char MARK = Symbols.BUDGET_VALUE_MARK;
+    /** The character that separates the factors in a budget value */
+    static final char SEPARATOR = Symbols.VALUE_SEPARATOR;
+
+    /**
+     * Fully display the BudgetValue
+     *
+     * @return String representation of the value
+     */
+    public default String budgetToString() {
+        final StringBuilder b = new StringBuilder();
+        b.append(MARK);
+        b.append(__priority().toString());
+        b.append(SEPARATOR);
+        b.append(__durability().toString());
+        b.append(SEPARATOR);
+        b.append(__quality().toString());
+        b.append(MARK);
+        return b.toString();
+    }
+
+    /**
+     * Briefly display the BudgetValue
+     *
+     * @return String representation of the value with 2-digit accuracy
+     */
+    public default String budgetToStringBrief() {
+        final StringBuilder b = new StringBuilder();
+        b.append(MARK);
+        b.append(__priority().toStringBrief());
+        b.append(SEPARATOR);
+        b.append(__durability().toStringBrief());
+        b.append(SEPARATOR);
+        b.append(__quality().toStringBrief());
+        b.append(MARK);
+        return b.toString();
     }
 }

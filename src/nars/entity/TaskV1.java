@@ -8,15 +8,7 @@ import nars.language.Term;
  */
 public class TaskV1 implements Task {
 
-    /**
-     * 🆕Item令牌
-     */
-    private final Token token;
-
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
+    // impl Budget for TaskV1
 
     @Override
     public ShortFloat __priority() {
@@ -32,6 +24,20 @@ public class TaskV1 implements Task {
     public ShortFloat __quality() {
         return this.token.__quality();
     }
+
+    // impl Item for TaskV1
+
+    /**
+     * 🆕Item令牌
+     */
+    private final Token token;
+
+    @Override
+    public String getKey() {
+        return token.getKey();
+    }
+
+    // impl Sentence for TaskV1
 
     /**
      * The sentence of the Task
@@ -59,6 +65,18 @@ public class TaskV1 implements Task {
     }
 
     @Override
+    public Sentence cloneSentence() {
+        return this.sentence.cloneSentence();
+    }
+
+    @Override
+    public boolean __revisable() {
+        return this.sentence.__revisable();
+    }
+
+    // impl Stamp for TaskV1
+
+    @Override
     public long[] __evidentialBase() {
         return this.sentence.__evidentialBase();
     }
@@ -68,15 +86,7 @@ public class TaskV1 implements Task {
         return this.sentence.__creationTime();
     }
 
-    @Override
-    public boolean __revisable() {
-        return this.sentence.__revisable();
-    }
-
-    @Override
-    public Sentence cloneSentence() {
-        return this.sentence.cloneSentence();
-    }
+    // impl Task for TaskV1
 
     /**
      * Task from which the Task is derived, or null if input
@@ -130,9 +140,11 @@ public class TaskV1 implements Task {
         if (!judgment.isJudgment())
             throw new IllegalArgumentException(judgment + " is not judgment");
         // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
-        this.bestSolution = sentence;
-        // this.bestSolution = sentence.cloneSentence();
+        this.bestSolution = judgment;
+        // this.bestSolution = judgment.cloneSentence();
     }
+
+    // other
 
     /**
      * 完全构造函数
@@ -193,24 +205,11 @@ public class TaskV1 implements Task {
      */
     @Override
     public String toString() {
-        final StringBuilder s = new StringBuilder();
-        final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
-        s.append(superString).append(" ");
-        s.append(this.stampToString());
-        if (parentTask != null) {
-            s.append("  \n from task: ").append(parentTask.toStringBrief());
-            if (parentBelief != null) {
-                s.append("  \n from belief: ").append(parentBelief.toStringBrief());
-            }
-        }
-        if (bestSolution != null) {
-            s.append("  \n solution: ").append(bestSolution.toStringBrief());
-        }
-        return s.toString();
+        return this.taskToString();
     }
 
     @Override
     public String toStringLong() {
-        return toString();
+        return this.taskToStringLong();
     }
 }
