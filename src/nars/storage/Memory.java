@@ -158,13 +158,13 @@ public class Memory {
      * Get the Concept associated to a Term, or create it.
      *
      * @param term indicating the concept
-     * @return an existing Concept, or a new one, or null ( TODO bad smell )
+     * @return an existing Concept, or a new one, or null ( bad smell ? )
      */
     public Concept getConceptOrCreate(Term term) {
         // * 🚩不给「非常量词项」新建概念 | 「非常量词项」也不可能作为一个「概念」被放进「记忆区」中
         if (!term.isConstant())
             return null;
-        // * 🚩尝试从概念袋中获取「已有概念」，否则创建概念
+        // * 🚩尝试从概念袋中获取「已有概念」，否则尝试创建概念
         final Concept concept = termToConcept(term);
         return concept == null ? makeNewConcept(term) : concept;
     }
@@ -174,7 +174,7 @@ public class Memory {
      * * 📌概念只可能由此被创建
      *
      * @param term 概念对应的词项
-     * @return 已经被置入「概念袋」的概念 | 创建失败时返回`
+     * @return 已经被置入「概念袋」的概念 | 创建失败时返回`null`
      */
     private Concept makeNewConcept(Term term) {
         final Concept concept = new Concept(term, this); // the only place to make a new Concept
