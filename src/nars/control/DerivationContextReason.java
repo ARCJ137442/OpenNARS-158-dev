@@ -20,6 +20,14 @@ import static nars.control.DerivationContext.drop;
 public class DerivationContextReason extends DerivationContextTransform {
 
     /**
+     * 设置当前信念
+     * * 📝仅在「直接推理」之前、「概念推理」切换概念时用到
+     */
+    protected void setCurrentBelief(Judgement currentBelief) {
+        this.currentBelief = currentBelief;
+    }
+
+    /**
      * 用于构建「直接推理上下文」对象
      */
     public static final void verify(DerivationContextReason self) {
