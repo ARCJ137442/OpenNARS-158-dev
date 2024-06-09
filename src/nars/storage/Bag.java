@@ -23,7 +23,6 @@ import nars.main.Parameters;
  * @param <E> The type of the Item in the Bag
  */
 public class Bag<E extends Item> {
-
     /**
      * priority levels
      */
@@ -81,7 +80,7 @@ public class Bag<E extends Item> {
      */
     private final AtomicInteger forgetRate;
 
-    private BagObserver<E> bagObserver = new NullBagObserver<>();
+    private BagObserver<E> bagObserver = new BagObserver.NullObserver<>();
 
     /**
      * The display level; initialized at lowest
@@ -407,7 +406,7 @@ public class Bag<E extends Item> {
      * Refresh display
      */
     public void refresh() {
-        if (bagObserver != null && !(bagObserver instanceof NullBagObserver)) {
+        if (bagObserver != null && !(bagObserver instanceof BagObserver.NullObserver)) {
             bagObserver.refresh(toString());
         }
     }

@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import nars.control.ConceptLinking;
 import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
-import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main.NARS;
 import nars.main.Parameters;
@@ -16,7 +15,6 @@ import nars.storage.Bag;
 import nars.storage.BagObserver;
 import nars.storage.RankTable;
 import nars.storage.Memory;
-import nars.storage.NullBagObserver;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -30,23 +28,37 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     // struct Concept
 
-    // TODO: 字段可空性、可变性、所有权标记
-
     /**
      * 🆕Item令牌
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改（调整预算值）
+     * * 📝所有权：具所有权
      */
     private final Token token;
 
     /**
      * The term is the unique ID of the concept
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：不变
+     * * 📝所有权：具所有权
      */
     private final Term term;
     /**
      * Task links for indirect processing
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：具所有权
      */
     private final Bag<TaskLink> taskLinks;
     /**
      * Term links between the term and its components and compounds
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：具所有权
      */
     private final Bag<TermLink> termLinks;
     /**
@@ -55,21 +67,36 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * * 📌【2024-06-04 20:14:09】目前确定为「所有『内部元素』链接到自身的可能情况」的模板集
      * * 📝只会创建「从内部元素链接到自身」（target=）
      * * 📝在{@link ConceptLinking#prepareTermLinkTemplates}中被准备，随后不再变化
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时生成
+     * * 📝所有权：具所有权
      */
     private final ArrayList<TermLinkTemplate> linkTemplatesToSelf;
     /**
      * Question directly asked about the term
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：具所有权
      */
     private final ArrayBuffer<Task> questions;
     /**
      * Sentences directly made about the term, with non-future tense
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：具所有权
      */
     private final RankTable<Judgement> beliefs;
-    // ! 🚩【2024-06-08 17:37:04】现在不再持有反向引用
     /**
      * The display window
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | GUI更新
+     * * 📝所有权：共享引用（GUI更新）
      */
-    private EntityObserver entityObserver = new NullEntityObserver();
+    private EntityObserver entityObserver = new EntityObserver.NullObserver();
 
     // impl Budget for Concept
 
@@ -128,11 +155,14 @@ public final class Concept implements Item, ToStringBriefAndLong {
         String res = toStringBrief() + " " + getKey()
                 + toStringIfNotNull(termLinks, "termLinks")
                 + toStringIfNotNull(taskLinks, "taskLinks");
-        res += toStringIfNotNull(null, "questions");
-        for (Task t : questions) {
-            res += t.toString();
+        res += "\nquestions:";
+        for (final Task t : questions) {
+            res += "\n" + t.toString();
         }
-        // TODO other details?
+        res += "\nbeliefs:";
+        for (final Judgement t : beliefs) {
+            res += "\n" + t.toString();
+        }
         return res;
     }
 
@@ -144,7 +174,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
         return toString();
     }
 
-    public String toStringIfNotNull(Object item, String title) {
+    public static String toStringIfNotNull(Object item, String title) {
         return item == null ? "" : "\n " + title + ":" + item.toString();
     }
 
@@ -158,10 +188,19 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param memory A reference to the memory
      */
     public Concept(Term term, Memory memory) {
-        this(term, memory.getTaskForgettingRate(),
+        this(term,
+                memory.getTaskForgettingRate(),
                 memory.getBeliefForgettingRate());
     }
 
+    /**
+     * 🆕完全参数构造函数
+     * * 🚩包括两个「超参数」的引入
+     *
+     * @param term
+     * @param taskLinkForgettingRate
+     * @param termLinkForgettingRate
+     */
     public Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
         this.token = new Token(term.getName());
         this.term = term;
@@ -169,13 +208,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.beliefs = createBeliefTable();
         this.taskLinks = new Bag<TaskLink>(taskLinkForgettingRate, Parameters.TASK_LINK_BAG_SIZE);
         this.termLinks = new Bag<TermLink>(termLinkForgettingRate, Parameters.TERM_LINK_BAG_SIZE);
-        if (term instanceof CompoundTerm) {
-            // * 🚩只有「复合词项←其内元素」的链接模板
-            // * 📝所有信息基于「内容包含」关系
-            this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(((CompoundTerm) term));
-        } else {
-            this.linkTemplatesToSelf = null;
-        }
+        // * 🚩只有「复合词项←其内元素」的链接模板
+        // * 📝所有信息基于「内容包含」关系
+        this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(term);
     }
 
     /** 🆕信念表的「是否适合新增」 */
@@ -297,7 +332,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕从「任务链袋」获取一个任务链
-     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     * * 🚩仅用于「概念推理」
      */
     public TaskLink __takeOutTaskLink() {
         return this.taskLinks.takeOut();
@@ -305,7 +340,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕从「词项链袋」获取一个词项链
-     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     * * 🚩仅用于「概念推理」
      */
     public TermLink __takeOutTermLink(TaskLink currentTaskLink, long time) {
         return this.takeOutTermLinkFromTaskLink(currentTaskLink, time);
@@ -338,7 +373,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕将一个任务链放回「任务链袋」
-     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     * * 🚩仅用于「概念推理」
      */
     public boolean __putTaskLinkBack(TaskLink link) {
         return this.taskLinks.putBack(link);
@@ -346,7 +381,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕将一个词项链放回「词项链袋」
-     * * 🚩仅用于从「记忆区」调用的{@link Memory#fireConcept}
+     * * 🚩仅用于「概念推理」
      */
     public boolean __putTermLinkBack(TermLink link) {
         return this.termLinks.putBack(link);
@@ -410,29 +445,5 @@ public final class Concept implements Item, ToStringBriefAndLong {
             }
         }
         return buffer.toString();
-    }
-
-    class NullEntityObserver implements EntityObserver {
-
-        @Override
-        public void post(String str) {
-        }
-
-        @Override
-        public BagObserver<TermLink> createBagObserver() {
-            return new NullBagObserver<>();
-        }
-
-        @Override
-        public void startPlay(Concept concept, boolean showLinks) {
-        }
-
-        @Override
-        public void stop() {
-        }
-
-        @Override
-        public void refresh(String message) {
-        }
     }
 }

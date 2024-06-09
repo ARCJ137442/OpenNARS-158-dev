@@ -37,4 +37,27 @@ public interface EntityObserver {
 	 */
 	void refresh(String message);
 
+	public class NullObserver implements EntityObserver {
+
+		@Override
+		public void post(String str) {
+		}
+
+		@Override
+		public BagObserver<TermLink> createBagObserver() {
+			return new BagObserver.NullObserver<>();
+		}
+
+		@Override
+		public void startPlay(Concept concept, boolean showLinks) {
+		}
+
+		@Override
+		public void stop() {
+		}
+
+		@Override
+		public void refresh(String message) {
+		}
+	}
 }

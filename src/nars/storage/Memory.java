@@ -2,7 +2,6 @@ package nars.storage;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import nars.control.DerivationContext;
 import nars.entity.Concept;
 import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
@@ -14,19 +13,72 @@ import nars.main.Parameters;
  */
 public class Memory {
 
+    // struct Memory
+
     /* ---------- Long-term storage for multiple cycles ---------- */
     /**
      * Concept bag. Containing all Concepts of the system
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：具所有权
      */
     private final Bag<Concept> concepts;
-    private final AtomicInteger conceptForgettingRate = new AtomicInteger(Parameters.CONCEPT_FORGETTING_CYCLE);
-    private final AtomicInteger beliefForgettingRate = new AtomicInteger(Parameters.TERM_LINK_FORGETTING_CYCLE);
-    private final AtomicInteger taskForgettingRate = new AtomicInteger(Parameters.TASK_LINK_FORGETTING_CYCLE);
 
+    // 各超参数
+    /**
+     * 概念遗忘速率
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：共享引用 | 用于外部GUI修改
+     */
+    private final AtomicInteger conceptForgettingRate;
+    /**
+     * 信念遗忘速率
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：共享引用 | 用于外部GUI修改
+     */
+    private final AtomicInteger beliefForgettingRate;
+    /**
+     * 任务遗忘速率
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 需要内部修改
+     * * 📝所有权：共享引用 | 用于外部GUI修改
+     */
+    private final AtomicInteger taskForgettingRate;
+
+    // impl Memory
+
+    /**
+     * 获取概念遗忘速率
+     * * 🎯用于「GUI更新」与「概念构造」
+     *
+     * @return
+     */
+    public AtomicInteger getConceptForgettingRate() {
+        return this.conceptForgettingRate;
+    }
+
+    /**
+     * 获取任务遗忘速率
+     * * 🎯用于「GUI更新」与「概念构造」
+     *
+     * @return
+     */
     public AtomicInteger getTaskForgettingRate() {
         return taskForgettingRate;
     }
 
+    /**
+     * 获取信念遗忘速率
+     * * 🎯用于「GUI更新」与「概念构造」
+     *
+     * @return
+     */
     public AtomicInteger getBeliefForgettingRate() {
         return beliefForgettingRate;
     }
@@ -35,15 +87,23 @@ public class Memory {
     /**
      * Create a new memory
      * <p>
-     * Called in Reasoner.reset only
+     * * 🚩仅在记忆区的构造函数中使用
      */
     public Memory() {
+        // * 🚩各参数
+        this.conceptForgettingRate = new AtomicInteger(Parameters.CONCEPT_FORGETTING_CYCLE);
+        this.beliefForgettingRate = new AtomicInteger(Parameters.TERM_LINK_FORGETTING_CYCLE);
+        this.taskForgettingRate = new AtomicInteger(Parameters.TASK_LINK_FORGETTING_CYCLE);
+        // * 🚩概念袋
         this.concepts = new Bag<Concept>(this.conceptForgettingRate, Parameters.CONCEPT_BAG_SIZE);
     }
 
+    /**
+     * 初始化记忆区
+     * * 🚩初始化「概念袋」
+     */
     public void init() {
         concepts.init();
-        DerivationContext.init();
     }
 
     /* ---------- conversion utilities ---------- */
@@ -174,10 +234,6 @@ public class Memory {
      */
     public final void putBackConcept(Concept concept) {
         this.concepts.putBack(concept);
-    }
-
-    public AtomicInteger getConceptForgettingRate() {
-        return this.conceptForgettingRate;
     }
 
     /**

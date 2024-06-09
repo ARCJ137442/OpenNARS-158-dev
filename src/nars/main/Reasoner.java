@@ -122,6 +122,7 @@ public class Reasoner {
         this.walkingSteps = 0;
         this.clock = 0;
         this.memory.init();
+        DerivationContext.init();
         this.initTimer();
         this.recorder.append("\n-----RESET-----\n");
         this.newTasks.clear();

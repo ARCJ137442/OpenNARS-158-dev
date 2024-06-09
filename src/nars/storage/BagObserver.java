@@ -34,4 +34,27 @@ public interface BagObserver<BagType extends Item> {
      * put in non-showing state
      */
     public abstract void stop();
+
+    /** a {@link BagObserver} that does nothing (null design pattern) */
+    public class NullObserver<BagType extends Item> implements BagObserver<BagType> {
+        @Override
+        public void setTitle(String title) {
+        }
+
+        @Override
+        public void setBag(Bag<BagType> concepts) {
+        }
+
+        @Override
+        public void post(String str) {
+        }
+
+        @Override
+        public void refresh(String string) {
+        }
+
+        @Override
+        public void stop() {
+        }
+    }
 }

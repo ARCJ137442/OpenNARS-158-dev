@@ -26,12 +26,16 @@ public abstract class ConceptLinking {
      *
      * @return A list of TermLink templates
      */
-    public static ArrayList<TermLinkTemplate> prepareTermLinkTemplates(CompoundTerm self) {
+    public static ArrayList<TermLinkTemplate> prepareTermLinkTemplates(Term self) {
+        // * 🚩创建返回值
         final ArrayList<TermLinkTemplate> linksToSelf = new ArrayList<>();
+        // * 🚩不是复合词项⇒返回空
+        if (!(self instanceof CompoundTerm))
+            return linksToSelf;
         // * 🚩预备「默认类型」：自身为陈述⇒陈述，自身为复合⇒复合
         final TLinkType type = (self instanceof Statement) ? TLinkType.COMPOUND_STATEMENT : TLinkType.COMPOUND; // default
         // * 🚩建立连接：从「自身到自身」开始
-        prepareComponentLinks(self, linksToSelf, type, self);
+        prepareComponentLinks((CompoundTerm) self, linksToSelf, type, (CompoundTerm) self);
         return linksToSelf;
     }
 
