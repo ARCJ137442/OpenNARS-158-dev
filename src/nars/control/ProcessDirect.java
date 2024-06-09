@@ -240,7 +240,9 @@ public abstract class ProcessDirect {
             throw new AssertionError("task " + task + "is not a judgment");
         final Judgement judgment = task.sentenceClone().asJudgement(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
-        final Judgement oldBelief = evaluation(judgment, self.getBeliefs());
+        final Judgement oldBelief = evaluation(
+                judgment, self.getBeliefs(),
+                BudgetFunctions::solutionQuality);
         if (oldBelief != null) {
             if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
@@ -297,7 +299,9 @@ public abstract class ProcessDirect {
         final Sentence question = newQuestion ? questionTask : existedQuestion;
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
-        final Judgement newAnswer = evaluation(question, self.getBeliefs());
+        final Judgement newAnswer = evaluation(
+                question, self.getBeliefs(),
+                BudgetFunctions::solutionQuality);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, questionTask, context);
@@ -345,6 +349,11 @@ public abstract class ProcessDirect {
         return null;
     }
 
+    @FunctionalInterface
+    private interface EvaluateSolutionQuality {
+        float call(Sentence query, Judgement judgment);
+    }
+
     /**
      * Evaluate a query against beliefs (and desires in the future)
      * * 📌返回值可空
@@ -353,7 +362,10 @@ public abstract class ProcessDirect {
      * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
-    private static Judgement evaluation(final Sentence query, final Iterable<Judgement> list) {
+    private static Judgement evaluation(
+            final Sentence query,
+            final Iterable<Judgement> list,
+            final EvaluateSolutionQuality solutionQuality) {
         if (list == null)
             throw new AssertionError("传入的表不可能为空");
         // TODO: 迁入「信念表」中
@@ -362,7 +374,7 @@ public abstract class ProcessDirect {
         float beliefQuality;
         Judgement candidate = null;
         for (final Judgement judgment : list) {
-            beliefQuality = BudgetFunctions.solutionQuality(query, judgment);
+            beliefQuality = solutionQuality.call(query, judgment);
             // * 🚩排行大于⇒更新
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;

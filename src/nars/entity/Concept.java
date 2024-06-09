@@ -4,15 +4,17 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
+import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.CompoundTerm;
 import nars.language.Term;
 import nars.main.NARS;
 import nars.main.Parameters;
 import nars.storage.ArrayBuffer;
+import nars.storage.ArrayRankTable;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
-import nars.storage.BeliefTable;
+import nars.storage.RankTable;
 import nars.storage.Memory;
 import nars.storage.NullBagObserver;
 
@@ -62,7 +64,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Sentences directly made about the term, with non-future tense
      */
-    private final BeliefTable beliefs;
+    private final RankTable<Judgement> beliefs;
     // ! 🚩【2024-06-08 17:37:04】现在不再持有反向引用
     /**
      * The display window
@@ -164,7 +166,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.token = new Token(term.getName());
         this.term = term;
         this.questions = new ArrayBuffer<Task>(Parameters.MAXIMUM_QUESTIONS_LENGTH);
-        this.beliefs = new BeliefTable();
+        this.beliefs = createBeliefTable();
         this.taskLinks = new Bag<TaskLink>(taskLinkForgettingRate, Parameters.TASK_LINK_BAG_SIZE);
         this.termLinks = new Bag<TermLink>(termLinkForgettingRate, Parameters.TERM_LINK_BAG_SIZE);
         if (term instanceof CompoundTerm) {
@@ -176,19 +178,28 @@ public final class Concept implements Item, ToStringBriefAndLong {
         }
     }
 
-    /**
-     * 🆕对外接口：刷新「实体观察者」
-     * * 🎯从「直接推理」而来
-     */
-    public void refreshObserver() {
-        this.entityObserver.refresh(this.displayContent());
+    /** 🆕信念表的「是否适合新增」 */
+    private static boolean beliefCompatibleToAdd(Judgement incoming, Judgement existed) {
+        // * 🚩若内容完全等价⇒不予理睬（添加失败）
+        return !Judgement.isBeliefEquivalent(incoming, existed);
+    }
+
+    /** 🆕创建信念表 */
+    private static final RankTable<Judgement> createBeliefTable() {
+        final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
+        // * 🚩使用「预算函数」中的「信念排行」方法
+        final ArrayRankTable.RankFunction<Judgement> rank = BudgetFunctions::rankBelief;
+        // * 🚩直接引用静态方法
+        final ArrayRankTable.CompatibleFunction<Judgement> isCompatibleToAdd = Concept::beliefCompatibleToAdd;
+        // * 🚩现在通过 函数指针/匿名函数 无需额外创建类
+        return new ArrayRankTable<Judgement>(capacity, rank, isCompatibleToAdd);
     }
 
     /**
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
      */
-    public BeliefTable getBeliefs() {
+    public RankTable<Judgement> getBeliefs() {
         return this.beliefs;
     }
 
