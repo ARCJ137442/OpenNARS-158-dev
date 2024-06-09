@@ -22,30 +22,145 @@ import nars.storage.Memory;
  * 🆕新的「推理上下文」对象
  * * 📄仿自OpenNARS 3.1.0
  */
-public abstract class DerivationContext {
+public interface DerivationContext {
 
-    /**
-     * 对「记忆区」的反向引用
-     * * 🚩【2024-05-18 17:00:12】目前需要访问其「输出」「概念」等功能
-     * * 📝可空性：非空
-     * * 📝可变性：可变 | 【2024-05-30 08:47:16】在「概念链接建立」的过程中需要
-     * * 📝所有权：引用 | 不可变引用/可变引用
-     */
-    private Memory memory;
+    /** 🆕内置公开结构体，用于公共读取 */
+    public static final class DerivationContextCore {
 
-    public Memory getMemory() {
-        return memory;
+        /**
+         * 缓存的「当前时间」
+         * * 🎯与「记忆区」解耦
+         *
+         * * ️📝可空性：非空
+         * * 📝可变性：只读 | 仅构造时赋值
+         * * 📝所有权：具所有权
+         */
+        final long time;
+
+        /**
+         * 缓存的「静默值」
+         * * 🚩【2024-05-30 09:02:10】现仅在构造时赋值，其余情况不变
+         * * ️📝可空性：非空
+         * * 📝可变性：只读
+         * * 📝所有权：具所有权
+         */
+        private final int silenceValue;
+
+        /* ---------- Short-term workspace for a single cycle ---------- */
+        /**
+         * List of new tasks accumulated in one cycle, to be processed in the next
+         * cycle
+         * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
+         * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 单次推理的结果存放至此
+         * * 📝所有权：具所有权
+         */
+        final LinkedList<Task> newTasks;
+
+        /**
+         * List of Strings or Tasks to be sent to the output channels
+         * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
+         * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 单次推理的结果存放至此
+         * * 📝所有权：具所有权
+         */
+        final ArrayList<String> exportStrings;
+
+        /**
+         * * 🆕用于在「被吸收」时加入「推理记录器」的字符串集合
+         *
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 单次推理的结果存放至此
+         * * 📝所有权：具所有权
+         */
+        final ArrayList<String> stringsToRecord;
+
+        /**
+         * The selected Concept
+         * * 🚩【2024-05-25 16:19:51】现在已经具备所有权
+         *
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 「链接到任务」等
+         * * 📝所有权：具所有权
+         */
+        final Concept currentConcept;
+
+        /**
+         * 用于「变量替换」中的「伪随机数生成器」
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 在「打乱集合」时被`shuffle`函数修改
+         * * 📝所有权：具所有权
+         */
+        public static Random randomNumber = new Random(1);
+
+        /**
+         * 构造函数
+         * * 🚩创建一个空的「推理上下文」，默认所有参数为空
+         *
+         * @param memory 所反向引用的「记忆区」对象
+         */
+        DerivationContextCore(final Reasoner reasoner, final Concept currentConcept) {
+            this(reasoner, currentConcept, new LinkedList<>(), new ArrayList<>());
+        }
+
+        /**
+         * 🆕带参初始化
+         * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
+         *
+         * @param memory
+         */
+        DerivationContextCore(
+                final Reasoner reasoner,
+                final Concept currentConcept,
+                final LinkedList<Task> newTasks,
+                final ArrayList<String> exportStrings) {
+            // this.memory = reasoner.getMemory();
+            this.currentConcept = currentConcept;
+            this.silenceValue = reasoner.getSilenceValue().get();
+            this.time = reasoner.getTime();
+            this.newTasks = newTasks;
+            this.exportStrings = exportStrings;
+            this.stringsToRecord = new ArrayList<>();
+        }
+
+        /** 🆕共用的静态方法 */
+        public void absorbedByReasoner(final Reasoner reasoner) {
+            final Memory memory = reasoner.getMemory();
+            // * 🚩将「当前概念」归还到「推理器」中
+            memory.putBackConcept(this.currentConcept);
+            // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
+            for (final Task newTask : this.newTasks) {
+                reasoner.mut_newTasks().add(newTask);
+            }
+            // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
+            for (final String output : this.exportStrings) {
+                reasoner.report(output);
+            }
+            // * 🚩将推理导出的「报告字串」添加到自身「报告字串」中（先进先出）
+            for (final String message : this.stringsToRecord) {
+                reasoner.getRecorder().append(message);
+            }
+            // * 🚩清理上下文防串（同时清理「导出的新任务」与「导出字串」）
+            this.newTasks.clear();
+            this.exportStrings.clear();
+            // * 🚩销毁自身：在此处销毁相应变量
+            drop(this.newTasks);
+            drop(this.exportStrings);
+        }
+
+        /** 🆕对上层暴露的方法 */
+        float getSilencePercent() {
+            return this.silenceValue / 100.0f;
+        }
+
     }
 
     /**
-     * 缓存的「当前时间」
-     * * 🎯与「记忆区」解耦
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：只读 | 仅构造时赋值
-     * * 📝所有权：具所有权
+     * 🆕获取记忆区（不可变引用）
      */
-    private final long time;
+    public Memory getMemory();
 
     /**
      * 🆕访问「当前时间」
@@ -53,9 +168,7 @@ public abstract class DerivationContext {
      * * ️📝可空性：非空
      * * 📝可变性：只读
      */
-    public long getTime() {
-        return time;
-    }
+    public long getTime();
 
     /**
      * 获取「静默值」
@@ -65,18 +178,7 @@ public abstract class DerivationContext {
      *
      * @return 静默值
      */
-    public float getSilencePercent() {
-        return silenceValue / 100.0f;
-    }
-
-    /**
-     * 缓存的「静默值」
-     * * 🚩【2024-05-30 09:02:10】现仅在构造时赋值，其余情况不变
-     * * ️📝可空性：非空
-     * * 📝可变性：只读
-     * * 📝所有权：具所有权
-     */
-    protected final int silenceValue;
+    public float getSilencePercent();
 
     /**
      * Actually means that there are no new Tasks
@@ -86,56 +188,17 @@ public abstract class DerivationContext {
      * * 📝可变性：只读
      * * 📝所有权：仅引用
      */
-    public boolean noResult() {
-        return newTasks.isEmpty();
+    public default boolean noResult() {
+        return getNewTasks().isEmpty();
     }
 
-    /**
-     * 用于「变量替换」中的「伪随机数生成器」
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 在「打乱集合」时被`shuffle`函数修改
-     * * 📝所有权：具所有权
-     */
-    public static Random randomNumber = new Random(1);
+    public LinkedList<Task> getNewTasks();
 
-    /* ---------- Short-term workspace for a single cycle ---------- */
-    /**
-     * List of new tasks accumulated in one cycle, to be processed in the next
-     * cycle
-     * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
-     * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 单次推理的结果存放至此
-     * * 📝所有权：具所有权
-     */
-    private final LinkedList<Task> newTasks;
+    public ArrayList<String> getExportStrings();
 
-    public LinkedList<Task> getNewTasks() {
-        return newTasks;
-    }
+    public ArrayList<String> getStringsToRecord();
 
-    /**
-     * List of Strings or Tasks to be sent to the output channels
-     * * 🚩【2024-05-18 17:29:40】在「记忆区」与「推理上下文」中各有一个，但语义不同
-     * * 📌「记忆区」的跨越周期，而「推理上下文」仅用于存储
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 单次推理的结果存放至此
-     * * 📝所有权：具所有权
-     */
-    private final ArrayList<String> exportStrings;
-
-    public ArrayList<String> getExportStrings() {
-        return exportStrings;
-    }
-
-    /**
-     * * 🆕用于在「被吸收」时加入「推理记录器」的字符串集合
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 单次推理的结果存放至此
-     * * 📝所有权：具所有权
-     */
-    protected final ArrayList<String> stringsToRecord;
+    public Concept getCurrentConcept();
 
     /**
      * * 📝在所有使用场景中，均为「当前概念要处理的词项」且只读
@@ -144,32 +207,9 @@ public abstract class DerivationContext {
      * * 📝可变性：只读 | 完全依赖「当前概念」而定，且「当前概念」永不变更词项
      * * 📝所有权：仅引用
      */
-    public Term getCurrentTerm() {
+    public default Term getCurrentTerm() {
         // ! 🚩需要假定`this.getCurrentConcept() != null`
         return this.getCurrentConcept().getTerm();
-    }
-
-    /**
-     * The selected Concept
-     * * 🚩【2024-05-25 16:19:51】现在已经具备所有权
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 「链接到任务」等
-     * * 📝所有权：具所有权
-     */
-    private Concept currentConcept;
-
-    public Concept getCurrentConcept() {
-        return currentConcept;
-    }
-
-    /**
-     * 🚩【2024-05-30 08:59:05】仅用于内部设定，外部不会也无法修改
-     *
-     * @param currentConcept
-     */
-    protected void setCurrentConcept(Concept currentConcept) {
-        this.currentConcept = currentConcept;
     }
 
     /**
@@ -180,38 +220,10 @@ public abstract class DerivationContext {
     public abstract Task getCurrentTask();
 
     /**
-     * 构造函数
-     * * 🚩创建一个空的「推理上下文」，默认所有参数为空
-     *
-     * @param memory 所反向引用的「记忆区」对象
-     */
-    public DerivationContext(final Reasoner reasoner) {
-        this(reasoner, new LinkedList<>(), new ArrayList<>());
-    }
-
-    /**
-     * 🆕带参初始化
-     * * 🚩包含所有`final`变量，避免「创建后赋值」如「复制时」
-     *
-     * @param memory
-     */
-    protected DerivationContext(
-            final Reasoner reasoner,
-            final LinkedList<Task> newTasks,
-            final ArrayList<String> exportStrings) {
-        this.memory = reasoner.getMemory();
-        this.silenceValue = reasoner.getSilenceValue().get();
-        this.time = reasoner.getTime();
-        this.newTasks = newTasks;
-        this.exportStrings = exportStrings;
-        this.stringsToRecord = new ArrayList<>();
-    }
-
-    /**
      * 重置全局状态
      */
     public static void init() {
-        randomNumber = new Random(1);
+        DerivationContextCore.randomNumber = new Random(1);
     }
 
     /**
@@ -224,22 +236,20 @@ public abstract class DerivationContext {
      * @param candidateBelief The belief to be used in future inference, for
      *                        forward/backward correspondence
      */
-    public void activatedTask(final Budget budget, final Judgement newTask, final Judgement candidateBelief) {
+    public default void activatedTask(final Budget budget, final Judgement newTask, final Judgement candidateBelief) {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
         final BudgetValue newBudget = BudgetValue.from(budget);
         final Task task = new TaskV1(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
-        stringsToRecord.add("!!! Activated: " + task.toString() + "\n");
+        this.getStringsToRecord().add("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (newTask.isQuestion()) {
             final float s = task.budgetSummary();
-            // float minSilent = memory.getReasoner().getMainWindow().silentW.value() /
-            // 100.0f;
             if (s > this.getSilencePercent()) { // only report significant derived Tasks
                 report(task, ReportType.OUT);
             }
         }
         // * 🚩将新创建的「导出任务」添加到「新任务」中
-        newTasks.add(task);
+        this.getNewTasks().add(task);
     }
 
     /* --------------- new task building --------------- */
@@ -249,17 +259,15 @@ public abstract class DerivationContext {
      *
      * @param task the derived task
      */
-    protected void derivedTask(Task task) {
+    default void derivedTask(Task task) {
         // * 🚩判断「导出的新任务」是否有价值
         if (!task.budgetAboveThreshold()) {
-            stringsToRecord.add("!!! Ignored: " + task + "\n");
+            this.getStringsToRecord().add("!!! Ignored: " + task + "\n");
             return;
         }
         // * 🚩报告
-        stringsToRecord.add("!!! Derived: " + task + "\n");
+        this.getStringsToRecord().add("!!! Derived: " + task + "\n");
         final float budget = task.budgetSummary();
-        // final float minSilent = memory.getReasoner()
-        // .getMainWindow().silentW.value() / 100.0f;
         if (budget > this.getSilencePercent()) { // only report significant derived Tasks
             report(task, ReportType.OUT);
         }
@@ -268,7 +276,7 @@ public abstract class DerivationContext {
     }
 
     /** 🆕仅源自「修正规则」调用，没有「父信念」 */
-    public void doublePremiseTaskRevision(
+    public default void doublePremiseTaskRevision(
             final Task currentTask,
             final Term newContent,
             final Truth newTruth,
@@ -289,9 +297,9 @@ public abstract class DerivationContext {
      * * 🚩记忆区在「吸收上下文」时产生记忆区的「报告」
      * * 📌原则：此处不应涉及有关「记忆区」的内容
      */
-    public void report(Sentence sentence, ReportType type) {
+    public default void report(Sentence sentence, ReportType type) {
         final String s = generateReportString(sentence, type);
-        exportStrings.add(s);
+        this.getExportStrings().add(s);
     }
 
     /**
@@ -311,29 +319,7 @@ public abstract class DerivationContext {
      * * 📌传入所有权而非引用
      * * 🚩【2024-05-21 23:17:57】现在迁移到「推理上下文」处，以便进行方法分派
      */
-    public void absorbedByReasoner(final Reasoner reasoner) {
-        final Memory memory = reasoner.getMemory();
-        // * 🚩将「当前概念」归还到「推理器」中
-        memory.putBackConcept(this.getCurrentConcept());
-        // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
-        for (final Task newTask : this.getNewTasks()) {
-            reasoner.mut_newTasks().add(newTask);
-        }
-        // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
-        for (final String output : this.getExportStrings()) {
-            reasoner.report(output);
-        }
-        // * 🚩将推理导出的「报告字串」添加到自身「报告字串」中（先进先出）
-        for (final String message : this.stringsToRecord) {
-            reasoner.getRecorder().append(message);
-        }
-        // * 🚩清理上下文防串（同时清理「导出的新任务」与「导出字串」）
-        this.getNewTasks().clear();
-        this.getExportStrings().clear();
-        // * 🚩销毁自身：在此处销毁相应变量
-        drop(this.getNewTasks());
-        drop(this.getExportStrings());
-    }
+    public void absorbedByReasoner(final Reasoner reasoner);
 
     // /**
     // * 默认就是被「自身所属推理器」吸收
@@ -344,7 +330,7 @@ public abstract class DerivationContext {
     // this.absorbedByReasoner(this.mutMemory());
     // }
 
-    protected void drop(Object any) {
+    static void drop(Object any) {
     }
 
     /**
@@ -353,7 +339,7 @@ public abstract class DerivationContext {
      * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
      * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
      */
-    public Concept termToConcept(Term term) {
+    public default Concept termToConcept(Term term) {
         if (term.equals(this.getCurrentTerm()))
             return this.getCurrentConcept();
         else

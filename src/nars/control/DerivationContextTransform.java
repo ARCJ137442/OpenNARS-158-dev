@@ -14,6 +14,11 @@ import nars.inference.RuleTables;
 import nars.inference.Truth;
 import nars.language.Term;
 import nars.main.Reasoner;
+import nars.storage.Memory;
+import static nars.control.DerivationContext.drop;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * 「转换推理上下文」
@@ -23,7 +28,26 @@ import nars.main.Reasoner;
  * * 📝以{@link RuleTables#transformTask}
  * * 🚩此处的`currentBelief`总是`null`，实际上不使用（以免产生更复杂的类型）
  */
-public class DerivationContextTransform extends DerivationContext {
+public class DerivationContextTransform implements DerivationContext {
+
+    /**
+     * 🆕内部存储的「上下文核心」
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
+     */
+    private final DerivationContextCore core;
+
+    /**
+     * 对「记忆区」的反向引用
+     * * 🚩【2024-05-18 17:00:12】目前需要访问其「输出」「概念」等功能
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：不变
+     * * 📝所有权：不可变引用
+     */
+    private final Memory memory;
 
     /**
      * 用于构建「直接推理上下文」对象
@@ -59,12 +83,11 @@ public class DerivationContextTransform extends DerivationContext {
             final Reasoner reasoner,
             final Concept currentConcept,
             final TaskLink currentTaskLink) {
-        // * 🚩从基类构造
-        super(reasoner);
-        // * 🚩赋值
-        this.setCurrentConcept(currentConcept);
-        // this.setCurrentTask(currentTask);
+        // * 🚩构造核心
+        this.core = new DerivationContextCore(reasoner, currentConcept);
         this.setCurrentTaskLink(currentTaskLink);
+        // * 🚩特有字段
+        this.memory = reasoner.getMemory();
         // * 🚩检验
         verify(this);
     }
@@ -286,12 +309,48 @@ public class DerivationContextTransform extends DerivationContext {
     }
 
     @Override
+    public Memory getMemory() {
+        return this.memory;
+    }
+
+    @Override
+    public long getTime() {
+        return this.core.time;
+    }
+
+    @Override
+    public float getSilencePercent() {
+        return this.core.getSilencePercent();
+    }
+
+    @Override
+    public LinkedList<Task> getNewTasks() {
+        return this.core.newTasks;
+    }
+
+    @Override
+    public ArrayList<String> getExportStrings() {
+        return this.core.exportStrings;
+    }
+
+    @Override
+    public ArrayList<String> getStringsToRecord() {
+        return this.core.stringsToRecord;
+    }
+
+    @Override
+    public Concept getCurrentConcept() {
+        return this.core.currentConcept;
+    }
+
+    @Override
     public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩销毁「当前信念」 | 变量值仅临时推理用
         this.currentBelief = null;
+        drop(currentBelief);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续
-        super.absorbedByReasoner(reasoner);
+        this.core.absorbedByReasoner(reasoner);
     }
 }

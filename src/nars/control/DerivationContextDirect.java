@@ -1,15 +1,47 @@
 package nars.control;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 import nars.entity.Concept;
 import nars.entity.Task;
 import nars.main.Reasoner;
 import nars.storage.Memory;
+import static nars.control.DerivationContext.drop;
 
 /**
  * 🆕新的「直接推理上下文」对象
  * * 📄从「推理上下文」中派生，用于「概念-任务」的「直接推理」
  */
-public class DerivationContextDirect extends DerivationContext {
+public class DerivationContextDirect implements DerivationContext {
+
+    /**
+     * 🆕内部存储的「上下文核心」
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
+     */
+    private final DerivationContextCore core;
+
+    /**
+     * 对「记忆区」的反向引用
+     * * 🚩【2024-05-18 17:00:12】目前需要访问其「输出」「概念」等功能
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 【2024-05-30 08:47:16】在「概念链接建立」的过程中需要
+     * * 📝所有权：可变引用
+     */
+    private final Memory memory;
+
+    /**
+     * The selected Task
+     *
+     * * ️📝可空性：可空
+     * * 📝可变性：可变 | 构造后不重新赋值，但内部可变
+     * * 📝所有权：具所有权 | 存储「传入的新任务」
+     * * ⚠️共享：需要传入并构造「任务链」或作为「父任务」，使用共享引用
+     */
+    private Task currentTask;
 
     /**
      * 用于构建「直接推理上下文」对象
@@ -40,10 +72,17 @@ public class DerivationContextDirect extends DerivationContext {
      * * 🎯确保内部字段的可空性：当前任务、当前概念 不可能为空
      */
     public DerivationContextDirect(final Reasoner reasoner, final Task currentTask, final Concept currentConcept) {
-        super(reasoner);
+        // * 🚩构造核心
+        this.core = new DerivationContextCore(reasoner, currentConcept);
+        // * 🚩独有字段
+        this.memory = reasoner.getMemory();
         this.currentTask = currentTask;
-        setCurrentConcept(currentConcept);
         verify(this);
+    }
+
+    @Override
+    public Memory getMemory() {
+        return memory;
     }
 
     /**
@@ -53,15 +92,17 @@ public class DerivationContextDirect extends DerivationContext {
         return this.getMemory();
     }
 
-    /**
-     * The selected Task
-     *
-     * * ️📝可空性：可空
-     * * 📝可变性：可变 | 构造后不重新赋值，但内部可变
-     * * 📝所有权：具所有权 | 存储「传入的新任务」
-     * * ⚠️共享：需要传入并构造「任务链」或作为「父任务」，使用共享引用
-     */
-    private Task currentTask;
+    public LinkedList<Task> getNewTasks() {
+        return this.core.newTasks;
+    }
+
+    public ArrayList<String> getExportStrings() {
+        return this.core.exportStrings;
+    }
+
+    public ArrayList<String> getStringsToRecord() {
+        return this.core.stringsToRecord;
+    }
 
     /**
      * * 📄「直接推理上下文」将其作为字段
@@ -79,7 +120,22 @@ public class DerivationContextDirect extends DerivationContext {
     public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩销毁「当前任务」
         drop(this.currentTask);
-        // * 🚩从基类方法继续
-        super.absorbedByReasoner(reasoner);
+        // * 🚩继续销毁核心
+        this.core.absorbedByReasoner(reasoner);
+    }
+
+    @Override
+    public long getTime() {
+        return this.core.time;
+    }
+
+    @Override
+    public float getSilencePercent() {
+        return this.core.getSilencePercent();
+    }
+
+    @Override
+    public Concept getCurrentConcept() {
+        return this.core.currentConcept;
     }
 }

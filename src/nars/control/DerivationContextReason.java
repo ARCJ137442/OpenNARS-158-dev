@@ -10,6 +10,7 @@ import nars.entity.TermLink;
 import nars.inference.RuleTables;
 import nars.language.Term;
 import nars.main.Reasoner;
+import static nars.control.DerivationContext.drop;
 
 /**
  * 🆕新的「概念推理上下文」对象

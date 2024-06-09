@@ -2,7 +2,7 @@ package nars.language;
 
 import java.util.*;
 
-import nars.control.DerivationContext;
+import nars.control.DerivationContext.DerivationContextCore;
 import nars.io.Symbols;
 
 /**
@@ -231,7 +231,7 @@ public class Variable extends Term {
             }
             final ArrayList<Term> list = cTerm1.cloneComponents();
             if (cTerm1.isCommutative()) {
-                Collections.shuffle(list, DerivationContext.randomNumber);
+                Collections.shuffle(list, DerivationContextCore.randomNumber);
             }
             for (int i = 0; i < cTerm1.size(); i++) { // assuming matching order
                 final Term t1 = list.get(i);
