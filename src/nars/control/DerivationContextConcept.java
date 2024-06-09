@@ -23,37 +23,11 @@ import nars.language.Term;
  */
 public interface DerivationContextConcept extends DerivationContext {
 
-    /**
-     * 用于构建「直接推理上下文」对象
-     */
-    public static void verify(DerivationContextTransform self) {
-        // * 🚩系列断言与赋值（实际使用中可删）
-        /*
-         * 📝有效字段：{
-         * currentTerm
-         * currentConcept
-         * currentTask
-         * currentTaskLink
-         * currentBelief?
-         * }
-         */
-        if (self.getCurrentConcept() == null)
-            throw new AssertionError("currentConcept: 不符预期的可空情况");
-        if (self.getCurrentTerm() == null)
-            throw new AssertionError("currentTerm: 不符预期的可空情况");
-        if (self.getCurrentTask() == null)
-            throw new AssertionError("currentTask: 不符预期的可空情况");
-        if (self.getCurrentTaskLink() == null)
-            throw new AssertionError("currentTaskLink: 不符预期的可空情况");
-        if (self.getCurrentBelief() == null && self.getCurrentBelief() != null) // * 📝可空
-            throw new AssertionError("currentBelief: 不符预期的可空情况");
-    }
-
     /* ---------- Short-term workspace for a single cycle ---------- */
 
     /**
      * 获取「当前信念」
-     * * 📌仅在「转换推理」「概念推理」中用到
+     * * 📌仅在「概念推理」中用到
      *
      * * 📝可空性：可空
      * * 📝可变性：不变
@@ -70,11 +44,10 @@ public interface DerivationContextConcept extends DerivationContext {
 
     /** 🆕产生新时间戳 from 单前提 */
     default Stamp generateNewStampSingle() {
-        if (this.getCurrentTask().isJudgment() || !this.hasCurrentBelief()) {
-            return new Stamp(this.getCurrentTask(), this.getTime());
-        } else { // to answer a question with negation in NAL-5 --- move to activated task?
-            return new Stamp(this.getCurrentBelief(), this.getTime());
-        }
+        return ((this.getCurrentTask().isJudgment() || !this.hasCurrentBelief())
+                ? new Stamp(this.getCurrentTask(), this.getTime())
+                // to answer a question with negation in NAL-5 --- move to activated task?
+                : new Stamp(this.getCurrentBelief(), this.getTime()));
     }
 
     /** 🆕产生新时间戳 from 双前提 */
@@ -140,7 +113,11 @@ public interface DerivationContextConcept extends DerivationContext {
         final char newPunctuation = currentTask.getPunctuation();
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
                 newStamp, true);
-        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), this.getCurrentBelief());
+        final Task newTask = new TaskV1(
+                newSentence,
+                newBudget,
+                this.getCurrentTask(),
+                this.getCurrentBelief());
         derivedTask(newTask);
     }
 
@@ -159,7 +136,6 @@ public interface DerivationContextConcept extends DerivationContext {
      * @param newStamp   The stamp in sentence
      * @param revisable  Whether the sentence is revisable
      */
-
     default void doublePremiseTask(
             final Term newContent,
             final Stamp newStamp,
@@ -175,7 +151,11 @@ public interface DerivationContextConcept extends DerivationContext {
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
                 newStamp,
                 revisable);
-        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), this.getCurrentBelief());
+        final Task newTask = new TaskV1(
+                newSentence,
+                newBudget,
+                this.getCurrentTask(),
+                this.getCurrentBelief());
         derivedTask(newTask);
     }
 

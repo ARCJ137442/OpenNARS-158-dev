@@ -1,8 +1,8 @@
 package nars.inference;
 
 import nars.control.DerivationContext;
+import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
-import nars.control.DerivationContextTransform;
 import nars.entity.*;
 import nars.language.*;
 
@@ -301,7 +301,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param truth The truth value of the conclusion
      * @return The budget value of the conclusion
      */
-    static Budget forward(Truth truth, DerivationContextTransform context) {
+    static Budget forward(Truth truth, DerivationContextConcept context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -312,7 +312,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static Budget backward(Truth truth, DerivationContextTransform context) {
+    public static Budget backward(Truth truth, DerivationContextConcept context) {
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -323,7 +323,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory Reference to the memory
      * @return The budget value of the conclusion
      */
-    public static Budget backwardWeak(Truth truth, DerivationContextTransform context) {
+    public static Budget backwardWeak(Truth truth, DerivationContextConcept context) {
         return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
@@ -336,7 +336,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static Budget compoundForward(Truth truth, Term content, DerivationContextTransform context) {
+    public static Budget compoundForward(Truth truth, Term content, DerivationContextConcept context) {
         return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
@@ -347,7 +347,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param memory  Reference to the memory
      * @return The budget of the conclusion
      */
-    public static Budget compoundBackward(Term content, DerivationContextTransform context) {
+    public static Budget compoundBackward(Term content, DerivationContextConcept context) {
         return budgetInference(1, content.getComplexity(), context);
     }
 
@@ -360,7 +360,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static Budget compoundBackwardWeak(
             final Term content,
-            final DerivationContextTransform context) {
+            final DerivationContextConcept context) {
         return budgetInference(w2c(1), content.getComplexity(), context);
     }
 
@@ -375,7 +375,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     private static Budget budgetInference(
             final float inferenceQuality,
             final int complexity,
-            final DerivationContextTransform context) {
+            final DerivationContextConcept context) {
         final Item tLink = context.getCurrentTaskLink();
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         if (tLink == null)

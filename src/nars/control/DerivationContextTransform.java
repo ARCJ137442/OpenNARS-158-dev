@@ -7,7 +7,6 @@ import nars.entity.TaskLink;
 import nars.inference.RuleTables;
 import nars.main.Reasoner;
 import nars.storage.Memory;
-import static nars.control.DerivationContext.drop;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -20,7 +19,9 @@ import java.util.LinkedList;
  * * 📝以{@link RuleTables#transformTask}
  * * 🚩此处的`currentBelief`总是`null`，实际上不使用（以免产生更复杂的类型）
  */
-public class DerivationContextTransform implements DerivationContextConcept {
+public final class DerivationContextTransform implements DerivationContextConcept {
+
+    // struct DerivationContextTransform
 
     /**
      * 🆕内部存储的「上下文核心」
@@ -49,23 +50,14 @@ public class DerivationContextTransform implements DerivationContextConcept {
      * * 📝可变性：可变 | 构造后不重新赋值，但内部可变（预算推理/反馈预算值）
      * * 📝所有权：具所有权，无需共享 | 存储「拿出的词项链」
      */
-    private TaskLink currentTaskLink;
+    private final TaskLink currentTaskLink;
+
+    // impl DerivationContextTransform
 
     /**
-     * The selected belief
-     *
-     * * ️📝可空性：可空
-     * * 📝可变性：可变 | 仅切换值，不修改内部 @ 切换信念/修正
-     * * 📝所有权：具所有权
-     *
-     * * 🚩【2024-05-30 09:25:15】内部不被修改，同时「语句」允许被随意复制（内容固定，占用小）
+     * 用于构建「转换推理上下文」对象
      */
-    protected Judgement currentBelief; // TODO: 字段分离（可变/不可变）
-
-    /**
-     * 用于构建「直接推理上下文」对象
-     */
-    public static final void verify(DerivationContextTransform self) {
+    public static void verify(DerivationContextTransform self) {
         // * 🚩系列断言与赋值（实际使用中可删）
         /*
          * 📝有效字段：{
@@ -73,7 +65,6 @@ public class DerivationContextTransform implements DerivationContextConcept {
          * currentConcept
          * currentTask
          * currentTaskLink
-         * currentBelief?
          * }
          */
         if (self.getCurrentConcept() == null)
@@ -84,8 +75,8 @@ public class DerivationContextTransform implements DerivationContextConcept {
             throw new AssertionError("currentTask: 不符预期的可空情况");
         if (self.getCurrentTaskLink() == null)
             throw new AssertionError("currentTaskLink: 不符预期的可空情况");
-        if (self.getCurrentBelief() == null && self.getCurrentBelief() != null) // * 📝可空
-            throw new AssertionError("currentBelief: 不符预期的可空情况");
+        // if (self.getCurrentBelief() != null) // * 📝可空
+        // throw new AssertionError("currentBelief: 不符预期的可空情况");
     }
 
     /**
@@ -105,15 +96,21 @@ public class DerivationContextTransform implements DerivationContextConcept {
         verify(this);
     }
 
-    /* ---------- Short-term workspace for a single cycle ---------- */
+    // impl DerivationContextConcept for DerivationContextTransform
 
-    public Judgement getCurrentBelief() {
-        return currentBelief;
-    }
-
+    @Override
     public TaskLink getCurrentTaskLink() {
         return currentTaskLink;
     }
+
+    @Override
+    public Judgement getCurrentBelief() {
+        // ! 📌「转换推理」的「当前信念」始终为空
+        // * 🚩【2024-06-09 11:03:54】妥协：诸多「导出结论」需要使用「当前信念」，但所幸「当前信念」允许为空（方便作为默认值）
+        return null;
+    }
+
+    // impl DerivationContext for DerivationContextTransform
 
     @Override
     public Memory getMemory() {
@@ -152,9 +149,6 @@ public class DerivationContextTransform implements DerivationContextConcept {
 
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
-        // * 🚩销毁「当前信念」 | 变量值仅临时推理用
-        this.currentBelief = null;
-        drop(currentBelief);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续

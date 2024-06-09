@@ -13,7 +13,7 @@ import static nars.control.DerivationContext.drop;
  * 🆕新的「直接推理上下文」对象
  * * 📄从「推理上下文」中派生，用于「概念-任务」的「直接推理」
  */
-public class DerivationContextDirect implements DerivationContext {
+public final class DerivationContextDirect implements DerivationContext {
 
     /**
      * 🆕内部存储的「上下文核心」
