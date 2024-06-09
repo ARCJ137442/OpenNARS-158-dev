@@ -29,6 +29,13 @@ public interface RankTable<E> extends Iterable<E> {
     /** 🆕内部弹出（末尾元素） */
     public E __pop();
 
+    /**
+     * 【核心】计算将插入位置
+     * * 🚩需要获取元素排行，并判断新增元素「是否兼容」
+     *
+     * @param element
+     * @return
+     */
     public default int rankIndexToAdd(E element) {
         // * 🚩按排行计算排行应处在的位置
         final float rankNew = this.rank(element); // for the new isBelief
@@ -52,6 +59,15 @@ public interface RankTable<E> extends Iterable<E> {
         return iToAdd;
     }
 
+    /**
+     * 检查新元素是否兼容
+     * * 🎯用于「筛除重复元素」如「重复语句」
+     * * 📜默认直接兼容
+     *
+     * @param newElement
+     * @param existedElement
+     * @return
+     */
     public default boolean isCompatibleToAdd(E newElement, E existedElement) {
         return true;
     }
@@ -93,5 +109,4 @@ public interface RankTable<E> extends Iterable<E> {
         // * 🚩最终添加成功，且没有排行被移除
         return null;
     }
-
 }

@@ -303,14 +303,29 @@ public abstract class StringParser extends Symbols {
         if (s.length() == 0) {
             throw new InvalidInputException("missing term");
         }
-        if (s.contains(" ")) // invalid characters in a name
-        {
+        if (s.contains(" ")) { // invalid characters in a name
             throw new InvalidInputException("invalid term");
         }
         if (Variable.containVar(s)) {
-            return new Variable(s);
+            return parseVariable(s);
         } else {
             return new Term(s);
+        }
+    }
+
+    /** 🆕解析变量词项 */
+    private static Variable parseVariable(String fullName) throws InvalidInputException {
+        final char type = fullName.charAt(0);
+        final String name = fullName.substring(1);
+        switch (type) {
+            case Symbols.VAR_INDEPENDENT:
+                return Variable.newVarI(name);
+            case Symbols.VAR_DEPENDENT:
+                return Variable.newVarD(name);
+            case Symbols.VAR_QUERY:
+                return Variable.newVarQ(name);
+            default:
+                throw new InvalidInputException("invalid variable");
         }
     }
 

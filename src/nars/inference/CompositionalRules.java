@@ -40,7 +40,7 @@ public final class CompositionalRules {
             }
             if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
                     && !(((Statement) component).getPredicate() instanceof Variable)) {
-                final Variable V = new Variable("#depIndVar1");
+                final Variable V = Variable.newVarD("depIndVar1"); // * ✅不怕重名：其它变量一定会被命名为数字
                 final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
                 final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
                 T2 = (CompoundTerm) setComponent(T2, 1, V);
@@ -51,7 +51,7 @@ public final class CompositionalRules {
                 T = (CompoundTerm) setComponent(T, index, res);
             } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
                     && !(((Statement) component).getSubject() instanceof Variable)) {
-                final Variable V = new Variable("#depIndVar2");
+                final Variable V = Variable.newVarD("depIndVar2"); // * ✅不怕重名：其它变量一定会被命名为数字
                 final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
                 final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
                 T2 = (CompoundTerm) setComponent(T2, 0, V);
@@ -382,8 +382,8 @@ public final class CompositionalRules {
         // TODO: 过程笔记注释
         final Truth truthT = context.getCurrentTask().asJudgement();
         final Truth truthB = context.getCurrentBelief();
-        final Variable varInd = new Variable("$varInd1");
-        final Variable varInd2 = new Variable("$varInd2");
+        final Variable varInd = Variable.newVarI("varInd1");
+        final Variable varInd2 = Variable.newVarI("varInd2");
         final Term term11, term12, term21, term22;
         Term commonTerm;
         final HashMap<Term, Term> subs = new HashMap<>();
@@ -449,7 +449,7 @@ public final class CompositionalRules {
         budget = BudgetFunctions.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
-        final Variable varDep = new Variable("#varDep");
+        final Variable varDep = Variable.newVarD("varDep");
         final Statement newState1, newState2;
         if (index == 0) {
             newState1 = makeInheritance(varDep, taskContent.getPredicate());
@@ -500,16 +500,16 @@ public final class CompositionalRules {
         }
         final Judgement belief = context.getCurrentBelief();
         final HashMap<Term, Term> substitute = new HashMap<>();
-        substitute.put(commonTerm1, new Variable("#varDep2"));
+        substitute.put(commonTerm1, Variable.newVarD("varDep2"));
         CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
         content.applySubstitute(substitute);
         Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
         Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
-        substitute.put(commonTerm1, new Variable("$varInd1"));
+        substitute.put(commonTerm1, Variable.newVarI("varInd1"));
         if (commonTerm2 != null) {
-            substitute.put(commonTerm2, new Variable("$varInd2"));
+            substitute.put(commonTerm2, Variable.newVarI("varInd2"));
         }
         content = makeImplication(premise1, oldCompound);
         if (content == null) {

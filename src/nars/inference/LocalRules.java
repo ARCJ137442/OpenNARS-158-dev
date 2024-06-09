@@ -53,7 +53,7 @@ public class LocalRules {
                 // * 📄Task :: SentenceV1@49 "<{?1} --> murder>? {105 : 6} "
                 // * & Belief: SentenceV1@39 "<{tom} --> murder>. %1.0000;0.7290% {147 : 3;4;2}"
                 // * ⇒ Unified SentenceV1@23 "<{tom} --> murder>? {105 : 6} "
-                final boolean hasUnified = Variable.hasSubstitute(
+                final boolean hasUnified = Variable.hasUnification(
                         Symbols.VAR_QUERY,
                         currentTask.getContent().clone(),
                         belief.getContent().clone());

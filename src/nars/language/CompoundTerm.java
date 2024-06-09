@@ -404,11 +404,13 @@ public abstract class CompoundTerm extends Term {
      */
     @Override
     public void renameVariables() {
-        // TODO: 过程笔记注释
-        if (containVar()) {
-            renameVariables(new HashMap<Variable, Variable>());
-        }
+        // * 🚩有变量⇒重命名变量
+        if (this.containVar())
+        renameCompoundVariables(this, new HashMap<Variable, Variable>());
+        // * 🚩设置「为常量」
+        // ? ❓【2024-06-09 13:26:43】为何要如此？
         setConstant(true);
+        // * 🚩重新生成名称
         setName(makeName());
     }
 
@@ -417,29 +419,50 @@ public abstract class CompoundTerm extends Term {
      *
      * @param map The substitution established so far
      */
-    private void renameVariables(HashMap<Variable, Variable> map) {
-        // TODO: 过程笔记注释
-        if (containVar()) {
-            for (int i = 0; i < components.size(); i++) {
-                Term term = componentAt(i);
-                if (term instanceof Variable) {
-                    Variable var;
-                    if (term.getName().length() == 1) { // anonymous variable from input
-                        var = new Variable(term.getName().charAt(0) + "" + (map.size() + 1));
-                    } else {
-                        var = (Variable) map.get((Variable) term);
-                        if (var == null) {
-                            var = new Variable(term.getName().charAt(0) + "" + (map.size() + 1));
-                        }
-                    }
-                    if (!term.equals(var)) {
-                        components.set(i, var);
-                    }
-                    map.put((Variable) term, var);
-                } else if (term instanceof CompoundTerm) {
-                    ((CompoundTerm) term).renameVariables(map);
-                    ((CompoundTerm) term).setName(((CompoundTerm) term).makeName());
+    private static void renameCompoundVariables(
+            CompoundTerm self,
+            HashMap<Variable, Variable> map) {
+        // * 🚩没有变量⇒返回
+        // ? 💭【2024-06-09 13:33:08】似乎对实际逻辑无用
+        if (!self.containVar())
+            return;
+        // * 🚩只有「包含变量」才要继续重命名
+        for (int i = 0; i < self.components.size(); i++) {
+            // * 🚩取变量词项
+            final Term inner = self.componentAt(i);
+            // * 🚩是「变量」词项⇒重命名
+            if (inner instanceof Variable) {
+                final Variable innerV = (Variable) inner;
+                // * 🚩构造新编号与名称 | 采用顺序编号
+                // * 📄类型相同，名称改变
+                final int newVarNum = map.size() + 1;
+                final String newName = innerV.getType() + "" + newVarNum;
+                final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
+                // * 🚩决定将产生的「新变量」
+                final Variable newV =
+                        // * 🚩用户输入的匿名变量 || 映射表中没有变量 ⇒ 新建变量
+                        isAnonymousVariableFromInput || !map.containsKey(innerV)
+                                // anonymous variable from input
+                                ? new Variable(newName)
+                                // * 🚩否则（非匿名 && 映射表中有） ⇒ 使用已有变量
+                                : map.get(innerV);
+                // * 🚩真正逻辑：替换变量词项
+                // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
+                if (!inner.equals(newV)) {
+                    self.components.set(i, newV);
                 }
+                // * 🚩将该变量记录在映射表中
+                // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
+                map.put(innerV, newV);
+            }
+            // * 🚩复合词项⇒继续递归深入
+            // * 📌逻辑统一：无论是「序列」「集合」还是「陈述」都是这一套逻辑
+            else if (inner instanceof CompoundTerm) {
+                final CompoundTerm innerC = (CompoundTerm) inner;
+                // * 🚩重命名内层复合词项
+                renameCompoundVariables(innerC, map);
+                // * 🚩重命名变量后生成名称
+                innerC.setName(innerC.makeName());
             }
         }
     }
@@ -449,25 +472,58 @@ public abstract class CompoundTerm extends Term {
      *
      * @param subs
      */
-    public void applySubstitute(HashMap<Term, Term> subs) {
-        // TODO: 过程笔记注释
-        Term t1, t2;
-        for (int i = 0; i < size(); i++) {
-            t1 = componentAt(i);
-            if (subs.containsKey(t1)) {
-                t2 = subs.get(t1);
-                while (subs.containsKey(t2)) {
-                    t2 = subs.get(t2);
-                }
-                components.set(i, t2.clone());
-            } else if (t1 instanceof CompoundTerm) {
-                ((CompoundTerm) t1).applySubstitute(subs);
+    public void applySubstitute(final HashMap<Term, Term> subs) {
+        applySubstitute(this, subs);
+    }
+
+    /** 📌静态方法形式 */
+    public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
+        // * 🚩遍历替换内部所有元素
+        for (int i = 0; i < self.size(); i++) {
+            final Term inner = self.componentAt(i);
+            // * 🚩若有「替换方案」⇒替换
+            if (subs.containsKey(inner)) {
+                // * ⚠️此处的「被替换词项」可能不是「变量词项」
+                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
+                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
+                final Term substituteT = chainGet(subs, inner);
+                // * 🚩复制并替换元素
+                final Term substitute = substituteT.clone();
+                self.components.set(i, substitute);
+            }
+            // * 🚩复合词项⇒递归深入
+            else if (inner instanceof CompoundTerm) {
+                applySubstitute((CompoundTerm) inner, subs);
             }
         }
-        if (this.isCommutative()) { // re-order
-            TreeSet<Term> s = new TreeSet<>(components);
-            components = new ArrayList<>(s);
+        // * 🚩可交换⇒替换之后重排顺序
+        if (self.isCommutative()) // re-order
+            self.reorderComponents();
+        // * 🚩重新生成名称
+        self.name = self.makeName();
+    }
+
+    /**
+     * 层级获取「变量替换」最终点
+     * * 🚩一路查找到头
+     * * 📄{A -> B, B -> C} + A => C
+     */
+    private static <T> T chainGet(final HashMap<T, T> map, final T startPoint) {
+        // * ⚠️此时应该传入非空值
+        // * 🚩从「起始点」开始查找
+        T endPoint = map.get(startPoint);
+        // * 🚩非空⇒一直溯源
+        while (map.containsKey(endPoint)) {
+            endPoint = map.get(endPoint);
+            if (endPoint == startPoint)
+                throw new Error("不应有「循环替换」的情况");
         }
-        name = makeName();
+        return endPoint;
+    }
+
+    /** 🆕对于「可交换词项」重排其中的元素 */
+    private void reorderComponents() {
+        final TreeSet<Term> s = new TreeSet<>(this.components);
+        this.components = new ArrayList<>(s);
     }
 }

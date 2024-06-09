@@ -332,13 +332,14 @@ public abstract class ProcessDirect {
      * @return 已有的问题，或为空
      */
     private static Task findExistedQuestion(final Concept self, final Term taskContent) {
-        // TODO: 过程笔记注释
         final Iterable<Task> questions = self.getQuestions();
         if (questions == null)
-            return null;
+            throw new AssertionError("传入的表不可能为空");
+        // * 🚩遍历所有已知问题：任意一个问题「词项相等」就返回
         for (final Task existedQuestion : questions) {
             final Term questionTerm = existedQuestion.getContent();
             if (questionTerm.equals(taskContent))
+                // * 🚩词项相等⇒返回
                 return existedQuestion;
         }
         return null;
@@ -346,20 +347,23 @@ public abstract class ProcessDirect {
 
     /**
      * Evaluate a query against beliefs (and desires in the future)
+     * * 📌返回值可空
      *
      * @param query The question to be processed
      * @param list  The list of beliefs to be used
      * @return The best candidate belief selected
      */
     private static Judgement evaluation(final Sentence query, final Iterable<Judgement> list) {
-        // TODO: 过程笔记注释
         if (list == null)
-            return null;
+            throw new AssertionError("传入的表不可能为空");
+        // TODO: 迁入「信念表」中
+        // * 🚩筛选出其中排行最前的回答
         float currentBest = 0;
         float beliefQuality;
         Judgement candidate = null;
         for (final Judgement judgment : list) {
             beliefQuality = BudgetFunctions.solutionQuality(query, judgment);
+            // * 🚩排行大于⇒更新
             if (beliefQuality > currentBest) {
                 currentBest = beliefQuality;
                 candidate = judgment;

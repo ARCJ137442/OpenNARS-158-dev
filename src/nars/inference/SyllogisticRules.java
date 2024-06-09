@@ -242,7 +242,7 @@ final class SyllogisticRules {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
-        final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final boolean conditionalTask = Variable.hasUnification(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
         if (side == 0) {
@@ -264,7 +264,9 @@ final class SyllogisticRules {
         if (index2 >= 0) {
             index = (short) index2;
         } else {
-            boolean match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index), commonComponent,
+            boolean match = Variable.unify(
+                    Symbols.VAR_INDEPENDENT,
+                    oldCondition.componentAt(index), commonComponent,
                     premise1, premise2);
             if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
                 match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index),
@@ -326,7 +328,7 @@ final class SyllogisticRules {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean conditionalTask = Variable.hasSubstitute(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final boolean conditionalTask = Variable.hasUnification(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
         if (side == 0) {
