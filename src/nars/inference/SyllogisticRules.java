@@ -6,6 +6,7 @@ import nars.io.Symbols;
 import static nars.control.MakeTerm.*;
 
 import nars.control.DerivationContextReason;
+import nars.control.VariableInference;
 
 /**
  * Syllogisms: Inference rules based on the transitivity of the relation.
@@ -242,7 +243,9 @@ final class SyllogisticRules {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
-        final boolean conditionalTask = Variable.hasUnification(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final boolean conditionalTask = VariableInference.hasUnification(
+                Symbols.VAR_INDEPENDENT,
+                premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
         if (side == 0) {
@@ -264,15 +267,18 @@ final class SyllogisticRules {
         if (index2 >= 0) {
             index = (short) index2;
         } else {
-            boolean match = Variable.unify(
+            // * 🚩尝试数次匹配
+            boolean hasMatch = VariableInference.unify(
                     Symbols.VAR_INDEPENDENT,
                     oldCondition.componentAt(index), commonComponent,
                     premise1, premise2);
-            if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
-                match = Variable.unify(Symbols.VAR_INDEPENDENT, oldCondition.componentAt(index),
-                        ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
+            if (!hasMatch && (commonComponent.getClass() == oldCondition.getClass())) {
+                hasMatch = VariableInference.unify(
+                        Symbols.VAR_INDEPENDENT,
+                        oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
+                        premise1, premise2);
             }
-            if (!match) {
+            if (!hasMatch) {
                 return;
             }
         }
@@ -328,7 +334,9 @@ final class SyllogisticRules {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean conditionalTask = Variable.hasUnification(Symbols.VAR_INDEPENDENT, premise2, belief.getContent());
+        final boolean conditionalTask = VariableInference.hasUnification(
+                Symbols.VAR_INDEPENDENT,
+                premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
         if (side == 0) {
@@ -345,11 +353,15 @@ final class SyllogisticRules {
         if (!(tm instanceof Conjunction))
             return;
         final Conjunction oldCondition = (Conjunction) tm;
-        boolean match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index), commonComponent,
+        boolean match = VariableInference.unify(
+                Symbols.VAR_DEPENDENT,
+                oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
         if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
-            match = Variable.unify(Symbols.VAR_DEPENDENT, oldCondition.componentAt(index),
-                    ((CompoundTerm) commonComponent).componentAt(index), premise1, premise2);
+            match = VariableInference.unify(
+                    Symbols.VAR_DEPENDENT,
+                    oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
+                    premise1, premise2);
         }
         if (!match) {
             return;

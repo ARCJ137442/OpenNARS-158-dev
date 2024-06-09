@@ -10,6 +10,7 @@ import nars.control.DerivationContext;
 import nars.control.DerivationContextDirect;
 import nars.control.DerivationContextReason;
 import nars.control.ReportType;
+import nars.control.VariableInference;
 
 /**
  * Directly process a task by a oldBelief, with only two Terms in both. In
@@ -53,7 +54,7 @@ public class LocalRules {
                 // * 📄Task :: SentenceV1@49 "<{?1} --> murder>? {105 : 6} "
                 // * & Belief: SentenceV1@39 "<{tom} --> murder>. %1.0000;0.7290% {147 : 3;4;2}"
                 // * ⇒ Unified SentenceV1@23 "<{tom} --> murder>? {105 : 6} "
-                final boolean hasUnified = Variable.hasUnification(
+                final boolean hasUnified = VariableInference.hasUnification(
                         Symbols.VAR_QUERY,
                         currentTask.getContent().clone(),
                         belief.getContent().clone());
