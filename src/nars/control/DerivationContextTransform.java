@@ -4,6 +4,7 @@ import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Task;
 import nars.entity.TaskLink;
+import nars.entity.TermLink;
 import nars.inference.RuleTables;
 import nars.main.Reasoner;
 import nars.storage.Memory;
@@ -100,13 +101,20 @@ public final class DerivationContextTransform implements DerivationContextConcep
 
     @Override
     public TaskLink getCurrentTaskLink() {
-        return currentTaskLink;
+        return this.currentTaskLink;
     }
 
     @Override
     public Judgement getCurrentBelief() {
         // ! 📌「转换推理」的「当前信念」始终为空
-        // * 🚩【2024-06-09 11:03:54】妥协：诸多「导出结论」需要使用「当前信念」，但所幸「当前信念」允许为空（方便作为默认值）
+        // * 🚩【2024-06-09 11:03:54】妥协：诸多「导出结论」需要使用「当前信念」，但所幸「当前信念」始终允许为空（方便作为默认值）
+        return null;
+    }
+
+    @Override
+    public TermLink getBeliefLinkForBudgetInference() {
+        // ! 📌「转换推理」的「当前信念链」始终为空
+        // * 🚩【2024-06-09 11:03:54】妥协：诸多「预算推理」需要使用「当前信念链」，但「当前信念」在「概念推理」中不允许为空
         return null;
     }
 

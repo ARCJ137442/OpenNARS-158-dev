@@ -7,6 +7,7 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TaskV1;
+import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.inference.Budget;
 import nars.inference.RuleTables;
@@ -28,12 +29,25 @@ public interface DerivationContextConcept extends DerivationContext {
     /**
      * 获取「当前信念」
      * * 📌仅在「概念推理」中用到
+     * * 🚩对于用不到的实现者，只需实现为空
      *
      * * 📝可空性：可空
      * * 📝可变性：不变
      * * 📝所有权：不可变引用
      */
     public Judgement getCurrentBelief();
+
+    /**
+     * 获取用于「预算推理」的「当前信念链」
+     * * 📌仅在「概念推理」中非空
+     * * 🚩对于用不到的实现者，只需实现为空
+     * * 🎯【2024-06-09 11:25:14】规避对`instanceof DerivationContextReason`的滥用
+     *
+     * * 📝可空性：可空
+     * * 📝可变性：可变 | 内部可变（更新预算值）
+     * * 📝所有权：可变引用
+     */
+    public TermLink getBeliefLinkForBudgetInference();
 
     /** 🆕实用方法：用于简化「推理规则分派」的代码 */
     public default boolean hasCurrentBelief() {

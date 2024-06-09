@@ -212,12 +212,17 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
     @Override
     public Judgement getCurrentBelief() {
-        return currentBelief;
+        return this.currentBelief;
     }
 
     @Override
+    public TermLink getBeliefLinkForBudgetInference() {
+        return this.currentBeliefLink;
+     }
+
+    @Override
     public TaskLink getCurrentTaskLink() {
-        return currentTaskLink;
+        return this.currentTaskLink;
     }
 
     // impl DerivationContext for DerivationContextReason

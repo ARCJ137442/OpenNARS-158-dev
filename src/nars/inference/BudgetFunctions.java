@@ -12,6 +12,8 @@ import nars.language.*;
  */
 public final class BudgetFunctions extends UtilityFunctions {
 
+    // TODO: 后续或许能使用「预算函数枚举」实现「传递『要用哪个函数』的信息，控制端独立计算预算值」的「推理器与控制区分离」
+
     /* ----------------------- Belief evaluation ----------------------- */
     /**
      * Determine the quality of a judgment by its truth value alone
@@ -380,19 +382,20 @@ public final class BudgetFunctions extends UtilityFunctions {
         // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         if (tLink == null)
             throw new AssertionError("t shouldn't be `null`!");
+        // * 🚩基于「任务链」计算默认的预算值
         float priority = tLink.getPriority();
         float durability = tLink.getDurability() / complexity;
         final float quality = inferenceQuality / complexity;
-        if (context instanceof DerivationContextReason) {
-            final TermLink bLink = ((DerivationContextReason) context).getCurrentBeliefLink();
-            if (bLink != null) {
-                priority = or(priority, bLink.getPriority());
-                durability = and(durability, bLink.getDurability());
-                final float targetActivation = getConceptActivation(bLink.getTarget(), context);
-                bLink.incPriority(or(quality, targetActivation));
-                bLink.incDurability(quality);
-            }
+        // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
+        final TermLink bLink = context.getBeliefLinkForBudgetInference();
+        if (bLink != null) {
+            priority = or(priority, bLink.getPriority());
+            durability = and(durability, bLink.getDurability());
+            final float targetActivation = getConceptActivation(bLink.getTarget(), context);
+            bLink.incPriority(or(quality, targetActivation));
+            bLink.incDurability(quality);
         }
+        // * 🚩返回最终的预算值
         return new BudgetValue(priority, durability, quality);
     }
 
