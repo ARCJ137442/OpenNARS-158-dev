@@ -249,23 +249,30 @@ public abstract class MatchingRules {
      * @param context Reference to the derivation context
      */
     private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContextReason context) {
-        // * 🚩先生成内容
-        Statement content = (Statement) context.getCurrentTask().getContent();
+        // * 🚩提取内容
+        final Statement taskContent = (Statement) context.getCurrentTask().getContent();
         final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();
-        final Term subjT = content.getSubject();
-        final Term predT = content.getPredicate();
+        final Term subjT = taskContent.getSubject();
+        final Term predT = taskContent.getPredicate();
         final Term subjB = beliefContent.getSubject();
         final Term predB = beliefContent.getPredicate();
-        Term otherTerm;
-        if (Variable.containVarQ(subjT)) {
-            otherTerm = (predT.equals(subjB)) ? predB : subjB;
-            content = makeStatement(content, otherTerm, predT);
-        }
+        // * 🚩创建内容 | ✅【2024-06-10 10:26:14】已通过「长期稳定性」验证与原先逻辑的稳定
+        final Term newSubject, newPredicate;
         if (Variable.containVarQ(predT)) {
-            otherTerm = (subjT.equals(subjB)) ? predB : subjB;
-            content = makeStatement(content, subjT, otherTerm);
+            // * 🚩谓词有查询变量⇒用「信念主词/信念谓词」替换
+            newSubject = subjT;
+            newPredicate = subjT.equals(subjB) ? predB : subjB;
+        } else if (Variable.containVarQ(subjT)) {
+            // * 🚩主词有查询变量⇒用「信念主词/信念谓词」替换
+            newSubject = predT.equals(subjB) ? predB : subjB;
+            newPredicate = predT;
+        } else {
+            // * 🚩否则：直接用「任务主词&任务谓词」替换
+            newSubject = subjT;
+            newPredicate = predT;
         }
+        final Term newContent = makeStatement(taskContent, newSubject, newPredicate);
         // * 🚩导出任务
-        context.singlePremiseTask(content, Symbols.JUDGMENT_MARK, newTruth, newBudget);
+        context.singlePremiseTask(newContent, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
 }
