@@ -469,59 +469,103 @@ public class RuleTables {
      * @param figure  The location of the shared term
      * @param context Reference to the derivation context
      */
-    private static void asymmetricSymmetric(Sentence asym, Sentence sym, SyllogismFigure figure,
+    private static void asymmetricSymmetric(
+            Sentence asym, Sentence sym,
+            SyllogismFigure figure,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Statement asymSt = (Statement) asym.cloneContent();
-        final Statement symSt = (Statement) sym.cloneContent();
-        final Term t1, t2;
+        // * 🚩非对称🆚对称
+        final Statement asymS = (Statement) asym.cloneContent();
+        final Statement symS = (Statement) sym.cloneContent();
+        final Term term1, term2;
+        final boolean unifiedI, unifiedQ;
         switch (figure) {
+            // * 🚩主项×主项 <A --> B> × <A <-> C>
             case SS:
-                if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getSubject(), asymSt, symSt)) {
-                    t1 = asymSt.getPredicate();
-                    t2 = symSt.getPredicate();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        SyllogisticRules.matchAsymSym(asym, sym, context);
-                    } else {
-                        SyllogisticRules.analogy(t2, t1, asym, sym, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unifiedI = VariableInference.unify(
+                        VAR_INDEPENDENT,
+                        asymS.getSubject(), symS.getSubject(),
+                        asymS, symS);
+                // * 🚩不能统一变量⇒终止
+                if (!unifiedI)
+                    return;
+                // * 🚩取其中两个不同的谓项 B + C
+                term1 = asymS.getPredicate();
+                term2 = symS.getPredicate();
+                // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
+                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                if (unifiedQ)
+                    // * 🚩能统一 ⇒ 继续分派
+                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                else
+                    // * 🚩未有统一 ⇒ 类比
+                    SyllogisticRules.analogy(term2, term1, asym, sym, context);
                 return;
+            // * 🚩主项×谓项 <A --> B> × <C <-> A>
             case SP:
-                if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getPredicate(), asymSt,
-                        symSt)) {
-                    t1 = asymSt.getPredicate();
-                    t2 = symSt.getSubject();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        SyllogisticRules.matchAsymSym(asym, sym, context);
-                    } else {
-                        SyllogisticRules.analogy(t2, t1, asym, sym, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unifiedI = VariableInference.unify(
+                        VAR_INDEPENDENT,
+                        asymS.getSubject(), symS.getPredicate(),
+                        asymS, symS);
+                // * 🚩不能统一变量⇒终止
+                if (!unifiedI)
+                    return;
+                // * 🚩取其中两个不同的主项 B + C
+                term1 = asymS.getPredicate();
+                term2 = symS.getSubject();
+                // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
+                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                if (unifiedQ)
+                    // * 🚩能统一 ⇒ 继续分派
+                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                else
+                    // * 🚩未有统一 ⇒ 类比
+                    SyllogisticRules.analogy(term2, term1, asym, sym, context);
                 return;
+            // * 🚩谓项×主项 <A --> B> × <B <-> C>
             case PS:
-                if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getSubject(), asymSt,
-                        symSt)) {
-                    t1 = asymSt.getSubject();
-                    t2 = symSt.getPredicate();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        SyllogisticRules.matchAsymSym(asym, sym, context);
-                    } else {
-                        SyllogisticRules.analogy(t1, t2, asym, sym, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unifiedI = VariableInference.unify(
+                        VAR_INDEPENDENT,
+                        asymS.getPredicate(), symS.getSubject(),
+                        asymS, symS);
+                // * 🚩不能统一变量⇒终止
+                if (!unifiedI)
+                    return;
+                // * 🚩取其中两个不同的主项 A + C
+                term1 = asymS.getSubject();
+                term2 = symS.getPredicate();
+                // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
+                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                if (unifiedQ)
+                    // * 🚩能统一 ⇒ 继续分派
+                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                else
+                    // * 🚩未有统一 ⇒ 类比
+                    SyllogisticRules.analogy(term1, term2, asym, sym, context);
                 return;
+            // * 🚩谓项×谓项 <A --> B> × <C <-> B>
             case PP:
-                if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getPredicate(), asymSt,
-                        symSt)) {
-                    t1 = asymSt.getSubject();
-                    t2 = symSt.getSubject();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        SyllogisticRules.matchAsymSym(asym, sym, context);
-                    } else {
-                        SyllogisticRules.analogy(t1, t2, asym, sym, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unifiedI = VariableInference.unify(
+                        VAR_INDEPENDENT,
+                        asymS.getPredicate(), symS.getPredicate(),
+                        asymS, symS);
+                // * 🚩不能统一变量⇒终止
+                if (!unifiedI)
+                    return;
+                // * 🚩取其中两个不同的主项 A + C
+                term1 = asymS.getSubject();
+                term2 = symS.getSubject();
+                // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
+                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                if (unifiedQ)
+                    // * 🚩能统一 ⇒ 继续分派
+                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                else
+                    // * 🚩未有统一 ⇒ 类比
+                    SyllogisticRules.analogy(term1, term2, asym, sym, context);
                 return;
         }
     }
@@ -534,35 +578,46 @@ public class RuleTables {
      * @param figure       The location of the shared term
      * @param context      Reference to the derivation context
      */
-    private static void symmetricSymmetric(Judgement belief, Sentence taskSentence, SyllogismFigure figure,
+    private static void symmetricSymmetric(
+            Judgement belief, Sentence taskSentence,
+            SyllogismFigure figure,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Statement s1 = (Statement) belief.cloneContent();
-        final Statement s2 = (Statement) taskSentence.cloneContent();
+        // * 🚩对称🆚对称
+        final Statement bTerm = (Statement) belief.cloneContent();
+        final Statement tTerm = (Statement) taskSentence.cloneContent();
+        final Term bS = bTerm.getSubject();
+        final Term tS = tTerm.getSubject();
+        final Term bP = bTerm.getPredicate();
+        final Term tP = tTerm.getPredicate();
+        final boolean unified;
         switch (figure) {
             case SS:
-                if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence,
-                            context);
-                }
+                // * 🚩尝试以不同方式统一查询变量 @ 公共词项
+                unified = VariableInference.unify(VAR_INDEPENDENT, bS, tS, bTerm, tTerm);
+                // * 🚩成功统一 ⇒ 相似传递
+                if (unified)
+                    SyllogisticRules.resemblance(bP, tP, belief, taskSentence, context);
                 return;
             case SP:
-                if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence,
-                            context);
-                }
+                // * 🚩尝试以不同方式统一查询变量 @ 公共词项
+                unified = VariableInference.unify(VAR_INDEPENDENT, bS, tP, bTerm, tTerm);
+                // * 🚩成功统一 ⇒ 相似传递
+                if (unified)
+                    SyllogisticRules.resemblance(bP, tS, belief, taskSentence, context);
                 return;
             case PS:
-                if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence,
-                            context);
-                }
+                // * 🚩尝试以不同方式统一查询变量 @ 公共词项
+                unified = VariableInference.unify(VAR_INDEPENDENT, bP, tS, bTerm, tTerm);
+                // * 🚩成功统一 ⇒ 相似传递
+                if (unified)
+                    SyllogisticRules.resemblance(bS, tP, belief, taskSentence, context);
                 return;
             case PP:
-                if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence,
-                            context);
-                }
+                // * 🚩尝试以不同方式统一查询变量 @ 公共词项
+                unified = VariableInference.unify(VAR_INDEPENDENT, bP, tP, bTerm, tTerm);
+                // * 🚩成功统一 ⇒ 相似传递
+                if (unified)
+                    SyllogisticRules.resemblance(bS, tS, belief, taskSentence, context);
                 return;
         }
     }
