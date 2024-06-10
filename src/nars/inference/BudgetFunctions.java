@@ -117,33 +117,13 @@ public final class BudgetFunctions extends UtilityFunctions {
         if (questionTask == null || !questionTask.isQuestion())
             // * 🚩实际上不会有「feedbackToLinks=true」的情况（当前任务非空）
             throw new AssertionError("问题任务必须为「问题」 | solutionEval is Never called in continued processing");
-        // feedbackToLinks = true;
-        // else
-        // feedbackToLinks = false;
-        // * 🚩【2024-06-06 10:32:15】断言judgmentTask为false
-        // final boolean judgmentTask = questionTask.isJudgment();
+        // TODO: 过程笔记注释
         final float solutionQuality = solutionQuality(problem, solution);
-        /*
-         * if (judgmentTask) {
-         * budget = null;
-         * questionTask.incPriority(quality);
-         * } else
-         */ {
-            final float taskPriority = questionTask.getPriority();
-            final float newP = or(taskPriority, solutionQuality);
-            final float newD = questionTask.getDurability();
-            final float newQ = truthToQuality(solution);
-            return new BudgetValue(newP, newD, newQ);
-        }
-        // if (feedbackToLinks && context instanceof DerivationContextReason) {
-        // final DerivationContextReason contextReason = (DerivationContextReason)
-        // context;
-        // final TaskLink tLink = contextReason.getCurrentTaskLink();
-        // tLink.setPriority(Math.min(not(quality), tLink.getPriority()));
-        // final TermLink bLink = contextReason.getCurrentBeliefLink();
-        // bLink.incPriority(quality);
-        // }
-        // return budget;
+        final float taskPriority = questionTask.getPriority();
+        final float newP = or(taskPriority, solutionQuality);
+        final float newD = questionTask.getDurability();
+        final float newQ = truthToQuality(solution);
+        return new BudgetValue(newP, newD, newQ);
     }
 
     /**
@@ -160,6 +140,7 @@ public final class BudgetFunctions extends UtilityFunctions {
             final Truth truth,
             // boolean feedbackToLinks = false,
             final DerivationContext context) {
+        // TODO: 过程笔记注释
         // * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
         final float difT = truth.getExpDifAbs(tTruth);
         // TODO: 🎯将「预算反馈」延迟处理（❓可以返回「推理结果」等，然后用专门的「预算更新」再处理预算）
@@ -189,6 +170,7 @@ public final class BudgetFunctions extends UtilityFunctions {
             final Truth truth,
             // final boolean feedbackToLinks = true,
             final DerivationContextReason context) {
+        // TODO: 过程笔记注释
         final float difT = truth.getExpDifAbs(tTruth); // * 🚩【2024-05-21 10:43:44】此处暂且需要重算一次
         final Budget revised = revise(tTruth, bTruth, truth, (DerivationContext) context);
         { // * 🚩独有逻辑：反馈到任务链、信念链
@@ -212,6 +194,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return Budget value of the updating task
      */
     static Budget update(Task task, Truth bTruth) {
+        // TODO: 过程笔记注释
         final float dif = task.asJudgement().getExpDifAbs(bTruth);
         final float priority = or(dif, task.getPriority());
         final float durability = aveAri(dif, task.getDurability());
@@ -230,6 +213,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return Budget value for each link
      */
     public static Budget distributeAmongLinks(final Budget original, final int nLinks) {
+        // TODO: 过程笔记注释
         final float priority = (float) (original.getPriority() / Math.sqrt(nLinks));
         return new BudgetValue(priority, original.getDurability(), original.getQuality());
     }
@@ -247,6 +231,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param budget  The budget for the new item
      */
     public static void activate(final Concept concept, final Budget budget) {
+        // TODO: 过程笔记注释
         final float cP = concept.getPriority();
         final float cD = concept.getDurability();
         final float bP = budget.getPriority();
@@ -275,6 +260,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param relativeThreshold The relative threshold of the bag
      */
     public static void forget(Budget budgetToBeForget, int forgetRate, float relativeThreshold) {
+        // TODO: 过程笔记注释
         double quality = budgetToBeForget.getQuality() * relativeThreshold; // re-scaled quality
         final double p = budgetToBeForget.getPriority() - quality; // priority above quality
         if (p > 0) {
@@ -291,6 +277,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param adjustValue The budget doing the adjusting
      */
     public static void merge(Budget baseValue, Budget adjustValue) {
+        // TODO: 过程笔记注释
         baseValue.setPriority(Math.max(baseValue.getPriority(), adjustValue.getPriority()));
         baseValue.setDurability(Math.max(baseValue.getDurability(), adjustValue.getDurability()));
         baseValue.setQuality(Math.max(baseValue.getQuality(), adjustValue.getQuality()));
@@ -304,6 +291,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget value of the conclusion
      */
     static Budget forward(Truth truth, DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -315,6 +303,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget value of the conclusion
      */
     public static Budget backward(Truth truth, DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(truthToQuality(truth), 1, context);
     }
 
@@ -326,6 +315,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget value of the conclusion
      */
     public static Budget backwardWeak(Truth truth, DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(w2c(1) * truthToQuality(truth), 1, context);
     }
 
@@ -339,6 +329,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget of the conclusion
      */
     public static Budget compoundForward(Truth truth, Term content, DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(truthToQuality(truth), content.getComplexity(), context);
     }
 
@@ -350,6 +341,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return The budget of the conclusion
      */
     public static Budget compoundBackward(Term content, DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(1, content.getComplexity(), context);
     }
 
@@ -363,6 +355,7 @@ public final class BudgetFunctions extends UtilityFunctions {
     public static Budget compoundBackwardWeak(
             final Term content,
             final DerivationContextConcept context) {
+        // TODO: 过程笔记注释
         return budgetInference(w2c(1), content.getComplexity(), context);
     }
 
@@ -389,6 +382,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
         final TermLink bLink = context.getBeliefLinkForBudgetInference();
         if (bLink != null) {
+            // TODO: 过程笔记注释
             priority = or(priority, bLink.getPriority());
             durability = and(durability, bLink.getDurability());
             final float targetActivation = getConceptActivation(bLink.getTarget(), context);
@@ -407,6 +401,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return the priority value of the concept
      */
     private static float getConceptActivation(Term t, DerivationContext context) {
+        // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
         final Concept c = context.termToConcept(t);
         return (c == null) ? 0f : c.getPriority();
     }

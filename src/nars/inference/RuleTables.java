@@ -626,49 +626,73 @@ public class RuleTables {
     /**
      * The detachment rule, with variable unification
      *
-     * @param originalMainSentence The premise that is an Implication or
-     *                             Equivalence
-     * @param subSentence          The premise that is the subject or predicate of
-     *                             the
-     *                             first one
-     * @param index                The location of the second premise in the first
-     * @param context.getMemory()  Reference to the context.getMemory()
+     * @param highOrderSentence The premise that is an Implication or Equivalence
+     * @param subSentence       The premise that is the subject or predicate of the
+     *                          first one
+     * @param index             The location of the second premise in the first one
+     * @param context           Reference to the context
      */
-    private static void detachmentWithVar(Sentence originalMainSentence, Sentence subSentence, int index,
+    private static void detachmentWithVar(
+            Sentence highOrderSentence,
+            Sentence subSentence, int index,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Sentence mainSentence = originalMainSentence.sentenceClone(); // for substitution
-        final Statement statement = (Statement) mainSentence.getContent();
-        final Term component = statement.componentAt(index);
-        final CompoundTerm content = (CompoundTerm) subSentence.getContent();
         if (!context.hasCurrentBelief())
-            return;
+            return; // ? 【2024-06-10 17:37:10】目前不确定是否有「当前信念」
+        // * 🚩提取元素
+        final Sentence mainSentence = highOrderSentence.sentenceClone(); // for substitution
+        final Statement mainStatement = (Statement) mainSentence.getContent();
+        final Term component = mainStatement.componentAt(index); // * 🚩前件
+        final CompoundTerm content = (CompoundTerm) subSentence.getContent(); // * 🚩子句本身
+        // * 🚩非继承或否定⇒提前结束
         if (!(component instanceof Inheritance || component instanceof Negation))
             return;
+        // * 🚩常量词项（没有变量）⇒直接分离
         if (component.isConstant()) {
             SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             return;
-        } else if (VariableInference.unify(VAR_INDEPENDENT, component, content, statement, content)) {
+        }
+        // * 🚩若非常量（有变量） ⇒ 尝试统一独立变量
+        final boolean unifiedI = VariableInference.unify(VAR_INDEPENDENT, component, content, mainStatement, content);
+        if (unifiedI) {
+            // * 🚩统一成功⇒分离
             SyllogisticRules.detachment(mainSentence, subSentence, index, context);
             return;
-        } else if ((statement instanceof Implication) && (statement.getPredicate() instanceof Statement)
-                && (context.getCurrentTask().isJudgment())) {
-            final Statement s2 = (Statement) statement.getPredicate();
-            if (s2.getSubject().equals(((Statement) content).getSubject())) {
-                CompositionalRules.introVarInner((Statement) content, s2, statement, context);
+        }
+        // ! ⚠️【2024-06-10 17:52:44】「当前任务」与「主陈述」可能不一致：主陈述可能源自「当前信念」
+        // * * 当前任务="<(*,{tom},(&,glasses,[black])) --> own>."
+        // * * 主陈述="<<$1 --> (/,livingIn,_,{graz})> ==> <(*,$1,sunglasses) --> own>>"
+        // * * 当前信念="<<$1 --> (/,livingIn,_,{graz})> ==> <(*,$1,sunglasses) --> own>>."
+        // * 🚩当前任务是「判断句」且是「陈述」（任务、信念皆判断）⇒尝试引入变量
+        final boolean isCurrentTaskJudgement = context.getCurrentTask().isJudgment();
+        final boolean isStatementMainPredicate = mainStatement.getPredicate() instanceof Statement;
+        if (isCurrentTaskJudgement && isStatementMainPredicate) {
+            // ? 💫【2024-06-10 17:50:36】此处逻辑尚未能完全理解
+            if (mainStatement instanceof Implication) {
+                final Statement s2 = (Statement) mainStatement.getPredicate();
+                final Term contentSubject = ((Statement) content).getSubject();
+                if (s2.getSubject().equals(contentSubject)) {
+                    // * 📄【2024-06-10 17:46:02】一例：
+                    // * TaskV1@838 "<<toothbrush --> $1> ==> <cup --> $1>>.
+                    // * // from task: $0.80;0.80;0.95$ <toothbrush --> [bendable]>. %1.00;0.90%
+                    // * // from belief: <cup --> [bendable]>. %1.00;0.90% {460 : 37} "
+                    // * content="<cup --> toothbrush>"
+                    // * s2="<cup --> $1>"
+                    // * mainStatement="<<toothbrush --> $1> ==> <cup --> $1>>"
+                    CompositionalRules.introVarInner((Statement) content, s2, mainStatement, context);
+                }
+                CompositionalRules.IntroVarSameSubjectOrPredicate(
+                        highOrderSentence.asJudgement(), subSentence.asJudgement(),
+                        component, content,
+                        index, context);
+                return;
             }
-            CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence.asJudgement(),
-                    subSentence.asJudgement(), component, content,
-                    index, context);
-            return;
-        } else if ((statement instanceof Equivalence) && (statement.getPredicate() instanceof Statement)
-                && (context.getCurrentTask().isJudgment())) {
-            CompositionalRules.IntroVarSameSubjectOrPredicate(originalMainSentence.asJudgement(),
-                    subSentence.asJudgement(), component, content,
-                    index, context);
-            return;
-        } else {
-            return;
+            if (mainStatement instanceof Equivalence) {
+                CompositionalRules.IntroVarSameSubjectOrPredicate(
+                        highOrderSentence.asJudgement(), subSentence.asJudgement(),
+                        component, content,
+                        index, context);
+                return;
+            }
         }
     }
 
@@ -682,30 +706,63 @@ public class RuleTables {
      * @param side        The location of the shared term in the statement
      * @param context     Reference to the derivation context
      */
-    private static void conditionalDedIndWithVar(Implication conditional, short index, Statement statement, short side,
-            DerivationContextReason context) {
-        // TODO: 过程笔记注释
+    private static void conditionalDedIndWithVar(
+            final Implication conditional,
+            final short index,
+            final Statement statement,
+            final short side,
+            final DerivationContextReason context) {
+        // * 🚩提取条件
         final CompoundTerm condition = (CompoundTerm) conditional.getSubject();
         final Term component = condition.componentAt(index);
+        // * 🚩决定要尝试消去的第二个元素，以及发生条件演绎、归纳的位置
         final Term component2;
+        final short newSide;
+        // * 📄一例：
+        // * conditional="<(&&,<$1 --> [aggressive]>,<sunglasses --> (/,own,$1,_)>) ==>
+        // <$1 --> murder>>"
+        // * condition="(&&,<$1 --> [aggressive]>,<sunglasses --> (/,own,$1,_)>)"
+        // * component="<$1 --> [aggressive]>"
+        // * index = 0
+        // * statement="<sunglasses --> glasses>"
+        // * side = 0
         if (statement instanceof Inheritance) {
+            // * 🚩继承⇒直接作为条件之一
             component2 = statement;
-            side = -1;
+            newSide = -1;
         } else if (statement instanceof Implication) {
+            // * 🚩蕴含⇒取其中一处元素（主项/谓项）
+            // * 📄【2024-06-10 18:10:39】一例：
+            // * statement="<<sunglasses --> (/,own,$1,_)> ==> <$1 --> [aggressive]>>"
+            // * component2="<sunglasses --> (/,own,$1,_)>"
+            // * component="<sunglasses --> (/,own,$1,_)>"
+            // * side=0
+            // * newSide=0
             component2 = statement.componentAt(side);
+            newSide = side;
         } else {
-            component2 = null;
-        }
-        if (component2 == null)
+            // * 📄【2024-06-10 18:13:13】一例：
+            // * currentConcept="sunglasses"
+            // * condition="(&&,<sunglasses --> (/,own,$1,_)>,(||,<$1 --> [aggressive]>,
+            // <$1 --> (/,livingIn,_,{graz})>))"
+            // * statement="<sunglasses <-> (&,glasses,[black])>"
             return;
-        boolean unifiable = VariableInference.unify(VAR_INDEPENDENT, component, component2, conditional, statement);
-        if (!unifiable) {
+        }
+        // * 🚩先尝试替换独立变量
+        boolean unified = VariableInference.unify(
+                VAR_INDEPENDENT,
+                component, component2,
+                conditional, statement);
+        // * 🚩若替换失败，则尝试替换非独变量
+        if (!unified)
             // * 🚩惰性求值：第一次替换成功，就无需再次替换
-            unifiable = VariableInference.unify(VAR_DEPENDENT, component, component2, conditional, statement);
-        }
-        if (unifiable) {
-            SyllogisticRules.conditionalDedInd(conditional, index, statement, side, context);
-        }
+            unified = VariableInference.unify(
+                    VAR_DEPENDENT,
+                    component, component2,
+                    conditional, statement);
+        // * 🚩成功替换⇒条件 演绎/归纳
+        if (unified)
+            SyllogisticRules.conditionalDedInd(conditional, index, statement, newSide, context);
     }
 
     /* ----- structural inferences ----- */
