@@ -189,23 +189,34 @@ public class Memory {
      * called in Concept.insertTaskLink only
      * * 🚩实际上也被「直接推理」调用
      *
-     * @param c the concept to be adjusted
-     * @param b the new BudgetValue
+     * @param concept      the concept to be adjusted
+     * @param incomeBudget the new BudgetValue
      */
-    public void activateConcept(final Concept c, final Budget b) {
+    public void activateConcept(final Concept concept, final Budget incomeBudget) {
         // * 🚩存在性检查
-        final boolean hasC = concepts.contains(c);
+        final boolean hasConcept = this.concepts.contains(concept);
         // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置
-        if (hasC) {
-            concepts.pickOut(c.getKey());
-            BudgetFunctions.activate(c, b);
-            concepts.putBack(c);
+        if (hasConcept) {
+            this.concepts.pickOut(concept.getKey());
+            activateConceptBudget(concept, incomeBudget);
+            this.concepts.putBack(concept);
         }
         // * 🚩若没有⇒放回→拿出
         else {
-            BudgetFunctions.activate(c, b);
-            concepts.forget(c); // * 📝此方法将改变「概念」的预算值，需要保证顺序一致
+            activateConceptBudget(concept, incomeBudget);
+            this.concepts.forget(concept); // * 📝此方法将改变「概念」的预算值，需要保证顺序一致
         }
+    }
+
+    /**
+     * 🆕单独更新预算值
+     *
+     * @param c [&m]
+     * @param b [&]
+     */
+    public static void activateConceptBudget(final Concept c, final Budget b) {
+        final Budget newBudget = BudgetFunctions.activate(c, b);
+        c.copyBudgetFrom(newBudget);
     }
 
     /**

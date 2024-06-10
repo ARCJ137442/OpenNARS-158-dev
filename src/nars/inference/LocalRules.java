@@ -16,11 +16,9 @@ import nars.control.ReportType;
  * satisfy: between a Sentence and a Question/Goal;
  * merge: between items of the same type and stamp;
  * conversion: between different inheritance relations.
- * * 🚩【2024-06-10 10:04:13】此注释已过时；在
+ * * 🚩【2024-06-10 10:04:13】此注释已过时；现在仅用于「直接推理」
  */
 public class LocalRules {
-
-    // * 直接推理/概念推理 共用 * //
 
     /* -------------------- same contents -------------------- */
 
@@ -39,7 +37,7 @@ public class LocalRules {
     public static void revisionDirect(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
         // * 🚩计算真值/预算值
         final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
-        final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context);
+        final Budget budget = BudgetFunctions.revise(newBelief, oldBelief, truth, context.getCurrentTask());
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提
         // * 📝仅在此处用到「当前信念」作为「导出信念」

@@ -186,7 +186,7 @@ public abstract class ProcessReason {
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
         // while (self.noResult() && (termLinkCount > 0)) {
         while (termLinkCount > 0) {
-            final TermLink termLink = concept.__takeOutTermLink(currentTaskLink, self.getTime());
+            final TermLink termLink = concept.takeOutTermLinkFromTaskLink(currentTaskLink, self.getTime());
             if (termLink == null)
                 break;
             self.getRecorder().append(" * Selected TermLink: " + termLink + "\n");

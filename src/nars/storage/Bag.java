@@ -268,7 +268,8 @@ public final class Bag<E extends Item> {
     }
 
     public final void forget(E oldItem) {
-        BudgetFunctions.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
+        final float newPriority = BudgetFunctions.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
+        oldItem.setPriority(newPriority);
     }
 
     /**

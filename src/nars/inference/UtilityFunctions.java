@@ -94,6 +94,9 @@ class UtilityFunctions {
         return w / (w + Parameters.HORIZON);
     }
 
+    /** 🆕缓存的普通常量 */
+    static final float W2C1 = w2c(1);
+
     /**
      * A function to convert confidence to weight
      *

@@ -23,6 +23,25 @@ import nars.storage.Memory;
  * To make sure the space will be released, the only allowed reference to a
  * concept are those in a ConceptBag. All other access go through the Term that
  * names the concept.
+ *
+ * * 📝参数可变性标注语法：
+ * * * [] ⇒ 传递所有权（深传递，整体只读）
+ * * * [m] ⇒ 传递所有权，且可变（深传递，读写）
+ * * * [&] ⇒ 传递不可变引用（浅传递，只读）
+ * * * [&m] ⇒ 传递可变引用（浅传递，独占可写）
+ * * * [R] ⇒ 传递不可变共享引用（共享只读）
+ * * * [Rm] ⇒ 传递可变共享引用（共享读写）
+ * * 📌对于隐式的`this`参数，可以像参数那样声明，也可如下语法：
+ * * * this ⇒ 传递所有权（深传递，整体只读）
+ * * * m-this ⇒ 传递所有权，且可变（深传递，读写）
+ * * * &this ⇒ 传递不可变引用（浅传递，只读）
+ * * * &m-this ⇒ 传递可变引用（浅传递，独占可写）
+ * * * R-this ⇒ 传递不可变共享引用（共享只读）
+ * * * Rm-this ⇒ 传递可变共享引用（共享读写）
+ * * 📌对于可空类型，统一前缀「?」
+ * * * 📄?this ⇒ 传递所有权（深传递，整体只读）
+ * * ⚠️此类标识最低程度上只表示「最低可接受范围」而非「实际用途」
+ * * * ⚠️不保证实际代码运行就是如此
  */
 public final class Concept implements Item, ToStringBriefAndLong {
 
@@ -184,8 +203,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Constructor, called in Memory.getConcept only
      *
-     * @param term   A term corresponding to the concept
-     * @param memory A reference to the memory
+     * @param term   [R] A term corresponding to the concept
+     * @param memory [&] A reference to the memory
+     * @return []
      */
     public Concept(Term term, Memory memory) {
         this(term,
@@ -197,11 +217,12 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * 🆕完全参数构造函数
      * * 🚩包括两个「超参数」的引入
      *
-     * @param term
-     * @param taskLinkForgettingRate
-     * @param termLinkForgettingRate
+     * @param term                   [R]
+     * @param taskLinkForgettingRate [R]
+     * @param termLinkForgettingRate [R]
+     * @return []
      */
-    public Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
+    private Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
         this.token = new Token(term.getName());
         this.term = term;
         this.questions = new ArrayBuffer<Task>(Parameters.MAXIMUM_QUESTIONS_LENGTH);
@@ -213,13 +234,23 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(term);
     }
 
-    /** 🆕信念表的「是否适合新增」 */
+    /**
+     * 🆕信念表的「是否适合新增」
+     *
+     * @param incoming [&]
+     * @param existed  [&]
+     * @return []
+     */
     private static boolean beliefCompatibleToAdd(Judgement incoming, Judgement existed) {
         // * 🚩若内容完全等价⇒不予理睬（添加失败）
         return !Judgement.isBeliefEquivalent(incoming, existed);
     }
 
-    /** 🆕创建信念表 */
+    /**
+     * 🆕创建信念表
+     *
+     * @return []
+     */
     private static final RankTable<Judgement> createBeliefTable() {
         final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
         // * 🚩使用「预算函数」中的「信念排行」方法
@@ -233,14 +264,32 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
+     *
+     * @param &this
+     * @return [&]
      */
     public RankTable<Judgement> getBeliefs() {
         return this.beliefs;
     }
 
     /**
+     * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
+     * and remove redundant or low rank one
+     * * 🚩添加到固定容量的缓冲区，并返回溢出的那个（溢出==所添加 ⇒ 添加失败）
+     *
+     * @param &m-this
+     * @param belief  [] The table to be revised
+     */
+    public void addBelief(Judgement belief) {
+        this.beliefs.add(belief);
+    }
+
+    /**
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
+     *
+     * @param &this
+     * @return [&]
      */
     public Iterable<Task> getQuestions() {
         return this.questions;
@@ -249,6 +298,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕对外接口：添加问题到「问题集」
      * * 🚩除了「添加」以外，还会实行「任务缓冲区」机制
+     *
+     * @param &m-this
+     * @param task    []
      */
     public void addQuestion(final Task task) {
         // * 🚩不会添加重复的问题
@@ -261,7 +313,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * Return the templates for TermLinks, only called in
      * Memory.continuedProcess
      *
-     * @return The template get
+     * @param &this
+     * @return [&] The template get
      */
     public ArrayList<TermLinkTemplate> getLinkTemplatesToSelf() {
         return this.linkTemplatesToSelf;
@@ -269,6 +322,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕API方法 @ 链接建立
+     *
+     * @param &m-this
+     * @param termLink []
      */
     public void putInTermLink(TermLink termLink) {
         this.termLinks.putIn(termLink);
@@ -276,6 +332,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
 
     /**
      * 🆕API方法 @ 链接建立
+     *
+     * @param &m-this
+     * @param taskLink []
      */
     public void putInTaskLink(TaskLink taskLink) {
         this.taskLinks.putIn(taskLink);
@@ -285,7 +344,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * Return the associated term, called from Memory only
      *
-     * @return The associated term
+     * @param &this
+     * @return [&] The associated term
      */
     public Term getTerm() {
         return term;
@@ -295,7 +355,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * Recalculate the quality of the concept [to be refined to show
      * extension/intension balance]
      *
-     * @return The quality value
+     * @param &this
+     * @return [] The quality value
      */
     public float termLinksAveragePriority() {
         return this.termLinks.averagePriority();
@@ -311,8 +372,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * * 📄在「组合规则」的「回答带变量合取」时用到
      * * 🚩改：去除其中「设置当前时间戳」的副作用，将其迁移到调用者处
      *
-     * @param taskSentence The selected task
-     * @return The selected isBelief
+     * @param &this
+     * @param taskSentence [&] The selected sentence of task
+     * @return [?] The selected belief
      */
     public Judgement getBelief(Sentence taskSentence) {
         // * 🚩此处按「信念排名」从大到小遍历；第一个满足「证据基不重复」的信念将被抽取
@@ -333,17 +395,12 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕从「任务链袋」获取一个任务链
      * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @return [?]
      */
     public TaskLink __takeOutTaskLink() {
         return this.taskLinks.takeOut();
-    }
-
-    /**
-     * 🆕从「词项链袋」获取一个词项链
-     * * 🚩仅用于「概念推理」
-     */
-    public TermLink __takeOutTermLink(TaskLink currentTaskLink, long time) {
-        return this.takeOutTermLinkFromTaskLink(currentTaskLink, time);
     }
 
     /**
@@ -352,11 +409,12 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * * 🎯在「概念推理」的「准备待推理词项链」的过程中用到
      * * 🔗ProcessReason.chooseTermLinksToReason
      *
-     * @param taskLink The selected TaskLink
-     * @param time     The current time
-     * @return The selected TermLink
+     * @param &m-this
+     * @param taskLink [&] The selected TaskLink
+     * @param time     [] The current time
+     * @return [?] The selected TermLink
      */
-    private TermLink takeOutTermLinkFromTaskLink(TaskLink taskLink, long time) {
+    public TermLink takeOutTermLinkFromTaskLink(TaskLink taskLink, long time) {
         for (int i = 0; i < Parameters.MAX_MATCHED_TERM_LINK; i++) {
             // * 🚩尝试拿出词项链 | 📝此间存在资源竞争
             final TermLink termLink = this.termLinks.takeOut();
@@ -374,6 +432,10 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕将一个任务链放回「任务链袋」
      * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @param link    []
+     * @return []
      */
     public boolean __putTaskLinkBack(TaskLink link) {
         return this.taskLinks.putBack(link);
@@ -382,6 +444,10 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕将一个词项链放回「词项链袋」
      * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @param link    []
+     * @return []
      */
     public boolean __putTermLinkBack(TermLink link) {
         return this.termLinks.putBack(link);

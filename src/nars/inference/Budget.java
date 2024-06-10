@@ -130,6 +130,19 @@ public interface Budget {
     }
 
     /**
+     * 🆕从其它预算值处拷贝值
+     * * 🚩拷贝优先级、耐久度与质量
+     *
+     * @param &m-this
+     * @param that    [&]
+     */
+    public default void copyBudgetFrom(final Budget that) {
+        this.setPriority(that.getPriority());
+        this.setDurability(that.getDurability());
+        this.setQuality(that.getQuality());
+    }
+
+    /**
      * Merge one BudgetValue into another
      *
      * @param that The other Budget

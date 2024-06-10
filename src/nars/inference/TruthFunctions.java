@@ -6,6 +6,14 @@ import nars.entity.*;
  * All truth-value (and desire-value) functions used in inference rules
  * * 📝所有函数均【返回新真值对象】且【不修改所传入参数】
  * * 📌【2024-06-07 13:15:14】所有函数均从public变为「internal」当前包私有
+ *
+ * * 📝参数可变性标注语法：
+ * * * [] ⇒ 传递所有权（深传递，整体只读）
+ * * * [m] ⇒ 传递所有权，且可变（深传递，读写）
+ * * * [&] ⇒ 传递不可变引用（浅传递，只读）
+ * * * [&m] ⇒ 传递可变引用（浅传递，独占可写）
+ * * * [R] ⇒ 传递不可变共享引用（共享只读）
+ * * * [Rm] ⇒ 传递可变共享引用（共享读写）
  */
 final class TruthFunctions extends UtilityFunctions {
 
@@ -39,7 +47,7 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<A ==> B>} |- <B ==> A>
      *
-     * @param v1 Truth value of the premise
+     * @param v1 [&] Truth value of the premise
      * @return Truth value of the conclusion
      */
     static Truth conversion(Truth v1) {
@@ -57,7 +65,7 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {A} |- (--A)
      *
-     * @param v1 Truth value of the premise
+     * @param v1 [&] Truth value of the premise
      * @return Truth value of the conclusion
      */
     static Truth negation(Truth v1) {
@@ -70,7 +78,7 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<A ==> B>} |- <(--, B) ==> (--, A)>
      *
-     * @param v1 Truth value of the premise
+     * @param v1 [&] Truth value of the premise
      * @return Truth value of the conclusion
      */
     static Truth contraposition(Truth v1) {
@@ -86,8 +94,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<S ==> P>, <S ==> P>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth revision(Truth v1, Truth v2) {
@@ -130,8 +138,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<S ==> M>, <M ==> P>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth deduction(Truth v1, Truth v2) {
@@ -148,8 +156,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {M, <M ==> P>} |- P
      *
-     * @param v1       Truth value of the first premise
-     * @param reliance Confidence of the second (analytical) premise
+     * @param v1       [&] Truth value of the first premise
+     * @param reliance [] Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
     static Truth analyticDeduction(Truth v1, float reliance) {
@@ -164,8 +172,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<S ==> M>, <M <=> P>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth analogy(Truth v1, Truth v2) {
@@ -182,8 +190,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<S <=> M>, <M <=> P>} |- <S <=> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth resemblance(Truth v1, Truth v2) {
@@ -200,8 +208,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<S ==> M>, <P ==> M>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth abduction(Truth v1, Truth v2) {
@@ -223,8 +231,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {M, <P ==> M>} |- P
      *
-     * @param v1       Truth value of the first premise
-     * @param reliance Confidence of the second (analytical) premise
+     * @param v1       [&] Truth value of the first premise
+     * @param reliance [] Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
     static Truth analyticAbduction(Truth v1, float reliance) {
@@ -244,8 +252,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<M ==> S>, <M ==> P>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth induction(Truth v1, Truth v2) {
@@ -256,8 +264,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<M ==> S>, <P ==> M>} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth exemplification(Truth v1, Truth v2) {
@@ -279,8 +287,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<M ==> S>, <M ==> P>} |- <S <=> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth comparison(Truth v1, Truth v2) {
@@ -302,8 +310,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * A function specially designed for desire value [To be refined]
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth desireStrong(Truth v1, Truth v2) {
@@ -322,8 +330,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * A function specially designed for desire value [To be refined]
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth desireWeak(Truth v1, Truth v2) {
@@ -341,8 +349,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * A function specially designed for desire value [To be refined]
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth desireDed(Truth v1, Truth v2) {
@@ -360,8 +368,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * A function specially designed for desire value [To be refined]
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth desireInd(Truth v1, Truth v2) {
@@ -381,8 +389,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<M --> S>, <M <-> P>} |- <M --> (S|P)>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth union(Truth v1, Truth v2) {
@@ -400,8 +408,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {<M --> S>, <M <-> P>} |- <M --> (S&P)>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth intersection(Truth v1, Truth v2) {
@@ -432,8 +440,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {(--, (&&, A, B)), B} |- (--, A)
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth reduceConjunction(Truth v1, Truth v2) {
@@ -445,8 +453,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {(--, (&&, A, (--, B))), (--, B)} |- (--, A)
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth reduceConjunctionNeg(Truth v1, Truth v2) {
@@ -457,8 +465,8 @@ final class TruthFunctions extends UtilityFunctions {
     /**
      * {(&&, <#x() ==> M>, <#x() ==> P>), S ==> M} |- <S ==> P>
      *
-     * @param v1 Truth value of the first premise
-     * @param v2 Truth value of the second premise
+     * @param v1 [&] Truth value of the first premise
+     * @param v2 [&] Truth value of the second premise
      * @return Truth value of the conclusion
      */
     static Truth anonymousAnalogy(Truth v1, Truth v2) {
@@ -502,6 +510,5 @@ final class TruthFunctions extends UtilityFunctions {
         // * 📌单真值依赖函数（分析性函数）
         TruthFSingleReliance analyticDeduction = TruthFunctions::analyticDeduction;
         TruthFSingleReliance analyticAbduction = TruthFunctions::analyticAbduction;
-
     }
 }

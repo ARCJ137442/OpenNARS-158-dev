@@ -312,15 +312,6 @@ public abstract class ProcessDirect {
         }
     }
 
-    /**
-     * Add a new belief (or goal) into the table Sort the beliefs/goals by rank,
-     * and remove redundant or low rank one
-     * * 🚩添加到固定容量的缓冲区，并返回溢出的那个（溢出==所添加 ⇒ 添加失败）
-     *
-     * @param newBelief The judgment to be processed
-     * @param table     The table to be revised
-     * @param capacity  The capacity of the table
-     */
     public static Judgement addBelief(
             final Concept self,
             final Judgement newBelief) {
@@ -337,8 +328,6 @@ public abstract class ProcessDirect {
      */
     private static Task findExistedQuestion(final Concept self, final Term taskContent) {
         final Iterable<Task> questions = self.getQuestions();
-        if (questions == null)
-            throw new AssertionError("传入的表不可能为空");
         // * 🚩遍历所有已知问题：任意一个问题「词项相等」就返回
         for (final Task existedQuestion : questions) {
             final Term questionTerm = existedQuestion.getContent();
@@ -358,8 +347,9 @@ public abstract class ProcessDirect {
      * Evaluate a query against beliefs (and desires in the future)
      * * 📌返回值可空
      *
-     * @param query The question to be processed
-     * @param list  The list of beliefs to be used
+     * @param query           The question to be processed
+     * @param list            The list of beliefs to be used
+     * @param solutionQuality the way to calculate the quality of the solution
      * @return The best candidate belief selected
      */
     private static Judgement evaluation(
@@ -368,7 +358,6 @@ public abstract class ProcessDirect {
             final EvaluateSolutionQuality solutionQuality) {
         if (list == null)
             throw new AssertionError("传入的表不可能为空");
-        // TODO: 迁入「信念表」中
         // * 🚩筛选出其中排行最前的回答
         float currentBest = 0;
         float beliefQuality;
