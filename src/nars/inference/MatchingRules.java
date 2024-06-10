@@ -15,6 +15,7 @@ import nars.io.Symbols;
 import nars.language.Statement;
 import nars.language.Term;
 import nars.language.Variable;
+import static nars.inference.RuleTables.SyllogismFigure;
 
 /**
  * 🆕重新创建「匹配规则」
@@ -131,7 +132,7 @@ public abstract class MatchingRules {
      * @param figure  location of the shared term
      * @param context Reference to the derivation context
      */
-    static void matchAsymSym(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
+    static void matchAsymSym(Sentence asym, Sentence sym, SyllogismFigure figure, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         switch (task.getPunctuation()) {
             // * 🚩判断句⇒尝试合并到非对称形式（相似⇒继承，等价⇒蕴含）

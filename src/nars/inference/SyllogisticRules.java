@@ -4,6 +4,7 @@ import nars.entity.*;
 import nars.language.*;
 import nars.io.Symbols;
 import static nars.control.MakeTerm.*;
+import static nars.inference.RuleTables.SyllogismFigure;
 
 import nars.control.DerivationContextReason;
 import nars.control.VariableInference;
@@ -65,7 +66,7 @@ final class SyllogisticRules {
      * @param figure       Locations of the shared term in premises
      * @param context      Reference to the derivation context
      */
-    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Judgement belief, int figure,
+    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Judgement belief, SyllogismFigure figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
@@ -107,7 +108,7 @@ final class SyllogisticRules {
      * @param figure     Locations of the shared term in premises
      * @param context    Reference to the derivation context
      */
-    static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, int figure,
+    static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric, SyllogismFigure figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(subj, pred)) {
@@ -143,7 +144,7 @@ final class SyllogisticRules {
      * @param figure   Locations of the shared term in premises
      * @param context  Reference to the derivation context
      */
-    static void resemblance(Term term1, Term term2, Judgement belief, Sentence sentence, int figure,
+    static void resemblance(Term term1, Term term2, Judgement belief, Sentence sentence, SyllogismFigure figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (Statement.invalidStatement(term1, term2)) {

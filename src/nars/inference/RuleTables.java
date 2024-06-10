@@ -246,70 +246,75 @@ public class RuleTables {
      * @param beliefTerm The content of belief
      * @param context    Reference to the derivation context
      */
-    private static void syllogisms(TaskLink tLink, TermLink bLink, Statement taskTerm, Statement beliefTerm,
+    private static void syllogisms(
+            TaskLink tLink, TermLink bLink,
+            Statement taskTerm, Statement beliefTerm,
             DerivationContextReason context) {
-        // * ❌【2024-06-04 21:21:08】放弃使用switch「case 常量+常量」方式：无法「部分default」
-        final Sentence taskSentence = context.getCurrentTask();
+        // * 🚩获取变量
+        final Sentence task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final int figure;
+        final SyllogismFigure figure;
         switch (taskTerm.operator() + beliefTerm.operator()) {
-            // * 🚩继承 +
-            case INHERITANCE_RELATION + INHERITANCE_RELATION: // * 🚩继承
+            // * 🚩非对称×非对称
+            case INHERITANCE_RELATION + INHERITANCE_RELATION: // * 🚩继承+继承
+            case IMPLICATION_RELATION + IMPLICATION_RELATION: // * 🚩蕴含+蕴含
                 figure = indexToFigure(tLink, bLink);
-                asymmetricAsymmetric(taskSentence, belief, figure, context);
+                asymmetricAsymmetric(task, belief, figure, context);
                 return;
-            case INHERITANCE_RELATION + SIMILARITY_RELATION: // * 🚩相似
+            // * 🚩非对称×对称
+            case INHERITANCE_RELATION + SIMILARITY_RELATION: // * 🚩继承×相似
+            case IMPLICATION_RELATION + EQUIVALENCE_RELATION: // * 🚩蕴含×等价
                 figure = indexToFigure(tLink, bLink);
-                asymmetricSymmetric(taskSentence, belief, figure, context);
+                asymmetricSymmetric(task, belief, figure, context);
                 return;
-            case INHERITANCE_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
-            case INHERITANCE_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
-                detachmentWithVar(belief, taskSentence, bLink.getIndex(0), context);
-                return;
-            // * 🚩相似 +
-            case SIMILARITY_RELATION + INHERITANCE_RELATION: // * 🚩继承
+            // * 🚩对称×非对称
+            case SIMILARITY_RELATION + INHERITANCE_RELATION: // * 🚩相似×继承
+            case EQUIVALENCE_RELATION + IMPLICATION_RELATION: // * 🚩等价×蕴含
                 figure = indexToFigure(bLink, tLink);
-                asymmetricSymmetric(belief, taskSentence, figure, context);
+                asymmetricSymmetric(belief, task, figure, context);
                 return;
-            case SIMILARITY_RELATION + SIMILARITY_RELATION: // * 🚩相似
+            // * 🚩对称×对称
+            case SIMILARITY_RELATION + SIMILARITY_RELATION: // * 🚩相似×相似
+            case EQUIVALENCE_RELATION + EQUIVALENCE_RELATION: // * 🚩等价×等价
                 figure = indexToFigure(bLink, tLink);
-                symmetricSymmetric(belief, taskSentence, figure, context);
+                symmetricSymmetric(belief, task, figure, context);
                 return;
-            case SIMILARITY_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
-            case SIMILARITY_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
+            // * 🚩分离：继承 +
+            case INHERITANCE_RELATION + IMPLICATION_RELATION: // * 🚩继承×蕴含
+            case INHERITANCE_RELATION + EQUIVALENCE_RELATION: // * 🚩继承×等价
+                detachmentWithVar(belief, task, bLink.getIndex(0), context);
                 return;
-            // * 🚩蕴含 +
-            case IMPLICATION_RELATION + INHERITANCE_RELATION: // * 🚩继承
-                detachmentWithVar(taskSentence, belief, tLink.getIndex(0), context);
+            // * 🚩分离：蕴含 +
+            case IMPLICATION_RELATION + INHERITANCE_RELATION: // * 🚩蕴含×继承
+            case EQUIVALENCE_RELATION + INHERITANCE_RELATION: // * 🚩等价×继承
+                detachmentWithVar(task, belief, tLink.getIndex(0), context);
                 return;
-            case IMPLICATION_RELATION + SIMILARITY_RELATION: // * 🚩相似
-                return;
-            case IMPLICATION_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
-                figure = indexToFigure(tLink, bLink);
-                asymmetricAsymmetric(taskSentence, belief, figure, context);
-                return;
-            case IMPLICATION_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
-                figure = indexToFigure(tLink, bLink);
-                asymmetricSymmetric(taskSentence, belief, figure, context);
-                return;
-            // * 🚩等价 +
-            case EQUIVALENCE_RELATION + INHERITANCE_RELATION: // * 🚩继承
-                detachmentWithVar(taskSentence, belief, tLink.getIndex(0), context);
-                return;
-            case EQUIVALENCE_RELATION + SIMILARITY_RELATION: // * 🚩相似
-                return;
-            case EQUIVALENCE_RELATION + IMPLICATION_RELATION: // * 🚩蕴含
-                figure = indexToFigure(bLink, tLink);
-                asymmetricSymmetric(belief, taskSentence, figure, context);
-                return;
-            case EQUIVALENCE_RELATION + EQUIVALENCE_RELATION: // * 🚩等价
-                figure = indexToFigure(bLink, tLink);
-                symmetricSymmetric(belief, taskSentence, figure, context);
+            // * 🚩无果匹配：相似×高阶
+            case SIMILARITY_RELATION + IMPLICATION_RELATION: // * 🚩相似×蕴含
+            case SIMILARITY_RELATION + EQUIVALENCE_RELATION: // * 🚩相似×等价
+            case IMPLICATION_RELATION + SIMILARITY_RELATION: // * 🚩蕴含×相似
+            case EQUIVALENCE_RELATION + SIMILARITY_RELATION: // * 🚩等价×相似
                 return;
             // * ❌域外情况
             default:
                 throw new IllegalArgumentException("未知的陈述类型：" + tLink + "; " + bLink);
         }
+    }
+
+    /**
+     * 📌三段论模式
+     * * 🚩公共词项在两个陈述之中的顺序
+     * * 📝左边任务（待处理），右边信念（已接纳）
+     */
+    static enum SyllogismFigure {
+        /** 主项×主项 <A --> B> × <A --> C> */
+        SS, // induction
+        /** 主项×谓项 <A --> B> × <C --> A> */
+        SP, // deduction
+        /** 谓项×主项 <A --> B> × <B --> C> */
+        PS, // exemplification
+        /** 谓项×谓项 <A --> B> × <C --> B> */
+        PP, // abduction
     }
 
     /**
@@ -320,8 +325,27 @@ public class RuleTables {
      * @param link2 The link to the second premise
      * @return The figure of the syllogism, one of the four: 11, 12, 21, or 22
      */
-    private static int indexToFigure(TLink<?> link1, TLink<?> link2) {
-        return (link1.getIndex(0) + 1) * 10 + (link2.getIndex(0) + 1);
+    private static SyllogismFigure indexToFigure(TLink<?> link1, TLink<?> link2) {
+        // // * 🚩本质上就是「数位叠加」
+        // return (link1.getIndex(0) + 1) * 10 + (link2.getIndex(0) + 1);
+        final int figureNum = (link1.getIndex(0) + 1) * 10 + (link2.getIndex(0) + 1);
+        // * 📄以 <A --> B> × <C --> D> 为例
+        switch (figureNum) {
+            // * 📌主项×主项 A=C
+            case 11: // induction
+                return SyllogismFigure.SS;
+            // * 📌主项×谓项 A=D
+            case 12: // deduction
+                return SyllogismFigure.SP;
+            // * 📌主项×谓项 B=C
+            case 21: // exemplification
+                return SyllogismFigure.PS;
+            // * 📌谓项×谓项 C=D
+            case 22: // abduction
+                return SyllogismFigure.PP;
+            default:
+                throw new AssertionError("【2024-06-10 14:59:04】只可能有四种索引模式");
+        }
     }
 
     /**
@@ -332,15 +356,18 @@ public class RuleTables {
      * @param figure   The location of the shared term
      * @param context  Reference to the derivation context
      */
-    private static void asymmetricAsymmetric(Sentence sentence, Judgement belief, int figure,
-            DerivationContextReason context) {
-        // TODO: 过程笔记注释
+    private static void asymmetricAsymmetric(
+            final Sentence sentence,
+            final Judgement belief,
+            final SyllogismFigure figure,
+            final DerivationContextReason context) {
+        // * 🚩非对称🆚非对称
         final Statement s1 = (Statement) sentence.cloneContent();
         final Statement s2 = (Statement) belief.cloneContent();
         final Term t1, t2;
         final boolean unified;
         switch (figure) {
-            case 11: // induction
+            case SS: // induction
                 unified = VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2);
                 if (unified) {
                     if (s1.equals(s2)) {
@@ -352,7 +379,7 @@ public class RuleTables {
                     SyllogisticRules.abdIndCom(t1, t2, sentence, belief, figure, context);
                 }
                 return;
-            case 12: // deduction
+            case SP: // deduction
                 unified = VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2);
                 if (unified) {
                     if (s1.equals(s2)) {
@@ -367,7 +394,7 @@ public class RuleTables {
                     }
                 }
                 return;
-            case 21: // exemplification
+            case PS: // exemplification
                 unified = VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2);
                 if (unified) {
                     if (s1.equals(s2)) {
@@ -382,7 +409,7 @@ public class RuleTables {
                     }
                 }
                 return;
-            case 22: // abduction
+            case PP: // abduction
                 unified = VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2);
                 if (unified) {
                     if (s1.equals(s2)) {
@@ -397,8 +424,6 @@ public class RuleTables {
                     }
                 }
                 return;
-            default:
-                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 
@@ -411,13 +436,14 @@ public class RuleTables {
      * @param figure  The location of the shared term
      * @param context Reference to the derivation context
      */
-    private static void asymmetricSymmetric(Sentence asym, Sentence sym, int figure, DerivationContextReason context) {
+    private static void asymmetricSymmetric(Sentence asym, Sentence sym, SyllogismFigure figure,
+            DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement asymSt = (Statement) asym.cloneContent();
         final Statement symSt = (Statement) sym.cloneContent();
         final Term t1, t2;
         switch (figure) {
-            case 11:
+            case SS:
                 if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getSubject(), asymSt, symSt)) {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getPredicate();
@@ -428,7 +454,7 @@ public class RuleTables {
                     }
                 }
                 return;
-            case 12:
+            case SP:
                 if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getSubject(), symSt.getPredicate(), asymSt,
                         symSt)) {
                     t1 = asymSt.getPredicate();
@@ -440,7 +466,7 @@ public class RuleTables {
                     }
                 }
                 return;
-            case 21:
+            case PS:
                 if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getSubject(), asymSt,
                         symSt)) {
                     t1 = asymSt.getSubject();
@@ -452,7 +478,7 @@ public class RuleTables {
                     }
                 }
                 return;
-            case 22:
+            case PP:
                 if (VariableInference.unify(VAR_INDEPENDENT, asymSt.getPredicate(), symSt.getPredicate(), asymSt,
                         symSt)) {
                     t1 = asymSt.getSubject();
@@ -464,8 +490,6 @@ public class RuleTables {
                     }
                 }
                 return;
-            default:
-                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 
@@ -477,38 +501,36 @@ public class RuleTables {
      * @param figure       The location of the shared term
      * @param context      Reference to the derivation context
      */
-    private static void symmetricSymmetric(Judgement belief, Sentence taskSentence, int figure,
+    private static void symmetricSymmetric(Judgement belief, Sentence taskSentence, SyllogismFigure figure,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Statement s1 = (Statement) belief.cloneContent();
         final Statement s2 = (Statement) taskSentence.cloneContent();
         switch (figure) {
-            case 11:
+            case SS:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
                 return;
-            case 12:
+            case SP:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
                 return;
-            case 21:
+            case PS:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence, figure,
                             context);
                 }
                 return;
-            case 22:
+            case PP:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
                     SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence, figure,
                             context);
                 }
                 return;
-            default:
-                throw new IllegalArgumentException("figure must be 11, 12, 21, or 22");
         }
     }
 

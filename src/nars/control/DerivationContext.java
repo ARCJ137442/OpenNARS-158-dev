@@ -286,7 +286,9 @@ public interface DerivationContext {
             return;
         // * 🚩仅在「任务内容」可用时构造
         final char newPunctuation = currentTask.getPunctuation();
-        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
+        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(
+                newContent,
+                newPunctuation, newTruth,
                 newStamp, true);
         final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);
         derivedTask(newTask);
