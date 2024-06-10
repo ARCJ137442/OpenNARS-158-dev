@@ -3,7 +3,6 @@ package nars.inference;
 import static nars.io.Symbols.*;
 
 import nars.control.DerivationContextReason;
-import nars.control.VariableInference;
 import nars.entity.Judgement;
 import nars.entity.Stamp;
 import nars.entity.Task;

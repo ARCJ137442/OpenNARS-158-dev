@@ -120,6 +120,14 @@ public class Term implements Cloneable, Comparable<Term> {
     }
 
     /**
+     * 🆕判断俩词项是否类型相同
+     * * 🎯明确语义，封装内部「class判等」逻辑
+     */
+    public final boolean isSameType(final Term that) {
+        return that.getClass() == this.getClass();
+    }
+
+    /**
      * Orders among terms: variable < atomic < compound
      *
      * @param that The Term to be compared with the current Term

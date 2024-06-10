@@ -382,7 +382,7 @@ public abstract class CompoundTerm extends Term {
      * @return Whether the components are all in the compound
      */
     public boolean containAllComponents(Term t) {
-        if (getClass() == t.getClass()) {
+        if (this.isSameType(t)) {
             return components.containsAll(((CompoundTerm) t).getComponents());
         } else {
             return components.contains(t);
@@ -406,7 +406,7 @@ public abstract class CompoundTerm extends Term {
     public void renameVariables() {
         // * 🚩有变量⇒重命名变量
         if (this.containVar())
-        renameCompoundVariables(this, new HashMap<Variable, Variable>());
+            renameCompoundVariables(this, new HashMap<Variable, Variable>());
         // * 🚩设置「为常量」
         // ? ❓【2024-06-09 13:26:43】为何要如此？
         setConstant(true);

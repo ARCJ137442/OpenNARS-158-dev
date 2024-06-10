@@ -4,12 +4,12 @@ import nars.entity.*;
 import nars.inference.TruthFunctions.TruthFSingleReliance;
 import nars.language.*;
 import nars.io.Symbols;
-import static nars.control.MakeTerm.*;
+
 import static nars.io.Symbols.JUDGMENT_MARK;
 import static nars.io.Symbols.QUESTION_MARK;
+import static nars.language.MakeTerm.*;
 
 import nars.control.DerivationContextReason;
-import nars.control.VariableInference;
 
 /**
  * Syllogisms: Inference rules based on the transitivity of the relation.
@@ -268,13 +268,11 @@ final class SyllogisticRules {
             index = (short) index2;
         } else {
             // * 🚩尝试数次匹配
-            boolean hasMatch = VariableInference.unify(
-                    Symbols.VAR_INDEPENDENT,
+            boolean hasMatch = VariableInference.unifyI(
                     oldCondition.componentAt(index), commonComponent,
                     premise1, premise2);
-            if (!hasMatch && (commonComponent.getClass() == oldCondition.getClass())) {
-                hasMatch = VariableInference.unify(
-                        Symbols.VAR_INDEPENDENT,
+            if (!hasMatch && (commonComponent.isSameType(oldCondition))) {
+                hasMatch = VariableInference.unifyI(
                         oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
                         premise1, premise2);
             }
@@ -353,13 +351,11 @@ final class SyllogisticRules {
         if (!(tm instanceof Conjunction))
             return;
         final Conjunction oldCondition = (Conjunction) tm;
-        boolean match = VariableInference.unify(
-                Symbols.VAR_DEPENDENT,
+        boolean match = VariableInference.unifyD(
                 oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
-        if (!match && (commonComponent.getClass() == oldCondition.getClass())) {
-            match = VariableInference.unify(
-                    Symbols.VAR_DEPENDENT,
+        if (!match && (commonComponent.isSameType(oldCondition))) {
+            match = VariableInference.unifyD(
                     oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
                     premise1, premise2);
         }
@@ -480,12 +476,14 @@ final class SyllogisticRules {
     /**
      * {(&&, <#x() --> S>, <#x() --> P>>, <M --> P>} |- <M --> S>
      *
-     * @param compound     The compound term to be decomposed
-     * @param component    The part of the compound to be removed
-     * @param compoundTask Whether the compound comes from the task
-     * @param context      Reference to the derivation context
+     * @param compound           The compound term to be decomposed
+     * @param component          The part of the compound to be removed
+     * @param isCompoundFromTask Whether the compound comes from the task
+     * @param context            Reference to the derivation context
      */
-    static void eliminateVarDep(CompoundTerm compound, Term component, boolean compoundTask,
+    static void eliminateVarDep(
+            CompoundTerm compound, Term component,
+            boolean isCompoundFromTask,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Term content = reduceComponents(compound, component);
@@ -497,11 +495,11 @@ final class SyllogisticRules {
         final Budget budget;
         if (task.isQuestion()) {
             truth = null;
-            budget = (compoundTask ? BudgetFunctions.backward(belief, context)
+            budget = (isCompoundFromTask ? BudgetFunctions.backward(belief, context)
                     : BudgetFunctions.backwardWeak(belief, context));
         } else {
             final Truth v1 = task.asJudgement();
-            truth = (compoundTask ? TruthFunctions.anonymousAnalogy(v1, belief)
+            truth = (isCompoundFromTask ? TruthFunctions.anonymousAnalogy(v1, belief)
                     : TruthFunctions.anonymousAnalogy(belief, v1));
             budget = BudgetFunctions.compoundForward(truth, content, context);
         }

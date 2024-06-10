@@ -15,7 +15,7 @@ public class Negation extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    public Negation(ArrayList<Term> arg) {
+    Negation(ArrayList<Term> arg) {
         super(arg);
     }
 
@@ -49,5 +49,13 @@ public class Negation extends CompoundTerm {
     @Override
     public String operator() {
         return Symbols.NEGATION_OPERATOR;
+    }
+
+    /**
+     * 🆕获取「否定」唯一的词项
+     * * 🎯明确语义
+     */
+    public Term getTheComponent() {
+        return this.components.get(0);
     }
 }

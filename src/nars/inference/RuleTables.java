@@ -1,7 +1,6 @@
 package nars.inference;
 
 import nars.control.DerivationContextReason;
-import nars.control.VariableInference;
 import nars.entity.*;
 import nars.entity.TLink.TLinkType;
 import nars.language.*;
@@ -42,7 +41,7 @@ public class RuleTables {
         // * 📝【2024-06-04 19:33:10】实质上这里的「链接类型分派」就是基于「词项链/任务链」的「内容相关性信息」分派
         // * 📄A @ (&&, A, B) => 点火「A」将以`COMPOUND`（从元素指向复合词项整体）
         // ! ❌尝试「摊平switch」失败：枚举变种无法被视作「常量」使用
-        // * 报错信息：case expressions must be constant expressionsJava(536871065)
+        // * 报错信息：case expressions must be constant expressions Java(536871065)
         switch (tLinkType) { // dispatch first by TaskLink type
             // * 🚩只有「从复合词项」
             default:
@@ -118,13 +117,18 @@ public class RuleTables {
                         // * 📄T="(&&,<cup --> #1>,<toothbrush --> #1>)"
                         // * + B="<cup --> [bendable]>"
                         // * @ C="cup"
-                        compoundAndCompound((CompoundTerm) taskTerm, (CompoundTerm) beliefTerm, context);
+                        compoundAndCompound(
+                                (CompoundTerm) taskTerm,
+                                (CompoundTerm) beliefTerm,
+                                context);
                         return;
                     case COMPOUND_STATEMENT: // * 🚩conceptTerm ∈ taskTerm, conceptTerm ∈ beliefTerm isa Statement
                         // * 📄T="(&&,<{tim} --> #1>,<{tom} --> #1>)"
                         // * + B="<{tom} --> murder>"
                         // * @ C="{tom}"
-                        compoundAndStatement((CompoundTerm) taskTerm, tIndex, (Statement) beliefTerm, bIndex,
+                        compoundAndStatement(
+                                (CompoundTerm) taskTerm, tIndex,
+                                (Statement) beliefTerm, bIndex,
                                 beliefTerm, context);
                         return;
                     case COMPOUND_CONDITION:
@@ -133,8 +137,7 @@ public class RuleTables {
                         // * @ C="(/,livingIn,_,{graz})"
                         if (belief != null) {
                             if (beliefTerm instanceof Implication) {
-                                final boolean canDetach = VariableInference.unify(
-                                        VAR_INDEPENDENT,
+                                final boolean canDetach = VariableInference.unifyI(
                                         ((Implication) beliefTerm).getSubject(), taskTerm,
                                         beliefTerm, taskTerm);
                                 if (canDetach) {
@@ -169,7 +172,9 @@ public class RuleTables {
                         // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
                         // * + B="{tim}"
                         // * @ C="tim"
-                        compoundAndStatement((CompoundTerm) beliefTerm, bIndex, (Statement) taskTerm, tIndex,
+                        compoundAndStatement(
+                                (CompoundTerm) beliefTerm, bIndex,
+                                (Statement) taskTerm, tIndex,
                                 beliefTerm, context);
                         return;
                     case COMPOUND_STATEMENT:
@@ -370,7 +375,7 @@ public class RuleTables {
             // * 🚩主项×主项 <A --> B> × <A --> C>
             case SS: // induction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getSubject(), bTerm.getSubject(), tTerm,
+                unified = VariableInference.unifyI(tTerm.getSubject(), bTerm.getSubject(), tTerm,
                         bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
@@ -389,7 +394,7 @@ public class RuleTables {
             // * 🚩主项×谓项 <A --> B> × <C --> A>
             case SP: // deduction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getSubject(), bTerm.getPredicate(), tTerm,
+                unified = VariableInference.unifyI(tTerm.getSubject(), bTerm.getPredicate(), tTerm,
                         bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
@@ -401,7 +406,7 @@ public class RuleTables {
                 term1 = bTerm.getSubject();
                 term2 = tTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                if (VariableInference.unify(VAR_QUERY, term1, term2, tTerm, bTerm))
+                if (VariableInference.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
                     SyllogisticRules.matchReverse(context);
                 else
@@ -411,7 +416,7 @@ public class RuleTables {
             // * 🚩谓项×主项 <A --> B> × <B --> C>
             case PS: // exemplification
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getPredicate(), bTerm.getSubject(), tTerm,
+                unified = VariableInference.unifyI(tTerm.getPredicate(), bTerm.getSubject(), tTerm,
                         bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
@@ -423,7 +428,7 @@ public class RuleTables {
                 term1 = tTerm.getSubject();
                 term2 = bTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                if (VariableInference.unify(VAR_QUERY, term1, term2, tTerm, bTerm))
+                if (VariableInference.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
                     SyllogisticRules.matchReverse(context);
                 else
@@ -433,8 +438,7 @@ public class RuleTables {
             // * 🚩谓项×谓项 <A --> B> × <C --> B>
             case PP: // abduction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unify(
-                        VAR_INDEPENDENT,
+                unified = VariableInference.unifyI(
                         tTerm.getPredicate(), bTerm.getPredicate(),
                         tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
@@ -482,8 +486,7 @@ public class RuleTables {
             // * 🚩主项×主项 <A --> B> × <A <-> C>
             case SS:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unify(
-                        VAR_INDEPENDENT,
+                unifiedI = VariableInference.unifyI(
                         asymS.getSubject(), symS.getSubject(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -493,7 +496,7 @@ public class RuleTables {
                 term1 = asymS.getPredicate();
                 term2 = symS.getPredicate();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -504,8 +507,7 @@ public class RuleTables {
             // * 🚩主项×谓项 <A --> B> × <C <-> A>
             case SP:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unify(
-                        VAR_INDEPENDENT,
+                unifiedI = VariableInference.unifyI(
                         asymS.getSubject(), symS.getPredicate(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -515,7 +517,7 @@ public class RuleTables {
                 term1 = asymS.getPredicate();
                 term2 = symS.getSubject();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -526,8 +528,7 @@ public class RuleTables {
             // * 🚩谓项×主项 <A --> B> × <B <-> C>
             case PS:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unify(
-                        VAR_INDEPENDENT,
+                unifiedI = VariableInference.unifyI(
                         asymS.getPredicate(), symS.getSubject(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -537,7 +538,7 @@ public class RuleTables {
                 term1 = asymS.getSubject();
                 term2 = symS.getPredicate();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -548,8 +549,7 @@ public class RuleTables {
             // * 🚩谓项×谓项 <A --> B> × <C <-> B>
             case PP:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unify(
-                        VAR_INDEPENDENT,
+                unifiedI = VariableInference.unifyI(
                         asymS.getPredicate(), symS.getPredicate(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -559,7 +559,7 @@ public class RuleTables {
                 term1 = asymS.getSubject();
                 term2 = symS.getSubject();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unify(VAR_QUERY, term1, term2, asymS, symS);
+                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -593,28 +593,28 @@ public class RuleTables {
         switch (figure) {
             case SS:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unify(VAR_INDEPENDENT, bS, tS, bTerm, tTerm);
+                unified = VariableInference.unifyI(bS, tS, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tP, belief, taskSentence, context);
                 return;
             case SP:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unify(VAR_INDEPENDENT, bS, tP, bTerm, tTerm);
+                unified = VariableInference.unifyI(bS, tP, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tS, belief, taskSentence, context);
                 return;
             case PS:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unify(VAR_INDEPENDENT, bP, tS, bTerm, tTerm);
+                unified = VariableInference.unifyI(bP, tS, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tP, belief, taskSentence, context);
                 return;
             case PP:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unify(VAR_INDEPENDENT, bP, tP, bTerm, tTerm);
+                unified = VariableInference.unifyI(bP, tP, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tS, belief, taskSentence, context);
@@ -652,7 +652,7 @@ public class RuleTables {
             return;
         }
         // * 🚩若非常量（有变量） ⇒ 尝试统一独立变量
-        final boolean unifiedI = VariableInference.unify(VAR_INDEPENDENT, component, content, mainStatement, content);
+        final boolean unifiedI = VariableInference.unifyI(component, content, mainStatement, content);
         if (unifiedI) {
             // * 🚩统一成功⇒分离
             SyllogisticRules.detachment(mainSentence, subSentence, index, context);
@@ -749,15 +749,13 @@ public class RuleTables {
             return;
         }
         // * 🚩先尝试替换独立变量
-        boolean unified = VariableInference.unify(
-                VAR_INDEPENDENT,
+        boolean unified = VariableInference.unifyI(
                 component, component2,
                 conditional, statement);
         // * 🚩若替换失败，则尝试替换非独变量
         if (!unified)
             // * 🚩惰性求值：第一次替换成功，就无需再次替换
-            unified = VariableInference.unify(
-                    VAR_DEPENDENT,
+            unified = VariableInference.unifyD(
                     component, component2,
                     conditional, statement);
         // * 🚩成功替换⇒条件 演绎/归纳
@@ -769,36 +767,61 @@ public class RuleTables {
     /**
      * Inference between a compound term and a component of it
      *
-     * @param compound     The compound term
-     * @param component    The component term
-     * @param compoundTask Whether the compound comes from the task
-     * @param context      Reference to the derivation context
+     * @param compound           The compound term
+     * @param component          The component term
+     * @param isCompoundFromTask Whether the compound comes from the task
+     * @param context            Reference to the derivation context
      */
-    private static void compoundAndSelf(CompoundTerm compound, Term component, boolean compoundTask,
+    private static void compoundAndSelf(
+            CompoundTerm compound,
+            Term component,
+            boolean isCompoundFromTask,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if ((compound instanceof Conjunction) || (compound instanceof Disjunction)) {
+        // * 🚩合取/析取
+        if (compound instanceof Conjunction || compound instanceof Disjunction) {
+            // * 🚩有「当前信念」⇒解构出陈述
             if (context.hasCurrentBelief()) {
-                CompositionalRules.decomposeStatement(compound, component, compoundTask, context);
+                CompositionalRules.decomposeStatement(
+                        compound, component,
+                        isCompoundFromTask, context);
                 return;
-            } else if (compound.containComponent(component)) {
-                StructuralRules.structuralCompound(compound, component, compoundTask, context);
+            }
+            // * 🚩否，但包含元素⇒取出词项
+            else if (compound.containComponent(component)) {
+                StructuralRules.structuralCompound(
+                        compound, component,
+                        isCompoundFromTask, context);
                 return;
             }
             // } else if ((compound instanceof Negation) &&
             // !context.getCurrentTask().isStructural()) {
-            else {
+            else
                 return;
-            }
-        } else if (compound instanceof Negation) {
-            if (compoundTask) {
-                StructuralRules.transformNegation(((Negation) compound).componentAt(0), context);
+        }
+        // * 🚩否定
+        else if (compound instanceof Negation) {
+            // * 🚩从「当前任务」来⇒转换其中的否定
+            if (isCompoundFromTask) {
+                // * 🚩双重否定⇒肯定
+                // * 📄【2024-06-10 19:57:15】一例：
+                // * compound="(--,(--,A))"
+                // * component="(--,A)"
+                // * currentConcept=Concept@63 "(--,(--,A))"
+                // * currentTask=TaskV1@807 "$0.8000;0.8000;0.9500$ (--,(--,A)). %1.00;0.90%"
+                StructuralRules.transformNegation(
+                        ((Negation) compound).getTheComponent(),
+                        context);
                 return;
             } else {
-                StructuralRules.transformNegation(compound, context);
+                // * 🚩否则⇒转换整个否定
+                StructuralRules.transformNegation(
+                        compound,
+                        context);
                 return;
             }
-        } else {
+        }
+        // * 🚩其它⇒无结果
+        else {
             return;
         }
     }
@@ -810,20 +833,25 @@ public class RuleTables {
      * @param beliefTerm The compound from the belief
      * @param context    Reference to the derivation context
      */
-    private static void compoundAndCompound(CompoundTerm taskTerm, CompoundTerm beliefTerm,
+    private static void compoundAndCompound(
+            CompoundTerm taskTerm, CompoundTerm beliefTerm,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (taskTerm.getClass() != beliefTerm.getClass())
+        // * 🚩非同类⇒返回
+        if (!taskTerm.isSameType(beliefTerm))
             return;
+        // * 🚩任务词项 > 信念词项 ⇒ 以「任务词项」为整体
         if (taskTerm.size() > beliefTerm.size()) {
             compoundAndSelf(taskTerm, beliefTerm, true, context);
             return;
-        } else if (taskTerm.size() < beliefTerm.size()) {
+        }
+        // * 🚩任务词项 < 信念词项 ⇒ 以「信念词项」为整体
+        else if (taskTerm.size() < beliefTerm.size()) {
             compoundAndSelf(beliefTerm, taskTerm, false, context);
             return;
-        } else {
-            return;
         }
+        // * 🚩其它情况 ⇒ 返回
+        else
+            return;
     }
 
     /**
@@ -836,33 +864,63 @@ public class RuleTables {
      * @param beliefTerm The content of the belief
      * @param context    Reference to the derivation context
      */
-    private static void compoundAndStatement(CompoundTerm compound, short index, Statement statement, short side,
+    private static void compoundAndStatement(
+            CompoundTerm compound, short index,
+            Statement statement, short side,
             Term beliefTerm, DerivationContextReason context) {
-        // TODO: 过程笔记注释
         final Term component = compound.componentAt(index);
+        // ! ⚠️可能与「当前概念」的词项不一致：元素"{tom}"🆚概念"tom"
         final Task task = context.getCurrentTask();
-        if (component.getClass() == statement.getClass()) {
-            if ((compound instanceof Conjunction) && (context.hasCurrentBelief())) {
-                if (VariableInference.unify(VAR_DEPENDENT, component, statement, compound, statement)) {
-                    SyllogisticRules.eliminateVarDep(compound, component, statement.equals(beliefTerm), context);
-                } else if (task.isJudgment()) { // && !compound.containComponent(component)) {
-                    CompositionalRules.introVarInner(statement, (Statement) component, compound, context);
-                } else if (VariableInference.unify(VAR_QUERY, component, statement, compound, statement)) {
-                    CompositionalRules.decomposeStatement(compound, component, true, context);
-                }
+        // * 🚩均为陈述，且为同一类型
+        if (component.isSameType(statement)) {
+            // * 其内元素是「合取」且有「当前信念」
+            if (compound instanceof Conjunction && context.hasCurrentBelief()) {
+                // * 🚩先尝试消去非独变量 #
+                final boolean unifiedD = VariableInference.unifyD(component, statement, compound, statement);
+                if (unifiedD)
+                    // * 🚩能消去⇒三段论消元
+                    SyllogisticRules.eliminateVarDep(
+                            compound, component,
+                            statement.equals(beliefTerm), // ? 【2024-06-10 19:38:32】为何要如此
+                            context);
+                /// * 🚩不能消去，但任务是判断句⇒内部引入变量
+                else if (task.isJudgment()) // && !compound.containComponent(component)) {
+                    CompositionalRules.introVarInner(
+                            statement, (Statement) component,
+                            compound,
+                            context);
+                /// * 🚩是疑问句，且能消去查询变量⇒解构出元素作为结论
+                else if (VariableInference.unifyQ(component, statement, compound, statement))
+                    CompositionalRules.decomposeStatement(
+                            compound, component,
+                            true,
+                            context);
             }
-        } else {
-            // if (!task.isStructural() && task.isJudgment()) {
-            if (task.isJudgment()) {
-                if (statement instanceof Inheritance) {
-                    StructuralRules.structuralCompose1(compound, index, statement, context);
-                    // if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
-                    if (!(compound instanceof SetExt || compound instanceof SetInt || compound instanceof Negation)) {
-                        StructuralRules.structuralCompose2(compound, index, statement, side, context);
-                    } // {A --> B, A @ (A&C)} |- (A&C) --> (B&C)
-                } else if ((statement instanceof Similarity) && !(compound instanceof Conjunction)) {
-                    StructuralRules.structuralCompose2(compound, index, statement, side, context);
-                } // {A <-> B, A @ (A&C)} |- (A&C) <-> (B&C)
+        }
+        // if (!task.isStructural() && task.isJudgment()) {
+        // * 🚩类型不同 且为双判断
+        else if (task.isJudgment()) {
+            final boolean canComposeBoth;
+            // * 🚩涉及的陈述是「继承」
+            if (statement instanceof Inheritance) {
+                // * 🚩单侧组合
+                StructuralRules.structuralComposeOne(compound, index, statement, context);
+                // if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
+                // * 🚩若能双侧组合⇒双侧组合
+                canComposeBoth = !(compound instanceof SetExt || compound instanceof SetInt
+                        || compound instanceof Negation);
+                if (canComposeBoth)
+                    // {A --> B, A @ (A&C)} |- (A&C) --> (B&C)
+                    StructuralRules.structuralComposeBoth(compound, index, statement, side, context);
+            }
+            // * 🚩涉及的陈述是「相似」，但涉及的另一复合词项不是「合取」
+            // * 📝「相似」只能双侧组合，可以组合出除「合取」之外的结论
+            else if (statement instanceof Similarity) {
+                // * 🚩尝试双侧组合
+                canComposeBoth = !(compound instanceof Conjunction);
+                if (canComposeBoth)
+                    // {A <-> B, A @ (A&C)} |- (A&C) <-> (B&C)
+                    StructuralRules.structuralComposeBoth(compound, index, statement, side, context);
             }
         }
     }
@@ -876,37 +934,59 @@ public class RuleTables {
      * @param side      The location of the current term in the statement
      * @param context   Reference to the derivation context
      */
-    private static void componentAndStatement(CompoundTerm compound, short index, Statement statement, short side,
+    private static void componentAndStatement(
+            CompoundTerm compound, short index,
+            Statement statement, short side,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        // if (!context.getCurrentTask().isStructural()) {
+        // * 🚩陈述是「继承」
+        // if (context.getCurrentTask().isStructural()) return;
+        final boolean canDecomposeBoth;
         if (statement instanceof Inheritance) {
-            StructuralRules.structuralDecompose1(compound, index, statement, context);
-            if (!(compound instanceof SetExt) && !(compound instanceof SetInt)) {
+            // * 🚩集合消去
+            StructuralRules.structuralDecomposeOne(compound, index, statement, context);
+            // * 🚩尝试两侧都消去
+            canDecomposeBoth = !(compound instanceof SetExt) && !(compound instanceof SetInt);
+            if (canDecomposeBoth) {
+                // * 🚩两侧消去
                 // {(C-B) --> (C-A), A @ (C-A)} |- A --> B
-                StructuralRules.structuralDecompose2(statement, index, context);
+                StructuralRules.structuralDecomposeBoth(statement, index, context);
                 return;
             } else {
+                // * 🚩外延集性质：一元集合⇒最小外延 | 内涵集性质：一元集合⇒最小内涵
+                // * <A --> {B}> |- <A <-> {B}>
                 StructuralRules.transformSetRelation(compound, statement, side, context);
                 return;
             }
-        } else if (statement instanceof Similarity) {
-            StructuralRules.structuralDecompose2(statement, index, context); // {(C-B) --> (C-A), A @ (C-A)} |- A --> B
-            if ((compound instanceof SetExt) || (compound instanceof SetInt)) {
+        }
+        // * 🚩陈述是「相似」⇒总是要两侧消去
+        else if (statement instanceof Similarity) {
+            // {(C-B) <-> (C-A), A @ (C-A)} |- A <-> B
+            StructuralRules.structuralDecomposeBoth(statement, index, context);
+            // * 🚩外延集/内涵集⇒尝试转换集合关系
+            if (compound instanceof SetExt || compound instanceof SetInt) {
+                // * 🚩外延集性质：一元集合⇒最小外延 | 内涵集性质：一元集合⇒最小内涵
+                // * <A <-> {B}> |- <A --> {B}>
                 StructuralRules.transformSetRelation(compound, statement, side, context);
             }
             return;
-        } else if ((statement instanceof Implication) && (compound instanceof Negation)) {
+        }
+        // * 🚩蕴含×否定⇒逆否
+        else if (statement instanceof Implication && compound instanceof Negation) {
             if (index == 0) {
-                StructuralRules.contraposition(statement, context.getCurrentTask(), context);
+                StructuralRules.contraposition(
+                        statement,
+                        context.getCurrentTask(),
+                        context);
                 return;
             } else {
-                StructuralRules.contraposition(statement, context.getCurrentBelief(), context);
+                StructuralRules.contraposition(
+                        statement,
+                        context.getCurrentBelief(),
+                        context);
                 return;
             }
         } else {
             return;
         }
-        // }
     }
 }

@@ -1,5 +1,7 @@
 package nars.inference;
 
+import static nars.language.MakeTerm.*;
+
 import java.util.ArrayList;
 
 import nars.control.DerivationContextTransform;
@@ -15,7 +17,6 @@ import nars.language.Implication;
 import nars.language.Inheritance;
 import nars.language.Product;
 import nars.language.Term;
-import static nars.control.MakeTerm.*;
 
 /**
  * 用于存储「介于『直接推理』与『概念推理』之间的『转换推理』」

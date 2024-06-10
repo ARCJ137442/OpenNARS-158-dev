@@ -4,10 +4,12 @@ import java.util.*;
 
 import nars.control.DerivationContextReason;
 import nars.entity.*;
+import nars.inference.TruthFunctions.TruthFDouble;
 import nars.language.*;
-import static nars.control.MakeTerm.*;
+
 import static nars.io.Symbols.JUDGMENT_MARK;
 import static nars.io.Symbols.QUESTION_MARK;
+import static nars.language.MakeTerm.*;
 
 /**
  * Compound term composition and decomposition rules, with two premises.
@@ -86,7 +88,7 @@ public final class CompositionalRules {
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if ((!context.getCurrentTask().isJudgment())
-                || (taskContent.getClass() != beliefContent.getClass())) {
+                || !(taskContent.isSameType(beliefContent))) {
             return;
         }
         final Term componentT = taskContent.componentAt(1 - sharedTermI);
@@ -184,19 +186,18 @@ public final class CompositionalRules {
     /**
      * {<(S|P) ==> M>, <P ==> M>} |- <S ==> M>
      *
-     * @param implication     The implication term to be decomposed
-     * @param componentCommon The part of the implication to be removed
-     * @param term1           The other term in the contentInd
-     * @param index           The location of the shared term: 0 for subject, 1
-     *                        for
-     *                        predicate
-     * @param compoundTask    Whether the implication comes from the task
-     * @param context         Reference to the derivation context
+     * @param implication        The implication term to be decomposed
+     * @param componentCommon    The part of the implication to be removed
+     * @param term1              The other term in the contentInd
+     * @param index              The location of the shared term: 0 for subject, 1
+     *                           for predicate
+     * @param isCompoundFromTask Whether the implication comes from the task
+     * @param context            Reference to the derivation context
      */
     private static void decomposeCompound(
             CompoundTerm compound, Term component,
             Term term1, int index,
-            boolean compoundTask, DerivationContextReason context) {
+            boolean isCompoundFromTask, DerivationContextReason context) {
         // TODO: 过程笔记注释
         if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
             return;
@@ -209,7 +210,7 @@ public final class CompositionalRules {
         final Judgement belief = context.getCurrentBelief();
         final Statement oldContent = (Statement) taskJudgement.getContent();
         final Truth v1, v2;
-        if (compoundTask) {
+        if (isCompoundFromTask) {
             v1 = taskJudgement;
             v2 = belief;
         } else {
@@ -285,17 +286,18 @@ public final class CompositionalRules {
      * {(||, S, P), P} |- S
      * {(&&, S, P), P} |- S
      *
-     * @param implication     The implication term to be decomposed
-     * @param componentCommon The part of the implication to be removed
-     * @param compoundTask    Whether the implication comes from the task
-     * @param context         Reference to the derivation context
+     * @param implication        The implication term to be decomposed
+     * @param componentCommon    The part of the implication to be removed
+     * @param isCompoundFromTask Whether the implication comes from the task
+     * @param context            Reference to the derivation context
      */
     static void decomposeStatement(
             CompoundTerm compound, Term component,
-            boolean compoundTask, DerivationContextReason context) {
+            boolean isCompoundFromTask,
+            DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        // * 🚩删去指定的那个元素
+        // * 🚩删去指定的那个元素，用删去之后的剩余元素做结论
         final Term content = reduceComponents(compound, component);
         if (content == null)
             return;
@@ -340,23 +342,25 @@ public final class CompositionalRules {
                 context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
                 return;
             case JUDGMENT_MARK:
+                // * 🚩选取前提真值 | ⚠️前后件语义不同
                 final Truth v1, v2;
-                if (compoundTask) {
+                if (isCompoundFromTask) {
                     v1 = task.asJudgement();
                     v2 = belief;
                 } else {
                     v1 = belief;
                     v2 = task.asJudgement();
                 }
-                if (!(task instanceof Sentence))
-                    throw new AssertionError("违反前提假定：task不是语句！");
-                if (compound instanceof Conjunction) {
-                    truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if (compound instanceof Disjunction) {
-                    truth = TruthFunctions.reduceDisjunction(v1, v2);
-                } else {
+                // * 🚩选取真值函数
+                final TruthFDouble truthF;
+                if (compound instanceof Conjunction)
+                    truthF = TruthFunctions::reduceConjunction;
+                else if (compound instanceof Disjunction)
+                    truthF = TruthFunctions::reduceDisjunction;
+                else
                     return;
-                }
+                // * 🚩构造真值、预算值，双前提结论
+                truth = truthF.call(v1, v2);
                 budget = BudgetFunctions.compoundForward(truth, content, context);
                 context.doublePremiseTask(content, truth, budget);
                 return;
@@ -476,11 +480,13 @@ public final class CompositionalRules {
      *                      or Conjunction
      * @param context       Reference to the derivation context
      */
-    static void introVarInner(Statement premise1, Statement premise2, CompoundTerm oldCompound,
+    static void introVarInner(
+            Statement premise1, Statement premise2,
+            CompoundTerm oldCompound,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        if (!task.isJudgment() || (premise1.getClass() != premise2.getClass())
+        if (!task.isJudgment() || (!premise1.isSameType(premise2))
                 || oldCompound.containComponent(premise1)) {
             return;
         }

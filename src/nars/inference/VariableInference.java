@@ -1,4 +1,6 @@
-package nars.control;
+package nars.inference;
+
+import static nars.io.Symbols.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +45,7 @@ public abstract class VariableInference {
      * @param compound2 The compound containing the second term
      * @return Whether the unification is possible
      */
-    public static boolean unify(final char type, Term t1, Term t2, Term compound1, Term compound2) {
+    private static boolean unify(final char type, Term t1, Term t2, Term compound1, Term compound2) {
         // * 🚩主逻辑：寻找替代
         final HashMap<Term, Term> map1 = new HashMap<>();
         final HashMap<Term, Term> map2 = new HashMap<>();
@@ -58,6 +60,21 @@ public abstract class VariableInference {
         }
         // * 🚩返回「是否替代成功」
         return hasSubs;
+    }
+
+    /** 🆕【对外接口】统一独立变量 */
+    static boolean unifyI(Term t1, Term t2, Term compound1, Term compound2) {
+        return unify(VAR_INDEPENDENT, t1, t2, compound1, compound2);
+    }
+
+    /** 🆕【对外接口】统一非独变量 */
+    static boolean unifyD(Term t1, Term t2, Term compound1, Term compound2) {
+        return unify(VAR_DEPENDENT, t1, t2, compound1, compound2);
+    }
+
+    /** 🆕【对外接口】统一查询变量 */
+    static boolean unifyQ(Term t1, Term t2, Term compound1, Term compound2) {
+        return unify(VAR_QUERY, t1, t2, compound1, compound2);
     }
 
     /** 🆕得出「替代结果」后，将映射表应用到词项上 */
@@ -111,7 +128,7 @@ public abstract class VariableInference {
         // * 🚩🆕预先计算好判据（及早求值）
         final boolean isCorrectVar1 = term1 instanceof Variable && ((Variable) term1).getType() == type;
         final boolean isCorrectVar2 = term2 instanceof Variable && ((Variable) term2).getType() == type;
-        final boolean isSameTypeCompound = term1 instanceof CompoundTerm && term1.getClass().equals(term2.getClass());
+        final boolean isSameTypeCompound = term1 instanceof CompoundTerm && term1.isSameType(term2);
         // * 🚩[$1 x ?] 对应位置是变量
         if (isCorrectVar1) {
             final Variable var1 = (Variable) term1;

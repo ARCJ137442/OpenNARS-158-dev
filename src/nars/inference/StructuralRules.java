@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import nars.control.DerivationContextReason;
 import nars.entity.*;
 import static nars.io.Symbols.*;
+import static nars.language.MakeTerm.*;
+
 import nars.language.*;
 import nars.main.Parameters;
-
-import static nars.control.MakeTerm.*;
 
 /**
  * Single-premise inference rules involving compound terms. Input are one
@@ -32,7 +32,7 @@ final class StructuralRules {
      * @param side      The location of the indicated term in the premise
      * @param context   Reference to the derivation context
      */
-    static void structuralCompose2(CompoundTerm compound, short index, Statement statement, short side,
+    static void structuralComposeBoth(CompoundTerm compound, short index, Statement statement, short side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (compound.equals(statement.componentAt(side))) {
@@ -96,11 +96,11 @@ final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralDecompose2(Statement statement, int index, DerivationContextReason context) {
+    static void structuralDecomposeBoth(Statement statement, int index, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
-        if (subj.getClass() != pred.getClass()) {
+        if (!subj.isSameType(pred)) {
             return;
         }
         final CompoundTerm sub = (CompoundTerm) subj;
@@ -158,7 +158,7 @@ final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralCompose1(CompoundTerm compound, short index, Statement statement,
+    static void structuralComposeOne(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
@@ -205,7 +205,9 @@ final class StructuralRules {
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
-    static void structuralDecompose1(CompoundTerm compound, short index, Statement statement,
+    static void structuralDecomposeOne(
+            CompoundTerm compound, short index,
+            Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!context.getCurrentTask().isJudgment()) {
@@ -269,6 +271,7 @@ final class StructuralRules {
     /* -------------------- set transform -------------------- */
     /**
      * {<S --> {P}>} |- <S <-> {P}>
+     * {<[S] --> P>} |- <[S] <-> P>
      *
      * @param compound  The set compound
      * @param statement The premise
@@ -316,18 +319,20 @@ final class StructuralRules {
      * {(&&, A, B), A@(&&, A, B)} |- A, or answer (&&, A, B)? using A
      * {(||, A, B), A@(||, A, B)} |- A, or answer (||, A, B)? using A
      *
-     * @param compound     The premise
-     * @param component    The recognized component in the premise
-     * @param compoundTask Whether the compound comes from the task
-     * @param context      Reference to the derivation context
+     * @param compound           The premise
+     * @param component          The recognized component in the premise
+     * @param isCompoundFromTask Whether the compound comes from the task
+     * @param context            Reference to the derivation context
      */
-    static void structuralCompound(CompoundTerm compound, Term component, boolean compoundTask,
+    static void structuralCompound(
+            CompoundTerm compound, Term component,
+            boolean isCompoundFromTask,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if (!component.isConstant()) {
             return;
         }
-        final Term content = (compoundTask ? component : compound);
+        final Term content = (isCompoundFromTask ? component : compound);
         final Task task = context.getCurrentTask();
         final Truth truth;
         final Budget budget;
@@ -335,13 +340,13 @@ final class StructuralRules {
             truth = null;
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
-            if ((task.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
+            if ((task.isJudgment()) == (isCompoundFromTask == (compound instanceof Conjunction))) {
                 truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
             } else {
-                Truth v1, v2;
-                v1 = TruthFunctions.negation(task.asJudgement());
-                v2 = TruthFunctions.analyticDeduction(v1, RELIANCE);
-                truth = TruthFunctions.negation(v2);
+                truth = TruthFunctions.negation(
+                        TruthFunctions.analyticDeduction(
+                                TruthFunctions.negation(task.asJudgement()),
+                                RELIANCE));
             }
             budget = BudgetFunctions.forward(truth, context);
         }
@@ -358,18 +363,22 @@ final class StructuralRules {
     static void transformNegation(Term content, DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
+        // * 🚩计算真值和预算值
         final Truth truth;
-        if (task.isJudgment()) {
-            truth = TruthFunctions.negation(task.asJudgement());
-        } else {
-            truth = null;
-        }
         final Budget budget;
-        if (task.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context);
-        } else {
-            budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
+        switch (task.getPunctuation()) {
+            case JUDGMENT_MARK:
+                truth = TruthFunctions.negation(task.asJudgement());
+                budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
+                break;
+            case QUESTION_MARK:
+                truth = null;
+                budget = BudgetFunctions.compoundBackward(content, context);
+                break;
+            default:
+                throw new AssertionError("未知的标点");
         }
+        // * 🚩直接导出结论
         context.singlePremiseTask(content, truth, budget);
     }
 

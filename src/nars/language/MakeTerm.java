@@ -1,28 +1,9 @@
-package nars.control;
+package nars.language;
 
 import java.util.ArrayList;
 import java.util.TreeSet;
 
 import nars.io.Symbols;
-import nars.language.CompoundTerm;
-import nars.language.Conjunction;
-import nars.language.Statement;
-import nars.language.DifferenceExt;
-import nars.language.DifferenceInt;
-import nars.language.Disjunction;
-import nars.language.Equivalence;
-import nars.language.ImageExt;
-import nars.language.ImageInt;
-import nars.language.Implication;
-import nars.language.Inheritance;
-import nars.language.IntersectionExt;
-import nars.language.IntersectionInt;
-import nars.language.Negation;
-import nars.language.Product;
-import nars.language.SetExt;
-import nars.language.SetInt;
-import nars.language.Similarity;
-import nars.language.Term;
 
 /**
  * 所有原`nars.language`包的{@link Term}子类中有关`make`的静态方法
@@ -127,7 +108,7 @@ public abstract class MakeTerm {
     // return t1;
     // final ArrayList<Term> list = t1.cloneComponents();
     // final boolean success;
-    // if (t1.getClass() == t2.getClass())
+    // if (t1.isSameType(t2))
     // success = list.addAll(((CompoundTerm) t2).getComponents());
     // else
     // success = list.add(t2);
@@ -139,34 +120,36 @@ public abstract class MakeTerm {
      * * 🚩从复合词项中删去一个元素，或从同类复合词项中删除所有其内元素，然后尝试约简
      * * ⚠️结果可空
      *
-     * @param t1 The compound
-     * @param t2 The component
+     * @param toBeReduce        The compound
+     * @param componentToReduce The component
      * @return The new compound
      */
-    public static Term reduceComponents(CompoundTerm t1, Term t2) {
+    public static Term reduceComponents(CompoundTerm toBeReduce, Term componentToReduce) {
         final boolean success;
-        final ArrayList<Term> components = t1.cloneComponents();
-        if (t1.getClass() == t2.getClass())
-            // * 🚩同类⇒删除t2内所有元素
-            success = components.removeAll(((CompoundTerm) t2).getComponents());
+        final ArrayList<Term> components = toBeReduce.cloneComponents();
+        if (toBeReduce.isSameType(componentToReduce))
+            // * 🚩同类⇒删除componentToReduce内所有元素
+            success = components.removeAll(((CompoundTerm) componentToReduce).getComponents());
         else
-            // * 🚩默认⇒删除t2（若含）
-            success = components.remove(t2);
+            // * 🚩默认⇒删除componentToReduce（若含）
+            success = components.remove(componentToReduce);
         if (!success)
             return null;
         // * 🚩删除成功⇒继续
         if (components.size() > 1) {
             // * 🚩元素数量>1⇒以t1为模板构造新词项
-            return makeCompoundTerm(t1, components);
+            return makeCompoundTerm(toBeReduce, components);
         } else if (components.size() == 1) {
             // * 🚩元素数量=1⇒尝试「集合约简」
             // * 📝「集合约简」：若为【只有一个元素】的「集合性操作」复合词项类型⇒语义上与其元素等价
-            final boolean canExtract = t1 instanceof Conjunction || t1 instanceof Disjunction
-                    || t1 instanceof IntersectionExt || t1 instanceof IntersectionInt
-                    || t1 instanceof DifferenceExt || t1 instanceof DifferenceInt;
+            final boolean canExtract = toBeReduce instanceof Conjunction || toBeReduce instanceof Disjunction
+                    || toBeReduce instanceof IntersectionExt || toBeReduce instanceof IntersectionInt
+                    || toBeReduce instanceof DifferenceExt || toBeReduce instanceof DifferenceInt;
             if (canExtract)
                 return components.get(0);
-            // ? 为何对「不可约简」的其它复合词项无效，如 (*, A) 就会返回null
+            else
+                // ? 为何对「不可约简」的其它复合词项无效，如 (*, A) 就会返回null
+                return null;
         }
         // * 🚩空集⇒始终失败
         return null;
@@ -189,7 +172,7 @@ public abstract class MakeTerm {
         list.remove(index);
         // * 🚩非空⇒替换
         if (t != null) {
-            if (compound.getClass() == t.getClass()) {
+            if (compound.isSameType(t)) {
                 // * 🚩同类⇒所有元素并入 | (*, 1, a)[1] = (*, 2, 3) => (*, 1, 2, 3)
                 final ArrayList<Term> list2 = ((CompoundTerm) t).cloneComponents();
                 for (int i = 0; i < list2.size(); i++) {

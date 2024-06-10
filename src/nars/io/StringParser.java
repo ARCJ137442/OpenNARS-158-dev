@@ -1,5 +1,7 @@
 package nars.io;
 
+import static nars.language.MakeTerm.*;
+
 import java.util.*;
 
 //import deductions.runtime.swing.TemporaryFrame;
@@ -9,7 +11,6 @@ import nars.inference.*;
 import nars.language.*;
 import nars.main.Parameters;
 import nars.storage.Memory;
-import static nars.control.MakeTerm.*;
 
 /**
  * Parse input String into Task or Term. Abstract class with static methods
