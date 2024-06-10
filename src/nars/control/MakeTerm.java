@@ -1064,7 +1064,7 @@ public abstract class MakeTerm {
      * @param pred      The second component
      * @return The Statement built
      */
-    public static Statement makeStatementSym(Statement statement, Term subj, Term pred) {
+    public static Statement makeStatementSymmetric(Statement statement, Term subj, Term pred) {
         // * 🚩非对称陈述⇒对称陈述
         if (statement instanceof Inheritance)
             // * 🚩继承⇒相似
@@ -1072,7 +1072,7 @@ public abstract class MakeTerm {
         if (statement instanceof Implication)
             // * 🚩蕴含⇒等价
             return makeEquivalence(subj, pred);
-        return null;
+        throw new Error("不可对称化的陈述系词");
     }
 
     /* Inheritance */

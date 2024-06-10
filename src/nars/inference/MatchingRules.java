@@ -12,7 +12,6 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.inference.TruthFunctions.TruthFSingleReliance;
 import nars.io.Symbols;
-import nars.language.Inheritance;
 import nars.language.Statement;
 import nars.language.Term;
 import nars.language.Variable;
@@ -160,20 +159,16 @@ public abstract class MatchingRules {
      * @param context   Reference to the derivation context
      */
     private static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Statement s1 = (Statement) judgment1.getContent();
-        final Term t1 = s1.getSubject();
-        final Term t2 = s1.getPredicate();
-        final Term content;
-        if (s1 instanceof Inheritance) {
-            content = makeSimilarity(t1, t2);
-        } else {
-            content = makeEquivalence(t1, t2);
-        }
-        final Truth value1 = judgment1;
-        final Truth value2 = judgment2;
-        final Truth truth = TruthFunctions.intersection(value1, value2);
+        // * 🚩提取内容
+        final Statement statement1 = (Statement) judgment1.getContent();
+        final Term term1 = statement1.getSubject();
+        final Term term2 = statement1.getPredicate();
+        // * 🚩构建内容 | 📝直接使用「制作对称」方法
+        final Term content = makeStatementSymmetric(statement1, term1, term2);
+        // * 🚩计算真值&预算
+        final Truth truth = TruthFunctions.intersection(judgment1, judgment2);
         final Budget budget = BudgetFunctions.forward(truth, context);
+        // * 🚩双前提结论
         context.doublePremiseTask(content, truth, budget);
     }
 

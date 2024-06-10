@@ -91,7 +91,7 @@ final class SyllogisticRules {
         }
         final Statement statement1 = makeStatement(taskContent, term1, term2);
         final Statement statement2 = makeStatement(taskContent, term2, term1);
-        final Statement statement3 = makeStatementSym(taskContent, term1, term2);
+        final Statement statement3 = makeStatementSymmetric(taskContent, term1, term2);
         context.doublePremiseTask(statement1, truth1, budget1);
         context.doublePremiseTask(statement2, truth2, budget2);
         context.doublePremiseTask(statement3, truth3, budget3);
