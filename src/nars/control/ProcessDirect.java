@@ -252,13 +252,13 @@ public abstract class ProcessDirect {
                 return;
             }
             // * 🚩不重复 && 可修正 ⇒ 修正
-            else if (LocalRules.revisable(judgment, oldBelief)) {
+            else if (judgment.revisable(oldBelief)) {
                 // * 🚩现在将「当前信念」「新时间戳」移入「修正」调用中
                 final boolean hasOverlap = judgment.evidentialOverlap(oldBelief);
                 if (!hasOverlap) {
                     // * 📌【2024-06-07 11:38:02】现在由于「新时间戳」的内置，经检查不再需要设置「当前信念」
                     // * 📌此处的「当前信念」直接取`oldBelief`，并以此构造时间戳
-                    LocalRules.revision(judgment, oldBelief, context);
+                    LocalRules.revisionDirect(judgment, oldBelief, context);
                 }
             }
         }

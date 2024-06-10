@@ -8,7 +8,7 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
-import nars.inference.LocalRules;
+import nars.inference.MatchingRules;
 import nars.main.Parameters;
 import nars.main.Reasoner;
 
@@ -47,11 +47,14 @@ public abstract class ProcessReason {
         // * 📌【2024-05-21 16:33:56】在运行到此处时，「推理上下文」的「当前信念」不在「待推理词项链表」中，但需要「被聚焦」
         for (;;) {
             // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
-            // * 🚩交给推理引擎做「概念推理」
-            // * 🚩先尝试本地处理，若本地处理成功（修正&答问），就返回
-            if (context.getCurrentBelief() != null) {
-                LocalRules.matchTaskAndBelief(context);
-            }
+            // * 🚩有当前信念 ⇒ 先尝试匹配处理
+            final int oldDerivedTasks = context.getNewTasks().size();
+            if (context.hasCurrentBelief())
+                MatchingRules.matchTaskAndBelief(context);
+            // * 🚩若作为「判断」成功⇒直接结束该信念的推理
+            final boolean hasResult = context.getNewTasks().size() > oldDerivedTasks;
+            if (hasResult && context.getCurrentTask().isJudgment())
+                continue;
             // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
             // * 📌依据：`long_term_stability.nal`
             // * 📄ONA中的结果有两个：
@@ -59,12 +62,8 @@ public abstract class ProcessReason {
             // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
             // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
             // * 📝目前的结果是：`ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}`
-            // * 🚩
-            // if (!context.getMemory().noResult() && task.isJudgment()) {
-            // * 🚩【2024-06-08 19:30:57】目前只能退而求其次，不可能再访问到其它地方的数据了
-            if (self.noResult() || !context.getCurrentTask().isJudgment()) {
-                inferenceEngine.reason(context);
-            }
+            // * 🚩交给推理引擎做「概念推理」
+            inferenceEngine.reason(context);
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
             final boolean hasNext = context.nextBelief() != null;
             if (!hasNext)

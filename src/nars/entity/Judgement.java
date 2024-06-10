@@ -11,6 +11,32 @@ public interface Judgement extends Sentence, Truth {
     // return JUDGMENT_MARK;
     // }
 
+    /**
+     * Check whether two sentences can be used in revision
+     * * 📝【2024-05-19 13:09:40】这里的`s1`、`s2`必定是「判断」类型
+     * * 🚩只有两个「判断句」才有可能「被用于修正」
+     *
+     * @param newBelief  The first sentence
+     * @param baseBelief The second sentence
+     * @return If revision is possible between the two sentences
+     */
+    public static boolean revisable(Judgement newBelief, Judgement baseBelief) {
+        // * 🚩如果两个「判断句」的「内容」相同，并且新的「判断句」是可（参与）修正的，那么第二个「判断句」可以修正第一个「判断句」
+        final boolean contentEq = newBelief.getContent().equals(baseBelief.getContent());
+        final boolean baseRevisable = newBelief.getRevisable();
+        return contentEq && baseRevisable;
+    }
+
+    /**
+     * 🆕作为一个「新信念」与「基础信念」是否可参与修正
+     *
+     * @param baseBelief
+     * @return
+     */
+    public default boolean revisable(Judgement baseBelief) {
+        return Judgement.revisable(this, baseBelief);
+    }
+
     @Override
     default boolean isJudgment() {
         return true;

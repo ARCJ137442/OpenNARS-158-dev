@@ -78,7 +78,7 @@ final class StructuralRules {
         } else {
             if (compound.size() > 1) {
                 if (task.isJudgment()) {
-                    truth = TruthFunctions.deduction(task.asJudgement(), RELIANCE);
+                    truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
                 } else {
                     return;
                 }
@@ -166,8 +166,8 @@ final class StructuralRules {
         }
         final Term component = compound.componentAt(index);
         final Judgement taskJudgement = context.getCurrentTask().asJudgement();
-        final Truth truthDed = TruthFunctions.deduction(taskJudgement, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(taskJudgement, RELIANCE));
+        final Truth truthDed = TruthFunctions.analyticDeduction(taskJudgement, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.analyticDeduction(taskJudgement, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (component.equals(subj)) {
@@ -213,8 +213,8 @@ final class StructuralRules {
         }
         final Term component = compound.componentAt(index);
         final Judgement taskJudgement = context.getCurrentTask().asJudgement();
-        final Truth truthDed = TruthFunctions.deduction(taskJudgement, RELIANCE);
-        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.deduction(taskJudgement, RELIANCE));
+        final Truth truthDed = TruthFunctions.analyticDeduction(taskJudgement, RELIANCE);
+        final Truth truthNDed = TruthFunctions.negation(TruthFunctions.analyticDeduction(taskJudgement, RELIANCE));
         final Term subj = statement.getSubject();
         final Term pred = statement.getPredicate();
         if (compound.equals(subj)) {
@@ -336,11 +336,11 @@ final class StructuralRules {
             budget = BudgetFunctions.compoundBackward(content, context);
         } else {
             if ((task.isJudgment()) == (compoundTask == (compound instanceof Conjunction))) {
-                truth = TruthFunctions.deduction(task.asJudgement(), RELIANCE);
+                truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
             } else {
                 Truth v1, v2;
                 v1 = TruthFunctions.negation(task.asJudgement());
-                v2 = TruthFunctions.deduction(v1, RELIANCE);
+                v2 = TruthFunctions.analyticDeduction(v1, RELIANCE);
                 truth = TruthFunctions.negation(v2);
             }
             budget = BudgetFunctions.forward(truth, context);

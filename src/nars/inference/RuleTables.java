@@ -361,7 +361,7 @@ public class RuleTables {
                     t1 = s2.getSubject();
                     t2 = s1.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, s1, s2)) {
-                        LocalRules.matchReverse(context);
+                        MatchingRules.matchReverse(context);
                     } else {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
                     }
@@ -376,7 +376,7 @@ public class RuleTables {
                     t1 = s1.getSubject();
                     t2 = s2.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, s1, s2)) {
-                        LocalRules.matchReverse(context);
+                        MatchingRules.matchReverse(context);
                     } else {
                         SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
                     }
@@ -422,7 +422,7 @@ public class RuleTables {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        LocalRules.matchAsymSym(asym, sym, figure, context);
+                        MatchingRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
                     }
@@ -434,7 +434,7 @@ public class RuleTables {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getSubject();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        LocalRules.matchAsymSym(asym, sym, figure, context);
+                        MatchingRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
                     }
@@ -446,7 +446,7 @@ public class RuleTables {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        LocalRules.matchAsymSym(asym, sym, figure, context);
+                        MatchingRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
                     }
@@ -458,7 +458,7 @@ public class RuleTables {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getSubject();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        LocalRules.matchAsymSym(asym, sym, figure, context);
+                        MatchingRules.matchAsymSym(asym, sym, figure, context);
                     } else {
                         SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
                     }

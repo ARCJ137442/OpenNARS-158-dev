@@ -9,6 +9,32 @@ import nars.entity.*;
  */
 final class TruthFunctions extends UtilityFunctions {
 
+    // * 函数式接口 * //
+
+    /**
+     * 🆕单真值函数
+     */
+    @FunctionalInterface
+    public interface TruthFSingle {
+        Truth call(Truth truth);
+    }
+
+    /**
+     * 🆕双真值函数
+     */
+    @FunctionalInterface
+    public interface TruthFDouble {
+        Truth call(Truth truth1, Truth truth2);
+    }
+
+    /**
+     * 🆕单真值+依赖度 函数
+     */
+    @FunctionalInterface
+    public interface TruthFSingleReliance {
+        Truth call(Truth truth, float reliance);
+    }
+
     /* ----- Single argument functions, called in MatchingRules ----- */
     /**
      * {<A ==> B>} |- <B ==> A>
@@ -126,7 +152,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @param reliance Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
-    static Truth deduction(Truth v1, float reliance) {
+    static Truth analyticDeduction(Truth v1, float reliance) {
         float f1 = v1.getFrequency();
         float c1 = v1.getConfidence();
         // * 📌对于第二个「分析性前提」使用「依赖度」衡量
@@ -201,8 +227,8 @@ final class TruthFunctions extends UtilityFunctions {
      * @param reliance Confidence of the second (analytical) premise
      * @return Truth value of the conclusion
      */
-    static Truth abduction(Truth v1, float reliance) {
-        // * 🚩分析性⇒无意义（信度清零）
+    static Truth analyticAbduction(Truth v1, float reliance) {
+        // * 🚩分析性⇒无意义（信度清零） | 只能「分析」一次
         if (v1.getAnalytic())
             return new TruthValue(0.5f, 0f);
         float f1 = v1.getFrequency();
@@ -235,7 +261,7 @@ final class TruthFunctions extends UtilityFunctions {
      * @return Truth value of the conclusion
      */
     static Truth exemplification(Truth v1, Truth v2) {
-        // * 🚩分析性⇒无意义（信度清零）
+        // * 🚩分析性⇒无意义（信度清零） | 只能「分析」一次
         if (v1.getAnalytic() || v2.getAnalytic())
             return new TruthValue(0.5f, 0f);
         float f1 = v1.getFrequency();
@@ -400,7 +426,7 @@ final class TruthFunctions extends UtilityFunctions {
     static Truth reduceDisjunction(Truth v1, Truth v2) {
         // * 🚩演绎（反向交集，依赖度=1）
         Truth v0 = intersection(v1, negation(v2));
-        return deduction(v0, 1f);
+        return analyticDeduction(v0, 1f);
     }
 
     /**
@@ -413,7 +439,7 @@ final class TruthFunctions extends UtilityFunctions {
     static Truth reduceConjunction(Truth v1, Truth v2) {
         // * 🚩否定演绎（反向交集（内部取反），依赖度=1）
         Truth v0 = intersection(negation(v1), v2);
-        return negation(deduction(v0, 1f));
+        return negation(analyticDeduction(v0, 1f));
     }
 
     /**
@@ -443,5 +469,39 @@ final class TruthFunctions extends UtilityFunctions {
         Truth v0 = new TruthValue(f1, w2c(c1));
         // * 🚩再参与「类比」（弱中之弱）
         return analogy(v2, v0);
+    }
+
+    /**
+     * 🆕函数表
+     * * 🎯示例性存储表示「真值函数」的引用（函数指针）
+     * * 🚩无需真正创建实例
+     */
+    static abstract class FunctionTable {
+        // * 📌单真值函数
+        TruthFSingle conversion = TruthFunctions::conversion;
+        TruthFSingle negation = TruthFunctions::negation;
+        TruthFSingle contraposition = TruthFunctions::contraposition;
+        // * 📌双真值函数
+        TruthFDouble revision = TruthFunctions::revision;
+        TruthFDouble deduction = TruthFunctions::deduction;
+        TruthFDouble analogy = TruthFunctions::analogy;
+        TruthFDouble resemblance = TruthFunctions::resemblance;
+        TruthFDouble abduction = TruthFunctions::abduction;
+        TruthFDouble induction = TruthFunctions::induction;
+        TruthFDouble exemplification = TruthFunctions::exemplification;
+        TruthFDouble desireStrong = TruthFunctions::desireStrong;
+        TruthFDouble desireWeak = TruthFunctions::desireWeak;
+        TruthFDouble desireDeduction = TruthFunctions::desireDed;
+        TruthFDouble desireInduction = TruthFunctions::desireInd;
+        TruthFDouble union = TruthFunctions::union;
+        TruthFDouble intersection = TruthFunctions::intersection;
+        TruthFDouble reduceDisjunction = TruthFunctions::reduceDisjunction;
+        TruthFDouble reduceConjunction = TruthFunctions::reduceConjunction;
+        TruthFDouble reduceConjunctionNeg = TruthFunctions::reduceConjunctionNeg;
+        TruthFDouble anonymousAnalogy = TruthFunctions::anonymousAnalogy;
+        // * 📌单真值依赖函数（分析性函数）
+        TruthFSingleReliance analyticDeduction = TruthFunctions::analyticDeduction;
+        TruthFSingleReliance analyticAbduction = TruthFunctions::analyticAbduction;
+
     }
 }
