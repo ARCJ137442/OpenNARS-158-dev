@@ -1,27 +1,19 @@
 package nars.inference;
 
-import static nars.control.MakeTerm.*;
 import static nars.io.Symbols.*;
 
 import nars.control.DerivationContextReason;
 import nars.control.VariableInference;
 import nars.entity.Judgement;
-import nars.entity.Question;
-import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.inference.TruthFunctions.TruthFSingleReliance;
 import nars.io.Symbols;
-import nars.language.Statement;
 import nars.language.Term;
-import nars.language.Variable;
-import static nars.inference.RuleTables.SyllogismFigure;
 
 /**
  * 🆕重新创建「匹配规则」
  * * 🎯用于在「概念推理」中【匹配】内容相近的语句
- * * 📄继承⇄相似
- * * 📄继承+继承→相似
+ * * 📌现在诸多规则已迁移到「三段论规则」中
  */
 public abstract class MatchingRules {
 
@@ -91,184 +83,5 @@ public abstract class MatchingRules {
                 content,
                 truth, budget,
                 newStamp);
-    }
-
-    /* -------------------- same terms, difference relations -------------------- */
-    /**
-     * The task and belief match reversely
-     * * 📄<A --> B> + <B --> A>
-     * * <A --> B>. => <A <-> B>.
-     * * <A --> B>? => <A --> B>.
-     *
-     * @param context Reference to the derivation context
-     */
-    static void matchReverse(DerivationContextReason context) {
-        // 📄TaskV1@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
-        // %1.00;0.45% {503 : 38;37}
-        // 📄JudgementV1@43 "<<toothbrush --> $1> ==> <cup --> $1>>. %1.0000;0.4475%
-        // {483 : 36;39} "
-        final Task task = context.getCurrentTask();
-        final Judgement belief = context.getCurrentBelief();
-        switch (task.getPunctuation()) {
-            // * 🚩判断句⇒尝试合并成对称形式（继承⇒相似，蕴含⇒等价）
-            case JUDGMENT_MARK:
-                inferToSym(task.asJudgement(), belief, context);
-                return;
-            // * 🚩疑问句⇒尝试执行转换规则
-            case QUESTION_MARK:
-                conversion(task.asQuestion(), belief, context);
-                return;
-            // * 🚩其它⇒报错
-            default:
-                throw new Error("Unknown punctuation of task: " + task.toStringLong());
-        }
-    }
-
-    /**
-     * Inheritance/Implication matches Similarity/Equivalence
-     *
-     * @param asym    A Inheritance/Implication sentence
-     * @param sym     A Similarity/Equivalence sentence
-     * @param figure  location of the shared term
-     * @param context Reference to the derivation context
-     */
-    static void matchAsymSym(Sentence asym, Sentence sym, SyllogismFigure figure, DerivationContextReason context) {
-        final Task task = context.getCurrentTask();
-        switch (task.getPunctuation()) {
-            // * 🚩判断句⇒尝试合并到非对称形式（相似⇒继承，等价⇒蕴含）
-            case JUDGMENT_MARK:
-                // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
-                inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
-                return;
-            // * 🚩疑问句⇒尝试「继承⇄相似」「蕴含⇄等价」
-            case QUESTION_MARK:
-                convertRelation(task.asQuestion(), context);
-                return;
-            default:
-                throw new Error("Unknown punctuation of task: " + task.toStringLong());
-        }
-    }
-
-    /* -------------------- two-premise inference rules -------------------- */
-    /**
-     * {<S --> P>, <P --> S} |- <S <-> p>
-     * Produce Similarity/Equivalence from a pair of reversed
-     * Inheritance/Implication
-     *
-     * @param judgment1 The first premise
-     * @param judgment2 The second premise
-     * @param context   Reference to the derivation context
-     */
-    private static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
-        // * 🚩提取内容
-        final Statement statement1 = (Statement) judgment1.getContent();
-        final Term term1 = statement1.getSubject();
-        final Term term2 = statement1.getPredicate();
-        // * 🚩构建内容 | 📝直接使用「制作对称」方法
-        final Term content = makeStatementSymmetric(statement1, term1, term2);
-        // * 🚩计算真值&预算
-        final Truth truth = TruthFunctions.intersection(judgment1, judgment2);
-        final Budget budget = BudgetFunctions.forward(truth, context);
-        // * 🚩双前提结论
-        context.doublePremiseTask(content, truth, budget);
-    }
-
-    /**
-     * {<S <-> P>, <P --> S>} |- <S --> P> Produce an Inheritance/Implication
-     * from a Similarity/Equivalence and a reversed Inheritance/Implication
-     *
-     * @param asym    The asymmetric premise
-     * @param sym     The symmetric premise
-     * @param context Reference to the derivation context
-     */
-    private static void inferToAsym(Judgement asym, Judgement sym, DerivationContextReason context) {
-        // * 🚩提取 | 📄<S --> P> => S, P
-        final Statement asymStatement = (Statement) asym.getContent();
-        // * 🚩构建新的相反陈述 | 📄S, P => <P --> S>
-        final Term newSubject = asymStatement.getPredicate();
-        final Term newPredicate = asymStatement.getSubject();
-        final Statement content = makeStatement(asymStatement, newSubject, newPredicate);
-        // * 🚩构建真值，更新预算
-        // TODO: 后续可使用函数指针延迟计算
-        final Truth truth = TruthFunctions.reduceConjunction(sym, asym);
-        final Budget budget = BudgetFunctions.forward(truth, context);
-        // * 🚩双前提结论
-        context.doublePremiseTask(content, truth, budget);
-    }
-
-    /* -------------------- one-premise inference rules -------------------- */
-    /**
-     * {<P --> S>} |- <S --> P> Produce an Inheritance/Implication from a
-     * reversed Inheritance/Implication
-     *
-     * @param context Reference to the derivation context
-     */
-    private static void conversion(Question taskQuestion, Judgement belief, DerivationContextReason context) {
-        // * 🚩构建真值和预算值
-        final Truth truth = TruthFunctions.conversion(context.getCurrentBelief());
-        final Budget budget = BudgetFunctions.forward(truth, context);
-        // * 🚩转发到统一的逻辑
-        convertedJudgment(truth, budget, context);
-    }
-
-    /**
-     * {<S --> P>} |- <S <-> P>
-     * {<S <-> P>} |- <S --> P> Switch between
-     * Inheritance/Implication and Similarity/Equivalence
-     *
-     * @param context Reference to the derivation context
-     */
-    private static void convertRelation(Question taskQuestion, DerivationContextReason context) {
-        // * 🚩根据「可交换性」分派真值函数
-        final TruthFSingleReliance truthF = ((Statement) taskQuestion.getContent()).isCommutative()
-                // * 🚩可交换（相似/等价）⇒归纳
-                ? TruthFunctions::analyticAbduction
-                // * 🚩不可交换（继承/蕴含）⇒演绎
-                : TruthFunctions::analyticDeduction;
-        final Truth newTruth = truthF.call(
-                // * 🚩基于「当前信念」
-                context.getCurrentBelief(),
-                1.0f);
-        // * 🚩分派预算值
-        final Budget budget = BudgetFunctions.forward(newTruth, context);
-        // * 🚩继续向下分派函数
-        convertedJudgment(newTruth, budget, context);
-    }
-
-    /**
-     * Convert judgment into different relation
-     * <p>
-     * called in MatchingRules
-     *
-     * @param budget  The budget value of the new task
-     * @param truth   The truth value of the new task
-     * @param context Reference to the derivation context
-     */
-    private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContextReason context) {
-        // * 🚩提取内容
-        final Statement taskContent = (Statement) context.getCurrentTask().getContent();
-        final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();
-        final Term subjT = taskContent.getSubject();
-        final Term predT = taskContent.getPredicate();
-        final Term subjB = beliefContent.getSubject();
-        final Term predB = beliefContent.getPredicate();
-        // * 🚩创建内容 | ✅【2024-06-10 10:26:14】已通过「长期稳定性」验证与原先逻辑的稳定
-        final Term newSubject, newPredicate;
-        if (Variable.containVarQ(predT)) {
-            // * 🚩谓词有查询变量⇒用「信念主词/信念谓词」替换
-            newSubject = subjT;
-            newPredicate = subjT.equals(subjB) ? predB : subjB;
-        } else if (Variable.containVarQ(subjT)) {
-            // * 🚩主词有查询变量⇒用「信念主词/信念谓词」替换
-            newSubject = predT.equals(subjB) ? predB : subjB;
-            newPredicate = predT;
-        } else {
-            // * 🚩否则：直接用「任务主词&任务谓词」替换
-            newSubject = subjT;
-            newPredicate = predT;
-        }
-        final Term newContent = makeStatement(taskContent, newSubject, newPredicate);
-        // * 🚩导出任务
-        context.singlePremiseTask(newContent, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
 }

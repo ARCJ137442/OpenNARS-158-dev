@@ -351,78 +351,111 @@ public class RuleTables {
     /**
      * Syllogistic rules whose both premises are on the same asymmetric relation
      *
-     * @param sentence The taskSentence in the task
-     * @param belief   The judgment in the belief
-     * @param figure   The location of the shared term
-     * @param context  Reference to the derivation context
+     * @param task    The taskSentence in the task
+     * @param belief  The judgment in the belief
+     * @param figure  The location of the shared term
+     * @param context Reference to the derivation context
      */
     private static void asymmetricAsymmetric(
-            final Sentence sentence,
+            final Sentence task,
             final Judgement belief,
             final SyllogismFigure figure,
             final DerivationContextReason context) {
         // * 🚩非对称🆚非对称
-        final Statement s1 = (Statement) sentence.cloneContent();
-        final Statement s2 = (Statement) belief.cloneContent();
-        final Term t1, t2;
+        final Statement tTerm = (Statement) task.cloneContent();
+        final Statement bTerm = (Statement) belief.cloneContent();
+        final Term term1, term2;
         final boolean unified;
         switch (figure) {
+            // * 🚩主项×主项 <A --> B> × <A --> C>
             case SS: // induction
-                unified = VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2);
-                if (unified) {
-                    if (s1.equals(s2)) {
-                        return;
-                    }
-                    t1 = s2.getPredicate();
-                    t2 = s1.getPredicate();
-                    CompositionalRules.composeCompound(s1, s2, 0, context);
-                    SyllogisticRules.abdIndCom(t1, t2, sentence, belief, figure, context);
-                }
+                // * 🚩先尝试统一独立变量
+                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getSubject(), bTerm.getSubject(), tTerm,
+                        bTerm);
+                // * 🚩不能统一变量⇒终止
+                if (!unified)
+                    return;
+                // * 🚩统一后内容相等⇒终止
+                if (tTerm.equals(bTerm))
+                    return;
+                // * 🚩取其中两个不同的谓项 B + C
+                term1 = bTerm.getPredicate();
+                term2 = tTerm.getPredicate();
+                // * 🚩构造复合词项
+                CompositionalRules.composeCompound(tTerm, bTerm, 0, context);
+                // * 🚩归因+归纳+比较
+                SyllogisticRules.abdIndCom(term1, term2, task, belief, context);
                 return;
+            // * 🚩主项×谓项 <A --> B> × <C --> A>
             case SP: // deduction
-                unified = VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2);
-                if (unified) {
-                    if (s1.equals(s2)) {
-                        return;
-                    }
-                    t1 = s2.getSubject();
-                    t2 = s1.getPredicate();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, s1, s2)) {
-                        MatchingRules.matchReverse(context);
-                    } else {
-                        SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getSubject(), bTerm.getPredicate(), tTerm,
+                        bTerm);
+                // * 🚩不能统一变量⇒终止
+                if (!unified)
+                    return;
+                // * 🚩统一后内容相等⇒终止
+                if (tTerm.equals(bTerm))
+                    return;
+                // * 🚩取其中两个不同的主项和谓项 C + B
+                term1 = bTerm.getSubject();
+                term2 = tTerm.getPredicate();
+                // * 🚩尝试统一查询变量
+                if (VariableInference.unify(VAR_QUERY, term1, term2, tTerm, bTerm))
+                    // * 🚩成功统一 ⇒ 匹配反向
+                    SyllogisticRules.matchReverse(context);
+                else
+                    // * 🚩未有统一 ⇒ 演绎+举例
+                    SyllogisticRules.dedExe(term1, term2, task, belief, context);
                 return;
+            // * 🚩谓项×主项 <A --> B> × <B --> C>
             case PS: // exemplification
-                unified = VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2);
-                if (unified) {
-                    if (s1.equals(s2)) {
-                        return;
-                    }
-                    t1 = s1.getSubject();
-                    t2 = s2.getPredicate();
-                    if (VariableInference.unify(VAR_QUERY, t1, t2, s1, s2)) {
-                        MatchingRules.matchReverse(context);
-                    } else {
-                        SyllogisticRules.dedExe(t1, t2, sentence, belief, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unified = VariableInference.unify(VAR_INDEPENDENT, tTerm.getPredicate(), bTerm.getSubject(), tTerm,
+                        bTerm);
+                // * 🚩不能统一变量⇒终止
+                if (!unified)
+                    return;
+                // * 🚩统一后内容相等⇒终止
+                if (tTerm.equals(bTerm))
+                    return;
+                // * 🚩取其中两个不同的主项和谓项 A + C
+                term1 = tTerm.getSubject();
+                term2 = bTerm.getPredicate();
+                // * 🚩尝试统一查询变量
+                if (VariableInference.unify(VAR_QUERY, term1, term2, tTerm, bTerm))
+                    // * 🚩成功统一 ⇒ 匹配反向
+                    SyllogisticRules.matchReverse(context);
+                else
+                    // * 🚩未有统一 ⇒ 演绎+举例
+                    SyllogisticRules.dedExe(term1, term2, task, belief, context);
                 return;
+            // * 🚩谓项×谓项 <A --> B> × <C --> B>
             case PP: // abduction
-                unified = VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2);
-                if (unified) {
-                    if (s1.equals(s2)) {
-                        return;
-                    }
-                    t1 = s1.getSubject();
-                    t2 = s2.getSubject();
-                    if (!SyllogisticRules.conditionalAbd(t1, t2, s1, s2, context)) { // if conditional abduction, skip
-                        // the following
-                        CompositionalRules.composeCompound(s1, s2, 1, context);
-                        SyllogisticRules.abdIndCom(t1, t2, sentence, belief, figure, context);
-                    }
-                }
+                // * 🚩先尝试统一独立变量
+                unified = VariableInference.unify(
+                        VAR_INDEPENDENT,
+                        tTerm.getPredicate(), bTerm.getPredicate(),
+                        tTerm, bTerm);
+                // * 🚩不能统一变量⇒终止
+                if (!unified)
+                    return;
+                // * 🚩统一后内容相等⇒终止
+                if (tTerm.equals(bTerm))
+                    return;
+                // * 🚩取其中两个不同的主项和谓项 A + C
+                term1 = tTerm.getSubject();
+                term2 = bTerm.getSubject();
+                // * 🚩先尝试进行「条件归纳」，有结果⇒返回
+                // TODO: 或许可以在这个过程中返回「推理结果」？在其中加入「导出的结论」「要更新的预算」等
+                final boolean applied = SyllogisticRules.conditionalAbd(term1, term2, tTerm, bTerm, context);
+                if (applied)
+                    return;
+                // if conditional abduction, skip the following
+                // * 🚩尝试构建复合词项
+                CompositionalRules.composeCompound(tTerm, bTerm, 1, context);
+                // * 🚩归因+归纳+比较
+                SyllogisticRules.abdIndCom(term1, term2, task, belief, context);
                 return;
         }
     }
@@ -448,9 +481,9 @@ public class RuleTables {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        MatchingRules.matchAsymSym(asym, sym, figure, context);
+                        SyllogisticRules.matchAsymSym(asym, sym, context);
                     } else {
-                        SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
+                        SyllogisticRules.analogy(t2, t1, asym, sym, context);
                     }
                 }
                 return;
@@ -460,9 +493,9 @@ public class RuleTables {
                     t1 = asymSt.getPredicate();
                     t2 = symSt.getSubject();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        MatchingRules.matchAsymSym(asym, sym, figure, context);
+                        SyllogisticRules.matchAsymSym(asym, sym, context);
                     } else {
-                        SyllogisticRules.analogy(t2, t1, asym, sym, figure, context);
+                        SyllogisticRules.analogy(t2, t1, asym, sym, context);
                     }
                 }
                 return;
@@ -472,9 +505,9 @@ public class RuleTables {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getPredicate();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        MatchingRules.matchAsymSym(asym, sym, figure, context);
+                        SyllogisticRules.matchAsymSym(asym, sym, context);
                     } else {
-                        SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
+                        SyllogisticRules.analogy(t1, t2, asym, sym, context);
                     }
                 }
                 return;
@@ -484,9 +517,9 @@ public class RuleTables {
                     t1 = asymSt.getSubject();
                     t2 = symSt.getSubject();
                     if (VariableInference.unify(VAR_QUERY, t1, t2, asymSt, symSt)) {
-                        MatchingRules.matchAsymSym(asym, sym, figure, context);
+                        SyllogisticRules.matchAsymSym(asym, sym, context);
                     } else {
-                        SyllogisticRules.analogy(t1, t2, asym, sym, figure, context);
+                        SyllogisticRules.analogy(t1, t2, asym, sym, context);
                     }
                 }
                 return;
@@ -509,25 +542,25 @@ public class RuleTables {
         switch (figure) {
             case SS:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getSubject(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence, figure,
+                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getPredicate(), belief, taskSentence,
                             context);
                 }
                 return;
             case SP:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getSubject(), s2.getPredicate(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence, figure,
+                    SyllogisticRules.resemblance(s1.getPredicate(), s2.getSubject(), belief, taskSentence,
                             context);
                 }
                 return;
             case PS:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getSubject(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence, figure,
+                    SyllogisticRules.resemblance(s1.getSubject(), s2.getPredicate(), belief, taskSentence,
                             context);
                 }
                 return;
             case PP:
                 if (VariableInference.unify(VAR_INDEPENDENT, s1.getPredicate(), s2.getPredicate(), s1, s2)) {
-                    SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence, figure,
+                    SyllogisticRules.resemblance(s1.getSubject(), s2.getSubject(), belief, taskSentence,
                             context);
                 }
                 return;

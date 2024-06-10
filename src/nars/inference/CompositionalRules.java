@@ -76,28 +76,28 @@ public final class CompositionalRules {
      *
      * @param taskSentence The first premise
      * @param belief       The second premise
-     * @param index        The location of the shared term
+     * @param sharedTermI  The location of the shared term
      * @param context      Reference to the derivation context
      */
     static void composeCompound(
             Statement taskContent,
             Statement beliefContent,
-            int index,
+            int sharedTermI,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         if ((!context.getCurrentTask().isJudgment())
                 || (taskContent.getClass() != beliefContent.getClass())) {
             return;
         }
-        final Term componentT = taskContent.componentAt(1 - index);
-        final Term componentB = beliefContent.componentAt(1 - index);
-        final Term componentCommon = taskContent.componentAt(index);
+        final Term componentT = taskContent.componentAt(1 - sharedTermI);
+        final Term componentB = beliefContent.componentAt(1 - sharedTermI);
+        final Term componentCommon = taskContent.componentAt(sharedTermI);
         if ((componentT instanceof CompoundTerm) && ((CompoundTerm) componentT).containAllComponents(componentB)) {
-            decomposeCompound((CompoundTerm) componentT, componentB, componentCommon, index, true, context);
+            decomposeCompound((CompoundTerm) componentT, componentB, componentCommon, sharedTermI, true, context);
             return;
         } else if ((componentB instanceof CompoundTerm)
                 && ((CompoundTerm) componentB).containAllComponents(componentT)) {
-            decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, index, false, context);
+            decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, sharedTermI, false, context);
             return;
         }
         final Truth truthT = context.getCurrentTask().asJudgement();
@@ -108,7 +108,7 @@ public final class CompositionalRules {
         Term termOr = null;
         Term termAnd = null;
         Term termDif = null;
-        if (index == 0) {
+        if (sharedTermI == 0) {
             if (taskContent instanceof Inheritance) {
                 termOr = makeIntersectionInt(componentT, componentB);
                 termAnd = makeIntersectionExt(componentT, componentB);
@@ -150,7 +150,7 @@ public final class CompositionalRules {
             processComposed(taskContent, termDif, componentCommon.clone(), truthDif, context);
         }
         if (taskContent instanceof Inheritance) {
-            introVarOuter(taskContent, beliefContent, index, context);
+            introVarOuter(taskContent, beliefContent, sharedTermI, context);
             // introVarImage(taskContent, beliefContent, index);
         }
     }
