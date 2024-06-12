@@ -27,7 +27,7 @@ public class Disjunction extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private Disjunction(String n, ArrayList<Term> cs, boolean con, short i) {
+    private Disjunction(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class Disjunction extends CompoundTerm {
      */
     @Override
     public Disjunction clone() {
-        return new Disjunction(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Disjunction(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

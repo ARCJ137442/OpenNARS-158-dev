@@ -27,7 +27,7 @@ public class SetExt extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private SetExt(String n, ArrayList<Term> cs, boolean con, short i) {
+    private SetExt(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -37,7 +37,7 @@ public class SetExt extends CompoundTerm {
      * @return A new object, to be casted into a SetExt
      */
     public SetExt clone() {
-        return new SetExt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new SetExt(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

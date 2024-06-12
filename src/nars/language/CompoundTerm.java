@@ -22,6 +22,22 @@ public abstract class CompoundTerm extends Term {
         public Term setTerm(int index, Term term) {
             return this.__set(index, term);
         }
+
+        // 深拷贝 //
+
+        /**
+         * Deep clone an array list of terms
+         *
+         * @param &this
+         * @return an identical and separate copy of the list
+         */
+        public TermComponents deepClone() {
+            ArrayList<Term> arr = new ArrayList<>(this.size());
+            for (int i = 0; i < this.size(); i++) {
+                arr.add((Term) ((Term) this.get(i)).clone());
+            }
+            return new TermComponents(arr);
+        }
     }
 
     /**
@@ -65,8 +81,12 @@ public abstract class CompoundTerm extends Term {
      * @param complexity Complexity of the compound term
      */
     protected CompoundTerm(String name, ArrayList<Term> components, boolean isConstant, short complexity) {
+        this(name, new TermComponents(components), isConstant, complexity);
+    }
+
+    protected CompoundTerm(String name, TermComponents components, boolean isConstant, short complexity) {
         super(name);
-        this.components = new TermComponents(components);
+        this.components = components;
         this.isConstant = isConstant;
         this.complexity = complexity;
     }
@@ -189,7 +209,7 @@ public abstract class CompoundTerm extends Term {
      * @return the oldName of the term
      */
     protected String makeName() {
-        return makeCompoundName(operator(), components);
+        return makeCompoundName(operator(), getComponents());
     }
 
     /**
@@ -222,7 +242,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg    the list of components
      * @return the oldName of the term
      */
-    public static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
+    public static String makeSetName(char opener, TermComponents arg, char closer) {
         StringBuilder name = new StringBuilder();
         name.append(opener);
         name.append(arg.get(0).getName());
@@ -243,6 +263,10 @@ public abstract class CompoundTerm extends Term {
      * @return the oldName of the term
      */
     public static String makeImageName(String op, ArrayList<Term> arg, int relationIndex) {
+        return makeImageName(op, new TermComponents(arg), relationIndex);
+    }
+
+    public static String makeImageName(String op, TermComponents arg, int relationIndex) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);
@@ -330,7 +354,7 @@ public abstract class CompoundTerm extends Term {
      * @return The component list
      */
     public ArrayList<Term> getComponents() {
-        return components;
+        return this.components.asList();
     }
 
     /**
@@ -339,24 +363,7 @@ public abstract class CompoundTerm extends Term {
      * @return The cloned component list
      */
     public ArrayList<Term> cloneComponents() {
-        return cloneList(components);
-    }
-
-    /**
-     * Deep clone an array list of terms
-     *
-     * @param original The original component list
-     * @return an identical and separate copy of the list
-     */
-    public static ArrayList<Term> cloneList(ArrayList<Term> original) {
-        if (original == null) {
-            return null;
-        }
-        ArrayList<Term> arr = new ArrayList<>(original.size());
-        for (int i = 0; i < original.size(); i++) {
-            arr.add((Term) ((Term) original.get(i)).clone());
-        }
-        return arr;
+        return this.components.deepClone().toArrayList();
     }
 
     /**

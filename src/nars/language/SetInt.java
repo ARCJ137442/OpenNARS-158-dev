@@ -28,7 +28,7 @@ public class SetInt extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private SetInt(String n, ArrayList<Term> cs, boolean con, short i) {
+    private SetInt(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class SetInt extends CompoundTerm {
      * @return A new object, to be casted into a SetInt
      */
     public SetInt clone() {
-        return new SetInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new SetInt(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

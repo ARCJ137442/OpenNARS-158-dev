@@ -27,7 +27,7 @@ public class Negation extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private Negation(String n, ArrayList<Term> cs, boolean con, short i) {
+    private Negation(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class Negation extends CompoundTerm {
      */
     @Override
     public Negation clone() {
-        return new Negation(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Negation(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

@@ -26,7 +26,7 @@ public class Implication extends Statement {
      * @param con Whether it is a constant term
      * @param i   Syntactic complexity of the compound
      */
-    protected Implication(String n, ArrayList<Term> cs, boolean con, short i) {
+    protected Implication(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -36,7 +36,7 @@ public class Implication extends Statement {
      * @return A new object
      */
     public Implication clone() {
-        return new Implication(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Implication(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

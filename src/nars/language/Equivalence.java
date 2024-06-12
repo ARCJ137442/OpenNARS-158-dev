@@ -26,7 +26,7 @@ public class Equivalence extends Statement {
      * @param constant   Whether the statement contains open variable
      * @param complexity Syntactic complexity of the compound
      */
-    protected Equivalence(String n, ArrayList<Term> components, boolean constant, short complexity) {
+    protected Equivalence(String n, TermComponents components, boolean constant, short complexity) {
         super(n, components, constant, complexity);
     }
 
@@ -37,7 +37,7 @@ public class Equivalence extends Statement {
      */
     @Override
     public Equivalence clone() {
-        return new Equivalence(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Equivalence(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

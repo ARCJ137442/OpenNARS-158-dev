@@ -28,7 +28,7 @@ public class DifferenceExt extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private DifferenceExt(String n, ArrayList<Term> cs, boolean con, short i) {
+    private DifferenceExt(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class DifferenceExt extends CompoundTerm {
      * @return A new object, to be casted into a DifferenceExt
      */
     public DifferenceExt clone() {
-        return new DifferenceExt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new DifferenceExt(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

@@ -27,7 +27,7 @@ public class Product extends CompoundTerm {
      * @param open       Open variable list
      * @param complexity Syntactic complexity of the compound
      */
-    private Product(String n, ArrayList<Term> cs, boolean con, short complexity) {
+    private Product(String n, TermComponents cs, boolean con, short complexity) {
         super(n, cs, con, complexity);
     }
 
@@ -37,7 +37,7 @@ public class Product extends CompoundTerm {
      * @return A new object, to be casted into an ImageExt
      */
     public Product clone() {
-        return new Product(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Product(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

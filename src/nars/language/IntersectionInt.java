@@ -28,7 +28,7 @@ public class IntersectionInt extends CompoundTerm {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private IntersectionInt(String n, ArrayList<Term> cs, boolean con, short i) {
+    private IntersectionInt(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class IntersectionInt extends CompoundTerm {
      * @return A new object, to be casted into a Conjunction
      */
     public IntersectionInt clone() {
-        return new IntersectionInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new IntersectionInt(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

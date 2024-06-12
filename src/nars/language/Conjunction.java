@@ -26,7 +26,7 @@ public class Conjunction extends CompoundTerm {
      * @param con Whether the term is a constant
      * @param i   Syntactic complexity of the compound
      */
-    private Conjunction(String n, ArrayList<Term> cs, boolean con, short i) {
+    private Conjunction(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -37,7 +37,7 @@ public class Conjunction extends CompoundTerm {
      */
     @Override
     public Conjunction clone() {
-        return new Conjunction(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Conjunction(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

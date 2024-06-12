@@ -27,7 +27,7 @@ public class Similarity extends Statement {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private Similarity(String n, ArrayList<Term> cs, boolean con, short i) {
+    private Similarity(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -38,7 +38,7 @@ public class Similarity extends Statement {
      */
     @Override
     public Similarity clone() {
-        return new Similarity(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        return new Similarity(name, this.components.deepClone(), isConstant(), complexity);
     }
 
     /**

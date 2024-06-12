@@ -27,7 +27,7 @@ public abstract class Statement extends CompoundTerm {
      * @param con Constant indicator
      * @param i   Syntactic complexity of the compound
      */
-    protected Statement(String n, ArrayList<Term> cs, boolean con, short i) {
+    protected Statement(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 

@@ -27,7 +27,7 @@ public class Inheritance extends Statement {
      * @param open Open variable list
      * @param i    Syntactic complexity of the compound
      */
-    private Inheritance(String n, ArrayList<Term> cs, boolean con, short i) {
+    private Inheritance(String n, TermComponents cs, boolean con, short i) {
         super(n, cs, con, i);
     }
 
@@ -37,7 +37,7 @@ public class Inheritance extends Statement {
      * @return A new object, to be casted into a SetExt
      */
     public Inheritance clone() {
-        return new Inheritance(name, (ArrayList<Term>) cloneList(components), isConstant, complexity);
+        return new Inheritance(name, this.components.deepClone(), isConstant, complexity);
     }
 
     /**
