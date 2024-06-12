@@ -2,6 +2,7 @@ package nars.storage;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.function.BiPredicate;
 
 // TODO: 字段可空性、可变性、所有权标记
 
@@ -24,8 +25,8 @@ public final class ArrayRankTable<T> implements RankTable<T> {
     }
 
     @FunctionalInterface
-    public interface CompatibleFunction<T> {
-        boolean call(T newElement, T existedElement);
+    public interface CompatibleFunction<T> extends BiPredicate<T, T> {
+        // boolean call(T newElement, T existedElement);
     }
 
     /** 🆕提取出的「计算排行」函数（函数指针） */
@@ -41,7 +42,7 @@ public final class ArrayRankTable<T> implements RankTable<T> {
 
     @Override
     public boolean isCompatibleToAdd(T newElement, T existedElement) {
-        return this.isCompatibleToAddF.call(newElement, existedElement);
+        return this.isCompatibleToAddF.test(newElement, existedElement);
     }
 
     // impl<T> ArrayRankTable<T>

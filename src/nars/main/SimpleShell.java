@@ -164,15 +164,17 @@ public class SimpleShell {
                     reasoner.handleOutput();
                     // reasoner.tick(); // 输入之后至少先将输出打印出来
                 }
+                shell.out.flush();
             }
             // * 🚩异常捕获 & 呈现
             catch (final Exception ex) {
                 shell.printException(ex);
-            }
-            // * 🚩最终总是「完成输出」
-            finally {
                 shell.out.flush();
             }
+            // // * 🚩最终总是「完成输出」
+            // finally {
+            // shell.out.flush();
+            // }
         }
     }
 

@@ -13,10 +13,21 @@ import nars.io.Symbols;
  */
 public abstract class CompoundTerm extends Term {
 
+    /** 🆕Narsese的「词项」是创建后定长且部分可写的数组 */
+    public static class TermComponents extends FixedSizeArray<Term> {
+        public TermComponents(ArrayList<Term> list) {
+            super(list);
+        }
+
+        public Term setTerm(int index, Term term) {
+            return this.__set(index, term);
+        }
+    }
+
     /**
      * list of (direct) components
      */
-    protected ArrayList<Term> components;
+    protected TermComponents components;
     /**
      * syntactic complexity of the compound, the sum of those of its components
      * plus 1
@@ -55,7 +66,7 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(String name, ArrayList<Term> components, boolean isConstant, short complexity) {
         super(name);
-        this.components = components;
+        this.components = new TermComponents(components);
         this.isConstant = isConstant;
         this.complexity = complexity;
     }
@@ -66,7 +77,7 @@ public abstract class CompoundTerm extends Term {
      * @param components Component list
      */
     protected CompoundTerm(ArrayList<Term> components) {
-        this.components = components;
+        this.components = new TermComponents(components);
         calcComplexity();
         name = makeName();
         isConstant = !Variable.containVar(name);
@@ -81,7 +92,7 @@ public abstract class CompoundTerm extends Term {
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
         isConstant = !Variable.containVar(name);
-        this.components = components;
+        this.components = new TermComponents(components);
         calcComplexity();
     }
 
@@ -449,7 +460,7 @@ public abstract class CompoundTerm extends Term {
                 // * 🚩真正逻辑：替换变量词项
                 // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
                 if (!inner.equals(newV)) {
-                    self.components.set(i, newV);
+                    self.components.setTerm(i, newV);
                 }
                 // * 🚩将该变量记录在映射表中
                 // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
@@ -489,7 +500,7 @@ public abstract class CompoundTerm extends Term {
                 final Term substituteT = chainGet(subs, inner);
                 // * 🚩复制并替换元素
                 final Term substitute = substituteT.clone();
-                self.components.set(i, substitute);
+                self.components.setTerm(i, substitute);
             }
             // * 🚩复合词项⇒递归深入
             else if (inner instanceof CompoundTerm) {
@@ -524,6 +535,6 @@ public abstract class CompoundTerm extends Term {
     /** 🆕对于「可交换词项」重排其中的元素 */
     private void reorderComponents() {
         final TreeSet<Term> s = new TreeSet<>(this.components);
-        this.components = new ArrayList<>(s);
+        this.components = new TermComponents(new ArrayList<>(s));
     }
 }
