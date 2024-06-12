@@ -16,6 +16,30 @@ import nars.io.Symbols;
  */
 public abstract class MakeTerm {
 
+    /* Word */
+
+    /** 🆕创建新 词语（仅含名称） */
+    public static Term makeWord(String name) {
+        return new Term(name);
+    }
+
+    /* Variable */
+
+    /** 🆕创建新 独立变量 */
+    public static final Variable makeVarI(final String name) {
+        return new Variable(Symbols.VAR_INDEPENDENT + name);
+    }
+
+    /** 🆕创建新 非独变量 */
+    public static final Variable makeVarD(final String name) {
+        return new Variable(Symbols.VAR_DEPENDENT + name);
+    }
+
+    /** 🆕创建新 查询变量 */
+    public static final Variable makeVarQ(final String name) {
+        return new Variable(Symbols.VAR_QUERY + name);
+    }
+
     /* CompoundTerm */
 
     /* static methods making new compounds, which may return null */

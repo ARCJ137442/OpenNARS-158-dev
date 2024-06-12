@@ -16,7 +16,7 @@ public class IntersectionInt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    public IntersectionInt(ArrayList<Term> arg) {
+    IntersectionInt(ArrayList<Term> arg) {
         super(arg);
     }
 

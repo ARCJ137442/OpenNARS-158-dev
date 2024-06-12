@@ -14,7 +14,7 @@ public class Equivalence extends Statement {
      *
      * @param components The component list of the term
      */
-    public Equivalence(ArrayList<Term> components) {
+    Equivalence(ArrayList<Term> components) {
         super(components);
     }
 

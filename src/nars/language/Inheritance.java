@@ -15,7 +15,7 @@ public class Inheritance extends Statement {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    public Inheritance(ArrayList<Term> arg) {
+    Inheritance(ArrayList<Term> arg) {
         super(arg);
     }
 

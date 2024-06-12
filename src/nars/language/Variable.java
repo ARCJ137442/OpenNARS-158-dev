@@ -16,21 +16,6 @@ public class Variable extends Term {
         super(s);
     }
 
-    /** 🆕创建新 独立变量 */
-    public static final Variable newVarI(final String name) {
-        return new Variable(Symbols.VAR_INDEPENDENT + name);
-    }
-
-    /** 🆕创建新 非独变量 */
-    public static final Variable newVarD(final String name) {
-        return new Variable(Symbols.VAR_DEPENDENT + name);
-    }
-
-    /** 🆕创建新 查询变量 */
-    public static final Variable newVarQ(final String name) {
-        return new Variable(Symbols.VAR_QUERY + name);
-    }
-
     /**
      * Clone a Variable
      *

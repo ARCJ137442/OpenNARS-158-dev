@@ -29,7 +29,7 @@ public class Term implements Cloneable, Comparable<Term> {
      *
      * @param name A String as the name of the Term
      */
-    public Term(String name) {
+    Term(String name) {
         this.name = name;
     }
 

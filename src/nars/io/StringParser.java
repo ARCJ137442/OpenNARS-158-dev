@@ -310,7 +310,7 @@ public abstract class StringParser extends Symbols {
         if (Variable.containVar(s)) {
             return parseVariable(s);
         } else {
-            return new Term(s);
+            return makeWord(s);
         }
     }
 
@@ -320,11 +320,11 @@ public abstract class StringParser extends Symbols {
         final String name = fullName.substring(1);
         switch (type) {
             case Symbols.VAR_INDEPENDENT:
-                return Variable.newVarI(name);
+                return makeVarI(name);
             case Symbols.VAR_DEPENDENT:
-                return Variable.newVarD(name);
+                return makeVarD(name);
             case Symbols.VAR_QUERY:
-                return Variable.newVarQ(name);
+                return makeVarQ(name);
             default:
                 throw new InvalidInputException("invalid variable");
         }

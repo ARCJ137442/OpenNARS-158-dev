@@ -16,7 +16,7 @@ public class SetInt extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    public SetInt(ArrayList<Term> arg) {
+    SetInt(ArrayList<Term> arg) {
         super(arg);
     }
 

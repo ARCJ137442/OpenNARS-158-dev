@@ -88,6 +88,8 @@ public class Memory {
      * Create a new memory
      * <p>
      * * 🚩仅在记忆区的构造函数中使用
+     *
+     * @return []
      */
     public Memory() {
         // * 🚩各参数
@@ -101,6 +103,8 @@ public class Memory {
     /**
      * 初始化记忆区
      * * 🚩初始化「概念袋」
+     *
+     * @param &m-this
      */
     public void init() {
         concepts.init();
@@ -112,8 +116,9 @@ public class Memory {
      * <p>
      * called from Term and ConceptWindow.
      *
-     * @param name the name of a concept
-     * @return a Concept or null
+     * @param &this
+     * @param name  [&] the name of a concept
+     * @return [&] a Concept or null
      */
     public Concept nameToConcept(String name) {
         return concepts.get(name);

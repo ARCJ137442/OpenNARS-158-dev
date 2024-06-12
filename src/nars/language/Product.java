@@ -15,7 +15,7 @@ public class Product extends CompoundTerm {
      * @param n   The name of the term
      * @param arg The component list of the term
      */
-    public Product(ArrayList<Term> arg) {
+    Product(ArrayList<Term> arg) {
         super(arg);
     }
 
