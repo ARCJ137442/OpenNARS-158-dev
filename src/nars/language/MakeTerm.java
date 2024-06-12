@@ -40,6 +40,11 @@ public abstract class MakeTerm {
         return new Variable(Symbols.VAR_QUERY + name);
     }
 
+    /** 🆕创建新变量词项，与旧变量词项相同类型，但名称不同 */
+    public static final Variable makeVarSimilar(final Variable asVar, final String name) {
+        return new Variable(asVar.getType() + name);
+    }
+
     /* CompoundTerm */
 
     /* static methods making new compounds, which may return null */

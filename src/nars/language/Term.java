@@ -84,14 +84,6 @@ public class Term implements Cloneable, Comparable<Term> {
     }
 
     /**
-     * Blank method to be override in CompoundTerm
-     * * 📝对原子词项（词语）而言，没什么可以「重命名」的
-     */
-    public void renameVariables() {
-        // throw new Error("Method is unimplemented!");
-    }
-
-    /**
      * 🆕是否为占位符
      * * 🚩判断自身名称是否以"_"开头
      * * 📝从「构造词项MakeTerm」抽象而来

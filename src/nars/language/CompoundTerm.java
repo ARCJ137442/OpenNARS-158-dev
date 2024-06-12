@@ -310,7 +310,7 @@ public abstract class CompoundTerm extends Term {
      *
      * @param isConstant
      */
-    public void setConstant(boolean isConstant) {
+    private void setConstant(boolean isConstant) {
         this.isConstant = isConstant;
     }
 
@@ -417,72 +417,21 @@ public abstract class CompoundTerm extends Term {
         return Variable.containVar(name);
     }
 
-    /**
-     * Rename the variables in the compound, called from Sentence constructors
-     */
-    @Override
-    public void renameVariables() {
-        // * 🚩有变量⇒重命名变量
-        if (this.containVar())
-            renameCompoundVariables(this, new HashMap<Variable, Variable>());
-        // * 🚩设置「为常量」
-        // ? ❓【2024-06-09 13:26:43】为何要如此？
-        setConstant(true);
-        // * 🚩重新生成名称
-        setName(makeName());
+    public void setTermWhenRenamingVariables(int index, Term term) {
+        this.components.setTerm(index, term);
     }
 
-    /**
-     * Recursively rename the variables in the compound
-     *
-     * @param map The substitution established so far
-     */
-    private static void renameCompoundVariables(
-            CompoundTerm self,
-            HashMap<Variable, Variable> map) {
-        // * 🚩没有变量⇒返回
-        // ? 💭【2024-06-09 13:33:08】似乎对实际逻辑无用
-        if (!self.containVar())
-            return;
-        // * 🚩只有「包含变量」才要继续重命名
-        for (int i = 0; i < self.components.size(); i++) {
-            // * 🚩取变量词项
-            final Term inner = self.componentAt(i);
-            // * 🚩是「变量」词项⇒重命名
-            if (inner instanceof Variable) {
-                final Variable innerV = (Variable) inner;
-                // * 🚩构造新编号与名称 | 采用顺序编号
-                // * 📄类型相同，名称改变
-                final int newVarNum = map.size() + 1;
-                final String newName = innerV.getType() + "" + newVarNum;
-                final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
-                // * 🚩决定将产生的「新变量」
-                final Variable newV =
-                        // * 🚩用户输入的匿名变量 || 映射表中没有变量 ⇒ 新建变量
-                        isAnonymousVariableFromInput || !map.containsKey(innerV)
-                                // anonymous variable from input
-                                ? new Variable(newName)
-                                // * 🚩否则（非匿名 && 映射表中有） ⇒ 使用已有变量
-                                : map.get(innerV);
-                // * 🚩真正逻辑：替换变量词项
-                // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
-                if (!inner.equals(newV)) {
-                    self.components.setTerm(i, newV);
-                }
-                // * 🚩将该变量记录在映射表中
-                // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
-                map.put(innerV, newV);
-            }
-            // * 🚩复合词项⇒继续递归深入
-            // * 📌逻辑统一：无论是「序列」「集合」还是「陈述」都是这一套逻辑
-            else if (inner instanceof CompoundTerm) {
-                final CompoundTerm innerC = (CompoundTerm) inner;
-                // * 🚩重命名内层复合词项
-                renameCompoundVariables(innerC, map);
-                // * 🚩重命名变量后生成名称
-                innerC.setName(innerC.makeName());
-            }
-        }
+    public void updateAfterRenameVariables() {
+        // * 🚩设置「为常量」
+        // ? ❓【2024-06-09 13:26:43】为何要如此？
+        this.setConstant(true);
+        // * 🚩更新名称
+        this.updateNameAfterRenameVariables();
+    }
+
+    public void updateNameAfterRenameVariables() {
+        // * 🚩重新生成名称
+        this.setName(this.makeName());
     }
 
     /**

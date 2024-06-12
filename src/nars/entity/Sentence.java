@@ -1,6 +1,7 @@
 package nars.entity;
 
 import nars.inference.Truth;
+import nars.inference.VariableInference;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.language.Variable;
@@ -188,7 +189,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          */
         protected SentenceInner(Term content, Stamp stamp, boolean revisable) {
             this.content = content;
-            this.content.renameVariables();
+            VariableInference.renameVariables(this.content);
             this.stamp = stamp;
             this.revisable = revisable;
             if (stamp == null)

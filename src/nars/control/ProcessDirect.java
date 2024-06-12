@@ -130,13 +130,16 @@ public abstract class ProcessDirect {
                 self,
                 taskInput);
 
+        // * 🚩未准备上下文⇒直接结束
+        if (context == null)
+            return true;
+
         // * 🚩上下文准备完毕⇒开始
-        if (context != null) {
-            // * 🚩调整概念的预算值
-            self.getMemory().activateConcept(context.getCurrentConcept(), taskInput);
-            // * 🔥开始「直接处理」
-            directProcess(context);
-        }
+
+        // * 🚩调整概念的预算值
+        self.getMemory().activateConcept(context.getCurrentConcept(), taskInput);
+        // * 🔥开始「直接推理」
+        directProcess(context);
 
         final boolean noResult = context.noResult();
 

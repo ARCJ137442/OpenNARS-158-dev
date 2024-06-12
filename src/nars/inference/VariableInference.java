@@ -12,12 +12,92 @@ import nars.language.ImageExt;
 import nars.language.ImageInt;
 import nars.language.Term;
 import nars.language.Variable;
+import static nars.language.MakeTerm.*;
 
 /**
  * 🆕所有跟「NAL-6 变量处理」相关的方法
  * * 🎯避免在专注「数据结构」的「词项」language包中放太多「逻辑推理」相关代码
  */
 public abstract class VariableInference {
+
+    // from CompoundTerm //
+
+    /**
+     * Blank method to be override in CompoundTerm
+     * * 📝对原子词项（词语）而言，没什么可以「重命名」的
+     */
+    public static void renameVariables(Term term) {
+        // * 🚩依据「是否为变量词项」分派
+        if (term instanceof CompoundTerm) {
+            final CompoundTerm c = (CompoundTerm) term;
+            // * 🚩有变量⇒重命名变量
+            if (c.containVar())
+                renameCompoundVariables(c, new HashMap<Variable, Variable>());
+            // * 🚩无论是否重命名，始终更新（内置则会影响推理结果）
+            c.updateAfterRenameVariables();
+        }
+    }
+
+    /**
+     * Rename the variables in the compound, called from Sentence constructors
+     */
+    public static void renameVariables(CompoundTerm term) {
+    }
+
+    /**
+     * Recursively rename the variables in the compound
+     *
+     * @param map The substitution established so far
+     */
+    private static void renameCompoundVariables(
+            CompoundTerm self,
+            HashMap<Variable, Variable> map) {
+        // * 🚩没有变量⇒返回
+        // ? 💭【2024-06-09 13:33:08】似乎对实际逻辑无用
+        if (!self.containVar())
+            return;
+        // * 🚩只有「包含变量」才要继续重命名
+        for (int i = 0; i < self.size(); i++) {
+            // * 🚩取变量词项
+            final Term inner = self.componentAt(i);
+            // * 🚩是「变量」词项⇒重命名
+            if (inner instanceof Variable) {
+                final Variable innerV = (Variable) inner;
+                // * 🚩构造新编号与名称 | 采用顺序编号
+                // * 📄类型相同，名称改变
+                final int newVarNum = map.size() + 1;
+                final String newName = "" + newVarNum;
+                final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
+                // * 🚩决定将产生的「新变量」
+                final Variable newV =
+                        // * 🚩用户输入的匿名变量 || 映射表中没有变量 ⇒ 新建变量
+                        isAnonymousVariableFromInput || !map.containsKey(innerV)
+                                // anonymous variable from input
+                                ? makeVarSimilar(innerV, newName)
+                                // * 🚩否则（非匿名 && 映射表中有） ⇒ 使用已有变量
+                                : map.get(innerV);
+                // * 🚩真正逻辑：替换变量词项
+                // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
+                if (!inner.equals(newV)) {
+                    self.setTermWhenRenamingVariables(i, newV);
+                }
+                // * 🚩将该变量记录在映射表中
+                // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
+                map.put(innerV, newV);
+            }
+            // * 🚩复合词项⇒继续递归深入
+            // * 📌逻辑统一：无论是「序列」「集合」还是「陈述」都是这一套逻辑
+            else if (inner instanceof CompoundTerm) {
+                final CompoundTerm innerC = (CompoundTerm) inner;
+                // * 🚩重命名内层复合词项
+                renameCompoundVariables(innerC, map);
+                // * 🚩重命名变量后生成名称
+                innerC.updateNameAfterRenameVariables();
+            }
+        }
+    }
+
+    // from Variable //
 
     // ! 🚩【2024-06-09 14:19:35】弃用：目前无需用到
     // /**
@@ -84,7 +164,7 @@ public abstract class VariableInference {
             return;
         // * 🚩应用 & 重命名
         compound.applySubstitute(map);
-        compound.renameVariables();
+        renameVariables(compound);
     }
 
     /**
