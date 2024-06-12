@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 
 import nars.io.Symbols;
+import nars.language.CompoundTerm.ArrayUtils;
 
 /**
  * 所有原`nars.language`包的{@link Term}子类中有关`make`的静态方法
@@ -123,9 +124,9 @@ public abstract class MakeTerm {
     // * * ⚠️返回**新增一个元素后的**【新】词项
     // * * 📌【2024-06-01 10:29:52】目前未发现有用到的地方
     // *
-    // * @param t1 The compound
-    // * @param t2 The component
-    // * @return The new compound
+    // * @param t1 [&] The compound
+    // * @param t2 [] The component
+    // * @return [] The new compound
     // */
     // public static Term addComponents(CompoundTerm t1, Term t2) {
     // if (t2 == null)
@@ -144,19 +145,16 @@ public abstract class MakeTerm {
      * * 🚩从复合词项中删去一个元素，或从同类复合词项中删除所有其内元素，然后尝试约简
      * * ⚠️结果可空
      *
-     * @param toBeReduce        The compound
-     * @param componentToReduce The component
-     * @return The new compound
+     * @param toBeReduce        [&] The compound
+     * @param componentToReduce [&] The component
+     * @return [] The new compound
      */
     public static Term reduceComponents(CompoundTerm toBeReduce, Term componentToReduce) {
-        final boolean success;
         final ArrayList<Term> components = toBeReduce.cloneComponents();
-        if (toBeReduce.isSameType(componentToReduce))
-            // * 🚩同类⇒删除componentToReduce内所有元素
-            success = components.removeAll(((CompoundTerm) componentToReduce).getComponents());
-        else
-            // * 🚩默认⇒删除componentToReduce（若含）
-            success = components.remove(componentToReduce);
+        // * 🚩尝试移除元素
+        final boolean success = ArrayUtils.removeAll(
+                toBeReduce.isSameType(componentToReduce),
+                components, componentToReduce);
         if (!success)
             return null;
         // * 🚩删除成功⇒继续
@@ -185,19 +183,19 @@ public abstract class MakeTerm {
      * * 🚩若要替换上的词项为空（⚠️t可空），则与「删除元素」等同
      * * ⚠️结果可空
      *
-     * @param compound The compound
-     * @param index    The location of replacement
-     * @param t        The new component
+     * @param compound [&] The compound
+     * @param index    [] The location of replacement
+     * @param t        [] The new component
      * @return The new compound
      */
     public static Term setComponent(CompoundTerm compound, int index, Term t) {
-        // * 🚩在元素列表中删去词项
+        // * 🚩在复制了的元素列表中删去词项
         final ArrayList<Term> list = compound.cloneComponents();
         list.remove(index);
         // * 🚩非空⇒替换
         if (t != null) {
             if (compound.isSameType(t)) {
-                // * 🚩同类⇒所有元素并入 | (*, 1, a)[1] = (*, 2, 3) => (*, 1, 2, 3)
+                // * 🚩同类⇒所有元素并入 | (*, 1, a, 4)[1] = (*, 2, 3) => (*, 1, 2, 3, 4)
                 final ArrayList<Term> list2 = ((CompoundTerm) t).cloneComponents();
                 for (int i = 0; i < list2.size(); i++) {
                     list.add(index + i, list2.get(i));
@@ -213,10 +211,11 @@ public abstract class MakeTerm {
 
     /**
      * build a component list from two terms
+     * * 🚩二元表
      *
-     * @param t1 the first component
-     * @param t2 the second component
-     * @return the component list
+     * @param t1 [] the first component
+     * @param t2 [] the second component
+     * @return [] the component list
      */
     private static ArrayList<Term> argumentsToList(Term t1, Term t2) {
         final ArrayList<Term> list = new ArrayList<>(2);

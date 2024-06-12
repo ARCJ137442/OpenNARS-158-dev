@@ -38,7 +38,8 @@ public class IntersectionInt extends CompoundTerm {
      * @return A new object, to be casted into a Conjunction
      */
     public IntersectionInt clone() {
-        return new IntersectionInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        final ArrayList<Term> cs = ArrayUtils.cloneList(components);
+        return new IntersectionInt(name, cs, isConstant(), complexity);
     }
 
     /**

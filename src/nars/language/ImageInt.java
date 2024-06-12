@@ -48,7 +48,8 @@ public class ImageInt extends CompoundTerm {
      * @return A new object, to be casted into an ImageInt
      */
     public ImageInt clone() {
-        return new ImageInt(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity, relationIndex);
+        final ArrayList<Term> cs = ArrayUtils.cloneList(components);
+        return new ImageInt(name, cs, isConstant(), complexity, relationIndex);
     }
 
     /**
@@ -66,7 +67,7 @@ public class ImageInt extends CompoundTerm {
      * @return The term representing a relation
      */
     public Term getRelation() {
-        return components.get(relationIndex);
+        return components[relationIndex];
     }
 
     /**
@@ -75,10 +76,10 @@ public class ImageInt extends CompoundTerm {
      * @return The term related
      */
     public Term getTheOtherComponent() {
-        if (components.size() != 2) {
+        if (components.length != 2) {
             return null;
         }
-        return (relationIndex == 0) ? components.get(1) : components.get(0);
+        return (relationIndex == 0) ? components[1] : components[0];
     }
 
     /**

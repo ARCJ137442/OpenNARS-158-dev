@@ -158,7 +158,7 @@ public abstract class Statement extends CompoundTerm {
      * @return The first component
      */
     public Term getSubject() {
-        return components.get(0);
+        return components[0];
     }
 
     /**
@@ -167,6 +167,6 @@ public abstract class Statement extends CompoundTerm {
      * @return The second component
      */
     public Term getPredicate() {
-        return components.get(1);
+        return components[1];
     }
 }

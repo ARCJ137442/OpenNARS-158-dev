@@ -10,13 +10,159 @@ import nars.io.Symbols;
  * A CompoundTerm consists of a term operator with one or more component Terms.
  * <p>
  * This abstract class contains default methods for all CompoundTerms.
+ *
+ * * 📝【2024-06-12 14:41:42】本质上「词项」是一个【可共享】的【写时复制(COW)】类型
+ * * * 写时复制：所有属性只读，要写属性时拷贝一个写后的元素
  */
 public abstract class CompoundTerm extends Term {
 
     /**
-     * list of (direct) components
+     * 🆕Java数组缺少很多ArrayList所用到的方法，此处一一补上实现
      */
-    protected ArrayList<Term> components;
+    public static abstract class ArrayUtils {
+
+        /**
+         * Deep clone an array list of terms
+         *
+         * @param original [&] The original component list
+         * @return [] an identical and separate copy of the list
+         */
+        public static final ArrayList<Term> cloneList(Term[] original) {
+            if (original == null)
+                return null;
+            // * 🚩深拷贝数组
+            final ArrayList<Term> arr = new ArrayList<>(original.length);
+            for (int i = 0; i < original.length; i++) {
+                arr.add(i, (Term) original[i].clone());
+            }
+            return arr;
+        }
+
+        /**
+         * Deep clone an array list of terms
+         *
+         * @param original [&]
+         * @return []
+         */
+        public static final Term[] cloneArray(Term[] original) {
+            if (original == null)
+                return null;
+            // * 🚩深拷贝数组
+            final Term[] arr = new Term[original.length];
+            for (int i = 0; i < original.length; i++) {
+                arr[i] = (Term) original[i].clone();
+            }
+            return arr;
+        }
+
+        /**
+         * 🆕动态数组→静态数组
+         *
+         * @param terms []
+         * @return []
+         */
+        public static Term[] arrayFromList(ArrayList<Term> terms) {
+            final Term[] lockedTerms = new Term[terms.size()];
+            for (int i = 0; i < terms.size(); i++) {
+                lockedTerms[i] = terms.get(i);
+            }
+            return lockedTerms;
+        }
+
+        /**
+         * 🆕静态数组→动态数组
+         *
+         * @param terms []
+         * @return []
+         */
+        public static ArrayList<Term> listFromArray(Term[] terms) {
+            final ArrayList<Term> list = new ArrayList<>(terms.length);
+            for (int i = 0; i < terms.length; i++) {
+                list.add(i, terms[i]);
+            }
+            return list;
+            // ! ❌不能用：ArrayList<Object>不能直接转换成ArrayList<Term>
+            // return (ArrayList<Term>) Arrays.asList(terms);
+        }
+
+        /**
+         * 🆕静态数组→动态数组（引用）
+         * * 🎯用于下方「移除所有词项」
+         *
+         * @param terms []
+         * @return [&]
+         */
+        public static ArrayList<Term> refListFromArray(Term[] terms) {
+            return listFromArray(terms);
+        }
+
+        /**
+         * 🆕从（一个词项的）元素列表中删除一个词项
+         *
+         * @param terms [&m]
+         * @param term  [&]
+         * @return [] 是否移除成功
+         */
+        public static boolean removeAll(
+                final boolean isSameType,
+                ArrayList<Term> terms,
+                final Term term) {
+            return isSameType
+                    // * 🚩同类⇒删除term内所有元素
+                    ? terms.removeAll(refListFromArray(((CompoundTerm) term).getComponents()))
+                    // * 🚩默认⇒删除term（若含）
+                    : terms.remove(term);
+        }
+
+        /**
+         * 🆕复刻ArrayList.indexOf
+         *
+         * @param terms [&]
+         * @param term  [&]
+         * @return [] index or -1
+         */
+        public static int indexOf(Term[] terms, Term term) {
+            // * 📃迁移自ArrayList<T>实现
+            for (int i = 0; i < terms.length; i++)
+                if (terms[i].equals(term))
+                    return i;
+            return -1;
+            // return listFromArray(terms).indexOf(term);
+        }
+
+        /**
+         * 🆕复刻ArrayList.contains
+         *
+         * @param terms [&]
+         * @param term  [&]
+         * @return []
+         */
+        public static boolean contains(Term[] terms, Term term) {
+            return indexOf(terms, term) >= 0;
+        }
+
+        /**
+         * 🆕检查是否包含另一集合的所有元素
+         */
+        public static boolean containsAll(Term[] terms, Term[] otherTerms) {
+            // * 📃迁移自ArrayList<T>实现
+            for (Term e : otherTerms)
+                if (!contains(terms, e))
+                    return false;
+            return true;
+            // return listFromArray(terms).containsAll(otherTerms);
+        }
+
+        public static ArrayList<Term> sortedList(Term[] terms) {
+            final TreeSet<Term> s = new TreeSet<>(ArrayUtils.listFromArray(terms));
+            return new ArrayList<>(s);
+        }
+    }
+
+    /**
+     * list of (direct) components
+     */ // ! ⚠️【2024-06-12 11:28:56】目前重排需要设置值 TODO: 解除限制
+    protected Term[] components; // TODO: 断言验证「构造后长度不可变」
     /**
      * syntactic complexity of the compound, the sum of those of its components
      * plus 1
@@ -55,7 +201,7 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(String name, ArrayList<Term> components, boolean isConstant, short complexity) {
         super(name);
-        this.components = components;
+        this.components = ArrayUtils.arrayFromList(components);
         this.isConstant = isConstant;
         this.complexity = complexity;
     }
@@ -66,7 +212,7 @@ public abstract class CompoundTerm extends Term {
      * @param components Component list
      */
     protected CompoundTerm(ArrayList<Term> components) {
-        this.components = components;
+        this.components = ArrayUtils.arrayFromList(components);
         calcComplexity();
         name = makeName();
         isConstant = !Variable.containVar(name);
@@ -81,7 +227,7 @@ public abstract class CompoundTerm extends Term {
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
         isConstant = !Variable.containVar(name);
-        this.components = components;
+        this.components = ArrayUtils.arrayFromList(components);
         calcComplexity();
     }
 
@@ -188,7 +334,7 @@ public abstract class CompoundTerm extends Term {
      * @param arg the list of components
      * @return the oldName of the term
      */
-    public static String makeCompoundName(String op, ArrayList<Term> arg) {
+    public static String makeCompoundName(String op, Term[] arg) {
         StringBuilder name = new StringBuilder();
         name.append(Symbols.COMPOUND_TERM_OPENER);
         name.append(op);
@@ -211,13 +357,13 @@ public abstract class CompoundTerm extends Term {
      * @param arg    the list of components
      * @return the oldName of the term
      */
-    public static String makeSetName(char opener, ArrayList<Term> arg, char closer) {
+    public static String makeSetName(char opener, Term[] arg, char closer) {
         StringBuilder name = new StringBuilder();
         name.append(opener);
-        name.append(arg.get(0).getName());
-        for (int i = 1; i < arg.size(); i++) {
+        name.append(arg[0].getName());
+        for (int i = 1; i < arg.length; i++) {
             name.append(Symbols.ARGUMENT_SEPARATOR);
-            name.append(arg.get(i).getName());
+            name.append(arg[i].getName());
         }
         name.append(closer);
         return name.toString();
@@ -243,6 +389,25 @@ public abstract class CompoundTerm extends Term {
                 name.append(Symbols.IMAGE_PLACE_HOLDER);
             } else {
                 name.append(arg.get(i).getName());
+            }
+        }
+        name.append(Symbols.COMPOUND_TERM_CLOSER);
+        return name.toString();
+    }
+
+    /** 🆕Java的ArrayList<T>和T[]不互通，非要复制两个方法出来 */
+    public static String makeImageName(String op, Term[] arg, int relationIndex) {
+        StringBuilder name = new StringBuilder();
+        name.append(Symbols.COMPOUND_TERM_OPENER);
+        name.append(op);
+        name.append(Symbols.ARGUMENT_SEPARATOR);
+        name.append(arg[relationIndex].getName());
+        for (int i = 0; i < arg.length; i++) {
+            name.append(Symbols.ARGUMENT_SEPARATOR);
+            if (i == relationIndex) {
+                name.append(Symbols.IMAGE_PLACE_HOLDER);
+            } else {
+                name.append(arg[i].getName());
             }
         }
         name.append(Symbols.COMPOUND_TERM_CLOSER);
@@ -297,20 +462,33 @@ public abstract class CompoundTerm extends Term {
     /**
      * get the number of components
      *
-     * @return the size of the component list
+     * @param &this
+     * @return [] the size of the component list
      */
     public int size() {
-        return components.size();
+        return components.length;
     }
 
     /**
      * get a component by index
      *
-     * @param i index of the component
-     * @return the component
+     * @param &this
+     * @param i     [] index of the component
+     * @return [&] the component
      */
     public Term componentAt(int i) {
-        return components.get(i);
+        return components[i];
+    }
+
+    /**
+     * 🆕根据指定元素找到对应索引位置
+     *
+     * @param &this
+     * @param component [&]
+     * @return [] index or -1
+     */
+    public int indexOfComponent(Term component) {
+        return ArrayUtils.indexOf(this.components, component);
     }
 
     /**
@@ -318,7 +496,7 @@ public abstract class CompoundTerm extends Term {
      *
      * @return The component list
      */
-    public ArrayList<Term> getComponents() {
+    public Term[] getComponents() {
         return components;
     }
 
@@ -328,24 +506,7 @@ public abstract class CompoundTerm extends Term {
      * @return The cloned component list
      */
     public ArrayList<Term> cloneComponents() {
-        return cloneList(components);
-    }
-
-    /**
-     * Deep clone an array list of terms
-     *
-     * @param original The original component list
-     * @return an identical and separate copy of the list
-     */
-    public static ArrayList<Term> cloneList(ArrayList<Term> original) {
-        if (original == null) {
-            return null;
-        }
-        ArrayList<Term> arr = new ArrayList<>(original.size());
-        for (int i = 0; i < original.size(); i++) {
-            arr.add((Term) ((Term) original.get(i)).clone());
-        }
-        return arr;
+        return ArrayUtils.cloneList(this.components);
     }
 
     /**
@@ -355,7 +516,7 @@ public abstract class CompoundTerm extends Term {
      * @return Whether the component is in the compound
      */
     public boolean containComponent(Term t) {
-        return components.contains(t);
+        return this.indexOfComponent(t) >= 0;
     }
 
     /**
@@ -382,11 +543,11 @@ public abstract class CompoundTerm extends Term {
      * @return Whether the components are all in the compound
      */
     public boolean containAllComponents(Term t) {
-        if (this.isSameType(t)) {
-            return components.containsAll(((CompoundTerm) t).getComponents());
-        } else {
-            return components.contains(t);
-        }
+        return this.isSameType(t)
+                // * 🚩类型相同⇒判断元素是否包含于
+                ? ArrayUtils.containsAll(this.components, ((CompoundTerm) t).getComponents())
+                // * 🚩类型不同⇒判断是否属于
+                : ArrayUtils.contains(components, t);
     }
 
     /* ----- variable-related utilities ----- */
@@ -427,7 +588,7 @@ public abstract class CompoundTerm extends Term {
         if (!self.containVar())
             return;
         // * 🚩只有「包含变量」才要继续重命名
-        for (int i = 0; i < self.components.size(); i++) {
+        for (int i = 0; i < self.components.length; i++) {
             // * 🚩取变量词项
             final Term inner = self.componentAt(i);
             // * 🚩是「变量」词项⇒重命名
@@ -449,7 +610,7 @@ public abstract class CompoundTerm extends Term {
                 // * 🚩真正逻辑：替换变量词项
                 // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
                 if (!inner.equals(newV)) {
-                    self.components.set(i, newV);
+                    self.components[i] = newV;
                 }
                 // * 🚩将该变量记录在映射表中
                 // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
@@ -489,7 +650,7 @@ public abstract class CompoundTerm extends Term {
                 final Term substituteT = chainGet(subs, inner);
                 // * 🚩复制并替换元素
                 final Term substitute = substituteT.clone();
-                self.components.set(i, substitute);
+                self.components[i] = substitute;
             }
             // * 🚩复合词项⇒递归深入
             else if (inner instanceof CompoundTerm) {
@@ -523,7 +684,9 @@ public abstract class CompoundTerm extends Term {
 
     /** 🆕对于「可交换词项」重排其中的元素 */
     private void reorderComponents() {
-        final TreeSet<Term> s = new TreeSet<>(this.components);
-        this.components = new ArrayList<>(s);
+        if (this.size() < 2)
+            return;
+        final Term[] newC = ArrayUtils.arrayFromList(ArrayUtils.sortedList(this.components));
+        this.components = newC;
     }
 }

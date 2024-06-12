@@ -37,7 +37,8 @@ public class Conjunction extends CompoundTerm {
      */
     @Override
     public Conjunction clone() {
-        return new Conjunction(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        final ArrayList<Term> cs = ArrayUtils.cloneList(components);
+        return new Conjunction(name, cs, this.isConstant(), complexity);
     }
 
     /**

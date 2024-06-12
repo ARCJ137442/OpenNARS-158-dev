@@ -38,7 +38,8 @@ public class Negation extends CompoundTerm {
      */
     @Override
     public Negation clone() {
-        return new Negation(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        final ArrayList<Term> cs = ArrayUtils.cloneList(components);
+        return new Negation(name, cs, isConstant(), complexity);
     }
 
     /**
@@ -56,6 +57,6 @@ public class Negation extends CompoundTerm {
      * * 🎯明确语义
      */
     public Term getTheComponent() {
-        return this.components.get(0);
+        return this.components[0];
     }
 }

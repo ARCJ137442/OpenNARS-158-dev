@@ -38,7 +38,8 @@ public class Similarity extends Statement {
      */
     @Override
     public Similarity clone() {
-        return new Similarity(name, (ArrayList<Term>) cloneList(components), isConstant(), complexity);
+        final ArrayList<Term> cs = ArrayUtils.cloneList(components);
+        return new Similarity(name, cs, isConstant(), complexity);
     }
 
     /**
