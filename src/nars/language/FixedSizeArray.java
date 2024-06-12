@@ -8,6 +8,8 @@ import java.util.function.UnaryOperator;
  * 🆕定长高不可变性数组
  * * 📌创建后长度固定（无法增删元素）
  * * 📌大部分情况下无法替换元素（可变性留给子类定义，默认不可修改）
+ * * 📝不可使用「代理模式」或「内建数组」：
+ * * * 将导致「长期稳定性」结果改变，且NAL测试6.20、6.21不通过
  */
 public abstract class FixedSizeArray<T> extends ArrayList<T> {
 

@@ -187,7 +187,7 @@ public abstract class VariableInference {
                 return false;
             // * 🚩复制词项列表 | 需要在「随机打乱」的同时不影响遍历
             final ArrayList<Term> list = cTerm1.cloneComponents();
-            // * 🚩可交换⇒打乱 | 需要让算法（对两个词项）的时间复杂度为定值（O(n)而非O(n²)）
+            // * 🚩可交换⇒打乱 | 需要让算法（对两个词项）的时间复杂度为定值（O(n)而非O(n!)）
             if (cTerm1.isCommutative())
                 Collections.shuffle(list, DerivationContextCore.randomNumber);
             // * 🚩逐个寻找替换
