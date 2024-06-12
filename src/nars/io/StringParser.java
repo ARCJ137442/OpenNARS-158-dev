@@ -319,12 +319,13 @@ public abstract class StringParser extends Symbols {
         final char type = fullName.charAt(0);
         final String name = fullName.substring(1);
         switch (type) {
+            // TODO: 后续有待「预先重命名」验证
             case Symbols.VAR_INDEPENDENT:
-                return makeVarI(name);
+                return makeVarI(name.hashCode());
             case Symbols.VAR_DEPENDENT:
-                return makeVarD(name);
+                return makeVarD(name.hashCode());
             case Symbols.VAR_QUERY:
-                return makeVarQ(name);
+                return makeVarQ(name.hashCode());
             default:
                 throw new InvalidInputException("invalid variable");
         }

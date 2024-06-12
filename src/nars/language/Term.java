@@ -8,6 +8,10 @@ import nars.io.Symbols;
  * A Term may have an associated Concept containing relations with other Terms.
  * It is not linked in the Term, because a Concept may be forgot while the Term
  * exists. Multiple objects may represent the same Term.
+ *
+ * * 📝此中「词项」的本质即为「构造后写时复制」结构
+ * * * ✨复合词项的「设置元素」「添加元素」「删除元素」均会创建新词项，而非修改原有词项
+ * * * ⚠️其中「重命名变量」是个例外：只有「最外层词项」需要重命名变量，但这会因此修改词项本身
  */
 public class Term implements Cloneable, Comparable<Term> {
 

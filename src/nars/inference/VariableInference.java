@@ -66,14 +66,14 @@ public abstract class VariableInference {
                 // * 🚩构造新编号与名称 | 采用顺序编号
                 // * 📄类型相同，名称改变
                 final int newVarNum = map.size() + 1;
-                final String newName = "" + newVarNum;
+                final long newId = newVarNum;
                 final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
                 // * 🚩决定将产生的「新变量」
                 final Variable newV =
                         // * 🚩用户输入的匿名变量 || 映射表中没有变量 ⇒ 新建变量
                         isAnonymousVariableFromInput || !map.containsKey(innerV)
                                 // anonymous variable from input
-                                ? makeVarSimilar(innerV, newName)
+                                ? makeVarSimilar(innerV, newId)
                                 // * 🚩否则（非匿名 && 映射表中有） ⇒ 使用已有变量
                                 : map.get(innerV);
                 // * 🚩真正逻辑：替换变量词项
@@ -217,7 +217,8 @@ public abstract class VariableInference {
                 return findUnification(type, map1.get(var1), term2, map1, map2);
             // * 🚩[$1 x $2] 若同为变量⇒统一二者（制作一个「共同变量」）
             if (isCorrectVar2) { // not mapped yet
-                final Variable commonVar = makeCommonVariable(term1, term2);
+                // * 🚩生成一个外界输入中不可能的变量词项作为「匿名变量」
+                final Variable commonVar = new CommonVariable(term1, term2);
                 // * 🚩建立映射：var1 -> commonVar @ term1
                 // * 🚩建立映射：term2 -> commonVar @ term2
                 map1.put(var1, commonVar); // unify
@@ -229,7 +230,7 @@ public abstract class VariableInference {
                 // * 🚩建立映射：var1 -> term2 @ term1
                 map1.put(var1, term2); // elimination
                 // * 🚩尝试消除「共同变量」
-                if (isCommonVariable(var1))
+                if (CommonVariable.is(var1))
                     // * 🚩建立映射：var1 -> term2 @ term2
                     map2.put(var1, term2);
             }
@@ -253,7 +254,7 @@ public abstract class VariableInference {
             // * 🚩建立映射：var2 -> term1 @ term2
             map2.put(var2, term1); // elimination
             // * 🚩尝试消除「共同变量」
-            if (isCommonVariable(var2))
+            if (CommonVariable.is(var2))
                 // * 🚩建立映射：var2 -> term1 @ term2
                 map1.put(var2, term1);
             return true;
@@ -286,21 +287,18 @@ public abstract class VariableInference {
 
     /** 特别为「共同变量」创建一个类 */
     private static class CommonVariable extends Variable {
-        public CommonVariable(Term v1, Term v2) {
+
+        CommonVariable(Term v1, Term v2) {
+            // super('/', (long) ((v1.getName() + v2.getName() + '$').hashCode()));
             super(v1.getName() + v2.getName() + '$');
         }
-    }
 
-    private static Variable makeCommonVariable(Term v1, Term v2) {
-        // * 🚩生成一个外界输入中不可能的变量词项作为「匿名变量」
-        return new CommonVariable(v1, v2);
-    }
-
-    private static boolean isCommonVariable(Variable v) {
-        // * 🚩判断这个词项是否是「匿名变量」
-        // final String s = v.getName();
-        // return s.charAt(s.length() - 1) == '$';
-        return v instanceof CommonVariable;
+        static boolean is(Term v) {
+            // * 🚩判断这个词项是否是「匿名变量」
+            // final String s = v.getName();
+            // return s.charAt(s.length() - 1) == '$';
+            return v instanceof CommonVariable;
+        }
     }
 
     /**

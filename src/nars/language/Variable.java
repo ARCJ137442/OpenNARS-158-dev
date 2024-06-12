@@ -6,6 +6,7 @@ import nars.io.Symbols;
  * A variable term, which does not correspond to a concept
  */
 public class Variable extends Term {
+    // TODO: 完全「数字编号化」尝试
     /**
      * Constructor, from a given variable name
      *
@@ -14,6 +15,10 @@ public class Variable extends Term {
     protected Variable(String s) {
         // * 🚩【2024-06-09 15:18:20】现在封闭构造入口
         super(s);
+    }
+
+    protected Variable(char type, long id) {
+        super("" + type + id);
     }
 
     /**

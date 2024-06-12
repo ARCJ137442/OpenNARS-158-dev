@@ -26,23 +26,23 @@ public abstract class MakeTerm {
     /* Variable */
 
     /** 🆕创建新 独立变量 */
-    public static final Variable makeVarI(final String name) {
-        return new Variable(Symbols.VAR_INDEPENDENT + name);
+    public static final Variable makeVarI(final long id) {
+        return new Variable(Symbols.VAR_INDEPENDENT, id);
     }
 
     /** 🆕创建新 非独变量 */
-    public static final Variable makeVarD(final String name) {
-        return new Variable(Symbols.VAR_DEPENDENT + name);
+    public static final Variable makeVarD(final long id) {
+        return new Variable(Symbols.VAR_DEPENDENT, id);
     }
 
     /** 🆕创建新 查询变量 */
-    public static final Variable makeVarQ(final String name) {
-        return new Variable(Symbols.VAR_QUERY + name);
+    public static final Variable makeVarQ(final long id) {
+        return new Variable(Symbols.VAR_QUERY, id);
     }
 
     /** 🆕创建新变量词项，与旧变量词项相同类型，但名称不同 */
-    public static final Variable makeVarSimilar(final Variable asVar, final String name) {
-        return new Variable(asVar.getType() + name);
+    public static final Variable makeVarSimilar(final Variable asVar, final long id) {
+        return new Variable(asVar.getType(), id);
     }
 
     /* CompoundTerm */
