@@ -177,30 +177,6 @@ public abstract class CompoundTerm extends Term {
         return 0;
     }
 
-    /**
-     * Check CompoundTerm operator symbol
-     *
-     * @return if the given String is an operator symbol
-     * @param s The String to be checked
-     */
-    public static boolean isOperator(String s) {
-        if (s.length() == 1) {
-            return (s.equals(Symbols.INTERSECTION_EXT_OPERATOR)
-                    || s.equals(Symbols.INTERSECTION_INT_OPERATOR)
-                    || s.equals(Symbols.DIFFERENCE_EXT_OPERATOR)
-                    || s.equals(Symbols.DIFFERENCE_INT_OPERATOR)
-                    || s.equals(Symbols.PRODUCT_OPERATOR)
-                    || s.equals(Symbols.IMAGE_EXT_OPERATOR)
-                    || s.equals(Symbols.IMAGE_INT_OPERATOR));
-        }
-        if (s.length() == 2) {
-            return (s.equals(Symbols.NEGATION_OPERATOR)
-                    || s.equals(Symbols.DISJUNCTION_OPERATOR)
-                    || s.equals(Symbols.CONJUNCTION_OPERATOR));
-        }
-        return false;
-    }
-
     /* ----- utilities for oldName ----- */
     /**
      * default method to make the oldName of the current term from existing

@@ -369,7 +369,7 @@ public abstract class StringParser extends Symbols {
         String s = s0.trim();
         int firstSeparator = s.indexOf(ARGUMENT_SEPARATOR);
         String op = s.substring(0, firstSeparator).trim();
-        if (!CompoundTerm.isOperator(op)) {
+        if (!isCompoundOperator(op)) {
             throw new InvalidInputException("unknown operator: " + op);
         }
         ArrayList<Term> arg = parseArguments(s.substring(firstSeparator + 1) + ARGUMENT_SEPARATOR);
@@ -378,6 +378,30 @@ public abstract class StringParser extends Symbols {
             throw new InvalidInputException("invalid compound term");
         }
         return t;
+    }
+
+    /**
+     * Check CompoundTerm operator symbol
+     *
+     * @return if the given String is an operator symbol
+     * @param s The String to be checked
+     */
+    private static boolean isCompoundOperator(String s) {
+        if (s.length() == 1) {
+            return (s.equals(Symbols.INTERSECTION_EXT_OPERATOR)
+                    || s.equals(Symbols.INTERSECTION_INT_OPERATOR)
+                    || s.equals(Symbols.DIFFERENCE_EXT_OPERATOR)
+                    || s.equals(Symbols.DIFFERENCE_INT_OPERATOR)
+                    || s.equals(Symbols.PRODUCT_OPERATOR)
+                    || s.equals(Symbols.IMAGE_EXT_OPERATOR)
+                    || s.equals(Symbols.IMAGE_INT_OPERATOR));
+        }
+        if (s.length() == 2) {
+            return (s.equals(Symbols.NEGATION_OPERATOR)
+                    || s.equals(Symbols.DISJUNCTION_OPERATOR)
+                    || s.equals(Symbols.CONJUNCTION_OPERATOR));
+        }
+        return false;
     }
 
     /**
