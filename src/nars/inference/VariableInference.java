@@ -218,7 +218,7 @@ public abstract class VariableInference {
             // * 🚩[$1 x $2] 若同为变量⇒统一二者（制作一个「共同变量」）
             if (isCorrectVar2) { // not mapped yet
                 // * 🚩生成一个外界输入中不可能的变量词项作为「匿名变量」
-                final Variable commonVar = new CommonVariable(term1, term2);
+                final Variable commonVar = new CommonVariable(var1, (Variable) term2);
                 // * 🚩建立映射：var1 -> commonVar @ term1
                 // * 🚩建立映射：term2 -> commonVar @ term2
                 map1.put(var1, commonVar); // unify
@@ -285,12 +285,23 @@ public abstract class VariableInference {
         return term1.equals(term2); // for atomic constant terms
     }
 
-    /** 特别为「共同变量」创建一个类 */
+    /**
+     * 🆕特别为「共同变量」创建一个类
+     * * 📌仅在「变量统一」中出现
+     * * 🚩【2024-06-13 08:37:01】技术上使用「多字符类型」替代「根据名字生成的编号」
+     * * * ⚠️后者会影响「长期稳定性」的测试结果
+     * * * * 📄 ANSWER: <{tom} --> murder>. %1.00;0.77% {2817 : 2;11;3;9}
+     * * * * 📄 ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}
+     * * 📌原则：「共同变量」的「变量类型」要与「合并前的两个变量」一致
+     * * * ⚠️否则会导致「长期稳定性」不一致
+     */
     private static class CommonVariable extends Variable {
 
-        CommonVariable(Term v1, Term v2) {
+        CommonVariable(Variable v1, Variable v2) {
             // super('/', (long) ((v1.getName() + v2.getName() + '$').hashCode()));
-            super(v1.getName() + v2.getName() + '$');
+            // super(v1.getName() + v2.getName() + '$');
+            // super(v1.getType() + v1.getName() + v2.getName() + '&', 0);
+            super(v1.getType(), (long) ((v1.getName() + v2.getName() + '$').hashCode()));
         }
 
         static boolean is(Term v) {

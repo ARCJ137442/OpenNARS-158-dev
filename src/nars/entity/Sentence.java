@@ -4,7 +4,6 @@ import nars.inference.Truth;
 import nars.inference.VariableInference;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
-import nars.language.Variable;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
@@ -91,10 +90,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      */
     public default Question asQuestion() {
         throw new Error("不是疑问句");
-    }
-
-    public default boolean containQueryVar() {
-        return Variable.containVarQ(this.getContent());
     }
 
     public default boolean getRevisable() {

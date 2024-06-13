@@ -6,20 +6,28 @@ import nars.io.Symbols;
  * A variable term, which does not correspond to a concept
  */
 public class Variable extends Term {
-    // TODO: 完全「数字编号化」尝试
     /**
      * Constructor, from a given variable name
      *
-     * @param s A String of name without prefix
+     * 🆕通过（作为字符的）类型和id构造「变量词项」
+     * * 📌用于「MakeTerm」中构造三种常见变量
+     *
+     * @param type [] The type of the variable
+     * @param id   [] The id of the variable
      */
-    protected Variable(String s) {
-        // * 🚩【2024-06-09 15:18:20】现在封闭构造入口
-        super(s);
+    protected Variable(char type, long id) {
+        super("" + type + id); // * ✅其「名称」由且只由「类型」和「编号」决定
+        this.type = type;
+        this.id = id;
     }
 
-    protected Variable(char type, long id) {
-        super("" + type + id);
-    }
+    /**
+     * 🆕数字编号化结果：表示「独立变量/非独变量/查询变量/……」的「类型」标签
+     * * 🎯亦用于「共同变量」的编号
+     */
+    private char type;
+    /** 🆕数字编号化结果：除「类型」外唯一标识的编码 */
+    private long id;
 
     /**
      * Clone a Variable
@@ -28,7 +36,7 @@ public class Variable extends Term {
      */
     @Override
     public Variable clone() {
-        return new Variable(name);
+        return new Variable(this.type, this.id);
     }
 
     /**
@@ -37,7 +45,7 @@ public class Variable extends Term {
      * @return The variable type
      */
     public char getType() {
-        return name.charAt(0);
+        return this.type;
     }
 
     /**

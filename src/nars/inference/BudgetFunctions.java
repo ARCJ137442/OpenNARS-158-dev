@@ -91,7 +91,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         if (solution == null)
             throw new AssertionError("要对应的解不应为空");
         // * 🚩根据「一般疑问 | 特殊疑问/目标」拆解
-        if (query.containQueryVar()) {
+        if (Variable.containVarQ(query.getContent())) {
             // * 🚩【一般疑问】 "yes/no" question
             return solution.getExpectation() / solution.getContent().getComplexity();
         } else {

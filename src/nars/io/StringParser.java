@@ -307,15 +307,16 @@ public abstract class StringParser extends Symbols {
         if (s.contains(" ")) { // invalid characters in a name
             throw new InvalidInputException("invalid term");
         }
-        if (Variable.containVar(s)) {
-            return parseVariable(s);
+        final Variable variableTerm = tryParseVariable(s);
+        if (variableTerm != null) {
+            return variableTerm;
         } else {
             return makeWord(s);
         }
     }
 
     /** 🆕解析变量词项 */
-    private static Variable parseVariable(String fullName) throws InvalidInputException {
+    private static Variable tryParseVariable(String fullName) throws InvalidInputException {
         final char type = fullName.charAt(0);
         final String name = fullName.substring(1);
         switch (type) {
@@ -327,7 +328,8 @@ public abstract class StringParser extends Symbols {
             case Symbols.VAR_QUERY:
                 return makeVarQ(name.hashCode());
             default:
-                throw new InvalidInputException("invalid variable");
+                // throw new InvalidInputException("invalid variable");
+                return null;
         }
     }
 
