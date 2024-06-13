@@ -406,8 +406,8 @@ public final class CompositionalRules {
                 }
                 if (commonTerm != null) {
                     subs.put(commonTerm, varInd2);
-                    ((ImageExt) term12).applySubstitute(subs);
-                    ((ImageExt) term22).applySubstitute(subs);
+                    VariableInference.applySubstitute((ImageExt) term12, subs);
+                    VariableInference.applySubstitute((ImageExt) term22, subs);
                 }
             }
         } else {
@@ -425,8 +425,8 @@ public final class CompositionalRules {
                 }
                 if (commonTerm != null) {
                     subs.put(commonTerm, varInd2);
-                    ((ImageInt) term11).applySubstitute(subs);
-                    ((ImageInt) term21).applySubstitute(subs);
+                    VariableInference.applySubstitute((ImageInt) term11, subs);
+                    VariableInference.applySubstitute((ImageInt) term21, subs);
                 }
             }
         }
@@ -508,7 +508,7 @@ public final class CompositionalRules {
         final HashMap<Term, Term> substitute = new HashMap<>();
         substitute.put(commonTerm1, makeVarD("varDep2".hashCode()));
         CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
-        content.applySubstitute(substitute);
+        VariableInference.applySubstitute(content, substitute);
         Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
         Budget budget = BudgetFunctions.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
@@ -521,7 +521,7 @@ public final class CompositionalRules {
         if (content == null) {
             return;
         }
-        content.applySubstitute(substitute);
+        VariableInference.applySubstitute(content, substitute);
         if (premise1.equals(task.getContent())) {
             truth = TruthFunctions.induction(belief, task.asJudgement());
         } else {

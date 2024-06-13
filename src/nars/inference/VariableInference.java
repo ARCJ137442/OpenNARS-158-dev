@@ -23,8 +23,60 @@ public abstract class VariableInference {
     // from CompoundTerm //
 
     /**
+     * Recursively apply a substitute to the current CompoundTerm
+     *
+     * @param subs
+     */
+    public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
+        // * 🚩遍历替换内部所有元素
+        for (int i = 0; i < self.size(); i++) {
+            final Term inner = self.componentAt(i);
+            // * 🚩若有「替换方案」⇒替换
+            if (subs.containsKey(inner)) {
+                // * ⚠️此处的「被替换词项」可能不是「变量词项」
+                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
+                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
+                final Term substituteT = chainGet(subs, inner);
+                // * 🚩复制并替换元素
+                final Term substitute = substituteT.clone();
+                self.setTermWhenDealingVariables(i, substitute);
+            }
+            // * 🚩复合词项⇒递归深入
+            else if (inner instanceof CompoundTerm) {
+                applySubstitute((CompoundTerm) inner, subs);
+            }
+        }
+        // * 🚩可交换⇒替换之后重排顺序
+        if (self.isCommutative()) // re-order
+            self.reorderComponents();
+        // * 🚩重新生成名称
+        self.updateNameAfterRenameVariables();
+    }
+
+    /**
+     * 层级获取「变量替换」最终点
+     * * 🚩一路查找到头
+     * * 📄{A -> B, B -> C} + A => C
+     */
+    private static <T> T chainGet(final HashMap<T, T> map, final T startPoint) {
+        // * ⚠️此时应该传入非空值
+        // * 🚩从「起始点」开始查找
+        T endPoint = map.get(startPoint);
+        // * 🚩非空⇒一直溯源
+        while (map.containsKey(endPoint)) {
+            endPoint = map.get(endPoint);
+            if (endPoint == startPoint)
+                throw new Error("不应有「循环替换」的情况");
+        }
+        return endPoint;
+    }
+
+    /**
      * Blank method to be override in CompoundTerm
+     * Rename the variables in the compound, called from Sentence constructors
      * * 📝对原子词项（词语）而言，没什么可以「重命名」的
+     * * ❓其是否要作为「变量推理」的一部分，仍待存疑——需要内化成「语言」库自身提供的特性吗？
+     * * * 诸多时候并非在「语言」中使用：解析器、语句构造 等
      */
     public static void renameVariables(Term term) {
         // * 🚩依据「是否为变量词项」分派
@@ -36,12 +88,6 @@ public abstract class VariableInference {
             // * 🚩无论是否重命名，始终更新（内置则会影响推理结果）
             c.updateAfterRenameVariables();
         }
-    }
-
-    /**
-     * Rename the variables in the compound, called from Sentence constructors
-     */
-    public static void renameVariables(CompoundTerm term) {
     }
 
     /**
@@ -79,7 +125,7 @@ public abstract class VariableInference {
                 // * 🚩真正逻辑：替换变量词项
                 // * 📌【2024-06-09 13:55:13】修改逻辑：只有「不等于」时才设置变量
                 if (!inner.equals(newV)) {
-                    self.setTermWhenRenamingVariables(i, newV);
+                    self.setTermWhenDealingVariables(i, newV);
                 }
                 // * 🚩将该变量记录在映射表中
                 // * ⚠️即便相等也要记录 | 影响的测试：NAL 6.20,6.21
@@ -163,7 +209,7 @@ public abstract class VariableInference {
         if (map.isEmpty())
             return;
         // * 🚩应用 & 重命名
-        compound.applySubstitute(map);
+        applySubstitute(compound, map);
         renameVariables(compound);
     }
 

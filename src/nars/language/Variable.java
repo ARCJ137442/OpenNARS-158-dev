@@ -23,7 +23,6 @@ public class Variable extends Term {
 
     /**
      * 🆕数字编号化结果：表示「独立变量/非独变量/查询变量/……」的「类型」标签
-     * * 🎯亦用于「共同变量」的编号
      */
     private char type;
     /** 🆕数字编号化结果：除「类型」外唯一标识的编码 */

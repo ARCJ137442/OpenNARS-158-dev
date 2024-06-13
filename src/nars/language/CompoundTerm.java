@@ -417,7 +417,7 @@ public abstract class CompoundTerm extends Term {
         return Variable.containVar(name);
     }
 
-    public void setTermWhenRenamingVariables(int index, Term term) {
+    public void setTermWhenDealingVariables(int index, Term term) {
         this.components.setTerm(index, term);
     }
 
@@ -435,61 +435,10 @@ public abstract class CompoundTerm extends Term {
     }
 
     /**
-     * Recursively apply a substitute to the current CompoundTerm
-     *
-     * @param subs
+     * 🆕对于「可交换词项」重排其中的元素
+     * * 🚩【2024-06-13 18:05:40】只在「应用替换」时用到
      */
-    public void applySubstitute(final HashMap<Term, Term> subs) {
-        applySubstitute(this, subs);
-    }
-
-    /** 📌静态方法形式 */
-    public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
-        // * 🚩遍历替换内部所有元素
-        for (int i = 0; i < self.size(); i++) {
-            final Term inner = self.componentAt(i);
-            // * 🚩若有「替换方案」⇒替换
-            if (subs.containsKey(inner)) {
-                // * ⚠️此处的「被替换词项」可能不是「变量词项」
-                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
-                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
-                final Term substituteT = chainGet(subs, inner);
-                // * 🚩复制并替换元素
-                final Term substitute = substituteT.clone();
-                self.components.setTerm(i, substitute);
-            }
-            // * 🚩复合词项⇒递归深入
-            else if (inner instanceof CompoundTerm) {
-                applySubstitute((CompoundTerm) inner, subs);
-            }
-        }
-        // * 🚩可交换⇒替换之后重排顺序
-        if (self.isCommutative()) // re-order
-            self.reorderComponents();
-        // * 🚩重新生成名称
-        self.name = self.makeName();
-    }
-
-    /**
-     * 层级获取「变量替换」最终点
-     * * 🚩一路查找到头
-     * * 📄{A -> B, B -> C} + A => C
-     */
-    private static <T> T chainGet(final HashMap<T, T> map, final T startPoint) {
-        // * ⚠️此时应该传入非空值
-        // * 🚩从「起始点」开始查找
-        T endPoint = map.get(startPoint);
-        // * 🚩非空⇒一直溯源
-        while (map.containsKey(endPoint)) {
-            endPoint = map.get(endPoint);
-            if (endPoint == startPoint)
-                throw new Error("不应有「循环替换」的情况");
-        }
-        return endPoint;
-    }
-
-    /** 🆕对于「可交换词项」重排其中的元素 */
-    private void reorderComponents() {
+    public void reorderComponents() {
         final TreeSet<Term> s = new TreeSet<>(this.components);
         this.components = new TermComponents(new ArrayList<>(s));
     }
