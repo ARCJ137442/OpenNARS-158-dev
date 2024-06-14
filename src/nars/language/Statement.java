@@ -32,26 +32,6 @@ public abstract class Statement extends CompoundTerm {
     }
 
     /**
-     * Check Statement relation symbol, called in StringParser
-     *
-     * @param s0 The String to be checked
-     * @return if the given String is a relation symbol
-     */
-    public static boolean isRelation(String s0) {
-        final String s = s0.trim();
-        if (s.length() != 3) {
-            return false;
-        }
-        return (s.equals(Symbols.INHERITANCE_RELATION)
-                || s.equals(Symbols.SIMILARITY_RELATION)
-                || s.equals(Symbols.INSTANCE_RELATION)
-                || s.equals(Symbols.PROPERTY_RELATION)
-                || s.equals(Symbols.INSTANCE_PROPERTY_RELATION)
-                || s.equals(Symbols.IMPLICATION_RELATION)
-                || s.equals(Symbols.EQUIVALENCE_RELATION));
-    }
-
-    /**
      * Override the default in making the nameStr of the current term from
      * existing fields
      *

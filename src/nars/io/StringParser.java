@@ -358,6 +358,26 @@ public abstract class StringParser extends Symbols {
     }
 
     /**
+     * Check Statement relation symbol, called in StringParser
+     *
+     * @param s0 The String to be checked
+     * @return if the given String is a relation symbol
+     */
+    public static boolean isRelation(String s0) {
+        final String s = s0.trim();
+        if (s.length() != 3) {
+            return false;
+        }
+        return (s.equals(Symbols.INHERITANCE_RELATION)
+                || s.equals(Symbols.SIMILARITY_RELATION)
+                || s.equals(Symbols.INSTANCE_RELATION)
+                || s.equals(Symbols.PROPERTY_RELATION)
+                || s.equals(Symbols.INSTANCE_PROPERTY_RELATION)
+                || s.equals(Symbols.IMPLICATION_RELATION)
+                || s.equals(Symbols.EQUIVALENCE_RELATION));
+    }
+
+    /**
      * Parse a String to create a CompoundTerm.
      *
      * @return the Term generated from the String
@@ -467,7 +487,7 @@ public abstract class StringParser extends Symbols {
         int levelCounter = 0;
         int i = 0;
         while (i < s.length() - 3) { // don't need to check the last 3 characters
-            if ((levelCounter == 0) && (Statement.isRelation(s.substring(i, i + 3)))) {
+            if ((levelCounter == 0) && (isRelation(s.substring(i, i + 3)))) {
                 return i;
             }
             if (isOpener(s, i)) {
@@ -497,7 +517,7 @@ public abstract class StringParser extends Symbols {
         if (!b) {
             return false;
         }
-        if (i + 3 <= s.length() && Statement.isRelation(s.substring(i, i + 3))) {
+        if (i + 3 <= s.length() && isRelation(s.substring(i, i + 3))) {
             return false;
         }
         return true;
@@ -519,7 +539,7 @@ public abstract class StringParser extends Symbols {
         if (!b) {
             return false;
         }
-        if (i >= 2 && Statement.isRelation(s.substring(i - 2, i + 1))) {
+        if (i >= 2 && isRelation(s.substring(i - 2, i + 1))) {
             return false;
         }
         return true;
