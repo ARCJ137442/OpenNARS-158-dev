@@ -428,8 +428,9 @@ public abstract class CompoundTerm extends Term {
     }
 
     /**
-     * 🆕对于「可交换词项」重排其中的元素
+     * 🆕对于「可交换词项」排序去重其中的元素
      * * 🚩【2024-06-13 18:05:40】只在「应用替换」时用到
+     * * 🚩包含「排序」「去重」两个作用
      */
     public void reorderComponents() {
         final TreeSet<Term> s = new TreeSet<>(this.components);
