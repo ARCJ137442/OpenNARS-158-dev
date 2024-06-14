@@ -48,7 +48,7 @@ public abstract class CompoundTerm extends Term {
      * syntactic complexity of the compound, the sum of those of its components
      * plus 1
      */
-    protected short complexity;
+    protected final short complexity;
     /**
      * Whether the term names a concept
      */
@@ -98,9 +98,9 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(ArrayList<Term> components) {
         this.components = new TermComponents(components);
-        calcComplexity();
-        name = makeName();
-        isConstant = !Variable.containVar(this);
+        this.complexity = this.calcComplexity();
+        this.name = makeName();
+        this.isConstant = !Variable.containVar(this);
     }
 
     /**
@@ -111,9 +111,9 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
-        isConstant = !Variable.containVar(this);
+        this.isConstant = !Variable.containVar(this);
         this.components = new TermComponents(components);
-        calcComplexity();
+        this.complexity = this.calcComplexity();
     }
 
     /**
@@ -128,11 +128,12 @@ public abstract class CompoundTerm extends Term {
     /**
      * The complexity of the term is the sum of those of the components plus 1
      */
-    private void calcComplexity() {
-        complexity = 1;
+    private short calcComplexity() {
+        short complexity = 1;
         for (Term t : components) {
             complexity += t.getComplexity();
         }
+        return complexity;
     }
 
     @Override
@@ -387,19 +388,32 @@ public abstract class CompoundTerm extends Term {
      * @return Whether the components are all in the compound
      */
     public boolean containAllComponents(Term t) {
-        if (this.isSameType(t)) {
-            return components.containsAll(((CompoundTerm) t).getComponents());
-        } else {
-            return components.contains(t);
-        }
+        return this.isSameType(t)
+                // * 🚩同类⇒深入比较
+                ? components.containsAll(((CompoundTerm) t).getComponents())
+                // * 🚩异类⇒判断包含
+                : components.contains(t);
     }
 
     /* ----- variable-related utilities ----- */
 
+    /**
+     * 🆕在变量处理中设置词项
+     * * 🎯变量推理需要使用其方法
+     *
+     * @param &m-this
+     * @param index   []
+     * @param term    []
+     */
     public void setTermWhenDealingVariables(int index, Term term) {
         this.components.setTerm(index, term);
     }
 
+    /**
+     * 重命名变量后，更新「是常量」与名称
+     *
+     * @param &m-this
+     */
     public void updateAfterRenameVariables() {
         // * 🚩设置「为常量」
         // ? ❓【2024-06-09 13:26:43】为何要如此？
