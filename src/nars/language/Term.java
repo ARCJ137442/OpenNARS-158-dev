@@ -47,38 +47,6 @@ public class Term implements Cloneable, Comparable<Term> {
     }
 
     /**
-     * Make a new Term with the same name.
-     *
-     * @return The new Term
-     */
-    @Override
-    public Term clone() {
-        return new Term(name);
-    }
-
-    /**
-     * Equal terms have identical name, though not necessarily the same
-     * reference.
-     *
-     * @return Whether the two Terms are equal
-     * @param that The Term to be compared with the current Term
-     */
-    @Override
-    public boolean equals(Object that) {
-        return (that instanceof Term) && name.equals(((Term) that).getName());
-    }
-
-    /**
-     * Produce a hash code for the term
-     *
-     * @return An integer hash code
-     */
-    @Override
-    public int hashCode() {
-        return (name != null ? name.hashCode() : 7);
-    }
-
-    /**
      * Check whether the current Term can name a Concept.
      *
      * @return A Term is constant by default
@@ -121,6 +89,38 @@ public class Term implements Cloneable, Comparable<Term> {
      */
     public final boolean isSameType(final Term that) {
         return that.getClass() == this.getClass();
+    }
+
+    /**
+     * Make a new Term with the same name.
+     *
+     * @return The new Term
+     */
+    @Override
+    public Term clone() {
+        return new Term(name);
+    }
+
+    /**
+     * Equal terms have identical name, though not necessarily the same
+     * reference.
+     *
+     * @return Whether the two Terms are equal
+     * @param that The Term to be compared with the current Term
+     */
+    @Override
+    public boolean equals(Object that) {
+        return (that instanceof Term) && name.equals(((Term) that).getName());
+    }
+
+    /**
+     * Produce a hash code for the term
+     *
+     * @return An integer hash code
+     */
+    @Override
+    public int hashCode() {
+        return (name != null ? name.hashCode() : 7);
     }
 
     /**
