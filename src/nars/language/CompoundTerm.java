@@ -100,7 +100,7 @@ public abstract class CompoundTerm extends Term {
         this.components = new TermComponents(components);
         calcComplexity();
         name = makeName();
-        isConstant = !this.containVar();
+        isConstant = !Variable.containVar(this);
     }
 
     /**
@@ -111,7 +111,7 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
-        isConstant = !this.containVar();
+        isConstant = !Variable.containVar(this);
         this.components = new TermComponents(components);
         calcComplexity();
     }
@@ -395,14 +395,6 @@ public abstract class CompoundTerm extends Term {
     }
 
     /* ----- variable-related utilities ----- */
-    /**
-     * Whether this compound term contains any variable term
-     *
-     * @return Whether the name contains a variable
-     */
-    public boolean containVar() {
-        return Variable.containVar(name);
-    }
 
     public void setTermWhenDealingVariables(int index, Term term) {
         this.components.setTerm(index, term);

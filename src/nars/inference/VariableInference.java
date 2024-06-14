@@ -83,7 +83,7 @@ public abstract class VariableInference {
         if (term instanceof CompoundTerm) {
             final CompoundTerm c = (CompoundTerm) term;
             // * 🚩有变量⇒重命名变量
-            if (c.containVar())
+            if (Variable.containVar(c))
                 renameCompoundVariables(c, new HashMap<Variable, Variable>());
             // * 🚩无论是否重命名，始终更新（内置则会影响推理结果）
             c.updateAfterRenameVariables();
@@ -100,7 +100,7 @@ public abstract class VariableInference {
             HashMap<Variable, Variable> map) {
         // * 🚩没有变量⇒返回
         // ? 💭【2024-06-09 13:33:08】似乎对实际逻辑无用
-        if (!self.containVar())
+        if (!Variable.containVar(self))
             return;
         // * 🚩只有「包含变量」才要继续重命名
         for (int i = 0; i < self.size(); i++) {

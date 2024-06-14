@@ -114,6 +114,15 @@ public class Variable extends Term {
     }
 
     /**
+     * Whether this compound term contains any variable term
+     *
+     * @return Whether the name contains a variable
+     */
+    public static boolean containVar(Term t) {
+        return containVar(t.getName());
+    }
+
+    /**
      * Check whether a string represent a name of a term that contains a
      * variable
      *
@@ -122,10 +131,6 @@ public class Variable extends Term {
      */
     public static boolean containVar(String n) {
         return containVarI(n) || containVarD(n) || containVarQ(n);
-    }
-
-    public static boolean containVar(Term t) {
-        return containVar(t.getName());
     }
 
     /**
