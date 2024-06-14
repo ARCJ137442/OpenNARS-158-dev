@@ -433,7 +433,22 @@ public abstract class CompoundTerm extends Term {
      * * 🚩包含「排序」「去重」两个作用
      */
     public void reorderComponents() {
-        final TreeSet<Term> s = new TreeSet<>(this.components);
-        this.components = new TermComponents(new ArrayList<>(s));
+        // * 🚩将自身组分暂时移交所有权
+        final ArrayList<Term> termsToReorder = this.components;
+        // * 🚩对移交出来的词项数组重排去重
+        final ArrayList<Term> newTerms = reorderTerms(termsToReorder);
+        // * 🚩基于整理好的词项数组，装填回自家类型
+        this.components = new TermComponents(newTerms);
+    }
+
+    /**
+     * 🆕重排去重给定的词项数组
+     * * 🎯用于「变量替换到新词项」
+     *
+     * @param old [] 传入所有权
+     */
+    public static ArrayList<Term> reorderTerms(final ArrayList<Term> old) {
+        final TreeSet<Term> s = new TreeSet<>(old);
+        return new ArrayList<>(s);
     }
 }

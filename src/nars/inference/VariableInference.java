@@ -28,6 +28,18 @@ public abstract class VariableInference {
      * @param subs
      */
     public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
+        final Term original = self.clone();
+        final Term n = applySubstitute2New(self, subs);
+        _applySubstitute(self, subs);
+        if (!((n == null) == !self.equals(n)))
+            throw new AssertionError("【2024-06-14 23:09:32】替换后不等 当且仅当替换后是空的！");
+        if (n == null)
+            System.err.println("新的替换后是空的！" + self + ", sub = " + subs);
+        if (!self.equals(n))
+            System.err.println("新旧替换不等！" + self + ", n = " + n + ", subs = " + subs);
+    }
+
+    public static void _applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
         // * 🚩遍历替换内部所有元素
         for (int i = 0; i < self.size(); i++) {
             final Term inner = self.componentAt(i);
@@ -51,6 +63,61 @@ public abstract class VariableInference {
             self.reorderComponents();
         // * 🚩重新生成名称
         self.updateNameAfterRenameVariables();
+    }
+
+    /**
+     * 🆕应用替换到新词项
+     * * 🎯纯函数，不涉及内部状态的改变
+     *
+     * @param old
+     * @param subs
+     * @return
+     */
+    public static Term applySubstitute2New(final CompoundTerm old, final HashMap<Term, Term> subs) {
+        // * 🚩生成新词项的内部元素
+        final ArrayList<Term> components = new ArrayList<>();
+        // * 🚩遍历替换内部所有元素
+        for (int i = 0; i < old.size(); i++) {
+            // * 🚩获取内部词项的引用
+            final Term inner = old.componentAt(i);
+            // * 🚩若有「替换方案」⇒添加被替换的项
+            if (subs.containsKey(inner)) {
+                // * ⚠️此处的「被替换词项」可能不是「变量词项」
+                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
+                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
+                final Term substituteT = chainGet(subs, inner);
+                // * 🚩预先判空并返回
+                if (substituteT == null)
+                    throw new AssertionError("【2024-06-14 23:05:26】此处有替代就一定非空");
+                // * 🚩复制并新增元素
+                final Term substitute = substituteT.clone();
+                components.add(substitute);
+            }
+            // * 🚩否则⇒复制or深入
+            else {
+                final Term newInner = inner instanceof CompoundTerm
+                        // * 🚩复合词项⇒递归深入
+                        ? applySubstitute2New((CompoundTerm) inner, subs)
+                        // * 🚩原子词项⇒直接复制
+                        : inner.clone();
+                // * 🚩预先判空并返回 | 内部词项有可能在替换之后并不合法，会返回空
+                if (newInner == null)
+                    return null;
+                // * 🚩增加
+                components.add(newInner);
+            }
+        }
+        // * 🚩选择性处理「可交换性」
+        final ArrayList<Term> newComponents = old.isCommutative()
+                // * 🚩可交换⇒替换之后重排顺序
+                ? CompoundTerm.reorderTerms(components) // re-order
+                // * 🚩否则按原样
+                : components;
+        // * 🚩以旧词项为模板生成新词项，顺带在其中生成名称
+        // ! ⚠️【2024-06-14 23:01:56】可以使用`make`系列方法，但这其中可能会产生空值（不是一个「有效词项」）
+        final Term newTerm = makeCompoundTerm(old, newComponents);
+        // * 🚩返回
+        return newTerm;
     }
 
     /**
@@ -242,13 +309,15 @@ public abstract class VariableInference {
     /**
      * To recursively find a substitution that can unify two Terms without
      * changing them
+     * * 📌名称：变量统一/变量归一化
      * * ⚠️会修改两个映射表
+     * * ⚠️【2024-06-14 23:11:42】对「含变量的可交换词项」带有随机成分
      *
-     * @param type  The type of Variable to be substituted
-     * @param term1 The first Term to be unified
-     * @param term2 The second Term to be unified
-     * @param map1  The substitution for term1 formed so far
-     * @param map2  The substitution for term2 formed so far
+     * @param type  [] The type of Variable to be substituted
+     * @param term1 [] The first Term to be unified
+     * @param term2 [] The second Term to be unified
+     * @param map1  [&m] The substitution for term1 formed so far
+     * @param map2  [&m] The substitution for term2 formed so far
      * @return Whether there is a substitution that unifies the two Terms
      */
     private static boolean findUnification(

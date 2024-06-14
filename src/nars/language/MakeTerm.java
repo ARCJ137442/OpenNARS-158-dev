@@ -52,20 +52,20 @@ public abstract class MakeTerm {
      * Try to make a compound term from a template and a list of components
      * * 📝基于一个「模板词项」与「元素」
      *
-     * @param compound   The template
+     * @param template   The template
      * @param components The components
      * @return A compound term or null
      */
-    public static Term makeCompoundTerm(CompoundTerm compound, ArrayList<Term> components) {
-        if (compound instanceof ImageExt)
+    public static Term makeCompoundTerm(CompoundTerm template, ArrayList<Term> components) {
+        if (template instanceof ImageExt)
             // * 🚩外延像
-            return makeImageExt(components, ((ImageExt) compound).getRelationIndex());
-        else if (compound instanceof ImageInt)
+            return makeImageExt(components, ((ImageExt) template).getRelationIndex());
+        else if (template instanceof ImageInt)
             // * 🚩内涵像
-            return makeImageInt(components, ((ImageInt) compound).getRelationIndex());
+            return makeImageInt(components, ((ImageInt) template).getRelationIndex());
         else
             // * 🚩其它
-            return makeCompoundTerm(compound.operator(), components);
+            return makeCompoundTerm(template.operator(), components);
     }
 
     /**
@@ -116,6 +116,12 @@ public abstract class MakeTerm {
                         return makeConjunction(arg);
                     default:
                         return null;
+                }
+            case 3:
+                if (arg.size() == 2) {
+                    final Term subject = arg.get(0);
+                    final Term predicate = arg.get(1);
+                    return makeStatement(op, subject, predicate);
                 }
             default:
                 return null;
