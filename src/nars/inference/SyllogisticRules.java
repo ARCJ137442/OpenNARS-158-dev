@@ -263,7 +263,7 @@ final class SyllogisticRules {
             return;
         }
         final Conjunction oldCondition = (Conjunction) subj;
-        final int index2 = oldCondition.getComponents().indexOf(commonComponent);
+        final int index2 = oldCondition.indexOfComponent(commonComponent);
         if (index2 >= 0) {
             index = (short) index2;
         } else {

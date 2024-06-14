@@ -326,11 +326,22 @@ public abstract class CompoundTerm extends Term {
 
     /**
      * Get the component list
+     * * 🚩【2024-06-14 10:48:44】现在减少其可见性，不在包外使用
      *
      * @return The component list
      */
-    public ArrayList<Term> getComponents() {
+    ArrayList<Term> getComponents() {
         return this.components.asList();
+    }
+
+    /**
+     * 🆕Get the index of a component
+     *
+     * @param t [&]
+     * @return [] index or -1
+     */
+    public int indexOfComponent(Term t) {
+        return this.components.indexOf(t);
     }
 
     /**

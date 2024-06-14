@@ -154,14 +154,13 @@ public abstract class MakeTerm {
      * @return The new compound
      */
     public static Term reduceComponents(CompoundTerm toBeReduce, Term componentToReduce) {
-        final boolean success;
         final ArrayList<Term> components = toBeReduce.cloneComponents();
-        if (toBeReduce.isSameType(componentToReduce))
-            // * 🚩同类⇒删除componentToReduce内所有元素
-            success = components.removeAll(((CompoundTerm) componentToReduce).getComponents());
-        else
-            // * 🚩默认⇒删除componentToReduce（若含）
-            success = components.remove(componentToReduce);
+        // * 🚩从变长数组中删除元素
+        final boolean success = toBeReduce.isSameType(componentToReduce)
+                // * 🚩同类⇒删除componentToReduce内所有元素
+                ? components.removeAll(((CompoundTerm) componentToReduce).getComponents())
+                // * 🚩默认⇒删除componentToReduce（若含）
+                : components.remove(componentToReduce);
         if (!success)
             return null;
         // * 🚩删除成功⇒继续

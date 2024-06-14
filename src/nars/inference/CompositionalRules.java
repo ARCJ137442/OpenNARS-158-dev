@@ -43,7 +43,7 @@ public final class CompositionalRules {
             if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
                     && !(((Statement) component).getPredicate() instanceof Variable)) {
                 final Variable V = makeVarD("depIndVar1".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-                final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
+                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
                 final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
                 T2 = (CompoundTerm) setComponent(T2, 1, V);
                 if (zw2 == null || T2 == null || zw2.equals(T2)) {
@@ -54,7 +54,7 @@ public final class CompositionalRules {
             } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
                     && !(((Statement) component).getSubject() instanceof Variable)) {
                 final Variable V = makeVarD("depIndVar2".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-                final CompoundTerm zw = (CompoundTerm) T.getComponents().get(index).clone();
+                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
                 final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
                 T2 = (CompoundTerm) setComponent(T2, 0, V);
                 if (zw2 == null || T2 == null || zw2.equals(T2)) {
