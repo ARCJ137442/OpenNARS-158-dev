@@ -237,7 +237,9 @@ final class SyllogisticRules {
      *                 for predicate, -1 for the whole term
      * @param context  Reference to the derivation context
      */
-    static void conditionalDedInd(Implication premise1, short index, Term premise2, int side,
+    static void conditionalDedInd(
+            Implication premise1, short index,
+            CompoundTerm premise2, int side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
@@ -327,7 +329,9 @@ final class SyllogisticRules {
      *                 for predicate, -1 for the whole term
      * @param context  Reference to the derivation context
      */
-    static void conditionalAna(Equivalence premise1, short index, Term premise2, int side,
+    static void conditionalAna(
+            Equivalence premise1, short index,
+            Implication premise2, int side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();

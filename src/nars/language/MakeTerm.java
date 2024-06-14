@@ -737,13 +737,13 @@ public abstract class MakeTerm {
      * make methods.
      * * 🚩预先构造好名称，然后传入类构造函数中（这样无需再创建名称）
      *
-     * @param argument The argument list
-     * @param index    The index of the place-holder in the new Image
+     * @param argument         The argument list
+     * @param placeholderIndex The index of the place-holder in the new Image
      * @return the Term generated from the arguments
      */
-    private static Term makeImageExt(ArrayList<Term> argument, short index) {
-        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, index);
-        return new ImageExt(name, argument, index);
+    private static Term makeImageExt(ArrayList<Term> argument, short placeholderIndex) {
+        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_EXT_OPERATOR, argument, placeholderIndex);
+        return new ImageExt(name, argument, placeholderIndex);
     }
 
     /* ImageInt */
@@ -825,13 +825,13 @@ public abstract class MakeTerm {
      * make methods.
      * * 📝与「外延像」对应方法相似
      *
-     * @param argument The argument list
-     * @param index    The index of the place-holder in the new Image
+     * @param argument         The argument list
+     * @param placeholderIndex The index of the place-holder in the new Image
      * @return the Term generated from the arguments
      */
-    private static Term makeImageInt(ArrayList<Term> argument, short index) {
-        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, index);
-        return new ImageInt(name, argument, index);
+    private static Term makeImageInt(ArrayList<Term> argument, short placeholderIndex) {
+        final String name = CompoundTerm.makeImageName(Symbols.IMAGE_INT_OPERATOR, argument, placeholderIndex);
+        return new ImageInt(name, argument, placeholderIndex);
     }
 
     /* Conjunction */

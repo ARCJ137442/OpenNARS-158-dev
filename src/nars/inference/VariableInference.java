@@ -164,14 +164,20 @@ public abstract class VariableInference {
      * To unify two terms
      * * ⚠️会改变词项自身
      *
-     * @param type      The type of variable that can be substituted
-     * @param t1        The first term to be unified
-     * @param t2        The second term to be unified
-     * @param compound1 The compound containing the first term
-     * @param compound2 The compound containing the second term
+     * @param type         The type of variable that can be substituted
+     * @param t1           The first term to be unified
+     * @param t2           The second term to be unified
+     * @param mayCompound1 The compound containing the first term
+     * @param mayCompound2 The compound containing the second term
      * @return Whether the unification is possible
      */
-    private static boolean unify(final char type, Term t1, Term t2, Term compound1, Term compound2) {
+    private static boolean unify(
+            final char type,
+            Term t1, Term t2,
+            CompoundTerm mayCompound1,
+            CompoundTerm mayCompound2) {
+        if (!(mayCompound1 instanceof CompoundTerm) || !(mayCompound2 instanceof CompoundTerm))
+            return false;
         // * 🚩主逻辑：寻找替代
         final HashMap<Term, Term> map1 = new HashMap<>();
         final HashMap<Term, Term> map2 = new HashMap<>();
@@ -181,25 +187,25 @@ public abstract class VariableInference {
             // * 🚩此时假定「有替代的一定是复合词项」
             // renameVar(map1, compound1, "-1");
             // renameVar(map2, compound2, "-2");
-            applyUnifyOne((CompoundTerm) compound1, map1);
-            applyUnifyOne((CompoundTerm) compound2, map2);
+            applyUnifyOne((CompoundTerm) mayCompound1, map1);
+            applyUnifyOne((CompoundTerm) mayCompound2, map2);
         }
         // * 🚩返回「是否替代成功」
         return hasSubs;
     }
 
     /** 🆕【对外接口】统一独立变量 */
-    static boolean unifyI(Term t1, Term t2, Term compound1, Term compound2) {
+    static boolean unifyI(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
         return unify(VAR_INDEPENDENT, t1, t2, compound1, compound2);
     }
 
     /** 🆕【对外接口】统一非独变量 */
-    static boolean unifyD(Term t1, Term t2, Term compound1, Term compound2) {
+    static boolean unifyD(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
         return unify(VAR_DEPENDENT, t1, t2, compound1, compound2);
     }
 
     /** 🆕【对外接口】统一查询变量 */
-    static boolean unifyQ(Term t1, Term t2, Term compound1, Term compound2) {
+    static boolean unifyQ(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
         return unify(VAR_QUERY, t1, t2, compound1, compound2);
     }
 

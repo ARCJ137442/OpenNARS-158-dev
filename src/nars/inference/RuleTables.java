@@ -88,7 +88,9 @@ public class RuleTables {
                         // * @ C=T
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
-                            SyllogisticRules.conditionalDedInd((Implication) taskTerm, bIndex2, beliefTerm, tIndex,
+                            SyllogisticRules.conditionalDedInd(
+                                    (Implication) taskTerm, bIndex2,
+                                    (Statement) beliefTerm, tIndex,
                                     context);
                         }
                         return;
@@ -97,11 +99,15 @@ public class RuleTables {
                         // * + B="<(&&,<{tim} --> [aggressive]>,<(*,{tim},{graz}) --> livingIn>) ==>
                         // <{tim} --> murder>>"
                         // * @ C=T
+                        if (!(taskTerm instanceof CompoundTerm))
+                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
+                        if (!(beliefTerm instanceof CompoundTerm))
+                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合某某」的，当前信念一定是复合词项");
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
                             SyllogisticRules.conditionalDedInd(
                                     (Implication) beliefTerm, bIndex2,
-                                    taskTerm, tIndex,
+                                    (CompoundTerm) taskTerm, tIndex,
                                     context);
                         }
                         return;
@@ -135,19 +141,28 @@ public class RuleTables {
                         // *📄T="(||,<{tom}-->[aggressive]>,<{tom}-->(/,livingIn,_,{graz})>)"
                         // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
                         // * @ C="(/,livingIn,_,{graz})"
+                        if (!(taskTerm instanceof CompoundTerm))
+                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
+                        if (!(beliefTerm instanceof CompoundTerm))
+                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合某某」的，当前信念一定是复合词项");
                         if (belief != null) {
+                            if (!(taskTerm instanceof CompoundTerm))
+                                throw new AssertionError("【2024-06-14 17:38:35】词项链是「复合条件」的，当前任务一定是「蕴含」词项（复合词项）");
                             if (beliefTerm instanceof Implication) {
-                                final boolean canDetach = VariableInference.unifyI(
+                                final boolean canDetach = taskTerm instanceof CompoundTerm ? VariableInference.unifyI(
                                         ((Implication) beliefTerm).getSubject(), taskTerm,
-                                        beliefTerm, taskTerm);
-                                if (canDetach) {
+                                        (Implication) beliefTerm, (CompoundTerm) taskTerm) : false;
+                                if (canDetach)
                                     detachmentWithVar(belief, task, bIndex, context);
-                                } else {
-                                    SyllogisticRules.conditionalDedInd((Implication) beliefTerm, bIndex, taskTerm, -1,
+                                else
+                                    SyllogisticRules.conditionalDedInd(
+                                            (Implication) beliefTerm, bIndex,
+                                            (CompoundTerm) taskTerm, -1,
                                             context);
-                                }
                             } else if (beliefTerm instanceof Equivalence) {
-                                SyllogisticRules.conditionalAna((Equivalence) beliefTerm, bIndex, taskTerm, -1,
+                                SyllogisticRules.conditionalAna(
+                                        (Equivalence) beliefTerm, bIndex,
+                                        (Implication) taskTerm, -1,
                                         context);
                             }
                         }
@@ -164,7 +179,9 @@ public class RuleTables {
                         // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
                         // * + B="tim"
                         // * @ C="{tim}"
-                        componentAndStatement((CompoundTerm) conceptTerm, bIndex, (Statement) taskTerm,
+                        componentAndStatement(
+                                (CompoundTerm) conceptTerm, bIndex,
+                                (Statement) taskTerm,
                                 tIndex,
                                 context);
                         return;
@@ -190,10 +207,11 @@ public class RuleTables {
                         // * @ C="(/,livingIn,_,{graz})"
                         if (belief != null) {
                             final short bIndex2 = bLink.getIndex(1);
-                            if (beliefTerm instanceof Implication) {
-                                conditionalDedIndWithVar((Implication) beliefTerm, bIndex2, (Statement) taskTerm,
+                            if (beliefTerm instanceof Implication)
+                                conditionalDedIndWithVar(
+                                        (Implication) beliefTerm, bIndex2,
+                                        (Statement) taskTerm,
                                         tIndex, context);
-                            }
                         }
                         return;
                 }
@@ -394,8 +412,9 @@ public class RuleTables {
             // * 🚩主项×谓项 <A --> B> × <C --> A>
             case SP: // deduction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unifyI(tTerm.getSubject(), bTerm.getPredicate(), tTerm,
-                        bTerm);
+                unified = VariableInference.unifyI(
+                        tTerm.getSubject(), bTerm.getPredicate(),
+                        tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
                     return;
@@ -416,8 +435,9 @@ public class RuleTables {
             // * 🚩谓项×主项 <A --> B> × <B --> C>
             case PS: // exemplification
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unifyI(tTerm.getPredicate(), bTerm.getSubject(), tTerm,
-                        bTerm);
+                unified = VariableInference.unifyI(
+                        tTerm.getPredicate(), bTerm.getSubject(),
+                        tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
                     return;
@@ -876,7 +896,9 @@ public class RuleTables {
             // * 其内元素是「合取」且有「当前信念」
             if (compound instanceof Conjunction && context.hasCurrentBelief()) {
                 // * 🚩先尝试消去非独变量 #
-                final boolean unifiedD = VariableInference.unifyD(component, statement, compound, statement);
+                final boolean unifiedD = VariableInference.unifyD(
+                        component, statement,
+                        compound, statement);
                 if (unifiedD)
                     // * 🚩能消去⇒三段论消元
                     SyllogisticRules.eliminateVarDep(
