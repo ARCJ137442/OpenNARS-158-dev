@@ -435,6 +435,7 @@ public class RuleTables {
             // * 🚩谓项×主项 <A --> B> × <B --> C>
             case PS: // exemplification
                 // * 🚩先尝试统一独立变量
+                // * 📝统一之后，原先的变量就丢弃了
                 unified = VariableInference.unifyI(
                         tTerm.getPredicate(), bTerm.getSubject(),
                         tTerm, bTerm);

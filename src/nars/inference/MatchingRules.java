@@ -6,7 +6,6 @@ import nars.control.DerivationContextReason;
 import nars.entity.Judgement;
 import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.io.Symbols;
 import nars.language.Term;
 
 /**
@@ -46,8 +45,7 @@ public abstract class MatchingRules {
                 // * 📄Task :: SentenceV1@49 "<{?1} --> murder>? {105 : 6} "
                 // * & Belief: SentenceV1@39 "<{tom} --> murder>. %1.0000;0.7290% {147 : 3;4;2}"
                 // * ⇒ Unified SentenceV1@23 "<{tom} --> murder>? {105 : 6} "
-                final boolean hasUnified = VariableInference.hasUnification(
-                        Symbols.VAR_QUERY,
+                final boolean hasUnified = VariableInference.hasUnificationQ(
                         currentTask.getContent().clone(),
                         belief.getContent().clone());
                 // * ⚠️只针对「特殊疑问」：传入的只有「带变量问题」，因为「一般疑问」通过直接推理就完成了

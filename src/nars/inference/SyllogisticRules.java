@@ -193,6 +193,10 @@ final class SyllogisticRules {
         } else {
             return;
         }
+        // * 📄【2024-06-15 11:39:40】可能存在「变量统一」后词项无效的情况
+        // * * main"<<bird --> bird> ==> <bird --> swimmer>>"
+        // * * content"<bird --> bird>"
+        // * * sub"<bird --> swimmer>"
         if ((content instanceof Statement) && ((Statement) content).invalid()) {
             return;
         }
@@ -245,8 +249,7 @@ final class SyllogisticRules {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
-        final boolean conditionalTask = VariableInference.hasUnification(
-                Symbols.VAR_INDEPENDENT,
+        final boolean conditionalTask = VariableInference.hasUnificationI(
                 premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
@@ -336,8 +339,7 @@ final class SyllogisticRules {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean conditionalTask = VariableInference.hasUnification(
-                Symbols.VAR_INDEPENDENT,
+        final boolean conditionalTask = VariableInference.hasUnificationI(
                 premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;

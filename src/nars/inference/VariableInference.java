@@ -28,15 +28,17 @@ public abstract class VariableInference {
      * @param subs
      */
     public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
-        final Term original = self.clone();
-        final Term n = applySubstitute2New(self, subs);
+        // final Term original = self.clone();
+        // final Term n = applySubstitute2New(self, subs);
+        // * 🚩【2024-06-15 12:10:14】除了下边这一行，其它都是验证「跟函数式替换是否一致」的代码
+        // * ✅【2024-06-15 12:10:54】目前验证结果：替换后不等⇔当且仅当替换后是空的——替换结果的无效性被提前揭露
         _applySubstitute(self, subs);
-        if (!((n == null) == !self.equals(n)))
-            throw new AssertionError("【2024-06-14 23:09:32】替换后不等 当且仅当替换后是空的！");
-        if (n == null)
-            System.err.println("新的替换后是空的！" + self + ", sub = " + subs);
-        if (!self.equals(n))
-            System.err.println("新旧替换不等！" + self + ", n = " + n + ", subs = " + subs);
+        // if (!((n == null) == !self.equals(n)))
+        // throw new AssertionError("【2024-06-14 23:09:32】替换后不等 当且仅当替换后是空的！");
+        // if (n == null)
+        // System.err.println("新的替换后是空的！" + self + ", sub = " + subs);
+        // if (!self.equals(n))
+        // System.err.println("新旧替换不等！" + self + ", n = " + n + ", subs = " + subs);
     }
 
     public static void _applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
@@ -55,7 +57,7 @@ public abstract class VariableInference {
             }
             // * 🚩复合词项⇒递归深入
             else if (inner instanceof CompoundTerm) {
-                applySubstitute((CompoundTerm) inner, subs);
+                _applySubstitute((CompoundTerm) inner, subs);
             }
         }
         // * 🚩可交换⇒替换之后重排顺序
@@ -63,61 +65,6 @@ public abstract class VariableInference {
             self.reorderComponents();
         // * 🚩重新生成名称
         self.updateNameAfterRenameVariables();
-    }
-
-    /**
-     * 🆕应用替换到新词项
-     * * 🎯纯函数，不涉及内部状态的改变
-     *
-     * @param old
-     * @param subs
-     * @return
-     */
-    public static Term applySubstitute2New(final CompoundTerm old, final HashMap<Term, Term> subs) {
-        // * 🚩生成新词项的内部元素
-        final ArrayList<Term> components = new ArrayList<>();
-        // * 🚩遍历替换内部所有元素
-        for (int i = 0; i < old.size(); i++) {
-            // * 🚩获取内部词项的引用
-            final Term inner = old.componentAt(i);
-            // * 🚩若有「替换方案」⇒添加被替换的项
-            if (subs.containsKey(inner)) {
-                // * ⚠️此处的「被替换词项」可能不是「变量词项」
-                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
-                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
-                final Term substituteT = chainGet(subs, inner);
-                // * 🚩预先判空并返回
-                if (substituteT == null)
-                    throw new AssertionError("【2024-06-14 23:05:26】此处有替代就一定非空");
-                // * 🚩复制并新增元素
-                final Term substitute = substituteT.clone();
-                components.add(substitute);
-            }
-            // * 🚩否则⇒复制or深入
-            else {
-                final Term newInner = inner instanceof CompoundTerm
-                        // * 🚩复合词项⇒递归深入
-                        ? applySubstitute2New((CompoundTerm) inner, subs)
-                        // * 🚩原子词项⇒直接复制
-                        : inner.clone();
-                // * 🚩预先判空并返回 | 内部词项有可能在替换之后并不合法，会返回空
-                if (newInner == null)
-                    return null;
-                // * 🚩增加
-                components.add(newInner);
-            }
-        }
-        // * 🚩选择性处理「可交换性」
-        final ArrayList<Term> newComponents = old.isCommutative()
-                // * 🚩可交换⇒替换之后重排顺序
-                ? CompoundTerm.reorderTerms(components) // re-order
-                // * 🚩否则按原样
-                : components;
-        // * 🚩以旧词项为模板生成新词项，顺带在其中生成名称
-        // ! ⚠️【2024-06-14 23:01:56】可以使用`make`系列方法，但这其中可能会产生空值（不是一个「有效词项」）
-        final Term newTerm = makeCompoundTerm(old, newComponents);
-        // * 🚩返回
-        return newTerm;
     }
 
     /**
@@ -132,7 +79,7 @@ public abstract class VariableInference {
         // * 🚩非空⇒一直溯源
         while (map.containsKey(endPoint)) {
             endPoint = map.get(endPoint);
-            if (endPoint == startPoint)
+            if (endPoint.equals(startPoint))
                 throw new Error("不应有「循环替换」的情况");
         }
         return endPoint;
@@ -180,6 +127,7 @@ public abstract class VariableInference {
                 // * 📄类型相同，名称改变
                 final int newVarNum = map.size() + 1;
                 final long newId = newVarNum;
+                // * 🚩此处特别区分「用户输入产生的匿名变量词项」亦即【只有类型是Variable，整体名称并未改变】的新变量词项
                 final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
                 // * 🚩决定将产生的「新变量」
                 final Variable newV =
@@ -439,21 +387,33 @@ public abstract class VariableInference {
      * @param term2 The second term to be unified
      * @return Whether there is a substitution
      */
-    public static boolean hasUnification(char type, Term term1, Term term2) {
+    private static boolean hasUnification(char type, Term term1, Term term2) {
         return findUnification(
                 type,
                 term1, term2,
                 new HashMap<Term, Term>(), new HashMap<Term, Term>());
     }
 
-    /**
-     * Rename the variables to prepare for unification of two terms
-     *
-     * @param map    The substitution so far
-     * @param term   The term to be processed
-     * @param suffix The suffix that distinguish the variables in one premise
-     *               from those from the other
-     */
+    public static boolean hasUnificationI(Term term1, Term term2) {
+        return hasUnification(VAR_INDEPENDENT, term1, term2);
+    }
+
+    public static boolean hasUnificationD(Term term1, Term term2) {
+        return hasUnification(VAR_DEPENDENT, term1, term2);
+    }
+
+    public static boolean hasUnificationQ(Term term1, Term term2) {
+        return hasUnification(VAR_QUERY, term1, term2);
+    }
+
+    // /**
+    // * Rename the variables to prepare for unification of two terms
+    // *
+    // * @param map The substitution so far
+    // * @param term The term to be processed
+    // * @param suffix The suffix that distinguish the variables in one premise
+    // * from those from the other
+    // */
     // private static void renameVar(HashMap<Term, Term> map, Term term, String
     // suffix) {
     // if (term instanceof Variable) {
@@ -469,4 +429,217 @@ public abstract class VariableInference {
     // }
     // }
 
+    // 尝试「不可变化」「函数式化」废稿 //
+    // * 🎯此处「函数式」的目标：让「词项」成为一个绝对的不可变（写时复制）类型
+    // * 📝NAL-6的「变量统一」是为数不多「修改词项本身比创建新词项更经济」的词项处理机制
+    // * 📝三大核心逻辑分别是「寻找归一字典」「应用替代」和「重命名变量」
+    // * * 寻找归一字典：扫描要统一的两个词项，并在「变量位置相对应」的地方构建映射
+    // * * 应用替代：扫描复合词项的所有元素，在【有映射】的地方替换元素
+    // * * 重命名变量：将各复合词项的变量重命名到特定编号之中，以便在各处「词项判等」逻辑中将其认定为相同词项
+    // * ⚠️缺陷
+    // * * 📌若不借助可变性，在此过程中需要创建大量中间对象
+    // * * * 性能开销相对较大，特别是对于大词项而言
+    // * * 📌若不修改MakeTerm，则会让「词项无效性」提前显现
+    // * * * 这会让许多「先前利用可变性的逻辑」需要大幅修改
+
+    /**
+     * Recursively rename the variables in the compound
+     *
+     * @param map The substitution established so far
+     */
+    private static void renameCompoundVariables(CompoundTerm self) {
+        final HashMap<Term, Term> map = new HashMap<>();
+        renameCompoundVariablesMap(self, map);
+        applySubstituteSingle(self, map);
+    }
+
+    private static void renameCompoundVariablesMap(
+            CompoundTerm self,
+            HashMap<Term, Term> map) {
+        // * 🚩没有变量⇒返回
+        // ? 💭【2024-06-09 13:33:08】似乎对实际逻辑无用
+        if (!Variable.containVar(self))
+            return;
+        // * 🚩只有「包含变量」才要继续重命名
+        for (int i = 0; i < self.size(); i++) {
+            // * 🚩取变量词项
+            final Term inner = self.componentAt(i);
+            // * 🚩是「变量」词项⇒重命名
+            if (inner instanceof Variable) {
+                final Variable innerV = (Variable) inner;
+                // * 🚩构造新编号与名称 | 采用顺序编号
+                // * 📄类型相同，名称改变
+                final int newVarNum = map.size() + 1;
+                final long newId = newVarNum;
+                // * 🚩此处特别区分「用户输入产生的匿名变量词项」亦即【只有类型是Variable，整体名称并未改变】的新变量词项
+                final boolean isAnonymousVariableFromInput = inner.getName().length() == 1;
+                // * 🚩决定将产生的「新变量」
+                final Term newV =
+                        // * 🚩用户输入的匿名变量 || 映射表中没有变量 ⇒ 新建变量
+                        isAnonymousVariableFromInput || !map.containsKey(innerV)
+                                // anonymous variable from input
+                                ? makeVarSimilar(innerV, newId)
+                                // * 🚩否则（非匿名 && 映射表中有） ⇒ 使用已有变量
+                                : map.get(innerV);
+                // * 🚩将该变量记录在映射表中
+                // * ⚠️即便相等也要记录：会因上头`map.containsKey(innerV)`影响后续判断
+                // * * 📄影响的测试：NAL 6.20,6.21
+                // * 🎯后续只要一层：所有变量⇒编号好了的匿名变量
+                map.put(innerV, newV);
+            }
+            // * 🚩复合词项⇒继续递归深入
+            // * 📌逻辑统一：无论是「序列」「集合」还是「陈述」都是这一套逻辑
+            else if (inner instanceof CompoundTerm) {
+                final CompoundTerm innerC = (CompoundTerm) inner;
+                // * 🚩重命名内层复合词项
+                renameCompoundVariablesMap(innerC, map);
+                // * 🚩重命名变量后生成名称
+                innerC.updateNameAfterRenameVariables();
+            }
+        }
+    }
+
+    /** 🆕没有chainGet的applySubstitute */
+    public static void applySubstituteSingle(CompoundTerm self, final HashMap<Term, Term> subs) {
+        // * 🚩遍历替换内部所有元素
+        for (int i = 0; i < self.size(); i++) {
+            final Term inner = self.componentAt(i);
+            // * 🚩若有「替换方案」⇒替换
+            if (subs.containsKey(inner)) {
+                // * 🚩追溯一次，替换变量词项
+                final Term substituteT = subs.get(inner);
+                // * 🚩复制并替换元素
+                final Term substitute = substituteT.clone();
+                self.setTermWhenDealingVariables(i, substitute);
+            }
+            // * 🚩复合词项⇒递归深入
+            else if (inner instanceof CompoundTerm) {
+                applySubstituteSingle((CompoundTerm) inner, subs);
+            }
+        }
+        // * 🚩可交换⇒替换之后重排顺序
+        if (self.isCommutative()) // re-order
+            self.reorderComponents();
+        // * 🚩重新生成名称
+        self.updateNameAfterRenameVariables();
+    }
+
+    /** 一次性返回多个值，所以需要这个临时性类 */
+    public static final class UnificationResult {
+        public final boolean hasSubs;
+        // 📝替换后make，可能不再是正常词项
+        public final Term substituted1;
+        public final Term substituted2;
+
+        public UnificationResult(
+                final boolean hasSubs,
+                final Term substituted1,
+                final Term substituted2) {
+            this.hasSubs = hasSubs;
+            this.substituted1 = substituted1;
+            this.substituted2 = substituted2;
+        }
+    }
+
+    private static UnificationResult unify2New(
+            final char type,
+            Term t1, Term t2,
+            CompoundTerm compound1,
+            CompoundTerm compound2) {
+        // * 🚩主逻辑：寻找替代
+        final HashMap<Term, Term> map1 = new HashMap<>();
+        final HashMap<Term, Term> map2 = new HashMap<>();
+        final boolean hasSubs = findUnification(type, t1, t2, map1, map2); // find substitution
+        // * 🚩有替代⇒应用替代
+        final Term newCompound1, newCompound2;
+        if (hasSubs) {
+            // * 🚩此时假定「有替代的一定是复合词项」
+            // renameVar(map1, compound1, "-1");
+            // renameVar(map2, compound2, "-2");
+            newCompound1 = applyUnifyOne2New(compound1, map1);
+            newCompound2 = applyUnifyOne2New(compound2, map1);
+        } else {
+            // * 🚩找不到替代⇒双方皆为null
+            newCompound1 = null;
+            newCompound2 = null;
+        }
+        // * 🚩返回「是否替代成功」
+        return new UnificationResult(hasSubs, newCompound1, newCompound2);
+    }
+
+    /** 🆕得出「替代结果」后，将映射表应用到词项上 */
+    private static Term applyUnifyOne2New(CompoundTerm compound, HashMap<Term, Term> map) {
+        // * 🚩映射表非空⇒替换
+        if (map.isEmpty())
+            return compound;
+        // * 🚩应用到新词项，此时无需重命名
+        return applySubstitute2New(compound, map);
+    }
+
+    public static UnificationResult unifyI2New(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
+        return unify2New(VAR_INDEPENDENT, t1, t2, compound1, compound2);
+    }
+
+    public static UnificationResult unifyD2New(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
+        return unify2New(VAR_DEPENDENT, t1, t2, compound1, compound2);
+    }
+
+    public static UnificationResult unifyQ2New(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
+        return unify2New(VAR_QUERY, t1, t2, compound1, compound2);
+    }
+
+    /**
+     * 🆕应用替换到新词项
+     * * 🎯纯函数，不涉及内部状态的改变
+     *
+     * @param old
+     * @param subs
+     * @return
+     */
+    public static Term applySubstitute2New(final CompoundTerm old, final HashMap<Term, Term> subs) {
+        // * 🚩生成新词项的内部元素
+        final ArrayList<Term> components = new ArrayList<>();
+        // * 🚩遍历替换内部所有元素
+        for (int i = 0; i < old.size(); i++) {
+            // * 🚩获取内部词项的引用
+            final Term inner = old.componentAt(i);
+            // * 🚩若有「替换方案」⇒添加被替换的项
+            if (subs.containsKey(inner)) {
+                // * ⚠️此处的「被替换词项」可能不是「变量词项」
+                // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
+                // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
+                final Term substituteT = chainGet(subs, inner);
+                // * 🚩预先判空并返回
+                if (substituteT == null)
+                    throw new AssertionError("【2024-06-14 23:05:26】此处有替代就一定非空");
+                // * 🚩复制并新增元素
+                final Term substitute = substituteT.clone();
+                components.add(substitute);
+            }
+            // * 🚩否则⇒复制or深入
+            else {
+                final Term newInner = inner instanceof CompoundTerm
+                        // * 🚩复合词项⇒递归深入
+                        ? applySubstitute2New((CompoundTerm) inner, subs)
+                        // * 🚩原子词项⇒直接复制
+                        : inner.clone();
+                // * 🚩预先判空并返回 | 内部词项有可能在替换之后并不合法，会返回空
+                if (newInner == null)
+                    return null;
+                // * 🚩增加
+                components.add(newInner);
+            }
+        }
+        // * 🚩选择性处理「可交换性」
+        final ArrayList<Term> newComponents = old.isCommutative()
+                // * 🚩可交换⇒替换之后重排顺序
+                ? CompoundTerm.reorderTerms(components) // re-order
+                // * 🚩否则按原样
+                : components;
+        // * 🚩以旧词项为模板生成新词项，顺带在其中生成名称
+        // ! ⚠️【2024-06-14 23:01:56】可以使用`make`系列方法，但这其中可能会产生空值（不是一个「有效词项」）
+        final Term newTerm = makeCompoundTerm(old, newComponents);
+        // * 🚩返回
+        return newTerm;
+    }
 }
