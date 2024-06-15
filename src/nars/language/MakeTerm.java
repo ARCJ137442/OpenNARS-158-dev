@@ -69,6 +69,32 @@ public abstract class MakeTerm {
     }
 
     /**
+     * 基于已有的模板产生复合词项
+     * * 🎯用于「函数式变量替换」
+     * * 🚩相比上述函数，兼容「陈述」类型
+     *
+     * @param template   [&]
+     * @param components []
+     * @return []
+     */
+    public static Term makeCompoundTermOrStatement(CompoundTerm template, ArrayList<Term> components) {
+        if (template instanceof Statement)
+            return makeStatement(
+                    ((Statement) template),
+                    ((Statement) template).getSubject(),
+                    ((Statement) template).getPredicate());
+        else if (template instanceof ImageExt)
+            // * 🚩外延像
+            return makeImageExt(components, ((ImageExt) template).getRelationIndex());
+        else if (template instanceof ImageInt)
+            // * 🚩内涵像
+            return makeImageInt(components, ((ImageInt) template).getRelationIndex());
+        else
+            // * 🚩其它
+            return makeCompoundTerm(template.operator(), components);
+    }
+
+    /**
      * Try to make a compound term from an operator and a list of components
      * <p>
      * Called from StringParser
@@ -117,12 +143,14 @@ public abstract class MakeTerm {
                     default:
                         return null;
                 }
-            case 3:
-                if (arg.size() == 2) {
-                    final Term subject = arg.get(0);
-                    final Term predicate = arg.get(1);
-                    return makeStatement(op, subject, predicate);
-                }
+                // ! ❌【2024-06-15 12:32:29】↓暂时不能这样开后门：会影响到其它情形
+                // * 📄例子：变量引入——会导致「原本不能创建的陈述」被创建
+                // case 3:
+                // if (arg.size() == 2) {
+                // final Term subject = arg.get(0);
+                // final Term predicate = arg.get(1);
+                // return makeStatement(op, subject, predicate);
+                // }
             default:
                 return null;
         }

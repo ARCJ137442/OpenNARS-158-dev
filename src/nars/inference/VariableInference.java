@@ -29,7 +29,7 @@ public abstract class VariableInference {
      */
     public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
         // final Term original = self.clone();
-        // final Term n = applySubstitute2New(self, subs);
+        // final Term n = applySubstitute2New(self, subs, true);
         // * 🚩【2024-06-15 12:10:14】除了下边这一行，其它都是验证「跟函数式替换是否一致」的代码
         // * ✅【2024-06-15 12:10:54】目前验证结果：替换后不等⇔当且仅当替换后是空的——替换结果的无效性被提前揭露
         _applySubstitute(self, subs);
@@ -41,7 +41,7 @@ public abstract class VariableInference {
         // System.err.println("新旧替换不等！" + self + ", n = " + n + ", subs = " + subs);
     }
 
-    public static void _applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
+    private static void _applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
         // * 🚩遍历替换内部所有元素
         for (int i = 0; i < self.size(); i++) {
             final Term inner = self.componentAt(i);
@@ -98,7 +98,9 @@ public abstract class VariableInference {
             final CompoundTerm c = (CompoundTerm) term;
             // * 🚩有变量⇒重命名变量
             if (Variable.containVar(c))
-                renameCompoundVariables(c, new HashMap<Variable, Variable>());
+                // * ✅目前从「长期稳定性」中证明这俩等价（纯可变式🆚半函数式）
+                // renameCompoundVariables(c, new HashMap<Variable, Variable>());
+                renameCompoundVariables(c);
             // * 🚩无论是否重命名，始终更新（内置则会影响推理结果）
             c.updateAfterRenameVariables();
         }
@@ -109,6 +111,7 @@ public abstract class VariableInference {
      *
      * @param map The substitution established so far
      */
+    @SuppressWarnings("unused")
     private static void renameCompoundVariables(
             CompoundTerm self,
             HashMap<Variable, Variable> map) {
@@ -430,6 +433,7 @@ public abstract class VariableInference {
     // }
 
     // 尝试「不可变化」「函数式化」废稿 //
+    // * 🕒更新时间：【2024-06-15 12:44:48】
     // * 🎯此处「函数式」的目标：让「词项」成为一个绝对的不可变（写时复制）类型
     // * 📝NAL-6的「变量统一」是为数不多「修改词项本身比创建新词项更经济」的词项处理机制
     // * 📝三大核心逻辑分别是「寻找归一字典」「应用替代」和「重命名变量」
@@ -443,14 +447,53 @@ public abstract class VariableInference {
     // * * * 这会让许多「先前利用可变性的逻辑」需要大幅修改
 
     /**
+     * Blank method to be override in CompoundTerm
+     * Rename the variables in the compound, called from Sentence constructors
+     * * 📝对原子词项（词语）而言，没什么可以「重命名」的
+     * * ❓其是否要作为「变量推理」的一部分，仍待存疑——需要内化成「语言」库自身提供的特性吗？
+     * * * 诸多时候并非在「语言」中使用：解析器、语句构造 等
+     */
+    public static Term renameVariables2New(Term term) {
+        // * 🚩依据「是否为变量词项」分派
+        if (term instanceof CompoundTerm) {
+            final CompoundTerm c = (CompoundTerm) term;
+            // * 🚩有变量⇒重命名变量
+            if (Variable.containVar(c))
+                // * ✅目前从「长期稳定性」中证明这俩等价（纯可变式🆚半函数式）
+                // renameCompoundVariables(c, new HashMap<Variable, Variable>());
+                return renameCompoundVariables2New(c);
+            // * 🚩产生了新词项，就不用重命名
+        }
+        return term;
+    }
+
+    /**
      * Recursively rename the variables in the compound
+     * * 📝这个函数本质上是个「半函数式」逻辑
+     * * * 🚩首先用函数式逻辑（词项不可变）得到「替换映射」
+     * * * 🚩随后用这个「替换映射」【修改】词项自身
      *
      * @param map The substitution established so far
      */
     private static void renameCompoundVariables(CompoundTerm self) {
         final HashMap<Term, Term> map = new HashMap<>();
         renameCompoundVariablesMap(self, map);
+        // * 🚩重命名变量均非「链式替换」
         applySubstituteSingle(self, map);
+    }
+
+    /**
+     * Recursively rename the variables in the compound
+     * * 📌全函数式逻辑
+     * * * 🎯动因：「重命名变量」的逻辑（被外部调用者）只存在于「语句创建」的部分
+     *
+     * @param map The substitution established so far
+     */
+    private static Term renameCompoundVariables2New(CompoundTerm self) {
+        final HashMap<Term, Term> map = new HashMap<>();
+        renameCompoundVariablesMap(self, map);
+        // * 🚩重命名变量均非「链式替换」
+        return applySubstitute2New(self, map, false);
     }
 
     private static void renameCompoundVariablesMap(
@@ -572,8 +615,8 @@ public abstract class VariableInference {
         // * 🚩映射表非空⇒替换
         if (map.isEmpty())
             return compound;
-        // * 🚩应用到新词项，此时无需重命名
-        return applySubstitute2New(compound, map);
+        // * 🚩应用到新词项，此时无需重命名 | 变量统一均为「链式替换」
+        return applySubstitute2New(compound, map, true);
     }
 
     public static UnificationResult unifyI2New(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
@@ -596,7 +639,11 @@ public abstract class VariableInference {
      * @param subs
      * @return
      */
-    public static Term applySubstitute2New(final CompoundTerm old, final HashMap<Term, Term> subs) {
+    private static Term applySubstitute2New(
+            final CompoundTerm old,
+            final HashMap<Term, Term> subs,
+            final boolean chainSubstitute // * 📌区分「单层替换」与「链式替换」，🎯节省代码
+    ) {
         // * 🚩生成新词项的内部元素
         final ArrayList<Term> components = new ArrayList<>();
         // * 🚩遍历替换内部所有元素
@@ -608,7 +655,7 @@ public abstract class VariableInference {
                 // * ⚠️此处的「被替换词项」可能不是「变量词项」
                 // * 📄NAL-6变量引入时会建立「临时共同变量」匿名词项，以替换非变量词项
                 // * 🚩一路追溯到「没有再被传递性替换」的词项（最终点）
-                final Term substituteT = chainGet(subs, inner);
+                final Term substituteT = chainSubstitute ? chainGet(subs, inner) : subs.get(inner);
                 // * 🚩预先判空并返回
                 if (substituteT == null)
                     throw new AssertionError("【2024-06-14 23:05:26】此处有替代就一定非空");
@@ -620,7 +667,7 @@ public abstract class VariableInference {
             else {
                 final Term newInner = inner instanceof CompoundTerm
                         // * 🚩复合词项⇒递归深入
-                        ? applySubstitute2New((CompoundTerm) inner, subs)
+                        ? applySubstitute2New((CompoundTerm) inner, subs, chainSubstitute)
                         // * 🚩原子词项⇒直接复制
                         : inner.clone();
                 // * 🚩预先判空并返回 | 内部词项有可能在替换之后并不合法，会返回空
@@ -638,7 +685,7 @@ public abstract class VariableInference {
                 : components;
         // * 🚩以旧词项为模板生成新词项，顺带在其中生成名称
         // ! ⚠️【2024-06-14 23:01:56】可以使用`make`系列方法，但这其中可能会产生空值（不是一个「有效词项」）
-        final Term newTerm = makeCompoundTerm(old, newComponents);
+        final Term newTerm = makeCompoundTermOrStatement(old, newComponents);
         // * 🚩返回
         return newTerm;
     }

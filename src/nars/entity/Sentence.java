@@ -183,12 +183,22 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          * @param revisable   Whether the sentence can be revised
          */
         protected SentenceInner(Term content, Stamp stamp, boolean revisable) {
-            this.content = content;
-            VariableInference.renameVariables(this.content);
-            this.stamp = stamp;
-            this.revisable = revisable;
+            if (content == null)
+                throw new AssertionError("【2024-06-15 12:56:36】不能用空词项构造语句！");
             if (stamp == null)
                 throw new AssertionError("Stamp is null!");
+
+            this.content = content;
+            VariableInference.renameVariables(this.content);
+            // ! ❌【2024-06-15 12:58:08】局部同义，全局不同义
+            // * * 💭不是内容不一致，是因为其它地方可变性要修改此中词项（暂且）
+            // * * 📄如：变量统一
+            // final Term newC = VariableInference.renameVariables2New(content);
+            // if (!this.content.equals(newC))
+            // throw new Error();
+            // this.content = VariableInference.renameVariables2New(content);
+            this.stamp = stamp;
+            this.revisable = revisable;
         }
 
         // impl Evidential for SentenceInner

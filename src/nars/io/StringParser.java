@@ -91,8 +91,11 @@ public abstract class StringParser extends Symbols {
             final Stamp stamp = new Stamp(stampCurrentSerial, time);
             final TruthValue truth = parseTruth(truthString, punctuation);
             final Term content = parseTerm(str.substring(0, last));
+            if (content == null)
+                throw new InvalidInputException("missing valid term");
             final boolean revisable = !(content instanceof Conjunction && Variable.containVarD(content));
-            final Sentence sentence = SentenceV1.newSentenceFromPunctuation(content, punctuation, truth, stamp,
+            final Sentence sentence = SentenceV1.newSentenceFromPunctuation(
+                    content, punctuation, truth, stamp,
                     revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
             return new TaskV1(sentence, budget);
@@ -320,7 +323,7 @@ public abstract class StringParser extends Symbols {
         final char type = fullName.charAt(0);
         final String name = fullName.substring(1);
         switch (type) {
-            // TODO: 后续有待「预先重命名」验证
+            // * ✅【2024-06-15 12:59:18】基本验证成功：通过散列码的方式，基本不会发生「变量重名」的情况
             case Symbols.VAR_INDEPENDENT:
                 return makeVarI(name.hashCode());
             case Symbols.VAR_DEPENDENT:
