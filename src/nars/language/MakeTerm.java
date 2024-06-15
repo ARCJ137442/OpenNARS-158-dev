@@ -81,8 +81,7 @@ public abstract class MakeTerm {
         if (template instanceof Statement)
             return makeStatement(
                     ((Statement) template),
-                    ((Statement) template).getSubject(),
-                    ((Statement) template).getPredicate());
+                    components.get(0), components.get(1));
         else if (template instanceof ImageExt)
             // * 🚩外延像
             return makeImageExt(components, ((ImageExt) template).getRelationIndex());

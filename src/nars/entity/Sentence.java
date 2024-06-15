@@ -178,8 +178,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          * @param punctuation The punctuation indicating the type of the sentence
          * @param truth       The truth value of the sentence, null for question
          * @param stamp       The stamp of the sentence indicating its derivation time
-         *                    and
-         *                    base
+         *                    and base
          * @param revisable   Whether the sentence can be revised
          */
         protected SentenceInner(Term content, Stamp stamp, boolean revisable) {
@@ -193,10 +192,13 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
             // ! ❌【2024-06-15 12:58:08】局部同义，全局不同义
             // * * 💭不是内容不一致，是因为其它地方可变性要修改此中词项（暂且）
             // * * 📄如：变量统一
+            // * * 📝这侧面说明「语句」也不是可变的
             // final Term newC = VariableInference.renameVariables2New(content);
             // if (!this.content.equals(newC))
             // throw new Error();
             // this.content = VariableInference.renameVariables2New(content);
+            // if (this.content == null)
+            // throw new AssertionError("【2024-06-15 12:56:36】不能用空词项构造语句！");
             this.stamp = stamp;
             this.revisable = revisable;
         }
