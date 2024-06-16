@@ -692,6 +692,15 @@ public abstract class MakeTerm {
     /**
      * Try to make a new ImageExt. Called by StringParser.
      * * 🚩从解析器构造外延像
+     * * 📄argList=[reaction, _, base] => argument=[reaction, base], index=0
+     * * * => "(/,reaction,_,base)"
+     * * 📄argList=[reaction, acid, _] => argument=[acid, reaction], index=1
+     * * * => "(/,reaction,acid,_)"
+     * * 📄argList=[neutralization, _, base]
+     * * * => argument=[neutralization, base], index=0
+     * * * => "(/,neutralization,_,base)"
+     * * 📄argList=[open, $120, _] => argument=[$120, open], index=1
+     * * * => "(/,open,$120,_)"
      *
      * @return the Term generated from the arguments
      * @param argList The list of components
@@ -725,6 +734,17 @@ public abstract class MakeTerm {
      * * 🚩从「乘积」构造外延像
      * * 📄(*, A, B) --> R @ 0 = A --> (/, R, _, B)
      * * 📄{<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     * * 📄product="(*,$1,sunglasses)", relation="own", index=1 => "(/,own,$1,_)"
+     * * 📄product="(*,bird,plant)", relation="?1", index=0 => "(/,?1,_,plant)"
+     * * 📄product="(*,bird,plant)", relation="?1", index=1 => "(/,?1,bird,_)"
+     * * 📄product="(*,robin,worms)", relation="food", index=1 => "(/,food,robin,_)"
+     * * 📄product="(*,CAT,eat,fish)", relation="R", index=0 => "(/,R,_,eat,fish)"
+     * * 📄product="(*,CAT,eat,fish)", relation="R", index=1 => "(/,R,CAT,_,fish)"
+     * * 📄product="(*,CAT,eat,fish)", relation="R", index=2 => "(/,R,CAT,fish,_)"
+     * * 📄product="(*,b,a)", relation="(*,b,(/,like,b,_))", index=1
+     * * * => "(/,like,b,_)"
+     * * 📄product="(*,a,b)", relation="(*,(/,like,b,_),b)", index=0
+     * * * => "(/,like,b,_)"
      *
      * @param product  The product
      * @param relation The relation
@@ -747,6 +767,7 @@ public abstract class MakeTerm {
                     // is reduced to self[1][1] = (*,a,b)[1] = b
                     return p2.componentAt(1);
                 }
+                // TODO: 后续可以通用化？
             }
         }
         // * 🚩从「乘积」中设置「关系词项」（直接表示占位符位置），然后直接构造
@@ -759,11 +780,23 @@ public abstract class MakeTerm {
      * Try to make an Image from an existing Image and a component. Called by the
      * inference rules.
      * * 🚩从一个已知的外延像中构造新外延像，并切换占位符的位置
+     * * 📄oldImage="(/,open,{key1},_)", component="lock", index=0
+     * * * => "(/,open,_,lock)"
+     * * 📄oldImage="(/,uncle,_,tom)", component="tim", index=0
+     * * * => "(/,uncle,tim,_)"
+     * * 📄oldImage="(/,open,{key1},_)", component="$2", index=0
+     * * * => "(/,open,_,$2)"
+     * * 📄oldImage="(/,open,{key1},_)", component="#1", index=0
+     * * * => "(/,open,_,#1)"
+     * * 📄oldImage="(/,like,_,a)", component="b", index=1
+     * * * => "(/,like,b,_)"
+     * * 📄oldImage="(/,like,b,_)", component="a", index=0
+     * * * => "(/,like,_,a)"
      *
-     * @param oldImage  The existing Image
-     * @param component The component to be added into the component list
-     * @param index     The index of the place-holder in the new Image
-     * @return A compound generated or a term it reduced to
+     * @param oldImage  [&] The existing Image
+     * @param component [] The component to be added into the component list
+     * @param index     [] The index of the place-holder in the new Image
+     * @return [] A compound generated or a term it reduced to
      */
     public static Term makeImageExt(ImageExt oldImage, Term component, short index) {
         final ArrayList<Term> argList = oldImage.cloneComponents();
