@@ -82,15 +82,8 @@ public abstract class MakeTerm {
             return makeStatement(
                     ((Statement) template),
                     components.get(0), components.get(1));
-        else if (template instanceof ImageExt)
-            // * 🚩外延像
-            return makeImageExt(components, ((ImageExt) template).getRelationIndex());
-        else if (template instanceof ImageInt)
-            // * 🚩内涵像
-            return makeImageInt(components, ((ImageInt) template).getRelationIndex());
         else
-            // * 🚩其它
-            return makeCompoundTerm(template.operator(), components);
+            return makeCompoundTerm(template, components);
     }
 
     /**
@@ -198,14 +191,18 @@ public abstract class MakeTerm {
             return null;
         // * 🚩删除成功⇒继续
         if (components.size() > 1) {
-            // * 🚩元素数量>1⇒以t1为模板构造新词项
+            // * 🚩元素数量>1⇒以toBeReduce为模板构造新词项
             return makeCompoundTerm(toBeReduce, components);
         } else if (components.size() == 1) {
             // * 🚩元素数量=1⇒尝试「集合约简」
             // * 📝「集合约简」：若为【只有一个元素】的「集合性操作」复合词项类型⇒语义上与其元素等价
-            final boolean canExtract = toBeReduce instanceof Conjunction || toBeReduce instanceof Disjunction
-                    || toBeReduce instanceof IntersectionExt || toBeReduce instanceof IntersectionInt
-                    || toBeReduce instanceof DifferenceExt || toBeReduce instanceof DifferenceInt;
+            final boolean canExtract = //
+                    toBeReduce instanceof Conjunction || //
+                            toBeReduce instanceof Disjunction || //
+                            toBeReduce instanceof IntersectionExt || //
+                            toBeReduce instanceof IntersectionInt || //
+                            toBeReduce instanceof DifferenceExt || //
+                            toBeReduce instanceof DifferenceInt;
             if (canExtract)
                 return components.get(0);
             else
@@ -222,9 +219,9 @@ public abstract class MakeTerm {
      * * 🚩若要替换上的词项为空（⚠️t可空），则与「删除元素」等同
      * * ⚠️结果可空
      *
-     * @param compound The compound
-     * @param index    The location of replacement
-     * @param t        The new component
+     * @param compound [&] The compound
+     * @param index    [] The location of replacement
+     * @param t        [?] The new component
      * @return The new compound
      */
     public static Term setComponent(CompoundTerm compound, int index, Term t) {
@@ -251,9 +248,9 @@ public abstract class MakeTerm {
     /**
      * build a component list from two terms
      *
-     * @param t1 the first component
-     * @param t2 the second component
-     * @return the component list
+     * @param t1 [] the first component
+     * @param t2 [] the second component
+     * @return [] the component list
      */
     private static ArrayList<Term> argumentsToList(Term t1, Term t2) {
         final ArrayList<Term> list = new ArrayList<>(2);
@@ -297,7 +294,7 @@ public abstract class MakeTerm {
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeSetExt(TreeSet<Term> set) {
+    private static Term makeSetExt(TreeSet<Term> set) {
         if (set.isEmpty())
             return null;
         final ArrayList<Term> argument = new ArrayList<Term>(set);
@@ -339,7 +336,7 @@ public abstract class MakeTerm {
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeSetInt(TreeSet<Term> set) {
+    private static Term makeSetInt(TreeSet<Term> set) {
         if (set.isEmpty())
             return null;
         final ArrayList<Term> argument = new ArrayList<Term>(set);
@@ -420,7 +417,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeIntersectionExt(ArrayList<Term> argList) {
+    private static Term makeIntersectionExt(ArrayList<Term> argList) {
         if (argList.isEmpty())
             return null;
         // * 🆕🚩做一个reduce的操作
@@ -528,7 +525,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeIntersectionInt(ArrayList<Term> argList) {
+    private static Term makeIntersectionInt(ArrayList<Term> argList) {
         if (argList.isEmpty())
             return null;
         // * 🆕🚩做一个reduce的操作
@@ -552,7 +549,7 @@ public abstract class MakeTerm {
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeIntersectionInt(TreeSet<Term> set) {
+    private static Term makeIntersectionInt(TreeSet<Term> set) {
         // special case: single component
         // * 🚩单个元素⇒直接取元素
         // * 📄(&, A) = A
@@ -572,23 +569,17 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeDifferenceExt(ArrayList<Term> argList) {
+    private static Term makeDifferenceExt(ArrayList<Term> argList) {
         // * 🚩单个元素：约简为内部元素 | (-,A) = A
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
             return argList.get(0);
         // * 🚩太多元素/空集：构造失败 | (-,A,B,C) = null
         if (argList.size() != 2)
             return null;
-        // * 🚩外延集的差：求差，构造外延集 | {A, B} - {A} = {B}
-        if ((argList.get(0) instanceof SetExt) && (argList.get(1) instanceof SetExt)) {
-            final ArrayList<Term> left = ((CompoundTerm) argList.get(0)).cloneComponents();
-            final ArrayList<Term> right = ((CompoundTerm) argList.get(1)).cloneComponents();
-            final TreeSet<Term> set = new TreeSet<Term>(left);
-            set.removeAll(right); // set difference
-            return makeSetExt(set);
-        }
-        // * 🚩否则：直接构造外延差 | A - B = (-,A,B)
-        return new DifferenceExt(argList);
+        // * 🚩直接提取两个词项，归并入「二词项构造函数」
+        final Term t1 = argList.get(0);
+        final Term t2 = argList.get(1);
+        return makeDifferenceExt(t1, t2);
     }
 
     /**
@@ -604,9 +595,17 @@ public abstract class MakeTerm {
         // * 🚩自己减自己⇒空集⇒null
         if (t1.equals(t2))
             return null;
-        // * 🚩否则⇒直接从二元列表构造
+        // * 🚩外延集的差：求差，构造外延集 | {A, B} - {A} = {B}
+        if (t1 instanceof SetExt && t2 instanceof SetExt) {
+            final ArrayList<Term> left = ((CompoundTerm) t1).cloneComponents();
+            final ArrayList<Term> right = ((CompoundTerm) t2).cloneComponents();
+            final TreeSet<Term> set = new TreeSet<Term>(left);
+            set.removeAll(right); // set difference
+            return makeSetExt(set);
+        }
+        // * 🚩否则：直接构造外延差 | A - B = (-,A,B)
         final ArrayList<Term> list = argumentsToList(t1, t2);
-        return makeDifferenceExt(list);
+        return new DifferenceExt(list);
     }
 
     /* DifferenceInt */
@@ -618,17 +617,17 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeDifferenceInt(ArrayList<Term> argList) {
+    private static Term makeDifferenceInt(ArrayList<Term> argList) {
+        // * 🚩单个元素：约简为内部元素 | (~,A) = A
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
             return argList.get(0);
+        // * 🚩太多元素/空集：构造失败 | (~,A,B,C) = null
         if (argList.size() != 2)
             return null;
-        if ((argList.get(0) instanceof SetInt) && (argList.get(1) instanceof SetInt)) {
-            final TreeSet<Term> set = new TreeSet<Term>(((CompoundTerm) argList.get(0)).cloneComponents());
-            set.removeAll(((CompoundTerm) argList.get(1)).cloneComponents()); // set difference
-            return makeSetInt(set);
-        }
-        return new DifferenceInt(argList);
+        // * 🚩直接提取两个词项，归并入「二词项构造函数」
+        final Term t1 = argList.get(0);
+        final Term t2 = argList.get(1);
+        return makeDifferenceInt(t1, t2);
     }
 
     /**
@@ -641,10 +640,20 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Term makeDifferenceInt(Term t1, Term t2) {
+        // * 🚩自己减自己⇒空集⇒null
         if (t1.equals(t2))
             return null;
+        // * 🚩内涵集的差：求差，构造内涵集 | [A, B] - [A] = [B]
+        if (t1 instanceof SetInt && t2 instanceof SetInt) {
+            final ArrayList<Term> left = ((CompoundTerm) t1).cloneComponents();
+            final ArrayList<Term> right = ((CompoundTerm) t2).cloneComponents();
+            final TreeSet<Term> set = new TreeSet<Term>(left);
+            set.removeAll(right); // set difference
+            return makeSetInt(set);
+        }
+        // * 🚩否则：直接构造内涵差 | A - B = (-,A,B)
         final ArrayList<Term> list = argumentsToList(t1, t2);
-        return makeDifferenceInt(list);
+        return new DifferenceInt(list);
     }
 
     /* Product */
@@ -656,7 +665,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argument The list of components
      */
-    public static Term makeProduct(ArrayList<Term> argument) {
+    private static Term makeProduct(ArrayList<Term> argument) {
         return new Product(argument);
     }
 
@@ -687,7 +696,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeImageExt(ArrayList<Term> argList) {
+    private static Term makeImageExt(ArrayList<Term> argList) {
         // * 🚩拒绝元素过少的词项 | 第一个词项需要是「关系」，除此之外必须含有至少一个元素 & 占位符
         if (argList.size() < 2)
             return null;
@@ -788,7 +797,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList The list of components
      */
-    public static Term makeImageInt(ArrayList<Term> argList) {
+    private static Term makeImageInt(ArrayList<Term> argList) {
         if (argList.size() < 2)
             return null;
         final Term relation = argList.get(0);
@@ -878,7 +887,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argList the list of arguments
      */
-    public static Term makeConjunction(ArrayList<Term> argList) {
+    private static Term makeConjunction(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
         return makeConjunction(set);
     }
@@ -986,7 +995,7 @@ public abstract class MakeTerm {
      * @param argList a list of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeDisjunction(ArrayList<Term> argList) {
+    private static Term makeDisjunction(ArrayList<Term> argList) {
         final TreeSet<Term> set = new TreeSet<>(argList); // sort/merge arguments
         return makeDisjunction(set);
     }
@@ -999,7 +1008,7 @@ public abstract class MakeTerm {
      * @param set a set of Term as components
      * @return the Term generated from the arguments
      */
-    public static Term makeDisjunction(TreeSet<Term> set) {
+    private static Term makeDisjunction(TreeSet<Term> set) {
         if (set.size() == 1) {
             return set.first();
         } // special case: single component
@@ -1032,7 +1041,7 @@ public abstract class MakeTerm {
      * @return the Term generated from the arguments
      * @param argument The list of components
      */
-    public static Term makeNegation(ArrayList<Term> argument) {
+    private static Term makeNegation(ArrayList<Term> argument) {
         if (argument.size() != 1)
             return null;
         return new Negation(argument);
