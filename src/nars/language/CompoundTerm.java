@@ -51,8 +51,13 @@ public abstract class CompoundTerm extends Term {
     protected final short complexity;
     /**
      * Whether the term names a concept
+     * * ❌【2024-06-18 01:23:56】不能省去该字段：getter使用的地方太多，并且从「语句」处不断传播「不确定性」
+     * * * setter在「语句」中使用：强制将其设为true
+     * * * 「记忆区」需要以此决定「是否创建概念」
+     * * * 「概念链接」需要以此判断「是否产生链接」
+     * * * 各推理规则中时有用到：组合规则、三段论规则 等
      */
-    protected boolean isConstant = true;
+    protected boolean isConstant;
 
     /* ----- abstract methods to be implemented in subclasses ----- */
     /**
@@ -287,8 +292,8 @@ public abstract class CompoundTerm extends Term {
      *
      * @param isConstant
      */
-    private void setConstant(boolean isConstant) {
-        this.isConstant = isConstant;
+    public void setConstantTrue() {
+        this.isConstant = true;
     }
 
     /**
@@ -415,9 +420,6 @@ public abstract class CompoundTerm extends Term {
      * @param &m-this
      */
     public void updateAfterRenameVariables() {
-        // * 🚩设置「为常量」
-        // ? ❓【2024-06-09 13:26:43】为何要如此？
-        this.setConstant(true);
         // * 🚩更新名称
         this.updateNameAfterRenameVariables();
     }
