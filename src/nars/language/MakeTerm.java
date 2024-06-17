@@ -570,16 +570,19 @@ public abstract class MakeTerm {
      * @param argList The list of components
      */
     private static Term makeDifferenceExt(ArrayList<Term> argList) {
+        final Term term;
         // * 🚩单个元素：约简为内部元素 | (-,A) = A
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
-            return argList.get(0);
+            term = argList.get(0);
         // * 🚩太多元素/空集：构造失败 | (-,A,B,C) = null
-        if (argList.size() != 2)
-            return null;
-        // * 🚩直接提取两个词项，归并入「二词项构造函数」
-        final Term t1 = argList.get(0);
-        final Term t2 = argList.get(1);
-        return makeDifferenceExt(t1, t2);
+        else if (argList.size() != 2)
+            term = null;
+        else {// * 🚩直接提取两个词项，归并入「二词项构造函数」
+            final Term t1 = argList.get(0);
+            final Term t2 = argList.get(1);
+            term = makeDifferenceExt(t1, t2);
+        }
+        return term;
     }
 
     /**
@@ -592,20 +595,22 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Term makeDifferenceExt(Term t1, Term t2) {
+        final Term term;
         // * 🚩自己减自己⇒空集⇒null
         if (t1.equals(t2))
-            return null;
+            term = null;
         // * 🚩外延集的差：求差，构造外延集 | {A, B} - {A} = {B}
-        if (t1 instanceof SetExt && t2 instanceof SetExt) {
+        else if (t1 instanceof SetExt && t2 instanceof SetExt) {
             final ArrayList<Term> left = ((CompoundTerm) t1).cloneComponents();
             final ArrayList<Term> right = ((CompoundTerm) t2).cloneComponents();
             final TreeSet<Term> set = new TreeSet<Term>(left);
             set.removeAll(right); // set difference
-            return makeSetExt(set);
+            term = makeSetExt(set);
+        } else {// * 🚩否则：直接构造外延差 | A - B = (-,A,B)
+            final ArrayList<Term> list = argumentsToList(t1, t2);
+            term = new DifferenceExt(list);
         }
-        // * 🚩否则：直接构造外延差 | A - B = (-,A,B)
-        final ArrayList<Term> list = argumentsToList(t1, t2);
-        return new DifferenceExt(list);
+        return term;
     }
 
     /* DifferenceInt */
@@ -618,16 +623,19 @@ public abstract class MakeTerm {
      * @param argList The list of components
      */
     private static Term makeDifferenceInt(ArrayList<Term> argList) {
+        final Term term;
         // * 🚩单个元素：约简为内部元素 | (~,A) = A
         if (argList.size() == 1) // special case from CompoundTerm.reduceComponent
-            return argList.get(0);
+            term = argList.get(0);
         // * 🚩太多元素/空集：构造失败 | (~,A,B,C) = null
-        if (argList.size() != 2)
-            return null;
-        // * 🚩直接提取两个词项，归并入「二词项构造函数」
-        final Term t1 = argList.get(0);
-        final Term t2 = argList.get(1);
-        return makeDifferenceInt(t1, t2);
+        else if (argList.size() != 2)
+            term = null;
+        else {// * 🚩直接提取两个词项，归并入「二词项构造函数」
+            final Term t1 = argList.get(0);
+            final Term t2 = argList.get(1);
+            term = makeDifferenceInt(t1, t2);
+        }
+        return term;
     }
 
     /**
@@ -640,20 +648,21 @@ public abstract class MakeTerm {
      * @return A compound generated or a term it reduced to
      */
     public static Term makeDifferenceInt(Term t1, Term t2) {
-        // * 🚩自己减自己⇒空集⇒null
+        final Term term;// * 🚩自己减自己⇒空集⇒null
         if (t1.equals(t2))
-            return null;
+            term = null;
         // * 🚩内涵集的差：求差，构造内涵集 | [A, B] - [A] = [B]
-        if (t1 instanceof SetInt && t2 instanceof SetInt) {
+        else if (t1 instanceof SetInt && t2 instanceof SetInt) {
             final ArrayList<Term> left = ((CompoundTerm) t1).cloneComponents();
             final ArrayList<Term> right = ((CompoundTerm) t2).cloneComponents();
             final TreeSet<Term> set = new TreeSet<Term>(left);
             set.removeAll(right); // set difference
-            return makeSetInt(set);
+            term = makeSetInt(set);
+        } else {// * 🚩否则：直接构造内涵差 | A - B = (-,A,B)
+            final ArrayList<Term> list = argumentsToList(t1, t2);
+            term = new DifferenceInt(list);
         }
-        // * 🚩否则：直接构造内涵差 | A - B = (-,A,B)
-        final ArrayList<Term> list = argumentsToList(t1, t2);
-        return new DifferenceInt(list);
+        return term;
     }
 
     /* Product */
@@ -1123,20 +1132,20 @@ public abstract class MakeTerm {
      * * ⚠️结果可空
      *
      * @return The Statement built
-     * @param subj      The first component
-     * @param pred      The second component
-     * @param statement A sample statement providing the class type
+     * @param subject   The first component
+     * @param predicate The second component
+     * @param template  A sample statement providing the class type
      */
-    public static Statement makeStatement(Statement statement, Term subj, Term pred) {
+    public static Statement makeStatement(Statement template, Term subject, Term predicate) {
         // * 🚩按四种基本系词构造
-        if (statement instanceof Inheritance)
-            return makeInheritance(subj, pred);
-        if (statement instanceof Similarity)
-            return makeSimilarity(subj, pred);
-        if (statement instanceof Implication)
-            return makeImplication(subj, pred);
-        if (statement instanceof Equivalence)
-            return makeEquivalence(subj, pred);
+        if (template instanceof Inheritance)
+            return makeInheritance(subject, predicate);
+        if (template instanceof Similarity)
+            return makeSimilarity(subject, predicate);
+        if (template instanceof Implication)
+            return makeImplication(subject, predicate);
+        if (template instanceof Equivalence)
+            return makeEquivalence(subject, predicate);
         return null;
     }
 
@@ -1282,7 +1291,7 @@ public abstract class MakeTerm {
     public static Implication makeImplication(Term subject, Term predicate) {
         // * 🚩检查有效性：任意元素为空⇒空 | 保证后续非空，并接受「自反性」等检验
         if (subject == null || predicate == null)
-            return null;
+            throw new AssertionError("不可能传入null以构造蕴含");
         if (Statement.invalidStatement(subject, predicate))
             return null;
         // * 🚩检查主词类型
@@ -1295,7 +1304,8 @@ public abstract class MakeTerm {
         if (predicate instanceof Implication) {
             /** B in <A ==> <B ==> C>> */
             final Term oldCondition = ((Implication) predicate).getSubject();
-            if (oldCondition instanceof Conjunction && ((Conjunction) oldCondition).containComponent(subject)) {
+            if (oldCondition instanceof Conjunction &&
+                    ((Conjunction) oldCondition).containComponent(subject)) {
                 // ! ❌ <A ==> <(&&, A, B) ==> C>>
                 // ? ❓为何不能合并：实际上A && (&&, A, B) = (&&, A, B)
                 return null;
@@ -1324,11 +1334,11 @@ public abstract class MakeTerm {
         // to be extended to check if subject is Conjunction
         // * 🚩检查非法主谓组合
         if (subject instanceof Implication || subject instanceof Equivalence)
-            return null; // ! <<A ==> B> <=> C>
+            return null; // ! <<A ==> B> <=> C> or <<A <=> B> <=> C>
         if (predicate instanceof Implication || predicate instanceof Equivalence)
-            return null; // ! <C <=> <C ==> D>>
+            return null; // ! <C <=> <C ==> D>> or <C <=> <C <=> D>>
         if (Statement.invalidStatement(subject, predicate))
-            return null; // ! <A <=> A>, <<A --> B> <=> <B --> A>>
+            return null; // ! <A <=> A> or <<A --> B> <=> <B --> A>>
         // * 🚩自动排序
         if (subject.compareTo(predicate) > 0) {
             final Term inner = subject;
