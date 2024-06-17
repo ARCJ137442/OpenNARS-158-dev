@@ -436,8 +436,8 @@ public class LogicalStability {
             "100" +
             "" +
             "' file: '6.11.nal'\n" +
-            "$0.80;0.80;0.95$ <{Tweety} --> [with-wings]>. %1.00;0.90%\n" +
-            "$0.80;0.80;0.95$ <(&&,<$x --> [chirping]>,<$x --> [with-wings]>) ==> <$x --> bird>>. %1.00;0.90%\n" +
+            "$0.80;0.80;0.95$ <{Tweety} --> [with_wings]>. %1.00;0.90%\n" +
+            "$0.80;0.80;0.95$ <(&&,<$x --> [chirping]>,<$x --> [with_wings]>) ==> <$x --> bird>>. %1.00;0.90%\n" +
             "100" +
             "" +
             "' file: '6.12.nal'\n" +
