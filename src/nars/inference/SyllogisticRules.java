@@ -243,7 +243,7 @@ final class SyllogisticRules {
      */
     static void conditionalDedInd(
             Implication premise1, short index,
-            CompoundTerm premise2, int side,
+            Term premise2, int side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();

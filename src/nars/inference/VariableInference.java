@@ -189,7 +189,7 @@ public abstract class VariableInference {
      * @param compound2 The compound containing the second term
      * @return Whether the unification is possible
      */
-    private static boolean unify(
+    private static boolean unifyCompound(
             final char type,
             Term t1, Term t2,
             CompoundTerm compound1,
@@ -210,19 +210,36 @@ public abstract class VariableInference {
         return hasSubs;
     }
 
+    /**
+     * 🆕【对外接口】统一两个词项
+     * * 📌实际上只对复合词项起作用
+     * * * 🚩二者皆为复合词项时，开始归一化；否则直接返回否
+     */
+    private static boolean unify(
+            final char type,
+            Term t1, Term t2,
+            Term whole1,
+            Term whole2) {
+        // * 🚩皆为复合词项⇒正式归一化
+        if (whole1 instanceof CompoundTerm && whole2 instanceof CompoundTerm)
+            return unifyCompound(type, t1, t2, (CompoundTerm) whole1, (CompoundTerm) whole2);
+        // * 🚩任一不是复合词项⇒否
+        return false;
+    }
+
     /** 🆕【对外接口】统一独立变量 */
-    static boolean unifyI(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
-        return unify(VAR_INDEPENDENT, t1, t2, compound1, compound2);
+    static boolean unifyI(Term t1, Term t2, Term whole1, Term whole2) {
+        return unify(VAR_INDEPENDENT, t1, t2, whole1, whole2);
     }
 
     /** 🆕【对外接口】统一非独变量 */
-    static boolean unifyD(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
-        return unify(VAR_DEPENDENT, t1, t2, compound1, compound2);
+    static boolean unifyD(Term t1, Term t2, Term whole1, Term whole2) {
+        return unify(VAR_DEPENDENT, t1, t2, whole1, whole2);
     }
 
     /** 🆕【对外接口】统一查询变量 */
-    static boolean unifyQ(Term t1, Term t2, CompoundTerm compound1, CompoundTerm compound2) {
-        return unify(VAR_QUERY, t1, t2, compound1, compound2);
+    static boolean unifyQ(Term t1, Term t2, Term whole1, Term whole2) {
+        return unify(VAR_QUERY, t1, t2, whole1, whole2);
     }
 
     /** 🆕得出「替代结果」后，将映射表应用到词项上 */

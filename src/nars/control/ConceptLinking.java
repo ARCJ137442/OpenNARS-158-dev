@@ -79,7 +79,10 @@ public abstract class ConceptLinking {
             // * 🚩条件类链接⇒递归
             final boolean isConditionalCompound =
                     // * 📌自身和索引必须先是「蕴含の主词」或「等价」，如 <# ==> C> 或 <# <=> #>
-                    self instanceof Equivalence || (self instanceof Implication && i == 0);
+                    // * 💥【2024-06-18 21:03:35】此处将「等价」从「复合条件」除籍，理由如下：
+                    // * * 「等价」可以通过类似「继承⇄相似」的方式产生「蕴含」
+                    // * * 许多推理规则均在「复合条件」链接类型中假设「链接目标」为「蕴含」词项
+                    /* self instanceof Equivalence || */ (self instanceof Implication && i == 0);
             final boolean isConditionalComponent =
                     // * 🚩然后「内部词项」必须是「合取」或「否定」
                     t1 instanceof Conjunction || t1 instanceof Negation;

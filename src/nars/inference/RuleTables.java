@@ -90,7 +90,7 @@ public class RuleTables {
                             // * 📝「复合条件」一定有两层，就处在作为「前件」的「条件」中
                             SyllogisticRules.conditionalDedInd(
                                     (Implication) taskTerm, bLink.getIndex(1),
-                                    (Statement) beliefTerm, tIndex,
+                                    beliefTerm, tIndex,
                                     context);
                         return;
                     case COMPOUND_CONDITION:
@@ -98,15 +98,20 @@ public class RuleTables {
                         // * + B="<(&&,<{tim} --> [aggressive]>,<(*,{tim},{graz}) --> livingIn>) ==>
                         // <{tim} --> murder>>"
                         // * @ C=T
-                        if (!(taskTerm instanceof CompoundTerm))
-                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
+                        // ! ❌【2024-06-18 21:34:08】↓此假设不一定成立
+                        // * 📄edge case：
+                        // * * task="flyer"
+                        // * * belief="<(&&,<$1 --> flyer>,<(*,$1,worms) --> food>) ==> <$1 --> bird>>"
+                        // if (!(taskTerm instanceof CompoundTerm))
+                        // throw new AssertionError(
+                        // "【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
                         if (!(beliefTerm instanceof Implication))
                             throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合条件」的，当前信念一定是「蕴含」");
                         if (belief != null)
                             // * 📝「复合条件」一定有两层，就处在作为「前件」的「条件」中
                             SyllogisticRules.conditionalDedInd(
                                     (Implication) beliefTerm, bLink.getIndex(1),
-                                    (CompoundTerm) taskTerm, tIndex,
+                                    taskTerm, tIndex,
                                     context);
                         return;
                 }

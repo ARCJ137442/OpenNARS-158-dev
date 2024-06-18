@@ -1101,7 +1101,7 @@ public abstract class MakeTerm {
      * @param predicate The second component
      * @return The Statement built
      */
-    public static Statement makeStatement(String relation, Term subject, Term predicate) {
+    public static Statement makeStatementFromParse(String relation, Term subject, Term predicate) {
         // * 📌【2024-06-01 10:46:42】原则：不让`nars.language`依赖MakeTerm
         if (Statement.invalidStatement(subject, predicate))
             return null;

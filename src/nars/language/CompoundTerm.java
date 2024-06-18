@@ -458,6 +458,9 @@ public abstract class CompoundTerm extends Term {
         final ArrayList<Term> termsToReorder = this.components;
         // * 🚩对移交出来的词项数组重排去重
         final ArrayList<Term> newTerms = reorderTerms(termsToReorder);
+        // * 🚩【2024-06-18 21:13:05】对于定长2的「陈述」不作处理：相同的时候不能简化
+        if (this instanceof Statement && newTerms.size() < 2)
+            return;
         // * 🚩基于整理好的词项数组，装填回自家类型
         this.components = new TermComponents(newTerms);
     }

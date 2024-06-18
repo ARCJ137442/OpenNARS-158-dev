@@ -347,16 +347,18 @@ public abstract class StringParser extends Symbols {
     private static Statement parseStatement(String s0) throws InvalidInputException {
         String s = s0.trim();
         int i = topRelation(s);
-        if (i < 0) {
-            throw new InvalidInputException("invalid statement");
-        }
+        if (i < 0)
+            throw new InvalidInputException("invalid statement relation");
         String relation = s.substring(i, i + 3);
         Term subject = parseTerm(s.substring(0, i));
+        if (subject == null) // * 🚩拒绝以null构造词项
+            throw new InvalidInputException("invalid statement subject");
         Term predicate = parseTerm(s.substring(i + 3));
-        Statement t = makeStatement(relation, subject, predicate);
-        if (t == null) {
+        if (predicate == null) // * 🚩拒绝以null构造词项
+            throw new InvalidInputException("invalid statement predicate");
+        Statement t = makeStatementFromParse(relation, subject, predicate);
+        if (t == null)
             throw new InvalidInputException("invalid statement");
-        }
         return t;
     }
 
