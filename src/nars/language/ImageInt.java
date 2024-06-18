@@ -33,12 +33,11 @@ public class ImageInt extends CompoundTerm {
      *
      * @param n          The name of the term
      * @param cs         Component list
-     * @param open       Open variable list
      * @param complexity Syntactic complexity of the compound
      * @param index      The index of relation in the component list
      */
-    private ImageInt(String n, TermComponents cs, boolean con, short complexity, short index) {
-        super(n, cs, con, complexity);
+    private ImageInt(String n, TermComponents cs, short complexity, short index) {
+        super(n, cs, complexity);
         relationIndex = index;
     }
 
@@ -48,7 +47,7 @@ public class ImageInt extends CompoundTerm {
      * @return A new object, to be casted into an ImageInt
      */
     public ImageInt clone() {
-        return new ImageInt(name, this.components.deepClone(), isConstant(), complexity, relationIndex);
+        return new ImageInt(name, this.components.deepClone(), complexity, relationIndex);
     }
 
     /**

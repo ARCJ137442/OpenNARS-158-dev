@@ -22,13 +22,12 @@ public class Inheritance extends Statement {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param n  The name of the term
+     * @param cs Component list
+     * @param i  Syntactic complexity of the compound
      */
-    private Inheritance(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private Inheritance(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Inheritance extends Statement {
      * @return A new object, to be casted into a SetExt
      */
     public Inheritance clone() {
-        return new Inheritance(name, this.components.deepClone(), isConstant, complexity);
+        return new Inheritance(name, this.components.deepClone(), complexity);
     }
 
     /**

@@ -23,13 +23,12 @@ public class SetInt extends CompoundTerm {
     /**
      * constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param n  The name of the term
+     * @param cs Component list
+     * @param i  Syntactic complexity of the compound
      */
-    private SetInt(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private SetInt(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**
@@ -38,7 +37,7 @@ public class SetInt extends CompoundTerm {
      * @return A new object, to be casted into a SetInt
      */
     public SetInt clone() {
-        return new SetInt(name, this.components.deepClone(), isConstant(), complexity);
+        return new SetInt(name, this.components.deepClone(), complexity);
     }
 
     /**

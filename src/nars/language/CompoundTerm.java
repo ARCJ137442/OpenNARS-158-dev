@@ -51,15 +51,7 @@ public abstract class CompoundTerm extends Term {
      * plus 1
      */
     protected final short complexity;
-    /**
-     * Whether the term names a concept
-     * * ❌【2024-06-18 01:23:56】不能省去该字段：getter使用的地方太多，并且从「语句」处不断传播「不确定性」
-     * * * setter在「语句」中使用：强制将其设为true
-     * * * 「记忆区」需要以此决定「是否创建概念」
-     * * * 「概念链接」需要以此判断「是否产生链接」
-     * * * 各推理规则中时有用到：组合规则、三段论规则 等
-     */
-    protected boolean isConstant;
+    // ! 💥【2024-06-18 15:22:34】破坏性省去该字段：仅影响「长期稳定性」的结果，不影响交叉测试
 
     /* ----- abstract methods to be implemented in subclasses ----- */
     /**
@@ -87,14 +79,13 @@ public abstract class CompoundTerm extends Term {
      * @param isConstant Whether the term refers to a concept
      * @param complexity Complexity of the compound term
      */
-    protected CompoundTerm(String name, ArrayList<Term> components, boolean isConstant, short complexity) {
-        this(name, new TermComponents(components), isConstant, complexity);
+    protected CompoundTerm(String name, ArrayList<Term> components, short complexity) {
+        this(name, new TermComponents(components), complexity);
     }
 
-    protected CompoundTerm(String name, TermComponents components, boolean isConstant, short complexity) {
+    protected CompoundTerm(String name, TermComponents components, short complexity) {
         super(name);
         this.components = components;
-        this.isConstant = isConstant;
         this.complexity = complexity;
     }
 
@@ -107,7 +98,6 @@ public abstract class CompoundTerm extends Term {
         this.components = new TermComponents(components);
         this.complexity = this.calcComplexity();
         this.name = makeName();
-        this.isConstant = this.calcIsConstant();
     }
 
     /**
@@ -120,7 +110,6 @@ public abstract class CompoundTerm extends Term {
         super(name);
         this.components = new TermComponents(components);
         this.complexity = this.calcComplexity();
-        this.isConstant = this.calcIsConstant();
     }
 
     /**
@@ -286,7 +275,7 @@ public abstract class CompoundTerm extends Term {
      */
     @Override
     public boolean isConstant() {
-        return isConstant;
+        return this.calcIsConstant();
     }
 
     private boolean calcIsConstant() {
@@ -295,16 +284,21 @@ public abstract class CompoundTerm extends Term {
             return true;
         }
         // * 🚩判断「是否有孤立的变量」
-        // ! 【2024-06-18 03:48:44】会改变「长期稳定性」的结果
+        // ! 💥【2024-06-18 03:48:44】会改变「长期稳定性」的结果
         return this.containsSoleVar();
     }
 
-    public boolean containsSoleVar() {
+    /**
+     * 🆕检验词项中是否包含「孤立非查询变量」
+     * * 🎯判断是否可作为「常量词项」看待
+     */
+    private boolean containsSoleVar() {
         HashMap<Variable, Integer> nVar = new HashMap<>();
         calcVarCount(nVar, this);
         return verifyVarCount(nVar);
     }
 
+    /** 🆕递归计算词项里各个变量词项（原子词项）的数目 */
     private static void calcVarCount(HashMap<Variable, Integer> nVar, Term current) {
         if (current instanceof Variable) {
             final Variable v = (Variable) current;
@@ -320,29 +314,23 @@ public abstract class CompoundTerm extends Term {
         }
     }
 
+    /** 🆕检验其中是否有「孤立的非查询变量」 */
     private static boolean verifyVarCount(HashMap<Variable, Integer> nVar) {
         for (final Variable v : nVar.keySet()) {
+            // * 🚩查询变量允许其单独作为一个「概念」：
+            // * * 💭其所代表的「所问」往往是单独出现的
+            // * * 📄"<{?who} --> murder>?"
             if (v.getType() == VAR_QUERY)
                 continue;
-            final int value = nVar.get(v);
-            if (value < 2)
+            // * 🚩若全局只有一个变量⇒开放变量⇒非「常量词项」
+            if (nVar.get(v) < 2)
                 return false;
         }
-        // for (final float value : nVar.values()) {
-        // if (value < 2)
-        // return false;
-        // }
         return true;
     }
 
-    /**
-     * Set the constant status
-     *
-     * @param isConstant
-     */
-    public void setConstantTrue() {
-        this.isConstant = true;
-    }
+    // ! ✅【2024-06-18 15:21:51】不再需要`setConstantTrue`
+    // * * ℹ️详情参见`Sentence.java`
 
     /**
      * Check if the order of the components matters

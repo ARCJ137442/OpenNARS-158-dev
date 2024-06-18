@@ -21,13 +21,13 @@ public class Equivalence extends Statement {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n          The name of the term
+     * @param name       The name of the term
      * @param components Component list
      * @param constant   Whether the statement contains open variable
      * @param complexity Syntactic complexity of the compound
      */
-    protected Equivalence(String n, TermComponents components, boolean constant, short complexity) {
-        super(n, components, constant, complexity);
+    protected Equivalence(String name, TermComponents components, short complexity) {
+        super(name, components, complexity);
     }
 
     /**
@@ -37,7 +37,7 @@ public class Equivalence extends Statement {
      */
     @Override
     public Equivalence clone() {
-        return new Equivalence(name, this.components.deepClone(), isConstant(), complexity);
+        return new Equivalence(name, this.components.deepClone(), complexity);
     }
 
     /**

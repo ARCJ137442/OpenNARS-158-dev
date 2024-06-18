@@ -21,13 +21,13 @@ public class Conjunction extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n   The name of the term
-     * @param cs  Component list
-     * @param con Whether the term is a constant
-     * @param i   Syntactic complexity of the compound
+     * @param name       The name of the term
+     * @param components Component list
+     *
+     * @param complexity Syntactic complexity of the compound
      */
-    private Conjunction(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private Conjunction(String name, TermComponents components, short complexity) {
+        super(name, components, complexity);
     }
 
     /**
@@ -37,7 +37,7 @@ public class Conjunction extends CompoundTerm {
      */
     @Override
     public Conjunction clone() {
-        return new Conjunction(name, this.components.deepClone(), isConstant(), complexity);
+        return new Conjunction(name, this.components.deepClone(), complexity);
     }
 
     /**

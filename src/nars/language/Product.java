@@ -22,13 +22,12 @@ public class Product extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n          The name of the term
-     * @param cs         Component list
-     * @param open       Open variable list
+     * @param name       The name of the term
+     * @param components Component list
      * @param complexity Syntactic complexity of the compound
      */
-    private Product(String n, TermComponents cs, boolean con, short complexity) {
-        super(n, cs, con, complexity);
+    private Product(String name, TermComponents components, short complexity) {
+        super(name, components, complexity);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Product extends CompoundTerm {
      * @return A new object, to be casted into an ImageExt
      */
     public Product clone() {
-        return new Product(name, this.components.deepClone(), isConstant(), complexity);
+        return new Product(name, this.components.deepClone(), complexity);
     }
 
     /**

@@ -22,13 +22,13 @@ public abstract class Statement extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n   The nameStr of the term
-     * @param cs  Component list
-     * @param con Constant indicator
-     * @param i   Syntactic complexity of the compound
+     * @param n  The nameStr of the term
+     * @param cs Component list
+     *
+     * @param i  Syntactic complexity of the compound
      */
-    protected Statement(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    protected Statement(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**

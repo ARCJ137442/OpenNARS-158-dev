@@ -21,13 +21,13 @@ public class Implication extends Statement {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n   The name of the term
-     * @param cs  Component list
-     * @param con Whether it is a constant term
-     * @param i   Syntactic complexity of the compound
+     * @param n  The name of the term
+     * @param cs Component list
+     *
+     * @param i  Syntactic complexity of the compound
      */
-    protected Implication(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    protected Implication(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**
@@ -36,7 +36,7 @@ public class Implication extends Statement {
      * @return A new object
      */
     public Implication clone() {
-        return new Implication(name, this.components.deepClone(), isConstant(), complexity);
+        return new Implication(name, this.components.deepClone(), complexity);
     }
 
     /**

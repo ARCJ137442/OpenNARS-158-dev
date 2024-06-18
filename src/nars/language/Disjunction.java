@@ -22,13 +22,12 @@ public class Disjunction extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param name       The name of the term
+     * @param components Component list
+     * @param complexity Syntactic complexity of the compound
      */
-    private Disjunction(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private Disjunction(String name, TermComponents components, short complexity) {
+        super(name, components, complexity);
     }
 
     /**
@@ -38,7 +37,7 @@ public class Disjunction extends CompoundTerm {
      */
     @Override
     public Disjunction clone() {
-        return new Disjunction(name, this.components.deepClone(), isConstant(), complexity);
+        return new Disjunction(name, this.components.deepClone(), complexity);
     }
 
     /**

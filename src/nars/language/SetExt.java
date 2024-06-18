@@ -22,13 +22,12 @@ public class SetExt extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param name       The name of the term
+     * @param components Component list
+     * @param complexity Syntactic complexity of the compound
      */
-    private SetExt(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private SetExt(String name, TermComponents components, short complexity) {
+        super(name, components, complexity);
     }
 
     /**
@@ -37,7 +36,7 @@ public class SetExt extends CompoundTerm {
      * @return A new object, to be casted into a SetExt
      */
     public SetExt clone() {
-        return new SetExt(name, this.components.deepClone(), isConstant(), complexity);
+        return new SetExt(name, this.components.deepClone(), complexity);
     }
 
     /**

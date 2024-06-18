@@ -23,13 +23,12 @@ public class IntersectionInt extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param n  The name of the term
+     * @param cs Component list
+     * @param i  Syntactic complexity of the compound
      */
-    private IntersectionInt(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private IntersectionInt(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**
@@ -38,7 +37,7 @@ public class IntersectionInt extends CompoundTerm {
      * @return A new object, to be casted into a Conjunction
      */
     public IntersectionInt clone() {
-        return new IntersectionInt(name, this.components.deepClone(), isConstant(), complexity);
+        return new IntersectionInt(name, this.components.deepClone(), complexity);
     }
 
     /**

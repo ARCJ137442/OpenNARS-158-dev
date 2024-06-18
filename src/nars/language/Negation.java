@@ -22,13 +22,12 @@ public class Negation extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n    The name of the term
-     * @param cs   Component list
-     * @param open Open variable list
-     * @param i    Syntactic complexity of the compound
+     * @param n  The name of the term
+     * @param cs Component list
+     * @param i  Syntactic complexity of the compound
      */
-    private Negation(String n, TermComponents cs, boolean con, short i) {
-        super(n, cs, con, i);
+    private Negation(String n, TermComponents cs, short i) {
+        super(n, cs, i);
     }
 
     /**
@@ -38,7 +37,7 @@ public class Negation extends CompoundTerm {
      */
     @Override
     public Negation clone() {
-        return new Negation(name, this.components.deepClone(), isConstant(), complexity);
+        return new Negation(name, this.components.deepClone(), complexity);
     }
 
     /**
