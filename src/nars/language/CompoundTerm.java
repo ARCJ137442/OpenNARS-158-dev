@@ -1,5 +1,7 @@
 package nars.language;
 
+import static nars.io.Symbols.VAR_QUERY;
+
 import java.util.*;
 
 import nars.io.Symbols;
@@ -288,19 +290,28 @@ public abstract class CompoundTerm extends Term {
     }
 
     private boolean calcIsConstant() {
-        // return !Variable.containVar(this);
+        // * 🚩快速检验「是否有变量」
+        if (!Variable.containVar(this)) {
+            return true;
+        }
+        // * 🚩判断「是否有孤立的变量」
         // ! 【2024-06-18 03:48:44】会改变「长期稳定性」的结果
-        HashMap<Term, Integer> nVar = new HashMap<>();
+        return this.containsSoleVar();
+    }
+
+    public boolean containsSoleVar() {
+        HashMap<Variable, Integer> nVar = new HashMap<>();
         calcVarCount(nVar, this);
         return verifyVarCount(nVar);
     }
 
-    private static void calcVarCount(HashMap<Term, Integer> nVar, Term current) {
+    private static void calcVarCount(HashMap<Variable, Integer> nVar, Term current) {
         if (current instanceof Variable) {
-            if (nVar.containsKey(current)) {
-                nVar.put(current, nVar.get(current) + 1);
+            final Variable v = (Variable) current;
+            if (nVar.containsKey(v)) {
+                nVar.put(v, nVar.get(v) + 1);
             } else {
-                nVar.put(current, 1);
+                nVar.put(v, 1);
             }
         } else if (current instanceof CompoundTerm) {
             for (final Term nextCurrent : ((CompoundTerm) current).components) {
@@ -309,11 +320,18 @@ public abstract class CompoundTerm extends Term {
         }
     }
 
-    private static boolean verifyVarCount(HashMap<Term, Integer> nVar) {
-        for (final float value : nVar.values()) {
+    private static boolean verifyVarCount(HashMap<Variable, Integer> nVar) {
+        for (final Variable v : nVar.keySet()) {
+            if (v.getType() == VAR_QUERY)
+                continue;
+            final int value = nVar.get(v);
             if (value < 2)
                 return false;
         }
+        // for (final float value : nVar.values()) {
+        // if (value < 2)
+        // return false;
+        // }
         return true;
     }
 

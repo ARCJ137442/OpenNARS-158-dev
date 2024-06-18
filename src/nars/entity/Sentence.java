@@ -3,7 +3,6 @@ package nars.entity;
 import nars.inference.Truth;
 import nars.inference.VariableInference;
 import nars.io.ToStringBriefAndLong;
-import nars.language.CompoundTerm;
 import nars.language.Term;
 
 /**
@@ -192,8 +191,14 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
             VariableInference.renameVariables(this.content);
             // * 🚩设置「为常量」
             // ? ❓【2024-06-09 13:26:43】为何要如此？
-            if (this.content instanceof CompoundTerm)
-                ((CompoundTerm) this.content).setConstantTrue();
+            // * ✅【2024-06-18 14:52:59】经过 比对性测试/交叉测试，去掉之后单步推理仍然不受影响
+            // ! 💥改变了「长期稳定性」的结果
+            // ! 💥但会遇到「不兼容问题」：
+            // ! * 可能在诸如「条件演绎」等推理过程中
+            // ! * 遇到「把『含有孤立变量的词项』视作『常量词项』」的情况
+            // * * 🚩结论：可以删去
+            // if (this.content instanceof CompoundTerm)
+            // ((CompoundTerm) this.content).setConstantTrue();
             // ! ❌【2024-06-15 12:58:08】局部同义，全局不同义
             // * * 💭不是内容不一致，是因为其它地方可变性要修改此中词项（暂且）
             // * * 📄如：变量统一
