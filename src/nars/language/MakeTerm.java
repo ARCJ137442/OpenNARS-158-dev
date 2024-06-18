@@ -1155,18 +1155,18 @@ public abstract class MakeTerm {
      * * ⚠️结果可空
      *
      * @param statement A sample asymmetric statement providing the class type
-     * @param subj      The first component
-     * @param pred      The second component
+     * @param subject   The first component
+     * @param predicate The second component
      * @return The Statement built
      */
-    public static Statement makeStatementSymmetric(Statement statement, Term subj, Term pred) {
+    public static Statement makeStatementSymmetric(Statement statement, Term subject, Term predicate) {
         // * 🚩非对称陈述⇒对称陈述
         if (statement instanceof Inheritance)
             // * 🚩继承⇒相似
-            return makeSimilarity(subj, pred);
+            return makeSimilarity(subject, predicate);
         if (statement instanceof Implication)
             // * 🚩蕴含⇒等价
-            return makeEquivalence(subj, pred);
+            return makeEquivalence(subject, predicate);
         throw new Error("不可对称化的陈述系词");
     }
 
