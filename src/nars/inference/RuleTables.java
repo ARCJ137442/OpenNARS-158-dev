@@ -86,13 +86,12 @@ public class RuleTables {
                         // *📄T="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
                         // * + B="[aggressive]"
                         // * @ C=T
-                        if (belief != null) {
-                            final short bIndex2 = bLink.getIndex(1);
+                        if (belief != null)
+                            // * 📝「复合条件」一定有两层，就处在作为「前件」的「条件」中
                             SyllogisticRules.conditionalDedInd(
-                                    (Implication) taskTerm, bIndex2,
+                                    (Implication) taskTerm, bLink.getIndex(1),
                                     (Statement) beliefTerm, tIndex,
                                     context);
-                        }
                         return;
                     case COMPOUND_CONDITION:
                         // * 📄T="<(*,{tim},{graz}) --> livingIn>"
@@ -101,15 +100,14 @@ public class RuleTables {
                         // * @ C=T
                         if (!(taskTerm instanceof CompoundTerm))
                             throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
-                        if (!(beliefTerm instanceof CompoundTerm))
-                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合某某」的，当前信念一定是复合词项");
-                        if (belief != null) {
-                            final short bIndex2 = bLink.getIndex(1);
+                        if (!(beliefTerm instanceof Implication))
+                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合条件」的，当前信念一定是「蕴含」");
+                        if (belief != null)
+                            // * 📝「复合条件」一定有两层，就处在作为「前件」的「条件」中
                             SyllogisticRules.conditionalDedInd(
-                                    (Implication) beliefTerm, bIndex2,
+                                    (Implication) beliefTerm, bLink.getIndex(1),
                                     (CompoundTerm) taskTerm, tIndex,
                                     context);
-                        }
                         return;
                 }
             case COMPOUND: // * 🚩conceptTerm ∈ taskTerm (normal)
@@ -142,33 +140,14 @@ public class RuleTables {
                         // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
                         // * @ C="(/,livingIn,_,{graz})"
                         if (!(taskTerm instanceof CompoundTerm))
-                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项");
-                        if (!(beliefTerm instanceof CompoundTerm))
-                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合某某」的，当前信念一定是复合词项");
-                        if (belief != null) {
-                            if (!(taskTerm instanceof CompoundTerm))
-                                throw new AssertionError("【2024-06-14 17:38:35】词项链是「复合条件」的，当前任务一定是「蕴含」词项（复合词项）");
-                            if (beliefTerm instanceof Implication) {
-                                // TODO: 简化此处条件
-                                final boolean canDetach = taskTerm instanceof CompoundTerm ? VariableInference.unifyI(
-                                        ((Implication) beliefTerm).getSubject(), taskTerm,
-                                        (Implication) beliefTerm, (CompoundTerm) taskTerm) : false;
-                                if (canDetach)
-                                    detachmentWithVar(belief, task, bIndex, context);
-                                else
-                                    SyllogisticRules.conditionalDedInd(
-                                            (Implication) beliefTerm, bIndex,
-                                            (CompoundTerm) taskTerm, -1,
-                                            context);
-                            }
-                            // * 🚩此处需要限制「任务词项」是「蕴含」
-                            else if (beliefTerm instanceof Equivalence)
-                                if (taskTerm instanceof Implication)
-                                    SyllogisticRules.conditionalAna(
-                                            (Equivalence) beliefTerm, bIndex,
-                                            (Implication) taskTerm, -1,
-                                            context);
-                        }
+                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合某某」的，当前任务一定是复合词项");
+                        if (!(beliefTerm instanceof Implication))
+                            throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合条件」的，当前信念一定是「蕴含」");
+                        reason_compoundAndCompoundCondition(
+                                context,
+                                task, (CompoundTerm) taskTerm,
+                                belief, (Implication) beliefTerm,
+                                bIndex);
                         return;
                 }
             case COMPOUND_STATEMENT: // * 🚩conceptTerm ∈ taskTerm (statement)
@@ -208,14 +187,17 @@ public class RuleTables {
                         // * 📄T="<<$1 --> [aggressive]> ==> <$1 --> (/,livingIn,_,{graz})>>"
                         // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
                         // * @ C="(/,livingIn,_,{graz})"
-                        if (belief != null) {
-                            final short bIndex2 = bLink.getIndex(1);
-                            if (beliefTerm instanceof Implication)
-                                conditionalDedIndWithVar(
-                                        (Implication) beliefTerm, bIndex2,
-                                        (Statement) taskTerm,
-                                        tIndex, context);
-                        }
+                        if (!(taskTerm instanceof Statement))
+                            throw new AssertionError("【2024-06-18 20:10:52】任务链是「复合陈述」的，当前任务一定是「陈述」");
+                        if (!(beliefTerm instanceof Implication))
+                            throw new AssertionError("【2024-06-18 20:11:03】信念链是「复合条件」的，当前信念一定是「蕴含」");
+                        if (belief != null)
+                            conditionalDedIndWithVar(
+                                    // * 🚩获取「信念链」内部指向的复合词项
+                                    // * 📝「复合条件」一定有两层，就处在作为「前件」的「条件」中
+                                    (Implication) beliefTerm, bLink.getIndex(1),
+                                    (Statement) taskTerm,
+                                    tIndex, context);
                         return;
                 }
             case COMPOUND_CONDITION: // * 🚩conceptTerm ∈ taskTerm (condition in statement)
@@ -237,28 +219,76 @@ public class RuleTables {
                         // *📄T="<(&&,<$1-->[aggressive]>,<sunglasses-->(/,own,$1,_)>)==><$1-->murder>>"
                         // * + B="<sunglasses --> glasses>"
                         // * @ C="sunglasses"
-                        if (belief != null) {
-                            // TODO maybe put instanceof test within conditionalDedIndWithVar()
-                            if (taskTerm instanceof Implication) {
-                                Term subj = ((Implication) taskTerm).getSubject();
-                                if (subj instanceof Negation) {
-                                    if (task.isJudgment()) {
-                                        componentAndStatement((CompoundTerm) subj, bIndex, (Statement) taskTerm, tIndex,
-                                                context);
-                                    } else {
-                                        componentAndStatement((CompoundTerm) subj, tIndex, (Statement) beliefTerm,
-                                                bIndex, context);
-                                    }
-                                } else {
-                                    conditionalDedIndWithVar((Implication) taskTerm, tIndex, (Statement) beliefTerm,
-                                            bIndex, context);
-                                }
-                            }
-                        }
+                        if (!(taskTerm instanceof Implication))
+                            throw new AssertionError("【2024-06-18 20:10:52】任务链是「复合条件」的，当前任务一定是「蕴含」");
+                        if (!(beliefTerm instanceof Statement))
+                            throw new AssertionError("【2024-06-18 20:11:03】信念链是「复合陈述」的，当前信念一定是「陈述」");
+                        if (belief != null)
+                            reason_compoundConditionAndCompoundStatement(
+                                    context,
+                                    task, (Implication) taskTerm, tIndex,
+                                    belief, (Statement) beliefTerm, bIndex);
                         return;
                 }
         }
         // ! unreachable
+    }
+
+    private static void reason_compoundConditionAndCompoundStatement(
+            final DerivationContextReason context,
+            final Task task, final Implication taskTerm, final short tIndex,
+            final Judgement belief, final Statement beliefTerm, final short bIndex) {
+        // TODo maybe put instanceof test within conditionalDedIndWithVar()
+        final Term taskSubject = taskTerm.getSubject();
+        // * 🚩「否定」⇒继续作为「元素🆚陈述」处理
+        if (taskSubject instanceof Negation)
+            if (task.isJudgment())
+                componentAndStatement(
+                        (Negation) taskSubject, bIndex,
+                        taskTerm, tIndex,
+                        context);
+            else
+                componentAndStatement(
+                        (Negation) taskSubject, tIndex,
+                        beliefTerm, bIndex,
+                        context);
+        // * 🚩一般情况⇒条件演绎/条件归纳
+        else
+            conditionalDedIndWithVar(
+                    taskTerm, tIndex,
+                    beliefTerm, bIndex,
+                    context);
+    }
+
+    private static void reason_compoundAndCompoundCondition(
+            final DerivationContextReason context,
+            final Task task,
+            final Term taskTerm,
+            final Judgement belief,
+            final Term beliefTerm,
+            final short bIndex) throws AssertionError {
+        if (belief == null)
+            return;
+        if (beliefTerm instanceof Implication) {
+            // * 🚩尝试统一其中的独立变量，然后应用「条件分离」规则
+            final boolean canDetach = VariableInference.unifyI(
+                    ((Implication) beliefTerm).getSubject(), taskTerm,
+                    (Implication) beliefTerm, (CompoundTerm) taskTerm);
+            if (canDetach)
+                detachmentWithVar(belief, task, bIndex, context);
+            else
+                SyllogisticRules.conditionalDedInd(
+                        (Implication) beliefTerm, bIndex,
+                        (CompoundTerm) taskTerm, -1,
+                        context);
+        }
+        // * 🚩此处需要限制「任务词项」是「蕴含」
+        else if (beliefTerm instanceof Equivalence)
+            if (taskTerm instanceof Implication)
+                SyllogisticRules.conditionalAna(
+                        (Equivalence) beliefTerm, bIndex,
+                        (Implication) taskTerm, -1,
+                        context);
     }
 
     /* ----- syllogistic inferences ----- */
