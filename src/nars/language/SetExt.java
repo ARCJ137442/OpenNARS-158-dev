@@ -24,10 +24,9 @@ public class SetExt extends CompoundTerm {
      *
      * @param name       The name of the term
      * @param components Component list
-     * @param complexity Syntactic complexity of the compound
      */
-    private SetExt(String name, TermComponents components, short complexity) {
-        super(name, components, complexity);
+    private SetExt(String name, TermComponents components) {
+        super(name, components);
     }
 
     /**
@@ -36,7 +35,7 @@ public class SetExt extends CompoundTerm {
      * @return A new object, to be casted into a SetExt
      */
     public SetExt clone() {
-        return new SetExt(name, this.components.deepClone(), complexity);
+        return new SetExt(name, this.components.deepClone());
     }
 
     /**

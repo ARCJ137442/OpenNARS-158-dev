@@ -26,8 +26,8 @@ public class Conjunction extends CompoundTerm {
      *
      * @param complexity Syntactic complexity of the compound
      */
-    private Conjunction(String name, TermComponents components, short complexity) {
-        super(name, components, complexity);
+    private Conjunction(String name, TermComponents components) {
+        super(name, components);
     }
 
     /**
@@ -37,7 +37,7 @@ public class Conjunction extends CompoundTerm {
      */
     @Override
     public Conjunction clone() {
-        return new Conjunction(name, this.components.deepClone(), complexity);
+        return new Conjunction(name, this.components.deepClone());
     }
 
     /**

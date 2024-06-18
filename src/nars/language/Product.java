@@ -24,10 +24,9 @@ public class Product extends CompoundTerm {
      *
      * @param name       The name of the term
      * @param components Component list
-     * @param complexity Syntactic complexity of the compound
      */
-    private Product(String name, TermComponents components, short complexity) {
-        super(name, components, complexity);
+    private Product(String name, TermComponents components) {
+        super(name, components);
     }
 
     /**
@@ -36,7 +35,7 @@ public class Product extends CompoundTerm {
      * @return A new object, to be casted into an ImageExt
      */
     public Product clone() {
-        return new Product(name, this.components.deepClone(), complexity);
+        return new Product(name, this.components.deepClone());
     }
 
     /**

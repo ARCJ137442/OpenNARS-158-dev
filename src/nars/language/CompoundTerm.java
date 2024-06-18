@@ -46,12 +46,10 @@ public abstract class CompoundTerm extends Term {
      * list of (direct) components
      */
     protected TermComponents components;
-    /**
-     * syntactic complexity of the compound, the sum of those of its components
-     * plus 1
-     */
-    protected final short complexity;
-    // ! 💥【2024-06-18 15:22:34】破坏性省去该字段：仅影响「长期稳定性」的结果，不影响交叉测试
+
+    // * ✅【2024-06-18 17:09:20】删掉已经是final的`complexity`字段：现在交给算法实时计算，牺牲性能以简化逻辑
+
+    // ! 💥【2024-06-18 15:22:34】破坏性省去`isConstant`字段：仅影响「长期稳定性」的结果，不影响交叉测试
 
     /* ----- abstract methods to be implemented in subclasses ----- */
     /**
@@ -71,22 +69,9 @@ public abstract class CompoundTerm extends Term {
     public abstract CompoundTerm clone();
 
     /* ----- object builders, called from subclasses ----- */
-    /**
-     * Constructor called from subclasses constructors to clone the fields
-     *
-     * @param name       Name
-     * @param components Component list
-     * @param isConstant Whether the term refers to a concept
-     * @param complexity Complexity of the compound term
-     */
-    protected CompoundTerm(String name, ArrayList<Term> components, short complexity) {
-        this(name, new TermComponents(components), complexity);
-    }
-
-    protected CompoundTerm(String name, TermComponents components, short complexity) {
+    protected CompoundTerm(String name, TermComponents components) {
         super(name);
         this.components = components;
-        this.complexity = complexity;
     }
 
     /**
@@ -96,7 +81,6 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(ArrayList<Term> components) {
         this.components = new TermComponents(components);
-        this.complexity = this.calcComplexity();
         this.name = makeName();
     }
 
@@ -109,7 +93,6 @@ public abstract class CompoundTerm extends Term {
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
         this.components = new TermComponents(components);
-        this.complexity = this.calcComplexity();
     }
 
     /**
@@ -265,7 +248,7 @@ public abstract class CompoundTerm extends Term {
      */
     @Override
     public int getComplexity() {
-        return complexity;
+        return this.calcComplexity();
     }
 
     /**

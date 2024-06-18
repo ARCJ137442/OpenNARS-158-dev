@@ -24,10 +24,9 @@ public class Disjunction extends CompoundTerm {
      *
      * @param name       The name of the term
      * @param components Component list
-     * @param complexity Syntactic complexity of the compound
      */
-    private Disjunction(String name, TermComponents components, short complexity) {
-        super(name, components, complexity);
+    private Disjunction(String name, TermComponents components) {
+        super(name, components);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Disjunction extends CompoundTerm {
      */
     @Override
     public Disjunction clone() {
-        return new Disjunction(name, this.components.deepClone(), complexity);
+        return new Disjunction(name, this.components.deepClone());
     }
 
     /**

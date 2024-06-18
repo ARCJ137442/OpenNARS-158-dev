@@ -23,12 +23,11 @@ public class IntersectionExt extends CompoundTerm {
     /**
      * Constructor with full values, called by clone
      *
-     * @param n  The name of the term
-     * @param cs Component list
-     * @param i  Syntactic complexity of the compound
+     * @param name       The name of the term
+     * @param components Component list
      */
-    private IntersectionExt(String n, TermComponents cs, short i) {
-        super(n, cs, i);
+    private IntersectionExt(String name, TermComponents components) {
+        super(name, components);
     }
 
     /**
@@ -37,7 +36,7 @@ public class IntersectionExt extends CompoundTerm {
      * @return A new object, to be casted into a IntersectionExt
      */
     public IntersectionExt clone() {
-        return new IntersectionExt(name, this.components.deepClone(), complexity);
+        return new IntersectionExt(name, this.components.deepClone());
     }
 
     /**

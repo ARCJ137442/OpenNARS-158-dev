@@ -24,10 +24,9 @@ public class Similarity extends Statement {
      *
      * @param n  The name of the term
      * @param cs Component list
-     * @param i  Syntactic complexity of the compound
      */
-    private Similarity(String n, TermComponents cs, short i) {
-        super(n, cs, i);
+    private Similarity(String n, TermComponents cs) {
+        super(n, cs);
     }
 
     /**
@@ -37,7 +36,7 @@ public class Similarity extends Statement {
      */
     @Override
     public Similarity clone() {
-        return new Similarity(name, this.components.deepClone(), complexity);
+        return new Similarity(name, this.components.deepClone());
     }
 
     /**

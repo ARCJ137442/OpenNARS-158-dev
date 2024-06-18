@@ -25,10 +25,9 @@ public class DifferenceInt extends CompoundTerm {
      *
      * @param n  The name of the term
      * @param cs Component list
-     * @param i  Syntactic complexity of the compound
      */
-    private DifferenceInt(String n, TermComponents cs, short i) {
-        super(n, cs, i);
+    private DifferenceInt(String n, TermComponents cs) {
+        super(n, cs);
     }
 
     /**
@@ -37,7 +36,7 @@ public class DifferenceInt extends CompoundTerm {
      * @return A new object, to be casted into a DifferenceInt
      */
     public DifferenceInt clone() {
-        return new DifferenceInt(name, this.components.deepClone(), complexity);
+        return new DifferenceInt(name, this.components.deepClone());
     }
 
     /**

@@ -32,12 +32,11 @@ public class ImageExt extends CompoundTerm {
      * Constructor with full values, called by clone
      *
      * @param name       The name of the term
-     * @param cs         Component list
-     * @param complexity Syntactic complexity of the compound
+     * @param components Component list
      * @param index      The index of relation in the component list
      */
-    private ImageExt(String name, TermComponents cs, short complexity, short index) {
-        super(name, cs, complexity);
+    private ImageExt(String name, TermComponents components, short index) {
+        super(name, components);
         relationIndex = index;
     }
 
@@ -47,7 +46,7 @@ public class ImageExt extends CompoundTerm {
      * @return A new object, to be casted into an ImageExt
      */
     public ImageExt clone() {
-        return new ImageExt(name, this.components.deepClone(), complexity, relationIndex);
+        return new ImageExt(name, this.components.deepClone(), relationIndex);
     }
 
     /**

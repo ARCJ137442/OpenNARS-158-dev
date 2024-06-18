@@ -25,10 +25,9 @@ public class SetInt extends CompoundTerm {
      *
      * @param n  The name of the term
      * @param cs Component list
-     * @param i  Syntactic complexity of the compound
      */
-    private SetInt(String n, TermComponents cs, short i) {
-        super(n, cs, i);
+    private SetInt(String n, TermComponents cs) {
+        super(n, cs);
     }
 
     /**
@@ -37,7 +36,7 @@ public class SetInt extends CompoundTerm {
      * @return A new object, to be casted into a SetInt
      */
     public SetInt clone() {
-        return new SetInt(name, this.components.deepClone(), complexity);
+        return new SetInt(name, this.components.deepClone());
     }
 
     /**
