@@ -142,13 +142,14 @@ public class RuleTables {
                         // *+B="<(&&,<$1-->[aggressive]>,<$1-->(/,livingIn,_,{graz})>)==><$1-->murder>>"
                         // * @ C="(/,livingIn,_,{graz})"
                         if (!(taskTerm instanceof CompoundTerm))
-                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项（蕴含/合取）");
+                            throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合条件」的，当前任务一定是复合词项");
                         if (!(beliefTerm instanceof CompoundTerm))
                             throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合某某」的，当前信念一定是复合词项");
                         if (belief != null) {
                             if (!(taskTerm instanceof CompoundTerm))
                                 throw new AssertionError("【2024-06-14 17:38:35】词项链是「复合条件」的，当前任务一定是「蕴含」词项（复合词项）");
                             if (beliefTerm instanceof Implication) {
+                                // TODO: 简化此处条件
                                 final boolean canDetach = taskTerm instanceof CompoundTerm ? VariableInference.unifyI(
                                         ((Implication) beliefTerm).getSubject(), taskTerm,
                                         (Implication) beliefTerm, (CompoundTerm) taskTerm) : false;
@@ -159,12 +160,14 @@ public class RuleTables {
                                             (Implication) beliefTerm, bIndex,
                                             (CompoundTerm) taskTerm, -1,
                                             context);
-                            } else if (beliefTerm instanceof Equivalence) {
-                                SyllogisticRules.conditionalAna(
-                                        (Equivalence) beliefTerm, bIndex,
-                                        (Implication) taskTerm, -1,
-                                        context);
                             }
+                            // * 🚩此处需要限制「任务词项」是「蕴含」
+                            else if (beliefTerm instanceof Equivalence)
+                                if (taskTerm instanceof Implication)
+                                    SyllogisticRules.conditionalAna(
+                                            (Equivalence) beliefTerm, bIndex,
+                                            (Implication) taskTerm, -1,
+                                            context);
                         }
                         return;
                 }
