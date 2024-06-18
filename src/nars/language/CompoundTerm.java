@@ -105,7 +105,7 @@ public abstract class CompoundTerm extends Term {
         this.components = new TermComponents(components);
         this.complexity = this.calcComplexity();
         this.name = makeName();
-        this.isConstant = !Variable.containVar(this);
+        this.isConstant = this.calcIsConstant();
     }
 
     /**
@@ -116,9 +116,9 @@ public abstract class CompoundTerm extends Term {
      */
     protected CompoundTerm(String name, ArrayList<Term> components) {
         super(name);
-        this.isConstant = !Variable.containVar(this);
         this.components = new TermComponents(components);
         this.complexity = this.calcComplexity();
+        this.isConstant = this.calcIsConstant();
     }
 
     /**
@@ -285,6 +285,36 @@ public abstract class CompoundTerm extends Term {
     @Override
     public boolean isConstant() {
         return isConstant;
+    }
+
+    private boolean calcIsConstant() {
+        // return !Variable.containVar(this);
+        // ! 【2024-06-18 03:48:44】会改变「长期稳定性」的结果
+        HashMap<Term, Integer> nVar = new HashMap<>();
+        calcVarCount(nVar, this);
+        return verifyVarCount(nVar);
+    }
+
+    private static void calcVarCount(HashMap<Term, Integer> nVar, Term current) {
+        if (current instanceof Variable) {
+            if (nVar.containsKey(current)) {
+                nVar.put(current, nVar.get(current) + 1);
+            } else {
+                nVar.put(current, 1);
+            }
+        } else if (current instanceof CompoundTerm) {
+            for (final Term nextCurrent : ((CompoundTerm) current).components) {
+                calcVarCount(nVar, nextCurrent);
+            }
+        }
+    }
+
+    private static boolean verifyVarCount(HashMap<Term, Integer> nVar) {
+        for (final float value : nVar.values()) {
+            if (value < 2)
+                return false;
+        }
+        return true;
     }
 
     /**
