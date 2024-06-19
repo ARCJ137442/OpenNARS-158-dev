@@ -26,7 +26,7 @@ public interface RankTable<E> extends Iterable<E> {
     /** 【内部】在某处插入元素（末尾） */
     public void __insert(E newElement);
 
-    /** 🆕内部弹出（末尾元素） */
+    /** 【内部】弹出（末尾元素） */
     public E __pop();
 
     /**
@@ -62,15 +62,12 @@ public interface RankTable<E> extends Iterable<E> {
     /**
      * 检查新元素是否兼容
      * * 🎯用于「筛除重复元素」如「重复语句」
-     * * 📜默认直接兼容
      *
      * @param newElement
      * @param existedElement
      * @return
      */
-    public default boolean isCompatibleToAdd(E newElement, E existedElement) {
-        return true;
-    }
+    public boolean isCompatibleToAdd(E newElement, E existedElement);
 
     /**
      * 加入元素

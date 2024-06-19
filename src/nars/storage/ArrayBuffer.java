@@ -3,7 +3,6 @@ package nars.storage;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-// TODO: 字段可空性、可变性、所有权标记
 /**
  * 🆕使用「变长数组」实现的「缓冲区」类型
  */
@@ -11,9 +10,21 @@ public class ArrayBuffer<T> implements Buffer<T> {
 
     // struct ArrayBuffer<T>
 
-    /** 内部数组 */
+    /**
+     * 内部数组
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
+     */
     private final ArrayList<T> inner;
-    /** 缓冲区容量 */
+    /**
+     * 缓冲区容量
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：不变
+     * * 📝所有权：具所有权
+     */
     private final int capacity;
 
     // impl<T> Buffer<T>
