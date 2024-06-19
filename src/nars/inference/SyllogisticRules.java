@@ -3,6 +3,7 @@ package nars.inference;
 import nars.entity.*;
 import nars.inference.TruthFunctions.TruthFSingleReliance;
 import nars.language.*;
+import nars.language.VariableProcess.AppliedCompounds;
 import nars.language.VariableProcess.Unification;
 import nars.io.Symbols;
 
@@ -272,22 +273,29 @@ final class SyllogisticRules {
         // * 🚩根据「旧条件」选取元素（或应用「变量统一」）
         final Conjunction oldCondition = (Conjunction) subj;
         final int index2 = oldCondition.indexOfComponent(commonComponent);
-        final Implication conditionalUnified = conditional; // 经过（潜在的）「变量统一」之后的「前提1」
+        final Statement conditionalUnified; // 经过（潜在的）「变量统一」之后的「前提1」
         if (index2 >= 0) {
             index = (short) index2;
+            conditionalUnified = conditional.clone();
         } else {
-            // * 🚩尝试数次匹配
+            // * 🚩尝试数次匹配，将其中的变量归一化
             final Term conditionToUnify = oldCondition.componentAt(index);
             final Unification unification1 = VariableProcess.unifyFindI(conditionToUnify, commonComponent);
             if (unification1.hasUnification()) {
-                VariableProcess.unifyApply(conditional, (CompoundTerm) premise2, unification1);
+                final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
+                        conditional, (CompoundTerm) premise2,
+                        unification1);
+                conditionalUnified = (Statement) appliedCompounds.extractApplied1();
             } else {
                 if (commonComponent.isSameType(oldCondition)) {
                     final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
                     final Unification unification2 = VariableProcess.unifyFindI(
                             conditionToUnify, commonComponentComponent);
                     if (unification2.hasUnification()) {
-                        VariableProcess.unifyApply(conditional, (CompoundTerm) premise2, unification2);
+                        final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
+                                conditional, (CompoundTerm) premise2,
+                                unification2);
+                        conditionalUnified = (Statement) appliedCompounds.extractApplied1();
                     } else
                         return;
                 } else

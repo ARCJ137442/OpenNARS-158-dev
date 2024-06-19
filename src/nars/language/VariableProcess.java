@@ -233,7 +233,7 @@ public abstract class VariableProcess {
     }
 
     /** 多值输出：寻找「归一替换」的中间结果 */
-    public static class Unification {
+    public static final class Unification {
         private final boolean hasUnification;
         /** 可变，因为要交出所有权 */
         private HashMap<Term, Term> unification1;
@@ -289,6 +289,58 @@ public abstract class VariableProcess {
     }
 
     /**
+     * 使用「统一结果」统一两个复合词项，并将结果保存到「统一结果」中去
+     * * ⚠️不会修改原有的复合词项
+     * ! ❌【2024-06-19 23:31:01】尽可能少用泛型：仅仅为了减少几个强制转换就大幅增加代码复杂度，不值得
+     *
+     * @param parent1 [&m] 要被修改的复合词项1
+     * @param parent2 [&m] 要被修改的复合词项2
+     * @param result  [] 上一个「寻找归一映射」的结果
+     * @return [?] 替换后的结果（可能没有）
+     */
+    public static AppliedCompounds unifyApplied(CompoundTerm parent1, CompoundTerm parent2, Unification result) {
+        // * 🚩主逻辑/应用替代
+        // * 📝就是在这里修改了两个复合词项
+        if (!result.hasUnification())
+            return null;
+        // * 🚩有替代⇒应用替代
+        // * 🚩拿出里头生成的两个映射表
+        final HashMap<Term, Term> map1 = result.extractUnification1();
+        final HashMap<Term, Term> map2 = result.extractUnification2();
+        // * 🚩此时假定「有替代的一定是复合词项」
+        // renameVar(map1, compound1, "-1");
+        // renameVar(map2, compound2, "-2");
+        final CompoundTerm applied1 = applyUnifyToNew(parent1, map1);
+        final CompoundTerm applied2 = applyUnifyToNew(parent2, map2);
+        return new AppliedCompounds(applied1, applied2);
+    }
+
+    /** 多值输出：寻找「归一替换」的中间结果 */
+    public static final class AppliedCompounds {
+        /** 可变，因为要交出所有权 */
+        private CompoundTerm applied1;
+        /** 可变，因为要交出所有权 */
+        private CompoundTerm applied2;
+
+        AppliedCompounds(CompoundTerm applied1, CompoundTerm applied2) {
+            this.applied1 = applied1;
+            this.applied2 = applied2;
+        }
+
+        public CompoundTerm extractApplied1() {
+            final CompoundTerm term = this.applied1;
+            this.applied1 = null;
+            return term;
+        }
+
+        public CompoundTerm extractApplied2() {
+            final CompoundTerm term = this.applied2;
+            this.applied2 = null;
+            return term;
+        }
+    }
+
+    /**
      * 🆕【对外接口】统一两个词项
      * * 📌实际上只对复合词项起作用
      * * * 🚩二者皆为复合词项时，开始归一化；否则直接返回否
@@ -320,7 +372,12 @@ public abstract class VariableProcess {
         return unify(VAR_QUERY, t1, t2, whole1, whole2);
     }
 
-    /** 🆕得出「替代结果」后，将映射表应用到词项上 */
+    /**
+     * 🆕得出「替代结果」后，将映射表应用到词项上
+     *
+     * @param compound [&m] 要被应用映射表的复合词项
+     * @param map      映射表
+     */
     private static void applyUnifyOne(CompoundTerm compound, HashMap<Term, Term> map) {
         // * 🚩映射表非空⇒替换
         if (map.isEmpty())
@@ -328,6 +385,25 @@ public abstract class VariableProcess {
         // * 🚩应用 & 重命名
         applySubstitute(compound, map);
         renameVariables(compound);
+    }
+
+    /**
+     * 🆕得出「替代结果」后，将映射表应用到词项上
+     * * 🚩【2024-06-19 23:21:14】返回一个新的词项，而原有词项不变
+     *
+     * @param compound [&] 所参考的复合词项
+     * @param map      映射表
+     * @return 新的（应用之后的）复合词项
+     */
+    private static CompoundTerm applyUnifyToNew(CompoundTerm compound, HashMap<Term, Term> map) {
+        CompoundTerm toBeApply = compound.clone();
+        // * 🚩映射表非空⇒替换
+        if (map.isEmpty())
+            return toBeApply;
+        // * 🚩应用 & 重命名
+        applySubstitute(toBeApply, map);
+        renameVariables(toBeApply);
+        return toBeApply;
     }
 
     /**
