@@ -3,6 +3,7 @@ package nars.inference;
 import nars.entity.*;
 import nars.inference.TruthFunctions.TruthFSingleReliance;
 import nars.language.*;
+import nars.language.VariableProcess.Unification;
 import nars.io.Symbols;
 
 import static nars.io.Symbols.JUDGMENT_MARK;
@@ -231,18 +232,17 @@ final class SyllogisticRules {
      * {<(&&, S2, S3) ==> P>, <S1 ==> S2>} |- <(&&, S1, S3) ==> P>
      * {<(&&, S1, S3) ==> P>, <S1 ==> S2>} |- <(&&, S2, S3) ==> P>
      *
-     * @param premise1 The conditional premise
-     * @param index    The location of the shared term in the condition of
-     *                 premise1
-     * @param premise2 The premise which, or part of which, appears in the
-     *                 condition of premise1
-     * @param side     The location of the shared term in premise2: 0 for
-     *                 subject, 1
-     *                 for predicate, -1 for the whole term
-     * @param context  Reference to the derivation context
+     * @param conditional The conditional premise
+     * @param index       The location of the shared term in the condition of
+     *                    premise1
+     * @param premise2    The premise which, or part of which, appears in the
+     *                    condition of premise1
+     * @param side        The location of the shared term in premise2:
+     *                    0 for subject, 1 for predicate, -1 for the whole term
+     * @param context     Reference to the derivation context
      */
     static void conditionalDedInd(
-            Implication premise1, short index,
+            Implication conditional, short index,
             Term premise2, int side,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
@@ -251,51 +251,74 @@ final class SyllogisticRules {
         final boolean deduction = (side != 0);
         final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
+        // * 🚩获取公共项
         final Term commonComponent;
         final Term newComponent;
-        if (side == 0) {
+        if (side == 0) { // * 在主项
             commonComponent = ((Statement) premise2).getSubject();
             newComponent = ((Statement) premise2).getPredicate();
-        } else if (side == 1) {
+        } else if (side == 1) { // * 在谓项
             commonComponent = ((Statement) premise2).getPredicate();
             newComponent = ((Statement) premise2).getSubject();
-        } else {
+        } else { // * 整个词项
             commonComponent = premise2;
             newComponent = null;
         }
-        final Term subj = premise1.getSubject();
+        // * 🚩获取「条件句」的条件
+        final Term subj = conditional.getSubject();
         if (!(subj instanceof Conjunction)) {
             return;
         }
+        // * 🚩根据「旧条件」选取元素（或应用「变量统一」）
         final Conjunction oldCondition = (Conjunction) subj;
         final int index2 = oldCondition.indexOfComponent(commonComponent);
+        final Implication conditionalUnified = conditional; // 经过（潜在的）「变量统一」之后的「前提1」
         if (index2 >= 0) {
             index = (short) index2;
         } else {
             // * 🚩尝试数次匹配
-            boolean hasMatch = VariableProcess.unifyI(
-                    oldCondition.componentAt(index), commonComponent,
-                    premise1, premise2);
-            if (!hasMatch && (commonComponent.isSameType(oldCondition))) {
-                hasMatch = VariableProcess.unifyI(
-                        oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
-                        premise1, premise2);
+            final Term conditionToUnify = oldCondition.componentAt(index);
+            final Unification unification1 = VariableProcess.unifyFindI(conditionToUnify, commonComponent);
+            if (unification1.hasUnification()) {
+                VariableProcess.unifyApply(conditional, (CompoundTerm) premise2, unification1);
+            } else {
+                if (commonComponent.isSameType(oldCondition)) {
+                    final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
+                    final Unification unification2 = VariableProcess.unifyFindI(
+                            conditionToUnify, commonComponentComponent);
+                    if (unification2.hasUnification()) {
+                        VariableProcess.unifyApply(conditional, (CompoundTerm) premise2, unification2);
+                    } else
+                        return;
+                } else
+                    return;
             }
-            if (!hasMatch) {
-                return;
-            }
+            // boolean hasMatch = VariableProcess.unifyI(
+            // oldCondition.componentAt(index), commonComponent,
+            // premise1, premise2);
+            // if (!hasMatch && (commonComponent.isSameType(oldCondition))) {
+            // hasMatch = VariableProcess.unifyI(
+            // oldCondition.componentAt(index), ((CompoundTerm)
+            // commonComponent).componentAt(index),
+            // premise1, premise2);
+            // }
+            // if (!hasMatch) {
+            // return;
+            // }
         }
+        // * 🚩构造「新条件」
         final Term newCondition;
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
             newCondition = setComponent(oldCondition, index, newComponent);
         }
+        // * 🚩根据「新条件」构造新词项
         final Term content;
         if (newCondition != null) {
-            content = makeStatement(premise1, newCondition, premise1.getPredicate());
+            content = makeStatement(conditionalUnified, newCondition, conditionalUnified.getPredicate());
         } else {
-            content = premise1.getPredicate();
+            content = conditionalUnified.getPredicate();
         }
         if (content == null) {
             return;

@@ -208,13 +208,28 @@ public abstract class VariableProcess {
      * @param t2   [&] 寻找所发生在的词项2
      * @return [] 「归一替换」的词项映射表
      */
-    public static Unification unifyFind(final char type, final Term t1, final Term t2) {
+    private static Unification unifyFind(final char type, final Term t1, final Term t2) {
         // * 🚩主逻辑/寻找替代
         // * 📝仅在「当前词项」t1、t2中寻找替代
         final HashMap<Term, Term> map1 = new HashMap<>();
         final HashMap<Term, Term> map2 = new HashMap<>();
         final boolean hasSubs = findUnification(type, t1, t2, map1, map2); // find substitution
         return new Unification(hasSubs, map1, map2);
+    }
+
+    /** 🆕【对外接口】统一独立变量 */
+    public static Unification unifyFindI(Term t1, Term t2) {
+        return unifyFind(VAR_INDEPENDENT, t1, t2);
+    }
+
+    /** 🆕【对外接口】统一非独变量 */
+    public static Unification unifyFindD(Term t1, Term t2) {
+        return unifyFind(VAR_DEPENDENT, t1, t2);
+    }
+
+    /** 🆕【对外接口】统一查询变量 */
+    public static Unification unifyFindQ(Term t1, Term t2) {
+        return unifyFind(VAR_QUERY, t1, t2);
     }
 
     /** 多值输出：寻找「归一替换」的中间结果 */
@@ -258,20 +273,19 @@ public abstract class VariableProcess {
      * @param result  [] 上一个「寻找归一映射」的结果
      */
     public static void unifyApply(CompoundTerm parent1, CompoundTerm parent2, Unification result) {
-        final boolean hasSubs = result.hasUnification();
         // * 🚩主逻辑/应用替代
         // * 📝就是在这里修改了两个复合词项
+        if (!result.hasUnification())
+            return;
         // * 🚩有替代⇒应用替代
-        if (hasSubs) {
-            // * 🚩拿出里头生成的两个映射表
-            final HashMap<Term, Term> map1 = result.extractUnification1();
-            final HashMap<Term, Term> map2 = result.extractUnification2();
-            // * 🚩此时假定「有替代的一定是复合词项」
-            // renameVar(map1, compound1, "-1");
-            // renameVar(map2, compound2, "-2");
-            applyUnifyOne(parent1, map1);
-            applyUnifyOne(parent2, map2);
-        }
+        // * 🚩拿出里头生成的两个映射表
+        final HashMap<Term, Term> map1 = result.extractUnification1();
+        final HashMap<Term, Term> map2 = result.extractUnification2();
+        // * 🚩此时假定「有替代的一定是复合词项」
+        // renameVar(map1, compound1, "-1");
+        // renameVar(map2, compound2, "-2");
+        applyUnifyOne(parent1, map1);
+        applyUnifyOne(parent2, map2);
     }
 
     /**
