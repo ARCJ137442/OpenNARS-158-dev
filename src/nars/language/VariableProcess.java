@@ -64,7 +64,7 @@ public abstract class VariableProcess {
     }
 
     /**
-     * 层级获取「变量替换」最终点
+     * 链式获取「变量替换」最终点
      * * 🚩一路查找到头
      * * 📄{A -> B, B -> C} + A => C
      */
@@ -178,32 +178,100 @@ public abstract class VariableProcess {
      * To unify two terms
      * * ⚠️会改变词项自身
      *
-     * @param type      The type of variable that can be substituted
-     * @param t1        The first term to be unified
-     * @param t2        The second term to be unified
-     * @param compound1 The compound containing the first term
-     * @param compound2 The compound containing the second term
+     * @param type      [] The type of variable that can be substituted
+     * @param t1        [&] The first term to be unified
+     * @param t2        [&] The second term to be unified
+     * @param compound1 [&m] The compound containing the first term
+     * @param compound2 [&m] The compound containing the second term
      * @return Whether the unification is possible
      */
     private static boolean unifyCompound(
             final char type,
-            Term t1, Term t2,
+            final Term t1, final Term t2,
             CompoundTerm compound1,
             CompoundTerm compound2) {
-        // * 🚩主逻辑：寻找替代
+        // * 🚩在两个子项中寻找「归一映射」
+        final Unification result = unifyFind(type, t1, t2);
+        // * 🚩复制其中的部分结果用作返回值
+        final boolean hasSubs = result.hasUnification();
+        // * 🚩继续根据结果，对复合词项应用「归一映射」
+        unifyApply(compound1, compound2, result);
+        // * 📝唯一会修改传入词项的一处
+        // * 🚩返回「是否替代成功」
+        return hasSubs;
+
+    }
+
+    /**
+     * @param type [] 要寻找的变量类型
+     * @param t1   [&] 寻找所发生在的词项1
+     * @param t2   [&] 寻找所发生在的词项2
+     * @return [] 「归一替换」的词项映射表
+     */
+    public static Unification unifyFind(final char type, final Term t1, final Term t2) {
+        // * 🚩主逻辑/寻找替代
+        // * 📝仅在「当前词项」t1、t2中寻找替代
         final HashMap<Term, Term> map1 = new HashMap<>();
         final HashMap<Term, Term> map2 = new HashMap<>();
         final boolean hasSubs = findUnification(type, t1, t2, map1, map2); // find substitution
+        return new Unification(hasSubs, map1, map2);
+    }
+
+    /** 多值输出：寻找「归一替换」的中间结果 */
+    public static class Unification {
+        private final boolean hasUnification;
+        /** 可变，因为要交出所有权 */
+        private HashMap<Term, Term> unification1;
+        /** 可变，因为要交出所有权 */
+        private HashMap<Term, Term> unification2;
+
+        Unification(boolean hasUnification, HashMap<Term, Term> unification1, HashMap<Term, Term> unification2) {
+            this.hasUnification = hasUnification;
+            this.unification1 = unification1;
+            this.unification2 = unification2;
+        }
+
+        public boolean hasUnification() {
+            return this.hasUnification;
+            // return this.unification1.isEmpty() && this.unification2.isEmpty();
+        }
+
+        public HashMap<Term, Term> extractUnification1() {
+            final HashMap<Term, Term> map = this.unification1;
+            this.unification1 = null;
+            return map;
+        }
+
+        public HashMap<Term, Term> extractUnification2() {
+            final HashMap<Term, Term> map = this.unification2;
+            this.unification2 = null;
+            return map;
+        }
+    }
+
+    /**
+     * 使用「统一结果」统一两个复合词项
+     * * ⚠️会修改原有的复合词项
+     *
+     * @param parent1 [&m] 要被修改的复合词项1
+     * @param parent2 [&m] 要被修改的复合词项2
+     * @param result  [] 上一个「寻找归一映射」的结果
+     */
+    public static void unifyApply(CompoundTerm parent1, CompoundTerm parent2, Unification result) {
+        final boolean hasSubs = result.hasUnification();
+        // * 🚩主逻辑/应用替代
+        // * 📝就是在这里修改了两个复合词项
         // * 🚩有替代⇒应用替代
         if (hasSubs) {
+            // * 🚩拿出里头生成的两个映射表
+            final HashMap<Term, Term> map1 = result.extractUnification1();
+            final HashMap<Term, Term> map2 = result.extractUnification2();
             // * 🚩此时假定「有替代的一定是复合词项」
             // renameVar(map1, compound1, "-1");
             // renameVar(map2, compound2, "-2");
-            applyUnifyOne(compound1, map1);
-            applyUnifyOne(compound2, map2);
+            applyUnifyOne(parent1, map1);
+            applyUnifyOne(parent2, map2);
         }
-        // * 🚩返回「是否替代成功」
-        return hasSubs;
     }
 
     /**
