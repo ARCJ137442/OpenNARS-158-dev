@@ -429,7 +429,7 @@ public abstract class CompoundTerm extends Term {
      * @param index   []
      * @param term    []
      */
-    public void setTermWhenDealingVariables(int index, Term term) {
+    void setTermWhenDealingVariables(int index, Term term) {
         this.components.setTerm(index, term);
     }
 
@@ -438,12 +438,12 @@ public abstract class CompoundTerm extends Term {
      *
      * @param &m-this
      */
-    public void updateAfterRenameVariables() {
+    void updateAfterRenameVariables() {
         // * 🚩更新名称
         this.updateNameAfterRenameVariables();
     }
 
-    public void updateNameAfterRenameVariables() {
+    void updateNameAfterRenameVariables() {
         // * 🚩重新生成名称
         this.setName(this.makeName());
     }
@@ -453,7 +453,7 @@ public abstract class CompoundTerm extends Term {
      * * 🚩【2024-06-13 18:05:40】只在「应用替换」时用到
      * * 🚩包含「排序」「去重」两个作用
      */
-    public void reorderComponents() {
+    void reorderComponents() {
         // * 🚩将自身组分暂时移交所有权
         final ArrayList<Term> termsToReorder = this.components;
         // * 🚩对移交出来的词项数组重排去重
@@ -471,7 +471,7 @@ public abstract class CompoundTerm extends Term {
      *
      * @param old [] 传入所有权
      */
-    public static ArrayList<Term> reorderTerms(final ArrayList<Term> old) {
+    static ArrayList<Term> reorderTerms(final ArrayList<Term> old) {
         final TreeSet<Term> s = new TreeSet<>(old);
         return new ArrayList<>(s);
     }

@@ -1,4 +1,4 @@
-package nars.inference;
+package nars.language;
 
 import static nars.io.Symbols.*;
 
@@ -7,18 +7,14 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import nars.control.DerivationContext.DerivationContextCore;
-import nars.language.CompoundTerm;
-import nars.language.ImageExt;
-import nars.language.ImageInt;
-import nars.language.Term;
-import nars.language.Variable;
+
 import static nars.language.MakeTerm.*;
 
 /**
  * 🆕所有跟「NAL-6 变量处理」相关的方法
  * * 🎯避免在专注「数据结构」的「词项」language包中放太多「逻辑推理」相关代码
  */
-public abstract class VariableInference {
+public abstract class VariableProcess {
 
     // from CompoundTerm //
 
@@ -228,17 +224,17 @@ public abstract class VariableInference {
     }
 
     /** 🆕【对外接口】统一独立变量 */
-    static boolean unifyI(Term t1, Term t2, Term whole1, Term whole2) {
+    public static boolean unifyI(Term t1, Term t2, Term whole1, Term whole2) {
         return unify(VAR_INDEPENDENT, t1, t2, whole1, whole2);
     }
 
     /** 🆕【对外接口】统一非独变量 */
-    static boolean unifyD(Term t1, Term t2, Term whole1, Term whole2) {
+    public static boolean unifyD(Term t1, Term t2, Term whole1, Term whole2) {
         return unify(VAR_DEPENDENT, t1, t2, whole1, whole2);
     }
 
     /** 🆕【对外接口】统一查询变量 */
-    static boolean unifyQ(Term t1, Term t2, Term whole1, Term whole2) {
+    public static boolean unifyQ(Term t1, Term t2, Term whole1, Term whole2) {
         return unify(VAR_QUERY, t1, t2, whole1, whole2);
     }
 

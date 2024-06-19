@@ -276,7 +276,7 @@ public class RuleTables {
             return;
         if (beliefTerm instanceof Implication) {
             // * 🚩尝试统一其中的独立变量，然后应用「条件分离」规则
-            final boolean canDetach = VariableInference.unifyI(
+            final boolean canDetach = VariableProcess.unifyI(
                     ((Implication) beliefTerm).getSubject(), taskTerm,
                     (Implication) beliefTerm, (CompoundTerm) taskTerm);
             if (canDetach)
@@ -431,7 +431,7 @@ public class RuleTables {
             // * 🚩主项×主项 <A --> B> × <A --> C>
             case SS: // induction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unifyI(tTerm.getSubject(), bTerm.getSubject(), tTerm,
+                unified = VariableProcess.unifyI(tTerm.getSubject(), bTerm.getSubject(), tTerm,
                         bTerm);
                 // * 🚩不能统一变量⇒终止
                 if (!unified)
@@ -450,7 +450,7 @@ public class RuleTables {
             // * 🚩主项×谓项 <A --> B> × <C --> A>
             case SP: // deduction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unifyI(
+                unified = VariableProcess.unifyI(
                         tTerm.getSubject(), bTerm.getPredicate(),
                         tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
@@ -463,7 +463,7 @@ public class RuleTables {
                 term1 = bTerm.getSubject();
                 term2 = tTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                if (VariableInference.unifyQ(term1, term2, tTerm, bTerm))
+                if (VariableProcess.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
                     SyllogisticRules.matchReverse(context);
                 else
@@ -474,7 +474,7 @@ public class RuleTables {
             case PS: // exemplification
                 // * 🚩先尝试统一独立变量
                 // * 📝统一之后，原先的变量就丢弃了
-                unified = VariableInference.unifyI(
+                unified = VariableProcess.unifyI(
                         tTerm.getPredicate(), bTerm.getSubject(),
                         tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
@@ -487,7 +487,7 @@ public class RuleTables {
                 term1 = tTerm.getSubject();
                 term2 = bTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                if (VariableInference.unifyQ(term1, term2, tTerm, bTerm))
+                if (VariableProcess.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
                     SyllogisticRules.matchReverse(context);
                 else
@@ -497,7 +497,7 @@ public class RuleTables {
             // * 🚩谓项×谓项 <A --> B> × <C --> B>
             case PP: // abduction
                 // * 🚩先尝试统一独立变量
-                unified = VariableInference.unifyI(
+                unified = VariableProcess.unifyI(
                         tTerm.getPredicate(), bTerm.getPredicate(),
                         tTerm, bTerm);
                 // * 🚩不能统一变量⇒终止
@@ -545,7 +545,7 @@ public class RuleTables {
             // * 🚩主项×主项 <A --> B> × <A <-> C>
             case SS:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unifyI(
+                unifiedI = VariableProcess.unifyI(
                         asymS.getSubject(), symS.getSubject(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -555,7 +555,7 @@ public class RuleTables {
                 term1 = asymS.getPredicate();
                 term2 = symS.getPredicate();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
+                unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -566,7 +566,7 @@ public class RuleTables {
             // * 🚩主项×谓项 <A --> B> × <C <-> A>
             case SP:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unifyI(
+                unifiedI = VariableProcess.unifyI(
                         asymS.getSubject(), symS.getPredicate(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -576,7 +576,7 @@ public class RuleTables {
                 term1 = asymS.getPredicate();
                 term2 = symS.getSubject();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
+                unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -587,7 +587,7 @@ public class RuleTables {
             // * 🚩谓项×主项 <A --> B> × <B <-> C>
             case PS:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unifyI(
+                unifiedI = VariableProcess.unifyI(
                         asymS.getPredicate(), symS.getSubject(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -597,7 +597,7 @@ public class RuleTables {
                 term1 = asymS.getSubject();
                 term2 = symS.getPredicate();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
+                unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -608,7 +608,7 @@ public class RuleTables {
             // * 🚩谓项×谓项 <A --> B> × <C <-> B>
             case PP:
                 // * 🚩先尝试统一独立变量
-                unifiedI = VariableInference.unifyI(
+                unifiedI = VariableProcess.unifyI(
                         asymS.getPredicate(), symS.getPredicate(),
                         asymS, symS);
                 // * 🚩不能统一变量⇒终止
@@ -618,7 +618,7 @@ public class RuleTables {
                 term1 = asymS.getSubject();
                 term2 = symS.getSubject();
                 // * 🚩再根据「是否可统一查询变量」做分派（可统一⇒已经统一了）
-                unifiedQ = VariableInference.unifyQ(term1, term2, asymS, symS);
+                unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
                     SyllogisticRules.matchAsymSym(asym, sym, context);
@@ -652,28 +652,28 @@ public class RuleTables {
         switch (figure) {
             case SS:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unifyI(bS, tS, bTerm, tTerm);
+                unified = VariableProcess.unifyI(bS, tS, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tP, belief, taskSentence, context);
                 return;
             case SP:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unifyI(bS, tP, bTerm, tTerm);
+                unified = VariableProcess.unifyI(bS, tP, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tS, belief, taskSentence, context);
                 return;
             case PS:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unifyI(bP, tS, bTerm, tTerm);
+                unified = VariableProcess.unifyI(bP, tS, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tP, belief, taskSentence, context);
                 return;
             case PP:
                 // * 🚩尝试以不同方式统一查询变量 @ 公共词项
-                unified = VariableInference.unifyI(bP, tP, bTerm, tTerm);
+                unified = VariableProcess.unifyI(bP, tP, bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tS, belief, taskSentence, context);
@@ -711,7 +711,7 @@ public class RuleTables {
             return;
         }
         // * 🚩若非常量（有变量） ⇒ 尝试统一独立变量
-        final boolean unifiedI = VariableInference.unifyI(component, content, mainStatement, content);
+        final boolean unifiedI = VariableProcess.unifyI(component, content, mainStatement, content);
         if (unifiedI) {
             // * 🚩统一成功⇒分离
             SyllogisticRules.detachment(mainSentence, subSentence, index, context);
@@ -808,13 +808,13 @@ public class RuleTables {
             return;
         }
         // * 🚩先尝试替换独立变量
-        boolean unified = VariableInference.unifyI(
+        boolean unified = VariableProcess.unifyI(
                 component, component2,
                 conditional, statement);
         // * 🚩若替换失败，则尝试替换非独变量
         if (!unified)
             // * 🚩惰性求值：第一次替换成功，就无需再次替换
-            unified = VariableInference.unifyD(
+            unified = VariableProcess.unifyD(
                     component, component2,
                     conditional, statement);
         // * 🚩成功替换⇒条件 演绎/归纳
@@ -935,7 +935,7 @@ public class RuleTables {
             // * 其内元素是「合取」且有「当前信念」
             if (compound instanceof Conjunction && context.hasCurrentBelief()) {
                 // * 🚩先尝试消去非独变量 #
-                final boolean unifiedD = VariableInference.unifyD(
+                final boolean unifiedD = VariableProcess.unifyD(
                         component, statement,
                         compound, statement);
                 if (unifiedD)
@@ -951,7 +951,7 @@ public class RuleTables {
                             compound,
                             context);
                 /// * 🚩是疑问句，且能消去查询变量⇒解构出元素作为结论
-                else if (VariableInference.unifyQ(component, statement, compound, statement))
+                else if (VariableProcess.unifyQ(component, statement, compound, statement))
                     CompositionalRules.decomposeStatement(
                             compound, component,
                             true,

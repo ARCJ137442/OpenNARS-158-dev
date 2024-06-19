@@ -249,7 +249,7 @@ final class SyllogisticRules {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
         final boolean deduction = (side != 0);
-        final boolean conditionalTask = VariableInference.hasUnificationI(
+        final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
@@ -273,11 +273,11 @@ final class SyllogisticRules {
             index = (short) index2;
         } else {
             // * 🚩尝试数次匹配
-            boolean hasMatch = VariableInference.unifyI(
+            boolean hasMatch = VariableProcess.unifyI(
                     oldCondition.componentAt(index), commonComponent,
                     premise1, premise2);
             if (!hasMatch && (commonComponent.isSameType(oldCondition))) {
-                hasMatch = VariableInference.unifyI(
+                hasMatch = VariableProcess.unifyI(
                         oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
                         premise1, premise2);
             }
@@ -339,7 +339,7 @@ final class SyllogisticRules {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean conditionalTask = VariableInference.hasUnificationI(
+        final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
         final Term commonComponent;
         final Term newComponent;
@@ -357,11 +357,11 @@ final class SyllogisticRules {
         if (!(tm instanceof Conjunction))
             return;
         final Conjunction oldCondition = (Conjunction) tm;
-        boolean match = VariableInference.unifyD(
+        boolean match = VariableProcess.unifyD(
                 oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
         if (!match && (commonComponent.isSameType(oldCondition))) {
-            match = VariableInference.unifyD(
+            match = VariableProcess.unifyD(
                     oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
                     premise1, premise2);
         }

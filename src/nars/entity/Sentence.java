@@ -1,9 +1,9 @@
 package nars.entity;
 
 import nars.inference.Truth;
-import nars.inference.VariableInference;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
+import nars.language.VariableProcess;
 
 /**
  * A Sentence is an abstract class, mainly containing a Term, a TruthValue, and
@@ -188,7 +188,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
                 throw new AssertionError("Stamp is null!");
 
             this.content = content;
-            VariableInference.renameVariables(this.content);
+            VariableProcess.renameVariables(this.content);
             // * 🚩设置「为常量」
             // ? ❓【2024-06-09 13:26:43】为何要如此？
             // * ✅【2024-06-18 14:52:59】经过 比对性测试/交叉测试，去掉之后单步推理仍然不受影响
