@@ -365,7 +365,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param adjustValue [&] The budget doing the adjusting
      * @return The merged budget
      */
-    public static BudgetValue mergeToNew(Budget baseValue, Budget adjustValue) {
+    public static final BudgetValue merge(final Budget baseValue, final Budget adjustValue) {
         final float bP = baseValue.getPriority();
         final float bD = baseValue.getDurability();
         final float bQ = baseValue.getQuality();
@@ -379,19 +379,24 @@ public final class BudgetFunctions extends UtilityFunctions {
         return new BudgetValue(p, d, q);
     }
 
-    // TODO: 过程注释 & 参数标注
-
     /* ----- Task derivation in LocalRules and SyllogisticRules ----- */
     @FunctionalInterface
     public static interface BudgetInferenceF {
-        BudgetInferenceParameters call(Truth truth, Term content);
+        /**
+         * 计算返回的参数集
+         *
+         * @param truth   [&?] 推理所用真值
+         * @param content [&?] 推理所用词项
+         * @return (推理的「质量」, 推理的「复杂度」)
+         */
+        BudgetInferenceParameters calc(Truth truth, Term content);
     }
 
     private static class BudgetInferenceParameters {
         final float inferenceQuality;
         final int complexity;
 
-        BudgetInferenceParameters(float inferenceQuality, int complexity) {
+        BudgetInferenceParameters(final float inferenceQuality, final int complexity) {
             this.inferenceQuality = inferenceQuality;
             this.complexity = complexity;
         }
@@ -399,44 +404,57 @@ public final class BudgetFunctions extends UtilityFunctions {
 
     /** Forward inference result and adjustment */
     private static final BudgetInferenceF forward = (truth, content) -> new BudgetInferenceParameters(
-            truthToQuality(truth),
+            // * 📝真值转质量，用不到词项
+            truthToQuality(truth), // 默认值：1
             1);
     /** Backward inference result and adjustment, stronger case */
     private static final BudgetInferenceF backward = (truth, content) -> new BudgetInferenceParameters(
-            truthToQuality(truth),
+            // * 📝真值转质量，用不到词项
+            truthToQuality(truth), // 默认值：1
             1);
     /** Backward inference result and adjustment, weaker case */
     private static final BudgetInferenceF backwardWeak = (truth, content) -> new BudgetInferenceParameters(
-            W2C1 * truthToQuality(truth),
+            // * 📝真值转质量，用不到词项
+            W2C1 * truthToQuality(truth), // 默认值：1
             1);
 
-    // /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
+    /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
 
     /** Forward inference with CompoundTerm conclusion */
     private static final BudgetInferenceF compoundForward = (truth, content) -> new BudgetInferenceParameters(
-            truthToQuality(truth),
-            content.getComplexity());
+            // * 📝真值转质量，用到词项的复杂度
+            truthToQuality(truth), // 默认值：1
+            content.getComplexity()); // 默认值：1
     /** Backward inference with CompoundTerm conclusion, stronger case */
     private static final BudgetInferenceF compoundBackward = (truth, content) -> new BudgetInferenceParameters(
+            // * 📝用到词项的复杂度，用不到真值
             1,
-            content.getComplexity());
+            content.getComplexity()); // 默认值：1
     /** Backward inference with CompoundTerm conclusion, weaker case */
     private static final BudgetInferenceF compoundBackwardWeak = (truth, content) -> new BudgetInferenceParameters(
+            // * 📝用到词项的复杂度，用不到真值
             W2C1,
-            content.getComplexity());
+            content.getComplexity()); // 默认值：1
 
     /**
      * 所有可用的预算值函数
      * * 🎯统一呈现「在推理过程中计算预算值」的「预算超参数」
      */
     public static enum BudgetInferenceFunction {
+        /** 正向推理 */
         Forward(forward),
+        /** 反向强推理 */
         Backward(backward),
+        /** 反向弱推理 */
         BackwardWeak(backwardWeak),
+        /** 复合正向推理 */
         CompoundForward(compoundForward),
+        /** 复合反向强推理 */
         CompoundBackward(compoundBackward),
+        /** 复合反向弱推理 */
         CompoundBackwardWeak(compoundBackwardWeak);
 
+        /** 要应用的「参数计算函数」 */
         final BudgetInferenceF function;
 
         private BudgetInferenceFunction(final BudgetInferenceF function) {
@@ -477,13 +495,22 @@ public final class BudgetFunctions extends UtilityFunctions {
                 // * 🚩其它⇒计算
                 : getConceptActivation(beliefLink.getTarget(), context);
         // * 🚩不带「推理上下文」参与计算
-        return budgetInferenceCalc(
-                inferenceF.call(truth, content),
+        return budgetInference(
+                inferenceF.calc(truth, content),
                 tLink, beliefLink,
                 targetActivation);
     }
 
-    public static BudgetInferenceResult budgetInferenceCalc(
+    /**
+     * 计算所有的四个预算值
+     *
+     * @param parameters       [] 通过「推理形式」给出的参数
+     * @param taskLinkBudget   [&] 任务链的预算值
+     * @param beliefLinkBudget [&] 信念链的预算值
+     * @param targetActivation [] 来自「信念链」的「目标激活度」
+     * @return [] 推理结果
+     */
+    public static BudgetInferenceResult budgetInference(
             final BudgetInferenceParameters parameters,
             final Budget taskLinkBudget,
             final Budget beliefLinkBudget, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级

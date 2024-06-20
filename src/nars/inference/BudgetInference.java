@@ -89,7 +89,7 @@ public final class BudgetInference {
      * @param adjustValue [&] The budget doing the adjusting
      */
     public static void merge(Budget baseValue, Budget adjustValue) {
-        final Budget newBudget = BudgetFunctions.mergeToNew(baseValue, adjustValue);
+        final Budget newBudget = BudgetFunctions.merge(baseValue, adjustValue);
         baseValue.copyBudgetFrom(newBudget);
     }
 
