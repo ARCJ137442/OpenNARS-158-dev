@@ -547,10 +547,15 @@ public final class BudgetFunctions extends UtilityFunctions {
         final Budget newBeliefLinkBudget;
         if (beliefLinkBudget != null) {
             // TODO: 此处仅在「概念推理」中出现，后续或可分离拆分
+            // * 📝p = belief | quality | targetActivation
+            // * 📝d = belief | quality
+            // * 📝q = belief
             // * 🚩提升优先级
             final float newBeliefLinkPriority = UtilityFunctions.or(
                     beliefLinkBudget.getPriority(),
-                    or(quality, targetActivation));
+                    // * ✅【2024-06-20 18:44:13】↓以下两个值的or嵌套可以消除：差异精度控制在5.9604645E-8内
+                    quality,
+                    targetActivation);
             // * 🚩提升耐久度
             final float newBeliefLinkDurability = UtilityFunctions.or(
                     beliefLinkBudget.getDurability(),
