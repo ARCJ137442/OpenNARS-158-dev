@@ -153,6 +153,109 @@ public final class BudgetFunctions extends UtilityFunctions {
         return new BudgetValue(newP, newD, newQ);
     }
 
+    /**
+     * Evaluate the quality of a revision, then de-prioritize the premises
+     * * 🚩【2024-05-21 10:30:50】现在通用于「直接推理」和「概念推理」：任务链、信念链处可空
+     * * 🚩【2024-06-20 20:33:03】现在一次返回多个更新后的值：
+     * * * 新预算
+     * * * 新的任务预算
+     * * * 新的任务链预算
+     * * * 新的词项链预算
+     *
+     * @param tTruth                  [&] The truth value of the judgment in the
+     *                                task
+     * @param bTruth                  [&] The truth value of the belief
+     * @param truth                   [&] The truth value of the conclusion of
+     *                                revision
+     * @param currentTaskBudget       [&m] The budget of the current task
+     * @param currentTaskLinkBudget   [&?]
+     * @param currentBeliefLinkBudget [&?]
+     * @return [] The budget result for the new task
+     */
+    final static ReviseResult revise(
+            final Truth tTruth,
+            final Truth bTruth,
+            final Truth truth,
+            final Budget currentTaskBudget,
+            final Budget currentTaskLinkBudget,
+            final Budget currentBeliefLinkBudget) {
+        // * 📌四个返回值
+        final Budget newBudget;
+        final Budget newTaskBudget;
+        final Budget newTaskLinkBudget;
+        final Budget newBeliefLinkBudget;
+        // * 🚩计算落差 | 【2024-05-21 10:43:44】此处暂且需要重算一次
+        final float difT = truth.getExpDifAbs(tTruth);
+        final float difB = truth.getExpDifAbs(bTruth);
+        // * 🚩若有：反馈到任务链、信念链
+        newTaskLinkBudget = currentTaskLinkBudget == null
+                ? null
+                // * 📝当前任务链 降低预算：
+                // * * p = link & !difT
+                // * * d = link & !difT
+                // * * q = link
+                : new BudgetValue(
+                        and(currentTaskLinkBudget.getPriority(), not(difT)),
+                        and(currentTaskLinkBudget.getDurability(), not(difT)),
+                        currentTaskLinkBudget.getQuality());
+        newBeliefLinkBudget = currentBeliefLinkBudget == null
+                ? null
+                // * 📝当前信念链 降低预算：
+                // * * p = link & !difB
+                // * * d = link & !difB
+                // * * q = link
+                : new BudgetValue(
+                        and(currentBeliefLinkBudget.getPriority(), not(difB)),
+                        and(currentBeliefLinkBudget.getDurability(), not(difB)),
+                        currentTaskLinkBudget.getQuality());
+
+        // * 🚩计算期望之差
+        final float difT1 = truth.getExpDifAbs(tTruth);
+        // ! ⚠️【2024-06-10 23:45:42】现场降低预算值，降低之后要立马使用
+        // * 💭或许亦可用「写时复制」的方法（最后再合并回「当前词项链」和「当前任务链」）
+        // * 🚩用落差降低优先级、耐久度
+        // * 📝当前任务 降低预算：
+        // * * p = task & !difT
+        // * * d = task & !difT
+        // * * q = task
+        newTaskBudget = new BudgetValue(
+                and(currentTaskBudget.getPriority(), not(difT1)),
+                and(currentTaskBudget.getDurability(), not(difT1)),
+                currentTaskBudget.getQuality());
+        // * 🚩用更新后的值计算新差 | ❓此时是否可能向下溢出？
+        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
+        if (dif < 0)
+            throw new AssertionError("【2024-06-10 23:48:25】此处差异不应小于零");
+        // * 🚩计算新预算值
+        // * 📝优先级 = 差 | 当前任务
+        // * 📝耐久度 = (差 + 当前任务) / 2
+        // * 📝质量 = 新真值→质量
+        final float priority = or(dif, currentTaskBudget.getPriority());
+        final float durability = aveAri(dif, currentTaskBudget.getDurability());
+        final float quality = BudgetFunctions.truthToQuality(truth);
+        newBudget = new BudgetValue(priority, durability, quality);
+        // 返回
+        return new ReviseResult(newBudget, newTaskBudget, newTaskLinkBudget, newBeliefLinkBudget);
+    }
+
+    static final class ReviseResult {
+        final Budget newBudget;
+        final Budget newTaskBudget;
+        final Budget newTaskLinkBudget;
+        final Budget newBeliefLinkBudget;
+
+        private ReviseResult(
+                final Budget newBudget,
+                final Budget newTaskBudget,
+                final Budget newTaskLinkBudget,
+                final Budget newBeliefLinkBudget) {
+            this.newBudget = newBudget;
+            this.newTaskBudget = newTaskBudget;
+            this.newTaskLinkBudget = newTaskLinkBudget;
+            this.newBeliefLinkBudget = newBeliefLinkBudget;
+        }
+    }
+
     // /**
     // * Update a belief
     // * * ⚠️要求此中之「任务」必须是「判断句」

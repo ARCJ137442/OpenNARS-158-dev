@@ -2,13 +2,10 @@ package nars.inference;
 
 import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
-import nars.entity.BudgetValue;
-import nars.entity.TaskLink;
-import nars.entity.TermLink;
 import nars.inference.BudgetFunctions.BudgetInferenceFunction;
 import nars.inference.BudgetFunctions.BudgetInferenceResult;
+import nars.inference.BudgetFunctions.ReviseResult;
 import nars.language.*;
-import static nars.inference.UtilityFunctions.*;
 
 /**
  * Budget functions for resources allocation
@@ -41,27 +38,15 @@ public final class BudgetInference {
             final Truth truth,
             // boolean feedbackToLinks = false,
             Budget currentTaskBudget) {
-        // * 🚩计算期望之差
-        final float difT = truth.getExpDifAbs(tTruth);
-        // ! ⚠️【2024-06-10 23:45:42】现场降低预算值，降低之后要立马使用
-        // * 💭或许亦可用「写时复制」的方法（最后再合并回「当前词项链」和「当前任务链」）
-        // * 🚩用落差降低优先级、耐久度
-        // * 📝当前任务 &= !落差
-        currentTaskBudget.decPriority(not(difT));
-        currentTaskBudget.decDurability(not(difT));
-        // * 🚩用更新后的值计算新差 | ❓此时是否可能向下溢出？
-        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
-        if (dif < 0)
-            throw new AssertionError("【2024-06-10 23:48:25】此处差异不应小于零");
-        // * 🚩计算新预算值
-        // * 📝优先级 = 差 | 当前任务
-        // * 📝耐久度 = (差 + 当前任务) / 2
-        // * 📝质量 = 新真值→质量
-        final float priority = or(dif, currentTaskBudget.getPriority());
-        final float durability = aveAri(dif, currentTaskBudget.getDurability());
-        final float quality = BudgetFunctions.truthToQuality(truth);
-        // 返回
-        return new BudgetValue(priority, durability, quality);
+        // * 🚩计算
+        final ReviseResult result = BudgetFunctions.revise(
+                tTruth, bTruth, truth,
+                currentTaskBudget,
+                null, null);
+        // * 🚩应用修改
+        currentTaskBudget.copyBudgetFrom(result.newTaskBudget);
+        // * 🚩返回
+        return result.newBudget;
     }
 
     /**
@@ -79,24 +64,21 @@ public final class BudgetInference {
             final Truth bTruth,
             final Truth truth,
             final DerivationContextReason context) {
-        // * 🚩计算落差 | 【2024-05-21 10:43:44】此处暂且需要重算一次
-        final float difT = truth.getExpDifAbs(tTruth);
-        final float difB = truth.getExpDifAbs(bTruth);
-        // * 🚩独有逻辑：反馈到任务链、信念链
-        {
-            // * 🚩反馈到任务链
-            // * 📝当前任务链 &= !落差T
-            final TaskLink tLink = context.getCurrentTaskLink();
-            tLink.decPriority(not(difT));
-            tLink.decDurability(not(difT));
-            // * 🚩反馈到信念链
-            // * 📝当前信念链 &= !落差B
-            final TermLink bLink = context.getCurrentBeliefLink();
-            bLink.decPriority(not(difB));
-            bLink.decDurability(not(difB));
-        }
-        // * 🚩按「非概念推理」计算并返回
-        return revise(tTruth, bTruth, truth, context.getCurrentTask());
+        final Budget currentTaskBudget = context.getCurrentTask();
+        final Budget currentTaskLinkBudget = context.getCurrentTaskLink();
+        final Budget currentBeliefLinkBudget = context.getCurrentBeliefLink();
+        // * 🚩计算
+        final ReviseResult result = BudgetFunctions.revise(
+                tTruth, bTruth, truth,
+                context.getCurrentTask(),
+                context.getCurrentTaskLink(),
+                context.getCurrentBeliefLink());
+        // * 🚩应用修改
+        currentTaskBudget.copyBudgetFrom(result.newTaskBudget);
+        currentTaskLinkBudget.copyBudgetFrom(result.newTaskLinkBudget);
+        currentBeliefLinkBudget.copyBudgetFrom(result.newBeliefLinkBudget);
+        // * 🚩返回
+        return result.newBudget;
     }
 
     /**
