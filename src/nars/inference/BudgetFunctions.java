@@ -1,13 +1,13 @@
 package nars.inference;
 
-import nars.control.DerivationContextReason;
+import nars.control.DerivationContext;
+import nars.control.DerivationContextConcept;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Question;
 import nars.entity.Sentence;
 import nars.entity.Task;
-import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.language.Term;
 import nars.language.Variable;
@@ -15,6 +15,7 @@ import nars.language.Variable;
 /**
  * Budget functions for resources allocation
  * * 📌【2024-06-07 13:15:14】暂时还不能封闭：具体推理控制中要用到
+ * * ⚠️【2024-06-20 19:56:05】此处仅存储「纯函数」：不在其中修改传入量的函数
  *
  * * 📝参数可变性标注语法：
  * * * [] ⇒ 传递所有权（深传递，整体只读）
@@ -24,7 +25,7 @@ import nars.language.Variable;
  * * * [R] ⇒ 传递不可变共享引用（共享只读）
  * * * [Rm] ⇒ 传递可变共享引用（共享读写）
  */
-public abstract class BudgetFunctions extends UtilityFunctions {
+public final class BudgetFunctions extends UtilityFunctions {
 
     // TODO: 后续或许能使用「预算函数枚举」实现「传递『要用哪个函数』的信息，控制端独立计算预算值」的「推理器与控制区分离」
 
@@ -77,6 +78,20 @@ public abstract class BudgetFunctions extends UtilityFunctions {
         final float termComplexityFactor = 1.0f / concept.getTerm().getComplexity();
         // * 🚩总体：任意更大就行；结构简单的基本总是最好的；词项越复杂，质量下限越低
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
+    }
+
+    /**
+     * Get the current activation level of a concept.
+     * * 🚩从「概念」中来
+     *
+     * @param t       [&] The Term naming a concept
+     * @param context [&] The derivation context
+     * @return [] the priority value of the concept
+     */
+    private static float getConceptActivation(Term t, DerivationContext context) {
+        // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
+        final Concept c = context.termToConcept(t);
+        return c == null ? 0f : c.getPriority();
     }
 
     /* ----- Functions used both in direct and indirect processing of tasks ----- */
@@ -136,80 +151,6 @@ public abstract class BudgetFunctions extends UtilityFunctions {
         final float newQ = truthToQuality(solution);
         // 返回
         return new BudgetValue(newP, newD, newQ);
-    }
-
-    /**
-     * Evaluate the quality of a revision, then de-prioritize the premises
-     * * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
-     *
-     * @param tTruth            [&] The truth value of the judgment in the task
-     * @param bTruth            [&] The truth value of the belief
-     * @param truth             [&] The truth value of the conclusion of revision
-     * @param currentTaskBudget [&m] The budget of the current task
-     * @return [] The budget for the new task
-     */
-    static Budget revise(
-            final Truth tTruth,
-            final Truth bTruth,
-            final Truth truth,
-            // boolean feedbackToLinks = false,
-            Budget currentTaskBudget) {
-        // * 🚩计算期望之差
-        final float difT = truth.getExpDifAbs(tTruth);
-        // ! ⚠️【2024-06-10 23:45:42】现场降低预算值，降低之后要立马使用
-        // * 💭或许亦可用「写时复制」的方法（最后再合并回「当前词项链」和「当前任务链」）
-        // * 🚩用落差降低优先级、耐久度
-        // * 📝当前任务 &= !落差
-        currentTaskBudget.decPriority(not(difT));
-        currentTaskBudget.decDurability(not(difT));
-        // * 🚩用更新后的值计算新差 | ❓此时是否可能向下溢出？
-        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
-        if (dif < 0)
-            throw new AssertionError("【2024-06-10 23:48:25】此处差异不应小于零");
-        // * 🚩计算新预算值
-        // * 📝优先级 = 差 | 当前任务
-        final float priority = or(dif, currentTaskBudget.getPriority());
-        // * 📝耐久度 = (差 + 当前任务) / 2
-        final float durability = aveAri(dif, currentTaskBudget.getDurability());
-        // * 📝质量 = 新真值→质量
-        final float quality = truthToQuality(truth);
-        // 返回
-        return new BudgetValue(priority, durability, quality);
-    }
-
-    /**
-     * 🆕同{@link BudgetInference#revise}，但是「概念推理」专用
-     * * 🚩在「共用逻辑」后，将预算值反馈回「词项链」「任务链」
-     *
-     * @param tTruth  [&]
-     * @param bTruth  [&]
-     * @param truth   [&]
-     * @param context [&m]
-     * @return []
-     */
-    static Budget reviseMatching(
-            final Truth tTruth,
-            final Truth bTruth,
-            final Truth truth,
-            final DerivationContextReason context) {
-        // * 🚩计算落差 | 【2024-05-21 10:43:44】此处暂且需要重算一次
-        final float difT = truth.getExpDifAbs(tTruth);
-        final float difB = truth.getExpDifAbs(bTruth);
-        // * 🚩独有逻辑：反馈到任务链、信念链
-        {
-            // * 🚩反馈到任务链
-            // * 📝当前任务链 &= !落差T
-            final TaskLink tLink = context.getCurrentTaskLink();
-            tLink.decPriority(not(difT));
-            tLink.decDurability(not(difT));
-            // * 🚩反馈到信念链
-            // * 📝当前信念链 &= !落差B
-            final TermLink bLink = context.getCurrentBeliefLink();
-            bLink.decPriority(not(difB));
-            bLink.decDurability(not(difB));
-        }
-        // * 🚩按「非概念推理」计算并返回
-        return revise(tTruth, bTruth, truth, context.getCurrentTask());
     }
 
     // /**
@@ -315,18 +256,6 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     }
 
     /**
-     * Merge an item into another one in a bag, when the two are identical
-     * except in budget values
-     *
-     * @param baseValue   [&m] The budget value to be modified
-     * @param adjustValue [&] The budget doing the adjusting
-     */
-    public static void merge(Budget baseValue, Budget adjustValue) {
-        final Budget newBudget = mergeToNew(baseValue, adjustValue);
-        baseValue.copyBudgetFrom(newBudget);
-    }
-
-    /**
      * 🆕「合并」两个预算值，但输出到新值
      *
      * @param baseValue   [&] The budget value to merge
@@ -357,211 +286,111 @@ public abstract class BudgetFunctions extends UtilityFunctions {
 
     private static class BudgetInferenceParameters {
         final float inferenceQuality;
-        final float complexity;
+        final int complexity;
 
-        BudgetInferenceParameters(float inferenceQuality, float complexity) {
+        BudgetInferenceParameters(float inferenceQuality, int complexity) {
             this.inferenceQuality = inferenceQuality;
             this.complexity = complexity;
         }
     }
 
-    public static final BudgetInferenceF forward = (truth, content) -> new BudgetInferenceParameters(
+    /** Forward inference result and adjustment */
+    private static final BudgetInferenceF forward = (truth, content) -> new BudgetInferenceParameters(
             truthToQuality(truth),
             1);
-    // /**
-    // * Forward inference result and adjustment
-    // *
-    // * @param truth [&] The truth value of the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget value of the conclusion
-    // */
-    // static Budget forward(Truth truth, DerivationContextConcept context) {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // truthToQuality(truth),
-    // 1,
-    // context);
-    // }
-
-    public static final BudgetInferenceF backward = (truth, content) -> new BudgetInferenceParameters(
+    /** Backward inference result and adjustment, stronger case */
+    private static final BudgetInferenceF backward = (truth, content) -> new BudgetInferenceParameters(
             truthToQuality(truth),
             1);
-    // /**
-    // * Backward inference result and adjustment, stronger case
-    // *
-    // * @param truth [&] The truth value of the belief deriving the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget value of the conclusion
-    // */
-    // public static Budget backward(Truth truth, DerivationContextConcept context)
-    // {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // truthToQuality(truth),
-    // 1,
-    // context);
-    // }
-
-    public static final BudgetInferenceF backwardWeak = (truth, content) -> new BudgetInferenceParameters(
+    /** Backward inference result and adjustment, weaker case */
+    private static final BudgetInferenceF backwardWeak = (truth, content) -> new BudgetInferenceParameters(
             W2C1 * truthToQuality(truth),
             1);
 
-    // /**
-    // * Backward inference result and adjustment, weaker case
-    // *
-    // * @param truth [&] The truth value of the belief deriving the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget value of the conclusion
-    // */
-    // public static Budget backwardWeak(Truth truth, DerivationContextConcept
-    // context) {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // W2C1 * truthToQuality(truth),
-    // 1,
-    // context);
-    // }
-
     // /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
 
-    public static final BudgetInferenceF compoundForward = (truth, content) -> new BudgetInferenceParameters(
+    /** Forward inference with CompoundTerm conclusion */
+    private static final BudgetInferenceF compoundForward = (truth, content) -> new BudgetInferenceParameters(
             truthToQuality(truth),
             content.getComplexity());
-
-    // /**
-    // * Forward inference with CompoundTerm conclusion
-    // *
-    // * @param truth [&] The truth value of the conclusion
-    // * @param content [&] The content of the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget of the conclusion
-    // */
-    // public static Budget compoundForward(Truth truth, Term content,
-    // DerivationContextConcept context) {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // truthToQuality(truth),
-    // content.getComplexity(),
-    // context);
-    // }
-
-    public static final BudgetInferenceF compoundBackward = (truth, content) -> new BudgetInferenceParameters(
+    /** Backward inference with CompoundTerm conclusion, stronger case */
+    private static final BudgetInferenceF compoundBackward = (truth, content) -> new BudgetInferenceParameters(
             1,
             content.getComplexity());
-
-    // /**
-    // * Backward inference with CompoundTerm conclusion, stronger case
-    // *
-    // * @param content [&] The content of the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget of the conclusion
-    // */
-    // public static Budget compoundBackward(Term content, DerivationContextConcept
-    // context) {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // 1,
-    // content.getComplexity(),
-    // context);
-    // }
-
-    public static final BudgetInferenceF compoundBackwardWeak = (truth, content) -> new BudgetInferenceParameters(
+    /** Backward inference with CompoundTerm conclusion, weaker case */
+    private static final BudgetInferenceF compoundBackwardWeak = (truth, content) -> new BudgetInferenceParameters(
             W2C1,
             content.getComplexity());
 
-    // /**
-    // * Backward inference with CompoundTerm conclusion, weaker case
-    // *
-    // * @param content [&] The content of the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] The budget of the conclusion
-    // */
-    // public static Budget compoundBackwardWeak(Term content,
-    // DerivationContextConcept context) {
-    // // TODO: 过程笔记注释
-    // return budgetInference(
-    // W2C1,
-    // content.getComplexity(),
-    // context);
-    // }
+    /**
+     * 所有可用的预算值函数
+     * * 🎯统一呈现「在推理过程中计算预算值」的「预算超参数」
+     */
+    public static enum BudgetInferenceFunction {
+        Forward(forward),
+        Backward(backward),
+        BackwardWeak(backwardWeak),
+        CompoundForward(compoundForward),
+        CompoundBackward(compoundBackward),
+        CompoundBackwardWeak(compoundBackwardWeak);
 
-    // /**
-    // * Common processing for all inference step
-    // *
-    // * @param inferenceQuality [] Quality of the inference
-    // * @param complexity [] Syntactic complexity of the conclusion
-    // * @param context [&m] The derivation context
-    // * @return [] Budget of the conclusion task
-    // */
-    // private static Budget budgetInference(
-    // final float inferenceQuality,
-    // final int complexity,
-    // final DerivationContextConcept context) {
-    // // * 🚩获取有关「词项链」「任务链」的有关参数
-    // final Item tLink = context.getCurrentTaskLink();
-    // if (tLink == null)
-    // // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
-    // throw new AssertionError("t shouldn't be `null`!");
-    // final TermLink beliefLink = context.getBeliefLinkForBudgetInference();
-    // final float targetActivation = beliefLink == null
-    // // * 🚩空值⇒空置（转换推理不会用到）
-    // ? 0.0f
-    // // * 🚩其它⇒计算
-    // : getConceptActivation(beliefLink.getTarget(), context);
-    // // * 🚩不带「推理上下文」参与计算
-    // return budgetInference(inferenceQuality, complexity, tLink, beliefLink,
-    // targetActivation);
-    // }
+        final BudgetInferenceF function;
 
-    // /**
-    // * Get the current activation level of a concept.
-    // * * 🚩从「概念」中来
-    // *
-    // * @param t [&] The Term naming a concept
-    // * @param context [&] The derivation context
-    // * @return [] the priority value of the concept
-    // */
-    // private static float getConceptActivation(Term t, DerivationContext context)
-    // {
-    // // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
-    // final Concept c = context.termToConcept(t);
-    // return c == null ? 0f : c.getPriority();
-    // }
+        private BudgetInferenceFunction(final BudgetInferenceF function) {
+            this.function = function;
+        }
+    }
 
-    // /**
-    // * Common processing for all inference step
-    // *
-    // * @param inferenceQuality [] Quality of the inference
-    // * @param complexity [] Syntactic complexity of the conclusion
-    // * @param taskLinkBudget [&] Budget value from task-link
-    // * @param beliefLink [&m] Budget value from belief-link (will be updated)
-    // * @param targetActivation [] The priority of belief-link's target concept
-    // * @return [] Budget of the conclusion task
-    // */
-    // private static Budget budgetInference(
-    // final float inferenceQuality,
-    // final int complexity,
-    // final Budget taskLinkBudget,
-    // final Budget beliefLinkBudget, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
-    // final float targetActivation) {
-    // // * 🚩计算新结果
-    // final BudgetInferenceResult result = budgetInferenceCalc(
-    // inferenceQuality, complexity,
-    // taskLinkBudget,
-    // beliefLinkBudget, targetActivation);
-    // // * 🚩应用新结果
-    // return budgetInferenceApply(result, beliefLinkBudget);
-    // }
+    /**
+     * Common processing for all inference step
+     *
+     * @param inferenceQuality [] Quality of the inference
+     * @param complexity       [] Syntactic complexity of the conclusion
+     * @param context          [&m] The derivation context
+     * @return [] Budget of the conclusion task
+     */
+    public static BudgetInferenceResult budgetForInference(
+            final BudgetInferenceFunction inferenceF,
+            final Truth truth,
+            final Term content,
+            final DerivationContextConcept context) {
+        return budgetForInference(inferenceF.function, truth, content, context);
+    }
+
+    private static BudgetInferenceResult budgetForInference(
+            final BudgetInferenceF inferenceF,
+            final Truth truth,
+            final Term content,
+            final DerivationContextConcept context) {
+        // * 🚩获取有关「词项链」「任务链」的有关参数
+        final Budget tLink = context.getCurrentTaskLink();
+        if (tLink == null)
+            // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
+            throw new AssertionError("t shouldn't be `null`!");
+        final TermLink beliefLink = context.getBeliefLinkForBudgetInference();
+        final float targetActivation = beliefLink == null
+                // * 🚩空值⇒空置（转换推理不会用到）
+                ? 0.0f
+                // * 🚩其它⇒计算
+                : getConceptActivation(beliefLink.getTarget(), context);
+        // * 🚩不带「推理上下文」参与计算
+        return budgetInferenceCalc(
+                inferenceF.call(truth, content),
+                tLink, beliefLink,
+                targetActivation);
+    }
 
     public static BudgetInferenceResult budgetInferenceCalc(
-            final float inferenceQuality,
-            final int complexity,
+            final BudgetInferenceParameters parameters,
             final Budget taskLinkBudget,
             final Budget beliefLinkBudget, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
             final float targetActivation) {
-        // * 🚩基于「任务链」计算默认的预算值
-        // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
-        // * 🚩根据「是否有信念链」用「任务链」「信念链」更新已有预算
+        // * 🚩提取其中的「推理优先级」和「复杂度」
+        final float inferenceQuality = parameters.inferenceQuality;
+        final int complexity = parameters.complexity;
+        // * 🚩获取「任务链」和「信念链」的优先级（默认0）与耐久度（默认1）
+        // * 📝p = self ?? 0
+        // * 📝d = self ?? 1
         final float bLinkPriority, bLinkDurability;
         final float tLinkPriority, tLinkDurability;
         tLinkPriority = taskLinkBudget.getPriority();
@@ -586,7 +415,7 @@ public abstract class BudgetFunctions extends UtilityFunctions {
         // * 🚩【2024-06-20 17:11:30】现在返回一个新的预算值
         final Budget newBeliefLinkBudget;
         if (beliefLinkBudget != null) {
-            // TODO: 此处仅在「概念推理」中出现，后续或可分离拆分
+            // * 📌此处仅在「概念推理」中出现：能使用可空值处理
             // * 📝p = belief | quality | targetActivation
             // * 📝d = belief | quality
             // * 📝q = belief

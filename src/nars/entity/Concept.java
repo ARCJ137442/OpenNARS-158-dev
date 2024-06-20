@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
-import nars.inference.BudgetInference;
+import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.main.NARS;
@@ -254,7 +254,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     private static final RankTable<Judgement> createBeliefTable() {
         final int capacity = Parameters.MAXIMUM_BELIEF_LENGTH;
         // * 🚩使用「预算函数」中的「信念排行」方法
-        final ArrayRankTable.RankFunction<Judgement> rank = BudgetInference::rankBelief;
+        final ArrayRankTable.RankFunction<Judgement> rank = BudgetFunctions::rankBelief;
         // * 🚩直接引用静态方法
         final ArrayRankTable.CompatibleFunction<Judgement> isCompatibleToAdd = Concept::beliefCompatibleToAdd;
         // * 🚩现在通过 函数指针/匿名函数 无需额外创建类

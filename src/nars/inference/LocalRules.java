@@ -69,9 +69,9 @@ public class LocalRules {
             throw new AssertionError("要解决的必须是「问题」");
 
         // * 🚩验证这个信念是否为「解决问题的最优解」
-        final float newQ = BudgetInference.solutionQuality(questionTask, belief);
+        final float newQ = BudgetFunctions.solutionQuality(questionTask, belief);
         if (oldBest != null) {
-            final float oldQ = BudgetInference.solutionQuality(questionTask, oldBest);
+            final float oldQ = BudgetFunctions.solutionQuality(questionTask, oldBest);
             // * 🚩新解比旧解还差⇒驳回
             if (oldQ >= newQ)
                 return;
@@ -85,9 +85,9 @@ public class LocalRules {
         }
         // * 🚩计算新预算值
         final Question problem = questionTask.asQuestion();
-        final Budget budget = BudgetInference.solutionEval(problem, belief, questionTask);
+        final Budget budget = BudgetFunctions.solutionEval(problem, belief, questionTask);
         // * 🚩更新「问题任务」的预算值
-        final float solutionQuality = BudgetInference.solutionQuality(problem, belief);
+        final float solutionQuality = BudgetFunctions.solutionQuality(problem, belief);
         final float updatedQuestionPriority = Math.min(
                 UtilityFunctions.not(solutionQuality),
                 questionTask.getPriority());

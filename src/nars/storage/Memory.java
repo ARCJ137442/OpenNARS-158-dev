@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.entity.Concept;
 import nars.inference.Budget;
-import nars.inference.BudgetInference;
+import nars.inference.BudgetFunctions;
 import nars.language.Term;
 import nars.main.Parameters;
 
@@ -220,7 +220,7 @@ public class Memory {
      * @param b [&]
      */
     public static void activateConceptBudget(final Concept c, final Budget b) {
-        final Budget newBudget = BudgetInference.activate(c, b);
+        final Budget newBudget = BudgetFunctions.activate(c, b);
         c.copyBudgetFrom(newBudget);
     }
 

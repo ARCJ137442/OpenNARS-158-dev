@@ -6,7 +6,7 @@ import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Task;
-import nars.inference.BudgetInference;
+import nars.inference.BudgetFunctions;
 import nars.inference.LocalRules;
 import nars.io.Symbols;
 import nars.language.Term;
@@ -245,7 +245,7 @@ public abstract class ProcessDirect {
         // * 🚩找到旧信念，并尝试修正
         final Judgement oldBelief = evaluation(
                 judgment, self.getBeliefs(),
-                BudgetInference::solutionQuality);
+                BudgetFunctions::solutionQuality);
         if (oldBelief != null) {
             if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
@@ -304,7 +304,7 @@ public abstract class ProcessDirect {
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Judgement newAnswer = evaluation(
                 question, self.getBeliefs(),
-                BudgetInference::solutionQuality);
+                BudgetFunctions::solutionQuality);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
             LocalRules.trySolution(newAnswer, questionTask, context);

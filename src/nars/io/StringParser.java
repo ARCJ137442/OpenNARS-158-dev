@@ -1,14 +1,11 @@
 package nars.io;
 
-import static nars.language.MakeTerm.*;
-
 import java.util.*;
-
-//import deductions.runtime.swing.TemporaryFrame;
 
 import nars.entity.*;
 import nars.inference.*;
 import nars.language.*;
+import static nars.language.MakeTerm.*;
 import nars.main.Parameters;
 import nars.storage.Memory;
 
@@ -202,7 +199,7 @@ public abstract class StringParser extends Symbols {
             case JUDGMENT_MARK:
                 priority = Parameters.DEFAULT_JUDGMENT_PRIORITY;
                 durability = Parameters.DEFAULT_JUDGMENT_DURABILITY;
-                quality = BudgetInference.truthToQuality(truth);
+                quality = BudgetFunctions.truthToQuality(truth);
                 break;
             case QUESTION_MARK:
                 priority = Parameters.DEFAULT_QUESTION_PRIORITY;
