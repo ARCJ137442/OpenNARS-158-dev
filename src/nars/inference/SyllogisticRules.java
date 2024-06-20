@@ -40,6 +40,9 @@ final class SyllogisticRules {
         if (Statement.invalidStatement(term1, term2)) {
             return;
         }
+        final Statement content = (Statement) sentence.getContent();
+        final Statement content1 = makeStatement(content, term1, term2);
+        final Statement content2 = makeStatement(content, term2, term1);
         Truth truth1 = null;
         Truth truth2 = null;
         final Budget budget1, budget2;
@@ -53,9 +56,6 @@ final class SyllogisticRules {
             budget1 = BudgetInference.forward(truth1, context);
             budget2 = BudgetInference.forward(truth2, context);
         }
-        final Statement content = (Statement) sentence.getContent();
-        final Statement content1 = makeStatement(content, term1, term2);
-        final Statement content2 = makeStatement(content, term2, term1);
         context.doublePremiseTask(content1, truth1, budget1);
         context.doublePremiseTask(content2, truth2, budget2);
     }

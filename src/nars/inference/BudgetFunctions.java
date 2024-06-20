@@ -1,11 +1,8 @@
 package nars.inference;
 
-import nars.control.DerivationContext;
-import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
-import nars.entity.Item;
 import nars.entity.Judgement;
 import nars.entity.Question;
 import nars.entity.Sentence;
@@ -353,6 +350,24 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // TODO: 过程注释 & 参数标注
 
     /* ----- Task derivation in LocalRules and SyllogisticRules ----- */
+    @FunctionalInterface
+    public static interface BudgetInferenceF {
+        BudgetInferenceParameters call(Truth truth, Term content);
+    }
+
+    private static class BudgetInferenceParameters {
+        final float inferenceQuality;
+        final float complexity;
+
+        BudgetInferenceParameters(float inferenceQuality, float complexity) {
+            this.inferenceQuality = inferenceQuality;
+            this.complexity = complexity;
+        }
+    }
+
+    public static final BudgetInferenceF forward = (truth, content) -> new BudgetInferenceParameters(
+            truthToQuality(truth),
+            1);
     // /**
     // * Forward inference result and adjustment
     // *
@@ -368,6 +383,9 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // context);
     // }
 
+    public static final BudgetInferenceF backward = (truth, content) -> new BudgetInferenceParameters(
+            truthToQuality(truth),
+            1);
     // /**
     // * Backward inference result and adjustment, stronger case
     // *
@@ -383,6 +401,10 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // 1,
     // context);
     // }
+
+    public static final BudgetInferenceF backwardWeak = (truth, content) -> new BudgetInferenceParameters(
+            W2C1 * truthToQuality(truth),
+            1);
 
     // /**
     // * Backward inference result and adjustment, weaker case
@@ -401,6 +423,11 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // }
 
     // /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
+
+    public static final BudgetInferenceF compoundForward = (truth, content) -> new BudgetInferenceParameters(
+            truthToQuality(truth),
+            content.getComplexity());
+
     // /**
     // * Forward inference with CompoundTerm conclusion
     // *
@@ -418,6 +445,10 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // context);
     // }
 
+    public static final BudgetInferenceF compoundBackward = (truth, content) -> new BudgetInferenceParameters(
+            1,
+            content.getComplexity());
+
     // /**
     // * Backward inference with CompoundTerm conclusion, stronger case
     // *
@@ -433,6 +464,10 @@ public abstract class BudgetFunctions extends UtilityFunctions {
     // content.getComplexity(),
     // context);
     // }
+
+    public static final BudgetInferenceF compoundBackwardWeak = (truth, content) -> new BudgetInferenceParameters(
+            W2C1,
+            content.getComplexity());
 
     // /**
     // * Backward inference with CompoundTerm conclusion, weaker case
