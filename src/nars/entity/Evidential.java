@@ -156,9 +156,9 @@ public interface Evidential {
      *
      * @return The TreeSet representation of the evidential base
      */
-    public default TreeSet<Long> evidenceSet() {
+    private static TreeSet<Long> evidenceSet(Evidential self) {
         final TreeSet<Long> set = new TreeSet<>();
-        for (final long serial : this.getEvidentialBase()) {
+        for (final long serial : self.getEvidentialBase()) {
             set.add(serial);
         }
         return set;
@@ -171,8 +171,8 @@ public interface Evidential {
      * @return Whether the two have contain the same elements
      */
     public default boolean evidentialEqual(final Evidential that) {
-        final TreeSet<Long> set1 = this.evidenceSet();
-        final TreeSet<Long> set2 = that.evidenceSet();
+        final TreeSet<Long> set1 = evidenceSet(this);
+        final TreeSet<Long> set2 = evidenceSet(that);
         return (set1.containsAll(set2) && set2.containsAll(set1));
     }
 

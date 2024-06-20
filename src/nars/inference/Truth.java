@@ -4,7 +4,7 @@ import nars.entity.ShortFloat;
 import nars.io.Symbols;
 
 /**
- * Frequency and __confidence().
+ * Frequency and confidence.
  * * 📌真值类型：频率 & 信度
  * * 📝此类型接近一种「值类型」：所有值只读、写入时复制/重新构造
  */
