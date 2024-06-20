@@ -250,7 +250,7 @@ public abstract class ProcessDirect {
             if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
                 if (task.getParentTask().isJudgment()) {
-                    task.decPriority(0); // duplicated task
+                    task.setPriority(0); // duplicated task
                 } // else: activated belief
                 return;
             }

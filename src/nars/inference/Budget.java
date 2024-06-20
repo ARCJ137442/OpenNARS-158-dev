@@ -40,24 +40,6 @@ public interface Budget {
     }
 
     /**
-     * Increase priority value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public default void incPriority(float v) {
-        __priority().setValue(UtilityFunctions.or(__priority().getValue(), v));
-    }
-
-    /**
-     * Decrease priority value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public default void decPriority(float v) {
-        __priority().setValue(UtilityFunctions.and(__priority().getValue(), v));
-    }
-
-    /**
      * Get durability value
      *
      * @return The current durability
@@ -76,24 +58,6 @@ public interface Budget {
     }
 
     /**
-     * Increase durability value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public default void incDurability(float v) {
-        __durability().setValue(UtilityFunctions.or(__durability().getValue(), v));
-    }
-
-    /**
-     * Decrease durability value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public default void decDurability(float v) {
-        __durability().setValue(UtilityFunctions.and(__durability().getValue(), v));
-    }
-
-    /**
      * Get quality value
      *
      * @return The current quality
@@ -109,24 +73,6 @@ public interface Budget {
      */
     public default void setQuality(float v) {
         __quality().setValue(v);
-    }
-
-    /**
-     * Increase quality value by a percentage of the remaining range
-     *
-     * @param v The increasing percent
-     */
-    public default void incQuality(float v) {
-        __quality().setValue(UtilityFunctions.or(__quality().getValue(), v));
-    }
-
-    /**
-     * Decrease quality value by a percentage of the remaining range
-     *
-     * @param v The decreasing percent
-     */
-    public default void decQuality(float v) {
-        __quality().setValue(UtilityFunctions.and(__quality().getValue(), v));
     }
 
     /**
