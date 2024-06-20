@@ -316,16 +316,29 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param adjustValue [&] The budget doing the adjusting
      */
     public static void merge(Budget baseValue, Budget adjustValue) {
-        // * 📝三×最大值
+        final Budget newBudget = mergeToNew(baseValue, adjustValue);
+        baseValue.copyBudgetFrom(newBudget);
+    }
+
+    /**
+     * 🆕「合并」两个预算值，但输出到新值
+     *
+     * @param baseValue   [&] The budget value to merge
+     * @param adjustValue [&] The budget doing the adjusting
+     * @return The merged budget
+     */
+    public static BudgetValue mergeToNew(Budget baseValue, Budget adjustValue) {
         final float bP = baseValue.getPriority();
         final float bD = baseValue.getDurability();
         final float bQ = baseValue.getQuality();
         final float aP = adjustValue.getPriority();
         final float aD = adjustValue.getDurability();
         final float aQ = adjustValue.getQuality();
-        baseValue.setPriority(Math.max(bP, aP));
-        baseValue.setDurability(Math.max(bD, aD));
-        baseValue.setQuality(Math.max(bQ, aQ));
+        // * 📝三×最大值
+        final float p = Math.max(bP, aP);
+        final float d = Math.max(bD, aD);
+        final float q = Math.max(bQ, aQ);
+        return new BudgetValue(p, d, q);
     }
 
     // TODO: 过程注释 & 参数标注
@@ -340,7 +353,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     static Budget forward(Truth truth, DerivationContextConcept context) {
         // TODO: 过程笔记注释
-        return budgetInference(truthToQuality(truth), 1, context);
+        return budgetInference(
+                truthToQuality(truth),
+                1,
+                context);
     }
 
     /**
@@ -352,7 +368,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static Budget backward(Truth truth, DerivationContextConcept context) {
         // TODO: 过程笔记注释
-        return budgetInference(truthToQuality(truth), 1, context);
+        return budgetInference(
+                truthToQuality(truth),
+                1,
+                context);
     }
 
     /**
@@ -364,7 +383,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static Budget backwardWeak(Truth truth, DerivationContextConcept context) {
         // TODO: 过程笔记注释
-        return budgetInference(W2C1 * truthToQuality(truth), 1, context);
+        return budgetInference(
+                W2C1 * truthToQuality(truth),
+                1,
+                context);
     }
 
     /* ----- Task derivation in CompositionalRules and StructuralRules ----- */
@@ -393,7 +415,8 @@ public final class BudgetFunctions extends UtilityFunctions {
      */
     public static Budget compoundBackward(Term content, DerivationContextConcept context) {
         // TODO: 过程笔记注释
-        return budgetInference(1,
+        return budgetInference(
+                1,
                 content.getComplexity(),
                 context);
     }
@@ -405,9 +428,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @param context [&m] The derivation context
      * @return [] The budget of the conclusion
      */
-    public static Budget compoundBackwardWeak(
-            final Term content,
-            final DerivationContextConcept context) {
+    public static Budget compoundBackwardWeak(Term content, DerivationContextConcept context) {
         // TODO: 过程笔记注释
         return budgetInference(
                 W2C1,
@@ -470,7 +491,33 @@ public final class BudgetFunctions extends UtilityFunctions {
             final float inferenceQuality,
             final int complexity,
             final Budget taskLinkBudget,
-            final TermLink beliefLink, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
+            final Budget beliefLinkBudget, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
+            final float targetActivation) {
+        // * 🚩计算新结果
+        final BudgetInferenceResult result = budgetInferenceCalc(
+                inferenceQuality, complexity,
+                taskLinkBudget,
+                beliefLinkBudget, targetActivation);
+        // * 🚩应用新结果
+        return budgetInferenceApply(result, beliefLinkBudget);
+    }
+
+    public static Budget budgetInferenceApply(final BudgetInferenceResult result, Budget beliefLinkBudget) {
+        // * 🚩拿出「新信念链预算」并更新
+        if (beliefLinkBudget != null) {
+            final Budget newBeliefLinkBudget = result.extractNewBeliefLinkBudget();
+            beliefLinkBudget.copyBudgetFrom(newBeliefLinkBudget);
+        }
+        // * 🚩拿出「新预算」并返回
+        final Budget newBudget = result.extractNewBudget();
+        return newBudget;
+    }
+
+    private static BudgetInferenceResult budgetInferenceCalc(
+            final float inferenceQuality,
+            final int complexity,
+            final Budget taskLinkBudget,
+            final Budget beliefLinkBudget, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
             final float targetActivation) {
         // * 🚩基于「任务链」计算默认的预算值
         // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
@@ -479,14 +526,14 @@ public final class BudgetFunctions extends UtilityFunctions {
         final float tLinkPriority, tLinkDurability;
         tLinkPriority = taskLinkBudget.getPriority();
         tLinkDurability = taskLinkBudget.getDurability();
-        if (beliefLink == null) {
+        if (beliefLinkBudget == null) {
             // * 🚩无信念链⇒默认值
             bLinkPriority = 0.0f; // 默认为0（or照常）
             bLinkDurability = 1.0f; // 默认为1（and照常）
         } else {
             // * 🚩有信念链⇒取其值
-            bLinkPriority = beliefLink.getPriority();
-            bLinkDurability = beliefLink.getDurability();
+            bLinkPriority = beliefLinkBudget.getPriority();
+            bLinkDurability = beliefLinkBudget.getDurability();
         }
         // * 🚩更新预算
         // * 📝p = task | belief
@@ -496,12 +543,63 @@ public final class BudgetFunctions extends UtilityFunctions {
         final float durability = and(tLinkDurability / complexity, bLinkDurability);
         final float quality = inferenceQuality / complexity;
         // * 🚩有信念链⇒更新信念链预算值
-        if (beliefLink != null) {
+        // * 🚩【2024-06-20 17:11:30】现在返回一个新的预算值
+        final Budget newBeliefLinkBudget;
+        if (beliefLinkBudget != null) {
             // TODO: 此处仅在「概念推理」中出现，后续或可分离拆分
-            beliefLink.incPriority(or(quality, targetActivation));
-            beliefLink.incDurability(quality);
+            // * 🚩提升优先级
+            final float newBeliefLinkPriority = UtilityFunctions.or(
+                    beliefLinkBudget.getPriority(),
+                    or(quality, targetActivation));
+            // * 🚩提升耐久度
+            final float newBeliefLinkDurability = UtilityFunctions.or(
+                    beliefLinkBudget.getDurability(),
+                    quality);
+            final float newBeliefLinkQuality = beliefLinkBudget.getQuality();
+            newBeliefLinkBudget = new BudgetValue(newBeliefLinkPriority, newBeliefLinkDurability, newBeliefLinkQuality);
+        } else {
+            newBeliefLinkBudget = null;
         }
         // * 🚩返回最终的预算值
-        return new BudgetValue(priority, durability, quality);
+        final Budget newBudget = new BudgetValue(priority, durability, quality);
+        return new BudgetInferenceResult(newBudget, newBeliefLinkBudget);
+    }
+
+    public static final class BudgetInferenceResult {
+        /**
+         * 推理出来的新预算
+         *
+         * * 📝可空性：可空
+         * * 📝可变性：不变
+         * * 📝所有权：具所有权
+         */
+        private Budget newBudget;
+        /**
+         * 新的「任务链预算值」（若有）
+         *
+         * * 📝可空性：非空
+         * * 📝可变性：不变
+         * * 📝所有权：具所有权
+         */
+        private Budget newBeliefLinkBudget;
+
+        BudgetInferenceResult(final Budget newBudget, final Budget newBeliefLinkBudget) {
+            this.newBudget = newBudget;
+            this.newBeliefLinkBudget = newBeliefLinkBudget;
+        }
+
+        /** 提取「新预算」 */
+        public Budget extractNewBudget() {
+            final Budget budget = this.newBudget;
+            this.newBudget = null;
+            return budget;
+        }
+
+        /** 提取「新信念链预算」 */
+        public Budget extractNewBeliefLinkBudget() {
+            final Budget budget = this.newBeliefLinkBudget;
+            this.newBeliefLinkBudget = null;
+            return budget;
+        }
     }
 }
