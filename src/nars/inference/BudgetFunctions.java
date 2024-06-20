@@ -427,32 +427,19 @@ public final class BudgetFunctions extends UtilityFunctions {
             final float inferenceQuality,
             final int complexity,
             final DerivationContextConcept context) {
+        // * 🚩获取有关「词项链」「任务链」的有关参数
         final Item tLink = context.getCurrentTaskLink();
-        // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
         if (tLink == null)
+            // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
             throw new AssertionError("t shouldn't be `null`!");
-        // * 🚩基于「任务链」计算默认的预算值
-        final float priority;
-        final float durability;
-        final float quality = inferenceQuality / complexity;
-        // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
-        // TODO: 此处仅在「概念推理」中出现，后续或可分离拆分
-        final TermLink bLink = context.getBeliefLinkForBudgetInference();
-        if (bLink != null) {
-            // TODO: 过程笔记注释
-            priority = or(tLink.getPriority(), bLink.getPriority());
-            durability = and(tLink.getDurability() / complexity, bLink.getDurability());
-            final float targetActivation = getConceptActivation(bLink.getTarget(), context);
-            bLink.incPriority(or(quality, targetActivation));
-            bLink.incDurability(quality);
-        }
-        // * 🚩没「信念链」⇒直接从任务链计算
-        else {
-            priority = tLink.getPriority();
-            durability = tLink.getDurability() / complexity;
-        }
-        // * 🚩返回最终的预算值
-        return new BudgetValue(priority, durability, quality);
+        final TermLink beliefLink = context.getBeliefLinkForBudgetInference();
+        final float targetActivation = beliefLink == null
+                // * 🚩空值⇒空置（转换推理不会用到）
+                ? 0.0f
+                // * 🚩其它⇒计算
+                : getConceptActivation(beliefLink.getTarget(), context);
+        // * 🚩不带「推理上下文」参与计算
+        return budgetInference(inferenceQuality, complexity, tLink, beliefLink, targetActivation);
     }
 
     /**
@@ -466,6 +453,55 @@ public final class BudgetFunctions extends UtilityFunctions {
     private static float getConceptActivation(Term t, DerivationContext context) {
         // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
         final Concept c = context.termToConcept(t);
-        return (c == null) ? 0f : c.getPriority();
+        return c == null ? 0f : c.getPriority();
+    }
+
+    /**
+     * Common processing for all inference step
+     *
+     * @param inferenceQuality [] Quality of the inference
+     * @param complexity       [] Syntactic complexity of the conclusion
+     * @param taskLinkBudget   [&] Budget value from task-link
+     * @param beliefLink       [&m] Budget value from belief-link (will be updated)
+     * @param targetActivation [] The priority of belief-link's target concept
+     * @return [] Budget of the conclusion task
+     */
+    private static Budget budgetInference(
+            final float inferenceQuality,
+            final int complexity,
+            final Budget taskLinkBudget,
+            final TermLink beliefLink, // 📌跟下边这个参数是捆绑的：有「信念链」就要获取「目标词项」的优先级
+            final float targetActivation) {
+        // * 🚩基于「任务链」计算默认的预算值
+        // * 🚩有「信念链」⇒根据「信念链」计算更新的预算值，并在其中更新「信念链」的预算值
+        // * 🚩根据「是否有信念链」用「任务链」「信念链」更新已有预算
+        final float bLinkPriority, bLinkDurability;
+        final float tLinkPriority, tLinkDurability;
+        tLinkPriority = taskLinkBudget.getPriority();
+        tLinkDurability = taskLinkBudget.getDurability();
+        if (beliefLink == null) {
+            // * 🚩无信念链⇒默认值
+            bLinkPriority = 0.0f; // 默认为0（or照常）
+            bLinkDurability = 1.0f; // 默认为1（and照常）
+        } else {
+            // * 🚩有信念链⇒取其值
+            bLinkPriority = beliefLink.getPriority();
+            bLinkDurability = beliefLink.getDurability();
+        }
+        // * 🚩更新预算
+        // * 📝p = task | belief
+        // * 📝d = (task / complexity) & belief
+        // * 📝q = inferenceQuality / complexity
+        final float priority = or(tLinkPriority, bLinkPriority);
+        final float durability = and(tLinkDurability / complexity, bLinkDurability);
+        final float quality = inferenceQuality / complexity;
+        // * 🚩有信念链⇒更新信念链预算值
+        if (beliefLink != null) {
+            // TODO: 此处仅在「概念推理」中出现，后续或可分离拆分
+            beliefLink.incPriority(or(quality, targetActivation));
+            beliefLink.incDurability(quality);
+        }
+        // * 🚩返回最终的预算值
+        return new BudgetValue(priority, durability, quality);
     }
 }
