@@ -39,7 +39,7 @@ final class TruthFunctions extends UtilityFunctions {
      * 🆕单真值+依赖度 函数
      */
     @FunctionalInterface
-    public interface TruthFSingleReliance {
+    public interface TruthFAnalytic {
         Truth call(Truth truth, float reliance);
     }
 
@@ -342,7 +342,7 @@ final class TruthFunctions extends UtilityFunctions {
         // * 📝频率=双频之合取
         // * 📝信度=双方信度 合取 第二方频率 合取 单位数目信度（保证弱推理）
         float f = and(f1, f2);
-        float c = and(c1, c2, f2, w2c(1.0f));
+        float c = and(c1, c2, f2, W2C1);
         return new TruthValue(f, c);
     }
 
@@ -508,7 +508,7 @@ final class TruthFunctions extends UtilityFunctions {
         TruthFDouble reduceConjunctionNeg = TruthFunctions::reduceConjunctionNeg;
         TruthFDouble anonymousAnalogy = TruthFunctions::anonymousAnalogy;
         // * 📌单真值依赖函数（分析性函数）
-        TruthFSingleReliance analyticDeduction = TruthFunctions::analyticDeduction;
-        TruthFSingleReliance analyticAbduction = TruthFunctions::analyticAbduction;
+        TruthFAnalytic analyticDeduction = TruthFunctions::analyticDeduction;
+        TruthFAnalytic analyticAbduction = TruthFunctions::analyticAbduction;
     }
 }

@@ -1,7 +1,7 @@
 package nars.inference;
 
 import nars.entity.*;
-import nars.inference.TruthFunctions.TruthFSingleReliance;
+import nars.inference.TruthFunctions.TruthFAnalytic;
 import nars.language.*;
 import nars.language.VariableProcess.AppliedCompounds;
 import nars.language.VariableProcess.Unification;
@@ -672,7 +672,7 @@ final class SyllogisticRules {
      */
     private static void convertRelation(Question taskQuestion, DerivationContextReason context) {
         // * 🚩根据「可交换性」分派真值函数
-        final TruthFSingleReliance truthF = ((Statement) taskQuestion.getContent()).isCommutative()
+        final TruthFAnalytic truthF = ((Statement) taskQuestion.getContent()).isCommutative()
                 // * 🚩可交换（相似/等价）⇒归纳
                 ? TruthFunctions::analyticAbduction
                 // * 🚩不可交换（继承/蕴含）⇒演绎
