@@ -202,7 +202,7 @@ public abstract class StringParser extends Symbols {
             case JUDGMENT_MARK:
                 priority = Parameters.DEFAULT_JUDGMENT_PRIORITY;
                 durability = Parameters.DEFAULT_JUDGMENT_DURABILITY;
-                quality = BudgetFunctions.truthToQuality(truth);
+                quality = BudgetInference.truthToQuality(truth);
                 break;
             case QUESTION_MARK:
                 priority = Parameters.DEFAULT_QUESTION_PRIORITY;

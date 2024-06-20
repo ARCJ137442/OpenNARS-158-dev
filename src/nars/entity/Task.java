@@ -1,7 +1,7 @@
 package nars.entity;
 
 import nars.inference.Budget;
-import nars.inference.BudgetFunctions;
+import nars.inference.BudgetInference;
 
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
@@ -66,9 +66,9 @@ public interface Task extends Sentence, Item {
             // * ⚠️改成接口后无法使用`super.method`调用默认方法
             // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
             // * 🚩【2024-06-07 13:52:15】目前直接内联接口的默认方法
-            BudgetFunctions.merge(this, that);
+            BudgetInference.merge(this, that);
         else
-            BudgetFunctions.merge(that, this);
+            BudgetInference.merge(that, this);
     }
 
     /**

@@ -148,7 +148,7 @@ public interface Budget {
      * @param that The other Budget
      */
     public default void mergeBudget(Budget that) {
-        BudgetFunctions.merge(this, that);
+        BudgetInference.merge(this, that);
     }
 
     /**

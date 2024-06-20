@@ -74,7 +74,7 @@ final class StructuralRules {
         final Budget budget;
         if (task.isQuestion()) {
             truth = null;
-            budget = BudgetFunctions.compoundBackwardWeak(content, context);
+            budget = BudgetInference.compoundBackwardWeak(content, context);
         } else {
             if (compound.size() > 1) {
                 if (task.isJudgment()) {
@@ -85,7 +85,7 @@ final class StructuralRules {
             } else {
                 truth = task.asJudgement().truthClone();
             }
-            budget = BudgetFunctions.compoundForward(truth, content, context);
+            budget = BudgetInference.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -124,13 +124,13 @@ final class StructuralRules {
         final Budget budget;
         if (task.isQuestion()) {
             truth = null;
-            budget = BudgetFunctions.compoundBackward(content, context);
+            budget = BudgetInference.compoundBackward(content, context);
         } else {
             if (!(sub instanceof Product) && (sub.size() > 1) && (task.isJudgment())) {
                 return;
             }
             truth = task.asJudgement().truthClone();
-            budget = BudgetFunctions.compoundForward(truth, content, context);
+            budget = BudgetInference.compoundForward(truth, content, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -262,7 +262,7 @@ final class StructuralRules {
         if (oldContent instanceof Statement) {
             final Term content = makeStatement((Statement) oldContent, subject, predicate);
             if (content != null) {
-                final Budget budget = BudgetFunctions.compoundForward(truth, content, context);
+                final Budget budget = BudgetInference.compoundForward(truth, content, context);
                 context.singlePremiseTask(content, truth, budget);
             }
         }
@@ -307,9 +307,9 @@ final class StructuralRules {
         final Task task = context.getCurrentTask();
         final Budget budget;
         if (task.isQuestion()) {
-            budget = BudgetFunctions.compoundBackward(content, context);
+            budget = BudgetInference.compoundBackward(content, context);
         } else {
-            budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
+            budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
         }
         context.singlePremiseTask(content, task, budget);
     }
@@ -338,7 +338,7 @@ final class StructuralRules {
         final Budget budget;
         if (task.isQuestion()) {
             truth = null;
-            budget = BudgetFunctions.compoundBackward(content, context);
+            budget = BudgetInference.compoundBackward(content, context);
         } else {
             if ((task.isJudgment()) == (isCompoundFromTask == (compound instanceof Conjunction))) {
                 truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
@@ -348,7 +348,7 @@ final class StructuralRules {
                                 TruthFunctions.negation(task.asJudgement()),
                                 RELIANCE));
             }
-            budget = BudgetFunctions.forward(truth, context);
+            budget = BudgetInference.forward(truth, context);
         }
         context.singlePremiseTask(content, truth, budget);
     }
@@ -369,11 +369,11 @@ final class StructuralRules {
         switch (task.getPunctuation()) {
             case JUDGMENT_MARK:
                 truth = TruthFunctions.negation(task.asJudgement());
-                budget = BudgetFunctions.compoundForward(task.asJudgement(), content, context);
+                budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
                 break;
             case QUESTION_MARK:
                 truth = null;
-                budget = BudgetFunctions.compoundBackward(content, context);
+                budget = BudgetInference.compoundBackward(content, context);
                 break;
             default:
                 throw new AssertionError("未知的标点");
@@ -407,15 +407,15 @@ final class StructuralRules {
                         // * 🚩蕴含⇒双重否定
                         ? TruthFunctions.contraposition(sentence.asJudgement())
                         : TruthValue.from(sentence.asJudgement());
-                budget = BudgetFunctions.compoundForward(truth, content, context);
+                budget = BudgetInference.compoundForward(truth, content, context);
                 break;
             // * 🚩问题
             case QUESTION_MARK:
                 truth = null;
                 budget = content instanceof Implication
                         // * 🚩蕴含⇒弱推理
-                        ? BudgetFunctions.compoundBackwardWeak(content, context)
-                        : BudgetFunctions.compoundBackward(content, context);
+                        ? BudgetInference.compoundBackwardWeak(content, context)
+                        : BudgetInference.compoundBackward(content, context);
                 break;
             default:
                 System.err.println("未知的标点类型：" + punctuation);

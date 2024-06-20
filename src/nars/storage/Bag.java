@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.entity.Item;
-import nars.inference.BudgetFunctions;
+import nars.inference.BudgetInference;
 import nars.io.ToStringBriefAndLong;
 import nars.main.Parameters;
 
@@ -268,7 +268,7 @@ public final class Bag<E extends Item> {
     }
 
     public final void forget(E oldItem) {
-        final float newPriority = BudgetFunctions.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
+        final float newPriority = BudgetInference.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
         oldItem.setPriority(newPriority);
     }
 

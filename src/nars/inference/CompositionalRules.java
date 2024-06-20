@@ -64,7 +64,7 @@ public final class CompositionalRules {
                 T = (CompoundTerm) setComponent(T, index, res);
             }
             final Truth truth = TruthFunctions.induction(originalMainSentence, subSentence);
-            final Budget budget = BudgetFunctions.compoundForward(truth, T, context);
+            final Budget budget = BudgetInference.compoundForward(truth, T, context);
             context.doublePremiseTask(T, truth, budget);
         }
     }
@@ -179,7 +179,7 @@ public final class CompositionalRules {
                 || content.equals(context.getCurrentBelief().getContent())) {
             return;
         }
-        final Budget budget = BudgetFunctions.compoundForward(truth, content, context);
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -277,7 +277,7 @@ public final class CompositionalRules {
             }
         }
         if (truth != null) {
-            final Budget budget = BudgetFunctions.compoundForward(truth, content, context);
+            final Budget budget = BudgetInference.compoundForward(truth, content, context);
             context.doublePremiseTask(content, truth, budget);
         }
     }
@@ -309,7 +309,7 @@ public final class CompositionalRules {
                 // * 🚩先将剩余部分作为「问题」提出
                 // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
                 if (!content.zeroComplexity()) {
-                    budget = BudgetFunctions.compoundBackward(content, context);
+                    budget = BudgetInference.compoundBackward(content, context);
                     context.doublePremiseTask(content, null, budget);
                 }
                 // * 🚩再将对应有「概念」与「信念」的内容作为新的「信念」放出
@@ -336,7 +336,7 @@ public final class CompositionalRules {
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
                 final Truth truth1 = TruthFunctions.intersection(contentBelief, belief);
                 // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                final Budget budget1 = BudgetFunctions.compoundForward(truth1, conj, context);
+                final Budget budget1 = BudgetInference.compoundForward(truth1, conj, context);
                 // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
                 // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
                 context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
@@ -361,7 +361,7 @@ public final class CompositionalRules {
                     return;
                 // * 🚩构造真值、预算值，双前提结论
                 truth = truthF.call(v1, v2);
-                budget = BudgetFunctions.compoundForward(truth, content, context);
+                budget = BudgetInference.compoundForward(truth, content, context);
                 context.doublePremiseTask(content, truth, budget);
                 return;
             default:
@@ -440,17 +440,17 @@ public final class CompositionalRules {
         Truth truth;
         Budget budget;
         truth = TruthFunctions.induction(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context);
+        budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         content = makeImplication(state2, state1);
         truth = TruthFunctions.induction(truthB, truthT);
-        budget = BudgetFunctions.compoundForward(truth, content, context);
+        budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         content = makeEquivalence(state1, state2);
         truth = TruthFunctions.comparison(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context);
+        budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
         final Variable varDep = makeVarD("varDep".hashCode());
@@ -464,7 +464,7 @@ public final class CompositionalRules {
         }
         content = makeConjunction(newState1, newState2);
         truth = TruthFunctions.intersection(truthT, truthB);
-        budget = BudgetFunctions.compoundForward(truth, content, context);
+        budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget, false);
     }
 
@@ -510,7 +510,7 @@ public final class CompositionalRules {
         CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
         VariableProcess.applySubstitute(content, substitute);
         Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
-        Budget budget = BudgetFunctions.forward(truth, context);
+        Budget budget = BudgetInference.forward(truth, context);
         context.doublePremiseTask(content, truth, budget, false);
         substitute.clear();
         substitute.put(commonTerm1, makeVarI("varInd1".hashCode()));
@@ -527,7 +527,7 @@ public final class CompositionalRules {
         } else {
             truth = TruthFunctions.induction(task.asJudgement(), belief);
         }
-        budget = BudgetFunctions.forward(truth, context);
+        budget = BudgetInference.forward(truth, context);
         context.doublePremiseTask(content, truth, budget);
     }
 

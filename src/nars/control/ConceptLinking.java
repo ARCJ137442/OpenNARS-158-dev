@@ -182,7 +182,7 @@ public abstract class ConceptLinking {
         if (!(self.getTerm() instanceof CompoundTerm && self.getLinkTemplatesToSelf().size() > 0))
             return;
         // * 🚩分发并指数递减预算值
-        final Budget subBudget = BudgetFunctions.distributeAmongLinks(
+        final Budget subBudget = BudgetInference.distributeAmongLinks(
                 task,
                 // ! ⚠️↓预算函数要求这里不能为零：要作为除数
                 self.getLinkTemplatesToSelf().size());
@@ -249,7 +249,7 @@ public abstract class ConceptLinking {
             return;
         // * 🚩分派链接，更新预算值，继续
         // * 📝太大的词项、太远的链接 根据AIKR有所取舍
-        final Budget subBudget = BudgetFunctions.distributeAmongLinks(
+        final Budget subBudget = BudgetInference.distributeAmongLinks(
                 sourceBudget,
                 self.getLinkTemplatesToSelf().size());
         if (!subBudget.budgetAboveThreshold())
