@@ -11,6 +11,7 @@ import nars.control.ReportType;
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
+import nars.entity.Item.BagItem;
 import nars.gui.MainWindow;
 import nars.inference.InferenceEngine;
 import nars.inference.InferenceEngineV1;
@@ -20,6 +21,7 @@ import nars.io.OutputChannel;
 import nars.io.StringParser;
 import nars.io.Symbols;
 import nars.storage.Bag;
+import nars.storage.Bag.MergeOrderF;
 import nars.storage.BagObserver;
 import nars.storage.Memory;
 
@@ -109,7 +111,8 @@ public class Reasoner {
         this.newTasks = new LinkedList<>();
         this.novelTasks = new Bag<Task>(
                 new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE),
-                Parameters.TASK_BUFFER_SIZE);
+                Parameters.TASK_BUFFER_SIZE,
+                (MergeOrderF<Task>) Task::mergeOrder);
         this.exportStrings = new ArrayList<>();
     }
 
@@ -275,7 +278,7 @@ public class Reasoner {
      * cycle
      * * 🚩没有上限，不适合作为「缓冲区」使用
      */
-    private final LinkedList<Task> newTasks;
+    private final LinkedList<BagItem<Task>> newTasks;
     /**
      * New tasks with novel composed terms, for delayed and selective processing
      */
@@ -305,10 +308,10 @@ public class Reasoner {
      *
      * @param task The input task
      */
-    public void inputTask(Task task) {
+    public void inputTask(BagItem<Task> task) {
         if (task.budgetAboveThreshold()) {
             this.recorder.append("!!! Perceived: " + task + "\n");
-            this.report(task, ReportType.IN); // report input
+            this.report(task.getValue(), ReportType.IN); // report input
             newTasks.add(task); // wait to be processed in the next workCycle
         } else {
             this.recorder.append("!!! Neglected: " + task + "\n");
@@ -365,7 +368,7 @@ public class Reasoner {
      * * 🚩获取的「新任务」可变
      * * 🎯用于「直接推理」
      */
-    public final LinkedList<Task> mut_newTasks() {
+    public final LinkedList<BagItem<Task>> mut_newTasks() {
         return newTasks;
     }
 
@@ -417,7 +420,7 @@ public class Reasoner {
                 final int i = Integer.parseInt(text);
                 walk(i);
             } catch (NumberFormatException e) {
-                final Task task = StringParser.parseExperience(
+                final BagItem<Task> task = StringParser.parseExperience(
                         new StringBuffer(text),
                         memory,
                         this.updateStampCurrentSerial(),

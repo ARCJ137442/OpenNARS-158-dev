@@ -26,14 +26,14 @@ public interface Item extends Budget {
      * * ❌即便能通过「钩子调用」让各处「预算更新」得到call，这也有很大耦合度
      * * 💭乃至不如最开始的「抽象接口」好使
      */
-    public static final class BagItem<T> implements Item, ToStringBriefAndLong {
+    public static final class BagItem<T extends ToKey> implements Item {
         private final T value;
         private final String key;
         private final BudgetValue budget;
 
-        public BagItem(T value, String key, Budget budget) {
+        public BagItem(T value, Budget budget) {
             this.value = value;
-            this.key = key;
+            this.key = value.toKey();
             // * 🚩不能直接赋值，必须复制构造
             this.budget = new BudgetValue(budget);
         }
@@ -61,24 +61,14 @@ public interface Item extends Budget {
         public ShortFloat __quality() {
             return budget.quality;
         }
+    }
 
-        @Override
-        public String toString() {
-            return budget.toString() + " " + getKey();
-        }
+    public interface BagItemToStringBriefAndLong<Self extends ToKey> {
+        public String toString(BagItem<Self> self);
 
-        @Override
-        public String toStringBrief() {
-            return budget.toStringBrief() + " " + getKey();
-        }
+        public String toStringBrief(BagItem<Self> self);
 
-        /**
-         * 🆕原版没有，此处仅重定向
-         */
-        @Override
-        public String toStringLong() {
-            return toString();
-        }
+        public String toStringLong(BagItem<Self> self);
     }
 
     /**

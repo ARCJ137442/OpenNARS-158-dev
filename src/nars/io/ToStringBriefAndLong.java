@@ -32,4 +32,5 @@ public interface ToStringBriefAndLong {
     // public default String toStringLong() {
     // return this.toString();
     // }
+
 }

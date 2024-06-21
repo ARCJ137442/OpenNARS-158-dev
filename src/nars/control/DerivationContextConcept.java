@@ -9,6 +9,7 @@ import nars.entity.TaskLink;
 import nars.entity.TaskV1;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
+import nars.entity.Item.BagItem;
 import nars.inference.Budget;
 import nars.inference.RuleTables;
 import nars.inference.Truth;
@@ -84,7 +85,12 @@ public interface DerivationContextConcept extends DerivationContext {
      * * 📄「转换推理上下文」「概念推理上下文」仅作为「当前任务链之目标」
      */
     @Override
-    public default Task getCurrentTask() {
+    public default BagItem<Task> getCurrentTask() {
+        // ! 🚩【2024-06-21 22:25:57】本次最后尝试 终点断点：任务链指向的任务，还要绑定预算值？
+        // * 💭后续仍然需要许多此类重构（任务的「派生关系」只指向任务，这没问题），才能解决
+        // * 💭于是这就会把「预算值」这个字段彻底拆分开——单独存储，单独计算
+        // * 💭本质上就是「拆出一个字段，这个字段代表一个类型」然后实现类似「BudgetValue+T」的「积类型」
+        // * * 💭这个「积类型」最终会导向一种「扁平化类型」的承诺：没有层次字段结构，复合次序不重要，加了就可以共用里头的字段……最终还是类似「多继承」的关系
         return this.getCurrentTaskLink().getTarget();
     }
 

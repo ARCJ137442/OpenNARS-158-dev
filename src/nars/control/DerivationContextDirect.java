@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
+import nars.entity.Item.BagItem;
 import nars.entity.Task;
 import nars.main.Reasoner;
 import nars.storage.Memory;
@@ -41,7 +42,7 @@ public final class DerivationContextDirect implements DerivationContext {
      * * 📝所有权：具所有权 | 存储「传入的新任务」
      * * ⚠️共享：需要传入并构造「任务链」或作为「父任务」，使用共享引用
      */
-    private Task currentTask;
+    private BagItem<Task> currentTask;
 
     /**
      * 用于构建「直接推理上下文」对象
@@ -71,7 +72,10 @@ public final class DerivationContextDirect implements DerivationContext {
      * * 🚩每次构造后立即检查参数是否为空
      * * 🎯确保内部字段的可空性：当前任务、当前概念 不可能为空
      */
-    public DerivationContextDirect(final Reasoner reasoner, final Task currentTask, final Concept currentConcept) {
+    public DerivationContextDirect(
+            final Reasoner reasoner,
+            final BagItem<Task> currentTask,
+            final Concept currentConcept) {
         // * 🚩构造核心
         this.core = new DerivationContextCore(reasoner, currentConcept);
         // * 🚩独有字段
@@ -112,8 +116,8 @@ public final class DerivationContextDirect implements DerivationContext {
      * * 📝【2024-05-30 10:31:01】在「本地规则/修正」中修改「优先级」「耐久度」
      */
     @Override
-    public Task getCurrentTask() {
-        return currentTask;
+    public BagItem<Task> getCurrentTask() {
+        return this.currentTask;
     }
 
     @Override

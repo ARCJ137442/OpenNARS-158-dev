@@ -7,6 +7,7 @@ import nars.entity.TLink.TLinkType;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
+import nars.entity.Item.BagItem;
 import nars.inference.InferenceEngine;
 import nars.inference.MatchingRules;
 import nars.main.Parameters;
@@ -110,12 +111,13 @@ public abstract class ProcessReason {
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
-        if (currentTaskLink == null) {
+        final BagItem<TaskLink> currentTaskLinkItem = currentConcept.__takeOutTaskLink();
+        if (currentTaskLinkItem == null) {
             // * 🚩中途返回时要回收
             self.getMemory().putBackConcept(currentConcept);
             return null;
         }
+        final TaskLink currentTaskLink = currentTaskLinkItem.getValue();
         // * 📝【2024-05-21 11:54:04】断言：直接推理不会涉及「词项链/信念链」
         // * ❓这里的「信念链」是否可空
         // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
@@ -144,8 +146,8 @@ public abstract class ProcessReason {
         }
 
         // * 🚩从选取的「任务链」获取要（分别）参与推理的「词项链」
-        final TermLink currentBeliefLink;
-        final LinkedList<TermLink> toReasonLinks = chooseTermLinksToReason(
+        final BagItem<TermLink> currentBeliefLink;
+        final LinkedList<BagItem<TermLink>> toReasonLinks = chooseTermLinksToReason(
                 self,
                 currentConcept,
                 currentTaskLink);
@@ -178,15 +180,15 @@ public abstract class ProcessReason {
      * @param currentTaskLink 当前任务链
      * @return 将要被拿去推理的词项链列表
      */
-    private static LinkedList<TermLink> chooseTermLinksToReason(
+    private static LinkedList<BagItem<TermLink>> chooseTermLinksToReason(
             final Reasoner self,
             final Concept concept,
             final TaskLink currentTaskLink) {
-        final LinkedList<TermLink> toReasonLinks = new LinkedList<>();
+        final LinkedList<BagItem<TermLink>> toReasonLinks = new LinkedList<>();
         int termLinkCount = Parameters.MAX_REASONED_TERM_LINK;
         // while (self.noResult() && (termLinkCount > 0)) {
         while (termLinkCount > 0) {
-            final TermLink termLink = concept.takeOutTermLinkFromTaskLink(currentTaskLink, self.getTime());
+            final BagItem<TermLink> termLink = concept.takeOutTermLinkFromTaskLink(currentTaskLink, self.getTime());
             if (termLink == null)
                 break;
             self.getRecorder().append(" * Selected TermLink: " + termLink + "\n");

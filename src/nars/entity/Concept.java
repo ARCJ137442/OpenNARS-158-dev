@@ -326,7 +326,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param &m-this
      * @param termLink []
      */
-    public void putInTermLink(TermLink termLink) {
+    public void putInTermLink(BagItem<TermLink> termLink) {
         this.termLinks.putIn(termLink);
     }
 
@@ -336,7 +336,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param &m-this
      * @param taskLink []
      */
-    public void putInTaskLink(TaskLink taskLink) {
+    public void putInTaskLink(BagItem<TaskLink> taskLink) {
         this.taskLinks.putIn(taskLink);
     }
 
@@ -399,7 +399,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param &m-this
      * @return [?]
      */
-    public TaskLink __takeOutTaskLink() {
+    public BagItem<TaskLink> __takeOutTaskLink() {
         return this.taskLinks.takeOut();
     }
 
@@ -414,14 +414,14 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param time     [] The current time
      * @return [?] The selected TermLink
      */
-    public TermLink takeOutTermLinkFromTaskLink(TaskLink taskLink, long time) {
+    public BagItem<TermLink> takeOutTermLinkFromTaskLink(TaskLink taskLink, long time) {
         for (int i = 0; i < Parameters.MAX_MATCHED_TERM_LINK; i++) {
             // * 🚩尝试拿出词项链 | 📝此间存在资源竞争
-            final TermLink termLink = this.termLinks.takeOut();
+            final BagItem<TermLink> termLink = this.termLinks.takeOut();
             if (termLink == null)
                 return null;
             // * 🚩任务链相对词项链「新近」⇒直接返回
-            if (taskLink.novel(termLink, time))
+            if (taskLink.novel(termLink.getValue(), time))
                 return termLink;
             // * 🚩当即放回
             this.termLinks.putBack(termLink);
@@ -437,7 +437,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param link    []
      * @return []
      */
-    public boolean __putTaskLinkBack(TaskLink link) {
+    public boolean __putTaskLinkBack(BagItem<TaskLink> link) {
         return this.taskLinks.putBack(link);
     }
 
@@ -449,7 +449,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param link    []
      * @return []
      */
-    public boolean __putTermLinkBack(TermLink link) {
+    public boolean __putTermLinkBack(BagItem<TermLink> link) {
         return this.termLinks.putBack(link);
     }
 

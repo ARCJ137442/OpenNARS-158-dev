@@ -1,12 +1,12 @@
 package nars.entity;
 
-import nars.inference.Budget;
-import nars.inference.BudgetInference;
+import nars.entity.Item.BagItem;
+import nars.storage.Bag.MergeOrder;
 
 /**
  * A task to be processed, consists of a Sentence and a BudgetValue
  */
-public interface Task extends Sentence, Item {
+public interface Task extends Sentence, ToKey {
 
     /**
      * Get the parent belief of a task
@@ -53,22 +53,38 @@ public interface Task extends Sentence, Item {
     }
 
     /**
-     * Merge one Task into another
+     * 决定两个「任务」之间的「合并顺序」
+     * * 🚩 true ⇒ 改变顺序(this <- that)，并入that
+     * * 🚩false ⇒ 维持原样(that <- this)，并入this
      *
-     * @param that The other Task
+     * @param that
+     * @return
      */
-    @Override
-    public default void mergeBudget(final Budget that) {
-        if (!(that instanceof Task))
-            throw new AssertionError(that + " isn't a Task");
-        // * 🚩均为「任务」⇒按照「发生时间」决定「谁并入谁」
-        if (getCreationTime() >= ((Task) that).getCreationTime())
-            // * ⚠️改成接口后无法使用`super.method`调用默认方法
-            // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
-            // * 🚩【2024-06-07 13:52:15】目前直接内联接口的默认方法
-            BudgetInference.merge(this, that);
-        else
-            BudgetInference.merge(that, this);
+    public static MergeOrder mergeOrder(final Task self, final Task that) {
+        /*
+         * 旧源码 @ Bag.java：
+         * newItem.mergeBudget(oldItem);
+         * * ⇒ this = newItem，此处传入的 this 在袋中相当于「新进入的任务」
+         * * ⇒ that = oldItem，此处传入的 that 在袋中相当于「要移出的任务」
+         */
+        /*
+         * 旧源码 @ Task.java：
+         * // * 🚩均为「任务」⇒按照「发生时间」决定「谁并入谁」
+         * if (getCreationTime() >= ((Task) that).getCreationTime())
+         * // * ⚠️改成接口后无法使用`super.method`调用默认方法
+         * // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
+         * // * 🚩【2024-06-07 13:52:15】目前直接内联接口的默认方法
+         * // * 📝自身「创建时间」晚于「要移出的任务」 ⇒ 将「要移出的任务」并入自身 ⇒ 旧任务并入新任务
+         * // * 📝自身「创建时间」早于「要移出的任务」 ⇒ 将「要移出的任务」并入自身 ⇒ 新任务并入旧任务
+         * BudgetInference.merge(this, that);
+         * else
+         * BudgetInference.merge(that, this);
+         */
+        return self.getCreationTime() < that.getCreationTime()
+                // * 📝自身「创建时间」早于「要移出的任务」 ⇒ 将「要移出的任务」并入自身 ⇒ 新任务并入旧任务
+                ? MergeOrder.NewToOld
+                // * 📝自身「创建时间」晚于「要移出的任务」 ⇒ 将「要移出的任务」并入自身 ⇒ 旧任务并入新任务
+                : MergeOrder.OldToNew;
     }
 
     /**
@@ -76,25 +92,26 @@ public interface Task extends Sentence, Item {
      *
      * @return The Task as a String
      */
-    public default String taskToString() {
+    public default String taskToString(BagItem<Task> self) {
         final StringBuilder s = new StringBuilder();
-        final String superString = this.budgetToString() + " " + getKey().toString();
+        final String superString = self.budgetToString() + " " + self.getKey().toString();
+        final Task task = self.getValue();
         s.append(superString).append(" ");
-        s.append(this.stampToString());
-        if (this.getParentTask() != null) {
-            s.append("  \n from task: ").append(this.getParentTask().toStringBrief());
-            if (this.getParentBelief() != null) {
-                s.append("  \n from belief: ").append(this.getParentBelief().toStringBrief());
+        s.append(task.stampToString());
+        if (task.getParentTask() != null) {
+            s.append("  \n from task: ").append(task.getParentTask().toStringBrief());
+            if (task.getParentBelief() != null) {
+                s.append("  \n from belief: ").append(task.getParentBelief().toStringBrief());
             }
         }
-        if (this.getBestSolution() != null) {
-            s.append("  \n solution: ").append(this.getBestSolution().toStringBrief());
+        if (task.getBestSolution() != null) {
+            s.append("  \n solution: ").append(task.getBestSolution().toStringBrief());
         }
         return s.toString();
     }
 
-    public default String taskToStringLong() {
-        return taskToString();
+    public default String taskToStringLong(BagItem<Task> self) {
+        return taskToString(self);
     }
 
     /**
@@ -102,7 +119,7 @@ public interface Task extends Sentence, Item {
      *
      * @return A simplified String representation of the content
      */
-    public default String taskToStringBrief() {
-        return this.budgetToStringBrief() + " " + getKey();
+    public default String taskToStringBrief(BagItem<Task> self) {
+        return self.budgetToStringBrief() + " " + self.getKey();
     }
 }

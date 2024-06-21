@@ -17,7 +17,7 @@ import nars.language.Term;
  * This class is mainly used in inference.RuleTable to dispatch premises to
  * inference rules
  */
-public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
+public class TermLink implements TLink<Term>, ToKey, ToStringBriefAndLong {
 
     // struct TermLink
 
@@ -29,39 +29,6 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
      * * 📝所有权：具所有权
      */
     private final TLinkage<Term> inner;
-
-    /**
-     * 🆕Item令牌
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 需要在「预算值」中被修改
-     * * 📝所有权：具所有权
-     */
-    private final Token token;
-
-    // impl Budget for TermLink
-
-    @Override
-    public ShortFloat __priority() {
-        return this.token.__priority();
-    }
-
-    @Override
-    public ShortFloat __durability() {
-        return this.token.__durability();
-    }
-
-    @Override
-    public ShortFloat __quality() {
-        return this.token.__quality();
-    }
-
-    // impl Item for TermLink
-
-    @Override
-    public String getKey() {
-        return token.getKey();
-    }
 
     // impl TLink<Term> for TermLink
 
@@ -112,7 +79,6 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
         this.inner = new TLinkage<Term>(target, type, indices);
         // * 🚩生成令牌 | 从抽象的「预算」到具体的「预算值」
         final String key = generateKey(target, type, indices);
-        this.token = new Token(key, budget);
     }
 
     /**
@@ -172,9 +138,8 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
      *
      * @return The String representation of the full content
      */
-    @Override
-    public String toString() {
-        return this.token.getBudgetValue().toString() + " " + getKey();
+    public String toString(Budget budget) {
+        return budget.toString() + " " + this.getKey();
     }
 
     /**
@@ -182,13 +147,11 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
      *
      * @return A simplified String representation of the content
      */
-    @Override
-    public String toStringBrief() {
-        return this.token.getBudgetValue().toStringBrief() + " " + getKey();
+    public String toStringBrief(Budget budget) {
+        return budget.toStringBrief() + " " + getKey();
     }
 
-    @Override
-    public String toStringLong() {
-        return toString();
+    public String toStringLong(Budget budget) {
+        return this.toString(budget);
     }
 }

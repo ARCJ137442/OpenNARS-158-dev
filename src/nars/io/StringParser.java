@@ -3,6 +3,7 @@ package nars.io;
 import java.util.*;
 
 import nars.entity.*;
+import nars.entity.Item.BagItem;
 import nars.inference.*;
 import nars.language.*;
 import static nars.language.MakeTerm.*;
@@ -40,7 +41,10 @@ public abstract class StringParser extends Symbols {
      * @param time   The current time
      * @return An experienced task
      */
-    public static Task parseExperience(StringBuffer buffer, Memory memory, long stampCurrentSerial, long time) {
+    public static BagItem<Task> parseExperience(
+            StringBuffer buffer,
+            Memory memory,
+            long stampCurrentSerial, long time) {
         int i = buffer.indexOf(PREFIX_MARK + "");
         if (i > 0) {
             String prefix = buffer.substring(0, i).trim();
@@ -77,7 +81,7 @@ public abstract class StringParser extends Symbols {
      * @param time   The current time
      * @return An experienced task
      */
-    private static Task parseTask(String s, Memory memory, long stampCurrentSerial, long time) {
+    private static BagItem<Task> parseTask(String s, Memory memory, long stampCurrentSerial, long time) {
         final StringBuffer buffer = new StringBuffer(s);
         try {
             final String budgetString = getBudgetString(buffer);
@@ -95,7 +99,8 @@ public abstract class StringParser extends Symbols {
                     content, punctuation, truth, stamp,
                     revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
-            return new TaskV1(sentence, budget);
+            final Task task = new TaskV1(sentence, budget);
+            return new BagItem<Task>(null, str, budget);
         } catch (final InvalidInputException e) {
             final String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
             System.out.println(message);

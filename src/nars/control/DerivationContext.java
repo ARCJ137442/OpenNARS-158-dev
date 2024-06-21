@@ -6,6 +6,7 @@ import java.util.Random;
 
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
+import nars.entity.Item.BagItem;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.SentenceV1;
@@ -57,7 +58,7 @@ public interface DerivationContext {
          * * 📝可变性：可变 | 单次推理的结果存放至此
          * * 📝所有权：具所有权
          */
-        final LinkedList<Task> newTasks;
+        final LinkedList<BagItem<Task>> newTasks;
 
         /**
          * List of Strings or Tasks to be sent to the output channels
@@ -115,7 +116,7 @@ public interface DerivationContext {
         DerivationContextCore(
                 final Reasoner reasoner,
                 final Concept currentConcept,
-                final LinkedList<Task> newTasks,
+                final LinkedList<BagItem<Task>> newTasks,
                 final ArrayList<String> exportStrings) {
             // this.memory = reasoner.getMemory();
             this.currentConcept = currentConcept;
@@ -132,7 +133,7 @@ public interface DerivationContext {
             // * 🚩将「当前概念」归还到「推理器」中
             memory.putBackConcept(this.currentConcept);
             // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
-            for (final Task newTask : this.newTasks) {
+            for (final BagItem<Task> newTask : this.newTasks) {
                 reasoner.mut_newTasks().add(newTask);
             }
             // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
@@ -229,7 +230,7 @@ public interface DerivationContext {
      * * 🚩【2024-05-21 22:40:21】现在改为抽象方法：不同实现有不同的用法
      * * 📄「直接推理上下文」将其作为字段，而「转换推理上下文」「概念推理上下文」均只用作「当前任务链的目标」
      */
-    public abstract Task getCurrentTask();
+    public abstract BagItem<Task> getCurrentTask();
 
     /**
      * 重置全局状态

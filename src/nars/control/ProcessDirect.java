@@ -3,6 +3,7 @@ package nars.control;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
+import nars.entity.Item.BagItem;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Task;
@@ -42,7 +43,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNewTask(final Reasoner self) {
         // * 🚩获取新任务
-        final LinkedList<Task> tasksToProcess = loadFromNewTasks(self);
+        final LinkedList<BagItem<Task>> tasksToProcess = loadFromNewTasks(self);
         // * 🚩处理新任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -55,7 +56,7 @@ public abstract class ProcessDirect {
      */
     private static boolean processNovelTask(final Reasoner self) {
         // * 🚩获取新近任务
-        final LinkedList<Task> tasksToProcess = loadFromNovelTasks(self);
+        final LinkedList<BagItem<Task>> tasksToProcess = loadFromNovelTasks(self);
         // * 🚩处理新近任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
         // * 🚩清理收尾
@@ -66,19 +67,20 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新任务」列表
      */
-    private static LinkedList<Task> loadFromNewTasks(final Reasoner self) {
+    private static LinkedList<BagItem<Task>> loadFromNewTasks(final Reasoner self) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        final LinkedList<BagItem<Task>> tasksToProcess = new LinkedList<>();
         final Memory memory = self.getMemory();
-        final LinkedList<Task> mut_newTasks = self.mut_newTasks();
+        final LinkedList<BagItem<Task>> mut_newTasks = self.mut_newTasks();
         // don't include new tasks produced in the current workCycle
         // * 🚩处理「新任务缓冲区」中的所有任务
         while (!mut_newTasks.isEmpty()) {
             // * 🚩拿出第一个
-            final Task task = mut_newTasks.removeFirst();
+            final BagItem<Task> taskItem = mut_newTasks.removeFirst();
+            final Task task = taskItem.getValue();
             // * 🚩是输入 或 已有对应概念 ⇒ 将参与「直接推理」
             if (task.isInput() || memory.hasConcept(task.getContent())) {
-                tasksToProcess.add(task); // new input or existing concept
+                tasksToProcess.add(taskItem); // new input or existing concept
             }
             // * 🚩否则：继续筛选以放进「新近任务」
             else {
@@ -92,7 +94,7 @@ public abstract class ProcessDirect {
                     shouldAddToNovelTasks = false;
                 // * 🚩添加
                 if (shouldAddToNovelTasks)
-                    self.mut_novelTasks().putIn(task);
+                    self.mut_novelTasks().putIn(taskItem);
                 else
                     // * 🚩忽略
                     self.getRecorder().append("!!! Neglected: " + task + "\n");
@@ -104,12 +106,12 @@ public abstract class ProcessDirect {
     /**
      * 🆕获取「要处理的新近任务」列表
      */
-    private static LinkedList<Task> loadFromNovelTasks(final Reasoner self) {
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+    private static LinkedList<BagItem<Task>> loadFromNovelTasks(final Reasoner self) {
+        final LinkedList<BagItem<Task>> tasksToProcess = new LinkedList<>();
         // select a task from novelTasks
         // one of the two places where this variable is set
         // * 🚩从「新近任务袋」中拿出一个任务，若有⇒添加进列表
-        final Task task = self.mut_novelTasks().takeOut();
+        final BagItem<Task> task = self.mut_novelTasks().takeOut();
         if (task != null)
             tasksToProcess.add(task);
         return tasksToProcess;
@@ -122,7 +124,7 @@ public abstract class ProcessDirect {
      *
      * @param taskInput the task to be accepted (owned)
      */
-    private static boolean immediateProcess(final Reasoner self, final Task taskInput) {
+    private static boolean immediateProcess(final Reasoner self, final BagItem<Task> taskInput) {
         self.getRecorder().append("!!! Insert: " + taskInput + "\n");
 
         // * 🚩构建「实际上下文」并断言可空性
@@ -176,7 +178,7 @@ public abstract class ProcessDirect {
      */
     private static DerivationContextDirect prepareDirectProcessContext(
             final Reasoner self,
-            final Task currentTask) {
+            final BagItem<Task> currentTask) {
         // * 🚩准备上下文
         // one of the two places where this variable is set
         final Concept taskConcept = self.getMemory().getConceptOrCreate(currentTask.getContent());

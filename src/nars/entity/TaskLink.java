@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.entity.Item.BagItem;
 import nars.inference.Budget;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
@@ -11,7 +12,7 @@ import nars.main.Parameters;
  * The reason to separate a Task and a TaskLink is that the same Task can be
  * linked from multiple Concepts, with different BudgetValue.
  */
-public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
+public class TaskLink implements TLink<Task>, ToKey, ToStringBriefAndLong {
 
     // struct TaskLink
 
@@ -23,15 +24,6 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
      * * 📝所有权：具所有权
      */
     private final TLinkage<Task> inner;
-
-    /**
-     * 🆕Item令牌
-     *
-     * * ️📝可空性：非空
-     * * 📝可变性：可变 | 需要在「预算值」中被修改
-     * * 📝所有权：具所有权
-     */
-    private final Token token;
 
     /**
      * Remember the TermLinks that has been used recently with this TaskLink
@@ -66,28 +58,11 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
      */
     private int nRecordedTermLinks;
 
-    // impl Budget for TaskLink
-
-    @Override
-    public ShortFloat __priority() {
-        return this.token.__priority();
-    }
-
-    @Override
-    public ShortFloat __durability() {
-        return this.token.__durability();
-    }
-
-    @Override
-    public ShortFloat __quality() {
-        return this.token.__quality();
-    }
-
     // impl Item for TaskLink
 
     @Override
-    public String getKey() {
-        return token.getKey();
+    public String toKey() {
+        return generateKey(this.getTarget(), this.getType(), this.getIndices());
     }
 
     // impl TLink<Task> for TaskLink
@@ -128,8 +103,6 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
             final short[] indices,
             final int recordLength) {
         this.inner = new TLinkage<Task>(target, type, indices);
-        final String key = generateKey(target, type, indices);
-        this.token = new Token(key, budget);
         this.recordedLinks = new String[recordLength];
         this.recordingTime = new long[recordLength];
         this.nRecordedTermLinks = 0;
@@ -172,7 +145,7 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
      * @param budget
      * @return
      */
-    public static final TaskLink newSelf(final Task target) {
+    public static final BagItem<TaskLink> newSelf(final Task target) {
         return new TaskLink(
                 target, new BudgetValue(target), // * 🚩此处将抽象的「预算」转换为具体的「预算值」 | 目前只会取「任务」自身的预算值
                 TLinkType.SELF, new short[] {}); // * 🚩必须非空，即便使用空数组

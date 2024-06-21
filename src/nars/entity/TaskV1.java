@@ -1,5 +1,6 @@
 package nars.entity;
 
+import nars.entity.Item.Token;
 import nars.inference.Budget;
 import nars.language.Term;
 
@@ -95,27 +96,10 @@ public class TaskV1 implements Task {
         this(sentence, budget, parentTask, parentBelief, null);
     }
 
-    // impl Budget for TaskV1
+    // impl ToKey for TaskV1
 
     @Override
-    public ShortFloat __priority() {
-        return this.token.__priority();
-    }
-
-    @Override
-    public ShortFloat __durability() {
-        return this.token.__durability();
-    }
-
-    @Override
-    public ShortFloat __quality() {
-        return this.token.__quality();
-    }
-
-    // impl Item for TaskV1
-
-    @Override
-    public String getKey() {
+    public String toKey() {
         return token.getKey();
     }
 
@@ -184,25 +168,23 @@ public class TaskV1 implements Task {
 
     @Override
     public String toStringBrief() {
-        return this.taskToStringBrief();
+        // * 🚩此处暂时如此
+        return this.sentenceToStringBrief();
     }
 
     @Override
     public String toString() {
-        return this.taskToString();
+        // * 🚩此处暂时如此
+        return this.sentenceToString();
     }
 
     @Override
     public String toStringLong() {
-        return this.taskToStringLong();
+        // * 🚩此处暂时如此
+        return this.sentenceToStringLong();
     }
 
     // impl Sentence for TaskV1
-
-    @Override
-    public String toKey() {
-        return this.sentence.toKey();
-    }
 
     @Override
     public String sentenceToString() {
