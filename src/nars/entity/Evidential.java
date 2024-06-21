@@ -3,7 +3,6 @@ package nars.entity;
 import java.util.TreeSet;
 
 import nars.io.Symbols;
-import nars.main.Parameters;
 
 /**
  * 🆕证据（基）
@@ -11,11 +10,6 @@ import nars.main.Parameters;
  * * 📝核心：记载一系列「证据时间」，提供「证据是否重复」方法，以避免「重复推理」
  */
 public interface Evidential {
-
-    /**
-     * 🆕提取出的「最大长度」常量
-     */
-    public static int maxEvidenceBaseLength = Parameters.MAXIMUM_STAMP_LENGTH;
 
     /**
      * serial numbers
@@ -84,7 +78,7 @@ public interface Evidential {
      * @param baseLength
      * @return
      */
-    public static long[] mergedEvidentialBase(final long[] base1, final long[] base2) {
+    public static long[] mergedEvidentialBase(final long[] base1, final long[] base2, final int maxEvidenceBaseLength) {
         // * 🚩计算新证据基长度：默认长度相加，一定长度后截断
         final int baseLength = Math.min( // * 📝一定程度上允许重复推理：在证据复杂时遗漏一定数据
                 base1.length + base2.length,

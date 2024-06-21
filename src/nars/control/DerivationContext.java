@@ -15,6 +15,7 @@ import nars.entity.TaskV1;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
+import nars.main.Parameters;
 import nars.main.Reasoner;
 import nars.storage.Memory;
 
@@ -169,6 +170,17 @@ public interface DerivationContext {
      * * 📝可变性：只读
      */
     public long getTime();
+
+    // /**
+    // * 🆕访问「当前超参数」
+    // * * 🎯用于在推理过程中构建「新时间戳」（作为「最大长度」参数）
+    // * * ️📝可空性：非空
+    // * * 📝可变性：只读
+    // */
+    // public Parameters getParameters();
+    public default int getMaxEvidenceBaseLength() {
+        return Parameters.MAXIMUM_STAMP_LENGTH;
+    }
 
     /**
      * 获取「静默值」

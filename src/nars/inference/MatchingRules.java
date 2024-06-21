@@ -75,7 +75,8 @@ public abstract class MatchingRules {
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp newStamp = Stamp.uncheckedMerge(
                 newBelief, oldBelief,
-                context.getTime());
+                context.getTime(),
+                context.getMaxEvidenceBaseLength());
         context.doublePremiseTask(
                 context.getCurrentTask(),
                 content,

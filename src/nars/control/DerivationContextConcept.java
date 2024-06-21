@@ -74,7 +74,9 @@ public interface DerivationContextConcept extends DerivationContext {
                         // * 📌此处的「时间戳」一定是「当前信念」的时间戳
                         // * 📄理由：最后返回的信念与「成功时比对的信念」一致（只隔着`clone`）
                         this.getCurrentBelief(),
-                        this.getTime())
+                        this.getTime(),
+                        // * 🚩【2024-06-21 17:08:14】暂且将超参数放置于此
+                        this.getMaxEvidenceBaseLength())
                 : null;
     }
 

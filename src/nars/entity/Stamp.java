@@ -98,10 +98,15 @@ public class Stamp implements Cloneable, Evidential {
      * @param parent1 The first Stamp
      * @param parent2 The second Stamp
      */
-    public static Stamp uncheckedMerge(final Evidential parent1, final Evidential parent2, final long time) {
+    public static Stamp uncheckedMerge(
+            final Evidential parent1, final Evidential parent2,
+            final long time,
+            final int maxEvidenceBaseLength) {
         return new Stamp(
                 // * 🚩合并的证据基，拥有新的长度和「父母证据基」各自的成员
-                Evidential.mergedEvidentialBase(parent1.getEvidentialBase(), parent2.getEvidentialBase()),
+                Evidential.mergedEvidentialBase(
+                        parent1.getEvidentialBase(), parent2.getEvidentialBase(),
+                        maxEvidenceBaseLength),
                 // * 🚩新的「创建时间」
                 time);
     }
@@ -116,11 +121,14 @@ public class Stamp implements Cloneable, Evidential {
      * @param time   The new creation time
      * @return The merged Stamp, or null
      */
-    public static Stamp merge(final Evidential first, final Evidential second, final long time) {
+    public static Stamp merge(
+            final Evidential first, final Evidential second,
+            final long time,
+            final int maxEvidenceBaseLength) {
         // * 🚩有重合证据⇒返回空；无重合证据⇒合并证据
         return Evidential.haveOverlap(first, second)
                 ? null
-                : uncheckedMerge(first, second, time);
+                : uncheckedMerge(first, second, time, maxEvidenceBaseLength);
     }
 
     /**
