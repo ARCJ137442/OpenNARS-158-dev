@@ -61,7 +61,7 @@ public interface TLink<Target> {
         }
 
         /**
-         * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+         * 🆕判断一个「T链接类型」是否为「从复合词项链接到元素」
          *
          * @param this
          * @return
@@ -252,67 +252,10 @@ public interface TLink<Target> {
         }
 
         /**
-         * Constructor for TermLink template
-         * <p>
-         * called in CompoundTerm.prepareComponentLinks only
-         * * 🚩直接调用超类构造函数
-         * * ⚠️此处的「目标」非彼「目标」，而是「模板」：针对「目标词项」构建「从元素到自身的词项链/任务链」
-         * * 📌【2024-06-04 20:19:33】所以此处才会存在「虽然『目标』是『元素』，但『链接类型』是『链接到自身』」的情况
-         * * 🎯用于「词项链模板」的类型别名
-         *
-         * @param target  Target Term
-         * @param type    Link type
-         * @param indices Component indices in compound, may be 1 to 4
-         */
-        protected TLinkage(final Target target, final TLinkType type, final int[] indices) {
-            this( // * 🚩直接传递到「完全构造方法」
-                    target,
-                    type,
-                    // * ✅现在不再需要传入null作为key了，因为TermLinkTemplate不需要key
-                    // template types all point to compound, though the target is component
-                    generateIndices(type, indices));
-        }
-
-        /**
          * 🆕「目标」的别名
          */
         public final Target willFromSelfTo() {
             return this.getTarget();
-        }
-
-        /**
-         * 🆕将构造方法中的「生成索引部分」独立出来
-         * * ⚠️仅在「复合词项→元素」中使用
-         * * 📄Concept@57 "<{tim} --> (/,livingIn,_,{graz})>"
-         * * --[COMPOUND_STATEMENT]--> SetExt@20 "{tim}"
-         *
-         * @param type
-         * @param indices
-         * @return
-         */
-        private static final short[] generateIndices(
-                final TLinkType type,
-                final int[] indices) {
-            // * 🚩假定此处是「COMPOUND」系列或「TRANSFORM」类型——链接到复合词项
-            if (!(type.isToCompound() || type == TLinkType.TRANSFORM))
-                throw new AssertionError("type " + type + " isn't from compound");
-            final short[] index;
-            // * 🚩原数组为「复合条件」⇒头部添加`0`
-            if (type == TLinkType.COMPOUND_CONDITION) { // the first index is 0 by default
-                index = new short[indices.length + 1];
-                index[0] = 0;
-                for (int i = 0; i < indices.length; i++) {
-                    index[i + 1] = (short) indices[i];
-                }
-            }
-            // * 🚩否则：逐个转换并复制原索引数组
-            else {
-                index = new short[indices.length];
-                for (int i = 0; i < index.length; i++) {
-                    index[i] = (short) indices[i];
-                }
-            }
-            return index;
         }
 
         // impl<Target> TLinkage<Target>

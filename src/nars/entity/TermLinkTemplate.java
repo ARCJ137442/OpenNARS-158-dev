@@ -26,8 +26,58 @@ import nars.language.Term;
  * * ✅【2024-06-08 14:03:40】现在已经作为{@link TLinkage<Term>}的类型别名
  */
 public class TermLinkTemplate extends TLinkage<Term> {
+    /**
+     * 构造词项链模板
+     * * 🚩直接调用超类构造函数
+     * * ⚠️此处的「目标」非彼「目标」，而是「模板」：针对「目标词项」构建「从元素到自身的词项链/任务链」
+     * * 📌【2024-06-04 20:19:33】所以此处才会存在「虽然『目标』是『元素』，但『链接类型』是『链接到自身』」的情况
+     * * 🎯用于「词项链模板」的类型别名
+     * * ⚠️【2024-06-22 01:09:59】与「类型别名」还是有一定区别：需要特别生成新的「索引」
+     *
+     * @param target
+     * @param type
+     * @param indices
+     */
     public TermLinkTemplate(final Term target, final TLinkType type, final int[] indices) {
-        // * 🚩实际上就是类型别名
-        super(target, type, indices);
+        super(
+                // * ✅现在不再需要传入null作为key了，因为TermLinkTemplate不需要key
+                target, type,
+                // template types all point to compound, though the target is component
+                generateIndices(type, indices));
+    }
+
+    /**
+     * 🆕将构造方法中的「生成索引部分」独立出来
+     * * ⚠️仅在「复合词项→元素」中使用
+     * * 📄Concept@57 "<{tim} --> (/,livingIn,_,{graz})>"
+     * * --[COMPOUND_STATEMENT]--> SetExt@20 "{tim}"
+     *
+     * @param type
+     * @param indices
+     * @return
+     */
+    private static final short[] generateIndices(
+            final TLinkType type,
+            final int[] indices) {
+        // * 🚩假定此处是「COMPOUND」系列或「TRANSFORM」类型——链接到复合词项
+        if (!(type.isToCompound() || type == TLinkType.TRANSFORM))
+            throw new AssertionError("type " + type + " isn't from compound");
+        final short[] index;
+        // * 🚩原数组为「复合条件」⇒头部添加`0`
+        if (type == TLinkType.COMPOUND_CONDITION) { // the first index is 0 by default
+            index = new short[indices.length + 1];
+            index[0] = 0;
+            for (int i = 0; i < indices.length; i++) {
+                index[i + 1] = (short) indices[i];
+            }
+        }
+        // * 🚩否则：逐个转换并复制原索引数组
+        else {
+            index = new short[indices.length];
+            for (int i = 0; i < index.length; i++) {
+                index[i] = (short) indices[i];
+            }
+        }
+        return index;
     }
 }
