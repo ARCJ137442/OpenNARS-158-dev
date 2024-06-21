@@ -114,12 +114,12 @@ public interface Item extends Budget {
          * @param key The key value
          */
         public Token(final String key) {
-            this.key = key;
-            this.budget = new BudgetValue();
+            this(key, new BudgetValue());
         }
 
         /**
          * Constructor with initial budget
+         * * 🚩零信任：拷贝预算值，以避免意外的所有权共享
          *
          * @param key    The key value
          * @param budget The initial budget
@@ -130,6 +130,7 @@ public interface Item extends Budget {
                 throw new AssertionError("key cannot be null");
             if (budget == null)
                 throw new AssertionError("budget cannot be null");
+            // * ✅【2024-06-21 23:48:54】信任所有权：目前没有任何可能修改Key对象的代码
             this.key = key;
             // * 🚩【2024-06-07 13:59:21】现在由于「外部构造均以『可预算的』特征对象传递」更加必须使用「复制构造」，否则会共享引用
             this.budget = new BudgetValue(budget); // clone, not assignment

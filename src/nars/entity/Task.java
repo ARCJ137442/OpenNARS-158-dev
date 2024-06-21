@@ -1,7 +1,6 @@
 package nars.entity;
 
 import nars.inference.Budget;
-import nars.inference.BudgetInference;
 import nars.language.Term;
 
 /**
@@ -64,14 +63,16 @@ public class Task implements Sentence, Item {
      * @param budget       The budget
      * @param parentTask   The task from which this new task is derived
      * @param parentBelief The belief from which this new task is derived
+     * @param solution     The best solution found so far
      */
     public Task(Sentence sentence, Budget budget, Task parentTask, Judgement parentBelief, Judgement solution) {
-        this.token = new Token(sentence.toKey(), budget); // change to toKey()
-        this.sentence = sentence;
+        // * 🚩【2024-06-21 23:35:53】不要「太信得过外界所传入的对象」被共享引用：全部用clone隔绝所有权
+        this.token = new Token(sentence.toKey(), budget); // * ✅此处的「预算」也是「零信任」 | change to toKey()
+        this.sentence = sentence.sentenceClone();
         // this.key = this.sentence.toKey(); // * ❌无需使用：s.toKey()与此相通
-        this.parentTask = parentTask;
-        this.parentBelief = parentBelief;
-        this.bestSolution = solution;
+        this.parentTask = parentTask; // * 🚩除了此处：共享所有权
+        this.parentBelief = parentBelief == null ? null : (Judgement) parentBelief.sentenceClone();
+        this.bestSolution = solution == null ? null : (Judgement) solution.sentenceClone();
     }
 
     /**
@@ -94,6 +95,34 @@ public class Task implements Sentence, Item {
      */
     public Task(Sentence sentence, Budget budget, Task parentTask, Judgement parentBelief) {
         this(sentence, budget, parentTask, parentBelief, null);
+    }
+
+    // impl Task
+
+    public Task getParentTask() {
+        return this.parentTask;
+    }
+
+    public Judgement getParentBelief() {
+        return this.parentBelief;
+    }
+
+    public Judgement getBestSolution() {
+        return this.bestSolution;
+    }
+
+    public void setBestSolution(Judgement judgment) {
+        if (!this.isQuestion())
+            throw new AssertionError(this + " is not question");
+        if (judgment == null)
+            throw new AssertionError("judgment == null");
+        // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
+        this.bestSolution = judgment;
+        // this.bestSolution = judgment.cloneSentence();
+    }
+
+    public boolean isInput() {
+        return this.getParentTask() == null;
     }
 
     // impl Budget for Task
@@ -120,8 +149,6 @@ public class Task implements Sentence, Item {
         return token.getKey();
     }
 
-    // impl OptionalTruth for SentenceV1
-
     // impl Sentence for Task
 
     @Override
@@ -139,7 +166,37 @@ public class Task implements Sentence, Item {
         return this.sentence.sentenceClone();
     }
 
-    // impl Stamp for Task
+    // impl ToStringBriefAndLong for Task
+
+    @Override
+    public String toString() {
+        final StringBuilder s = new StringBuilder();
+        final String superString = this.budgetToString() + " " + this.getKey().toString();
+        s.append(superString).append(" ");
+        s.append(this.stampToString());
+        if (this.getParentTask() != null) {
+            s.append("  \n from task: ").append(this.getParentTask().toStringBrief());
+            if (this.getParentBelief() != null) {
+                s.append("  \n from belief: ").append(this.getParentBelief().toStringBrief());
+            }
+        }
+        if (this.getBestSolution() != null) {
+            s.append("  \n solution: ").append(this.getBestSolution().toStringBrief());
+        }
+        return s.toString();
+    }
+
+    @Override
+    public String toStringBrief() {
+        return this.budgetToStringBrief() + " " + this.getKey();
+    }
+
+    @Override
+    public String toStringLong() {
+        return this.toString();
+    }
+
+    // impl Evidential for Task
 
     @Override
     public long[] __evidentialBase() {
@@ -149,49 +206,6 @@ public class Task implements Sentence, Item {
     @Override
     public long __creationTime() {
         return this.sentence.__creationTime();
-    }
-
-    // impl Task for Task
-
-    public Task getParentTask() {
-        return this.parentTask;
-    }
-
-    public Judgement getParentBelief() {
-        return this.parentBelief;
-    }
-
-    public Judgement getBestSolution() {
-        return this.bestSolution;
-    }
-
-    public void setBestSolution(Judgement judgment) {
-        if (!this.isQuestion())
-            throw new AssertionError(this + " is not question");
-        if (judgment == null)
-            throw new AssertionError("judgment == null");
-        if (!judgment.isJudgement())
-            throw new AssertionError(judgment + " is not judgment");
-        // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
-        this.bestSolution = judgment;
-        // this.bestSolution = judgment.cloneSentence();
-    }
-
-    // impl ToStringBriefAndLong for Task
-
-    @Override
-    public String toStringBrief() {
-        return this.taskToStringBrief();
-    }
-
-    @Override
-    public String toString() {
-        return this.taskToString();
-    }
-
-    @Override
-    public String toStringLong() {
-        return this.taskToStringLong();
     }
 
     // impl Sentence for Task
@@ -224,49 +238,5 @@ public class Task implements Sentence, Item {
     @Override
     public Question asQuestion() {
         return this.sentence.asQuestion();
-    }
-
-    public boolean isInput() {
-        return this.getParentTask() == null;
-    }
-
-    @Override
-    public void mergeBudget(Budget that) {
-        final Budget that1 = that;
-        if (!(that1 instanceof Task))
-            throw new AssertionError(that1 + " isn't a Task");
-        // * 🚩均为「任务」⇒按照「发生时间」决定「谁并入谁」
-        if (getCreationTime() >= ((Task) that1).getCreationTime())
-            // * ⚠️改成接口后无法使用`super.method`调用默认方法
-            // * 🚩【2024-06-05 00:25:49】现在可直接使用「获取预算」而无需强制要求基于「Token」
-            // * 🚩【2024-06-07 13:52:15】目前直接内联接口的默认方法
-            BudgetInference.merge(this, that1);
-        else
-            BudgetInference.merge(that1, this);
-    }
-
-    public String taskToString() {
-        final StringBuilder s = new StringBuilder();
-        final String superString = this.budgetToString() + " " + getKey().toString();
-        s.append(superString).append(" ");
-        s.append(this.stampToString());
-        if (this.getParentTask() != null) {
-            s.append("  \n from task: ").append(this.getParentTask().toStringBrief());
-            if (this.getParentBelief() != null) {
-                s.append("  \n from belief: ").append(this.getParentBelief().toStringBrief());
-            }
-        }
-        if (this.getBestSolution() != null) {
-            s.append("  \n solution: ").append(this.getBestSolution().toStringBrief());
-        }
-        return s.toString();
-    }
-
-    public String taskToStringBrief() {
-        return this.budgetToStringBrief() + " " + getKey();
-    }
-
-    public String taskToStringLong() {
-        return taskToString();
     }
 }
