@@ -93,13 +93,32 @@ public final class Bag<E extends Item> {
     /**
      * constructor, called from subclasses
      *
-     * @param memory The reference to memory
+     * @param forgetRate the priority decay rate
+     * @param capacity   the capacity of the bag
      */
     public Bag(AtomicInteger forgetRate, int capacity) {
         this.capacity = capacity;
         this.forgetRate = forgetRate;
         this.itemTable = new ArrayList<>(TOTAL_LEVEL);
         this.nameTable = new HashMap<>((int) (capacity / LOAD_FACTOR), LOAD_FACTOR);
+        // * 📜默认就是「旧的并入新的」
+        this.mergeOrderF = (oldValue, newValue) -> MergeOrder.OldToNew;
+        init();
+    }
+
+    /**
+     * 除了以上参数外，还附加「并入顺序决定函数」
+     *
+     * @param forgetRate  the priority decay rate
+     * @param capacity    the capacity of the bag
+     * @param mergeOrderF the merge order function
+     */
+    public Bag(AtomicInteger forgetRate, int capacity, MergeOrderF<E> mergeOrderF) {
+        this.capacity = capacity;
+        this.forgetRate = forgetRate;
+        this.itemTable = new ArrayList<>(TOTAL_LEVEL);
+        this.nameTable = new HashMap<>((int) (capacity / LOAD_FACTOR), LOAD_FACTOR);
+        this.mergeOrderF = mergeOrderF;
         init();
     }
 
@@ -217,6 +236,28 @@ public final class Bag<E extends Item> {
         return out;
     }
 
+    public static enum MergeOrder {
+        /**
+         * 从「将移出的Item」合并到「新进入的Item」
+         * * 📌修改「新进入的Item」
+         */
+        OldToNew,
+        /**
+         * 从「新进入的Item」合并到「将移出的Item」
+         * * 📌修改「将移出的Item」
+         */
+        NewToOld
+    }
+
+    /** 决定「预算合并顺序」的函数指针类型 */
+    @FunctionalInterface
+    public static interface MergeOrderF<E> {
+        MergeOrder call(E oldValue, E newValue);
+    }
+
+    /** 决定「预算合并顺序」的函数指针 */
+    private final MergeOrderF<E> mergeOrderF;
+
     /**
      * Add a new Item into the Bag
      *
@@ -234,7 +275,16 @@ public final class Bag<E extends Item> {
         if (oldItem != null) { // merge duplications
             // * 🚩重复的键
             this.outOfBase(oldItem);
-            newItem.mergeBudget(oldItem);
+            // * 🚩按照计算出的「合并顺序」合并预算值
+            // newItem.mergeBudget(oldItem);
+            switch (this.mergeOrderF.call(oldItem, newItem)) {
+                case OldToNew:
+                    oldItem.mergeBudget(newItem);
+                    break;
+                case NewToOld: // * 📝原先统一是相当于这个
+                    newItem.mergeBudget(oldItem);
+                    break;
+            }
         }
         // * 🚩置入层级表
         final E overflowItem = this.intoBase(newItem); // put the (new or merged) item into itemTable

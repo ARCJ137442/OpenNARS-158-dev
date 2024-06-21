@@ -61,7 +61,7 @@ public class TermLinkTemplate extends TLinkage<Term> {
             final int[] indices) {
         // * 🚩假定此处是「COMPOUND」系列或「TRANSFORM」类型——链接到复合词项
         if (!(type.isToCompound() || type == TLinkType.TRANSFORM))
-            throw new AssertionError("type " + type + " isn't from compound");
+            throw new AssertionError("type " + type + " isn't point to compound");
         final short[] index;
         // * 🚩原数组为「复合条件」⇒头部添加`0`
         if (type == TLinkType.COMPOUND_CONDITION) { // the first index is 0 by default

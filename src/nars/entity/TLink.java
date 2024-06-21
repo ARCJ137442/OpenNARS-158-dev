@@ -258,7 +258,7 @@ public interface TLink<Target> {
             return this.getTarget();
         }
 
-        // impl<Target> TLinkage<Target>
+        // impl<Target> TLink<Target>
 
         @Override
         public final Target getTarget() {

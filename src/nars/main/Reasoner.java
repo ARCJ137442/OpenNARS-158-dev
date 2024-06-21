@@ -20,6 +20,7 @@ import nars.io.OutputChannel;
 import nars.io.StringParser;
 import nars.io.Symbols;
 import nars.storage.Bag;
+import nars.storage.Bag.MergeOrderF;
 import nars.storage.BagObserver;
 import nars.storage.Memory;
 
@@ -109,7 +110,8 @@ public class Reasoner {
         this.newTasks = new LinkedList<>();
         this.novelTasks = new Bag<Task>(
                 new AtomicInteger(Parameters.NEW_TASK_FORGETTING_CYCLE),
-                Parameters.TASK_BUFFER_SIZE);
+                Parameters.TASK_BUFFER_SIZE,
+                (MergeOrderF<Task>) Task::mergeOrder);
         this.exportStrings = new ArrayList<>();
     }
 
