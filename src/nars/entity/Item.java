@@ -137,17 +137,17 @@ public interface Item extends Budget {
 
         @Override
         public String getKey() {
-            return key;
+            return this.key;
         }
 
         @Override
         public String toString() {
-            return getBudgetValue() + " " + getKey();
+            return this.budget.toString() + " " + this.getKey();
         }
 
         @Override
         public String toStringBrief() {
-            return budget.toStringBrief() + " " + getKey();
+            return this.budget.toStringBrief() + " " + this.getKey();
         }
 
         /**
@@ -155,7 +155,7 @@ public interface Item extends Budget {
          */
         @Override
         public String toStringLong() {
-            return toString();
+            return this.toString();
         }
     }
 }

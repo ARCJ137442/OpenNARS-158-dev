@@ -95,7 +95,7 @@ public abstract class StringParser extends Symbols {
                     content, punctuation, truth, stamp,
                     revisable);
             final BudgetValue budget = parseBudget(budgetString, punctuation, truth);
-            return new TaskV1(sentence, budget);
+            return new Task(sentence, budget);
         } catch (final InvalidInputException e) {
             final String message = "ERR: !!! INVALID INPUT: parseTask: " + buffer + " --- " + e.getMessage();
             System.out.println(message);

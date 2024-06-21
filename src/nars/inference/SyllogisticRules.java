@@ -555,7 +555,7 @@ final class SyllogisticRules {
      * @param context Reference to the derivation context
      */
     static void matchReverse(DerivationContextReason context) {
-        // 📄TaskV1@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
+        // 📄Task@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
         // %1.00;0.45% {503 : 38;37}
         // 📄JudgementV1@43 "<<toothbrush --> $1> ==> <cup --> $1>>. %1.0000;0.4475%
         // {483 : 36;39} "

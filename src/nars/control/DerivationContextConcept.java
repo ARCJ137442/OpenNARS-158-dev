@@ -6,7 +6,6 @@ import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
-import nars.entity.TaskV1;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.inference.Budget;
@@ -129,7 +128,7 @@ public interface DerivationContextConcept extends DerivationContext {
         final char newPunctuation = currentTask.getPunctuation();
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
                 newStamp, true);
-        final Task newTask = new TaskV1(
+        final Task newTask = new Task(
                 newSentence,
                 newBudget,
                 this.getCurrentTask(),
@@ -167,7 +166,7 @@ public interface DerivationContextConcept extends DerivationContext {
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
                 newStamp,
                 revisable);
-        final Task newTask = new TaskV1(
+        final Task newTask = new Task(
                 newSentence,
                 newBudget,
                 this.getCurrentTask(),
@@ -225,7 +224,7 @@ public interface DerivationContextConcept extends DerivationContext {
                 newTruth, newStamp,
                 revisable);
         // * 🚩构造新任务
-        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
         // * 🚩导出
         derivedTask(newTask);
     }

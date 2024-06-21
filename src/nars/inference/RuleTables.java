@@ -731,7 +731,7 @@ public class RuleTables {
                 final Term contentSubject = ((Statement) content).getSubject();
                 if (s2.getSubject().equals(contentSubject)) {
                     // * 📄【2024-06-10 17:46:02】一例：
-                    // * TaskV1@838 "<<toothbrush --> $1> ==> <cup --> $1>>.
+                    // * Task@838 "<<toothbrush --> $1> ==> <cup --> $1>>.
                     // * // from task: $0.80;0.80;0.95$ <toothbrush --> [bendable]>. %1.00;0.90%
                     // * // from belief: <cup --> [bendable]>. %1.00;0.90% {460 : 37} "
                     // * content="<cup --> toothbrush>"
@@ -866,7 +866,7 @@ public class RuleTables {
                 // * compound="(--,(--,A))"
                 // * component="(--,A)"
                 // * currentConcept=Concept@63 "(--,(--,A))"
-                // * currentTask=TaskV1@807 "$0.8000;0.8000;0.9500$ (--,(--,A)). %1.00;0.90%"
+                // * currentTask=Task@807 "$0.8000;0.8000;0.9500$ (--,(--,A)). %1.00;0.90%"
                 StructuralRules.transformNegation(
                         ((Negation) compound).getTheComponent(),
                         context);

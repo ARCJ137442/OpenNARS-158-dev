@@ -11,7 +11,6 @@ import nars.entity.Sentence;
 import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.entity.TaskV1;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
@@ -251,7 +250,7 @@ public interface DerivationContext {
     public default void activatedTask(final Budget budget, final Judgement newTask, final Judgement candidateBelief) {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
         final BudgetValue newBudget = BudgetValue.from(budget);
-        final Task task = new TaskV1(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
+        final Task task = new Task(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
         this.getStringsToRecord().add("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (newTask.isQuestion()) {
@@ -302,7 +301,7 @@ public interface DerivationContext {
                 newContent,
                 newPunctuation, newTruth,
                 newStamp, true);
-        final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);
+        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
         derivedTask(newTask);
     }
 
