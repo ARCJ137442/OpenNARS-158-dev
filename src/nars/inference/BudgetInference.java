@@ -159,7 +159,7 @@ public final class BudgetInference {
      * @return [] The budget of the conclusion
      */
     public static Budget compoundBackwardWeak(Term content, DerivationContextConcept context) {
-        return budgetInference(BudgetInferenceFunction.BackwardWeak, null, content, context);
+        return budgetInference(BudgetInferenceFunction.CompoundBackwardWeak, null, content, context);
     }
 
     /**
