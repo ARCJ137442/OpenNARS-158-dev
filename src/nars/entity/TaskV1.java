@@ -139,11 +139,6 @@ public class TaskV1 implements Task {
         return this.sentence.sentenceClone();
     }
 
-    @Override
-    public boolean __revisable() {
-        return this.sentence.__revisable();
-    }
-
     // impl Stamp for TaskV1
 
     @Override

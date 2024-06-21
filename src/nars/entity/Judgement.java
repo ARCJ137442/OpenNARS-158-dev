@@ -37,6 +37,9 @@ public interface Judgement extends Sentence, Truth {
         return Judgement.revisable(this, baseBelief);
     }
 
+    /** 🆕获取内部的「是否可参与修订」属性 */
+    public boolean getRevisable();
+
     @Override
     default boolean isJudgment() {
         return true;

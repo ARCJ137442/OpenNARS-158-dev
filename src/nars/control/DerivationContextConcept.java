@@ -213,10 +213,15 @@ public interface DerivationContextConcept extends DerivationContext {
         // * 🚩构造新时间戳
         final Stamp newStamp = this.generateNewStampSingle();
         // * 🚩使用新内容构造新语句
+        final boolean revisable = taskSentence.isJudgment()
+                // * 🚩判断句⇒返回实际的「可修订」
+                ? taskSentence.asJudgement().getRevisable()
+                // * 🚩疑问句⇒返回一个用不到的空值
+                : false;
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(
                 newContent, punctuation,
                 newTruth, newStamp,
-                taskSentence.getRevisable());
+                revisable);
         // * 🚩构造新任务
         final Task newTask = new TaskV1(newSentence, newBudget, this.getCurrentTask(), null);
         // * 🚩导出

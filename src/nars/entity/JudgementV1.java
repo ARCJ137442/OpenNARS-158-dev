@@ -22,6 +22,15 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
     private final SentenceInner inner;
 
     /**
+     * Whether the sentence can be revised
+     *
+     * * ️📝可空性：非空
+     * * 📝可变性：不变 | 仅构造时，无需可变
+     * * 📝所有权：具所有权
+     */
+    private final boolean revisable;
+
+    /**
      * The truth value of Judgment
      *
      * * ️📝可空性：非空
@@ -35,7 +44,8 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
     public JudgementV1(Term content, Truth truth, Stamp stamp, boolean revisable) {
         if (truth == null)
             throw new AssertionError("truth can't be null");
-        this.inner = new SentenceInner(content, stamp, revisable);
+        this.inner = new SentenceInner(content, stamp);
+        this.revisable = revisable;
         this.truth = TruthValue.from(truth);
     }
 
@@ -43,6 +53,7 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
     protected JudgementV1(JudgementV1 j) {
         this.inner = j.inner.clone();
         this.truth = j.truth.clone();
+        this.revisable = j.revisable;
     }
 
     // impl Truth for JudgementV1
@@ -118,11 +129,6 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
     // impl Sentence for JudgementV1
 
     @Override
-    public boolean __revisable() {
-        return this.inner.__revisable();
-    }
-
-    @Override
     public Sentence sentenceClone() {
         return new JudgementV1(this);
     }
@@ -159,4 +165,9 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
     }
 
     // impl Judgement for JudgementV1
+
+    @Override
+    public boolean getRevisable() {
+        return this.revisable;
+    }
 }

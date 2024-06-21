@@ -43,7 +43,7 @@ public abstract class SentenceV1 implements Sentence {
             case JUDGMENT_MARK:
                 return new JudgementV1(newContent, newTruth, newStamp, revisable);
             case QUESTION_MARK:
-                return new QuestionV1(newContent, newStamp, revisable);
+                return new QuestionV1(newContent, newStamp);
             default:
                 throw new IllegalArgumentException("unknown punctuation: " + punctuation);
         }

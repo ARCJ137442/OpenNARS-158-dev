@@ -156,7 +156,7 @@ public interface Evidential {
      *
      * @return The TreeSet representation of the evidential base
      */
-    private static TreeSet<Long> evidenceSet(Evidential self) {
+    static TreeSet<Long> evidenceSet(Evidential self) {
         final TreeSet<Long> set = new TreeSet<>();
         for (final long serial : self.getEvidentialBase()) {
             set.add(serial);

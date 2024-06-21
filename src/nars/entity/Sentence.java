@@ -22,7 +22,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
 
     // * ✅【2024-06-08 11:36:18】成功删除：通过`stampToString`成功解耦
 
-    boolean __revisable();
+    // * ✅【2024-06-21 16:18:52】成功删除：下放到「判断句」中
 
     /**
      * 🆕复制其中的「语句」成分
@@ -92,10 +92,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
         throw new Error("不是疑问句");
     }
 
-    public default boolean getRevisable() {
-        return __revisable();
-    }
-
     /**
      * Get a String representation of the sentence for key of Task and TaskLink
      *
@@ -116,7 +112,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      * @return The String
      */
     public default String sentenceToStringBrief() {
-        return toKey() + this.stampToString();
+        return this.toKey() + this.stampToString();
     }
 
     /**
@@ -133,7 +129,8 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      *
      * @return
      */
-    public Sentence sentenceCloneWithSamePunctuation(Term content,
+    public Sentence sentenceCloneWithSamePunctuation(
+            final Term content,
             final Term newContent,
             final Truth newTruth,
             final Stamp newStamp,
@@ -160,14 +157,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          * * 📝所有权：具所有权
          */
         private final Stamp stamp;
-        /**
-         * Whether the sentence can be revised
-         *
-         * * ️📝可空性：非空
-         * * 📝可变性：不变 | 仅构造时，无需可变
-         * * 📝所有权：具所有权
-         */
-        private final boolean revisable;
 
         // impl SentenceInner
 
@@ -181,7 +170,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
          *                    and base
          * @param revisable   Whether the sentence can be revised
          */
-        protected SentenceInner(Term content, Stamp stamp, boolean revisable) {
+        protected SentenceInner(Term content, Stamp stamp) {
             if (content == null)
                 throw new AssertionError("【2024-06-15 12:56:36】不能用空词项构造语句！");
             if (stamp == null)
@@ -210,7 +199,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
             // if (this.content == null)
             // throw new AssertionError("【2024-06-15 12:56:36】不能用空词项构造语句！");
             this.stamp = stamp;
-            this.revisable = revisable;
         }
 
         // impl Evidential for SentenceInner
@@ -220,10 +208,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
         }
 
         // impl Sentence for SentenceInner
-
-        public boolean __revisable() {
-            return revisable;
-        }
 
         public Term getContent() {
             return content;
@@ -237,8 +221,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
                     content.clone(),
                     // punctuation,
                     // truth == null ? null : truth.clone(),
-                    stamp.clone(),
-                    revisable);
+                    stamp.clone());
         }
 
         // ! 🚩【2024-06-08 23:30:24】经实验，用法上并不需要判等

@@ -23,8 +23,8 @@ public class QuestionV1 extends SentenceV1 implements Question {
 
     // impl QuestionV1
 
-    public QuestionV1(Term content, Stamp stamp, boolean revisable) {
-        this.inner = new SentenceInner(content, stamp, revisable);
+    public QuestionV1(Term content, Stamp stamp) {
+        this.inner = new SentenceInner(content, stamp);
     }
 
     /** 复制构造函数 */
@@ -84,11 +84,6 @@ public class QuestionV1 extends SentenceV1 implements Question {
     // impl Sentence for QuestionV1
 
     @Override
-    public boolean __revisable() {
-        return this.inner.__revisable();
-    }
-
-    @Override
     public Sentence sentenceClone() {
         return new QuestionV1(this);
     }
@@ -109,7 +104,7 @@ public class QuestionV1 extends SentenceV1 implements Question {
             final Truth newTruth,
             final Stamp newStamp,
             final boolean revisable) {
-        return new QuestionV1(content, newStamp, revisable);
+        return new QuestionV1(content, newStamp);
     }
 
     // impl Evidential for QuestionV1
