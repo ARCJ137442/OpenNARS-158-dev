@@ -145,7 +145,7 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
     private static final TLinkType generateTypeFromTemplate(final Term target, final TermLinkTemplate template) {
         final TLinkType templateType = template.getType();
         // * 🚩断言此时「链接模板」的链接类型
-        if (!TLink.isToCompound(templateType))
+        if (!templateType.isToCompound())
             throw new AssertionError("模板必定是「从元素链接到整体」");
         // * 🚩开始计算类型
         final TLinkType result;

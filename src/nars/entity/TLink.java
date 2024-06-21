@@ -61,6 +61,44 @@ public interface TLink<Target> {
         }
 
         /**
+         * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+         *
+         * @param this
+         * @return
+         */
+        public boolean isToComponent() {
+            switch (this) {
+                // from COMPONENT
+                case COMPONENT: // 1
+                case COMPONENT_STATEMENT: // 3
+                case COMPONENT_CONDITION: // 5
+                    return true;
+                // #other
+                default:
+                    return false;
+            }
+        }
+
+        /**
+         * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+         *
+         * @param this
+         * @return
+         */
+        public boolean isToCompound() {
+            switch (this) {
+                // from COMPONENT
+                case COMPOUND: // 2
+                case COMPOUND_STATEMENT: // 4
+                case COMPOUND_CONDITION: // 6
+                    return true;
+                // #other | 🚩【2024-06-04 18:25:26】目前不包括TRANSFORM
+                default:
+                    return false;
+            }
+        }
+
+        /**
          * 🆕从「元素→整体」变成「整体→元素」
          * * 🚩「自元素到整体」⇒「自整体到元素」
          * * 📌【2024-06-04 19:51:48】目前只在「元素→整体」⇒「整体→元素」的过程中调用
@@ -104,56 +142,11 @@ public interface TLink<Target> {
 
     /**
      * Get all the indices
+     * * 📝对此对象的直接访问在「转换规则」中用到
      *
      * @return The index array
      */
     public short[] getIndices();
-
-    /**
-     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
-     *
-     * @param type
-     * @return
-     */
-    public static boolean isToComponent(TLinkType type) {
-        switch (type) {
-            // from COMPONENT
-            case COMPONENT: // 1
-            case COMPONENT_STATEMENT: // 3
-            case COMPONENT_CONDITION: // 5
-                return true;
-            // #other
-            default:
-                return false;
-        }
-    }
-
-    public default boolean isToComponent() {
-        return isToComponent(this.getType());
-    }
-
-    /**
-     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
-     *
-     * @param type
-     * @return
-     */
-    public static boolean isToCompound(TLinkType type) {
-        switch (type) {
-            // from COMPONENT
-            case COMPOUND: // 2
-            case COMPOUND_STATEMENT: // 4
-            case COMPOUND_CONDITION: // 6
-                return true;
-            // #other | 🚩【2024-06-04 18:25:26】目前不包括TRANSFORM
-            default:
-                return false;
-        }
-    }
-
-    public default boolean isToCompound() {
-        return isToCompound(this.getType());
-    }
 
     /**
      * Set the key of the link
@@ -167,7 +160,7 @@ public interface TLink<Target> {
         // * 📝 向元素: 整体 "@(【索引】)_" 元素
         // * 📝 向整体: 元素 "_@(【索引】)" 整体
         final String at1, at2;
-        if (isToComponent(type)) { // to component
+        if (type.isToComponent()) { // to component
             at1 = Symbols.TO_COMPONENT_1;
             at2 = Symbols.TO_COMPONENT_2;
         } else { // to compound
@@ -301,7 +294,7 @@ public interface TLink<Target> {
                 final TLinkType type,
                 final int[] indices) {
             // * 🚩假定此处是「COMPOUND」系列或「TRANSFORM」类型——链接到复合词项
-            if (!(TLink.isToCompound(type) || type == TLinkType.TRANSFORM))
+            if (!(type.isToCompound() || type == TLinkType.TRANSFORM))
                 throw new AssertionError("type " + type + " isn't from compound");
             final short[] index;
             // * 🚩原数组为「复合条件」⇒头部添加`0`
