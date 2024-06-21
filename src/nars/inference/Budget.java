@@ -94,7 +94,8 @@ public interface Budget {
      * @param that The other Budget
      */
     public default void mergeBudget(Budget that) {
-        BudgetInference.merge(this, that);
+        final Budget newBudget = BudgetFunctions.merge(this, that);
+        this.copyBudgetFrom(newBudget);
     }
 
     /**

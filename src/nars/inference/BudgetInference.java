@@ -81,18 +81,6 @@ public final class BudgetInference {
         return result.newBudget;
     }
 
-    /**
-     * Merge an item into another one in a bag, when the two are identical
-     * except in budget values
-     *
-     * @param baseValue   [&m] The budget value to be modified
-     * @param adjustValue [&] The budget doing the adjusting
-     */
-    public static void merge(Budget baseValue, Budget adjustValue) {
-        final Budget newBudget = BudgetFunctions.merge(baseValue, adjustValue);
-        baseValue.copyBudgetFrom(newBudget);
-    }
-
     /* ----- Task derivation in LocalRules and SyllogisticRules ----- */
     /**
      * Forward inference result and adjustment

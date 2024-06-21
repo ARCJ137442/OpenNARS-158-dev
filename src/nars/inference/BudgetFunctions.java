@@ -359,7 +359,9 @@ public final class BudgetFunctions extends UtilityFunctions {
     }
 
     /**
-     * 🆕「合并」两个预算值，但输出到新值
+     * Merge an item into another one in a bag, when the two are identical except in
+     * budget values
+     * * 🚩「合并」两个预算值，但输出到新值
      *
      * @param baseValue   [&] The budget value to merge
      * @param adjustValue [&] The budget doing the adjusting
