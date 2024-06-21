@@ -279,10 +279,10 @@ public final class Bag<E extends Item> {
             // newItem.mergeBudget(oldItem);
             switch (this.mergeOrderF.call(oldItem, newItem)) {
                 case OldToNew:
-                    oldItem.mergeBudget(newItem);
+                    newItem.mergeBudget(oldItem);
                     break;
                 case NewToOld: // * 📝原先统一是相当于这个
-                    newItem.mergeBudget(oldItem);
+                    oldItem.mergeBudget(newItem);
                     break;
             }
         }
