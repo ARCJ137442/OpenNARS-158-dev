@@ -149,21 +149,16 @@ public class Task implements Sentence, Item {
         return token.getKey();
     }
 
-    // impl Sentence for Task
+    // impl Evidential for Task
 
     @Override
-    public Term getContent() {
-        return this.sentence.getContent();
+    public long[] __evidentialBase() {
+        return this.sentence.__evidentialBase();
     }
 
     @Override
-    public char getPunctuation() {
-        return this.sentence.getPunctuation();
-    }
-
-    @Override
-    public Sentence sentenceClone() {
-        return this.sentence.sentenceClone();
+    public long __creationTime() {
+        return this.sentence.__creationTime();
     }
 
     // impl ToStringBriefAndLong for Task
@@ -196,19 +191,22 @@ public class Task implements Sentence, Item {
         return this.toString();
     }
 
-    // impl Evidential for Task
-
-    @Override
-    public long[] __evidentialBase() {
-        return this.sentence.__evidentialBase();
-    }
-
-    @Override
-    public long __creationTime() {
-        return this.sentence.__creationTime();
-    }
-
     // impl Sentence for Task
+
+    @Override
+    public Term getContent() {
+        return this.sentence.getContent();
+    }
+
+    @Override
+    public char getPunctuation() {
+        return this.sentence.getPunctuation();
+    }
+
+    @Override
+    public Sentence sentenceClone() {
+        return this.sentence.sentenceClone();
+    }
 
     @Override
     public String toKey() {
