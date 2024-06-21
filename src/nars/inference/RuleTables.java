@@ -247,7 +247,7 @@ public class RuleTables {
         final Term taskSubject = taskTerm.getSubject();
         // * 🚩「否定」⇒继续作为「元素🆚陈述」处理
         if (taskSubject instanceof Negation)
-            if (task.isJudgment())
+            if (task.isJudgement())
                 componentAndStatement(
                         (Negation) taskSubject, bIndex,
                         taskTerm, tIndex,
@@ -722,7 +722,7 @@ public class RuleTables {
         // * * 主陈述="<<$1 --> (/,livingIn,_,{graz})> ==> <(*,$1,sunglasses) --> own>>"
         // * * 当前信念="<<$1 --> (/,livingIn,_,{graz})> ==> <(*,$1,sunglasses) --> own>>."
         // * 🚩当前任务是「判断句」且是「陈述」（任务、信念皆判断）⇒尝试引入变量
-        final boolean isCurrentTaskJudgement = context.getCurrentTask().isJudgment();
+        final boolean isCurrentTaskJudgement = context.getCurrentTask().isJudgement();
         final boolean isStatementMainPredicate = mainStatement.getPredicate() instanceof Statement;
         if (isCurrentTaskJudgement && isStatementMainPredicate) {
             // ? 💫【2024-06-10 17:50:36】此处逻辑尚未能完全理解
@@ -945,7 +945,7 @@ public class RuleTables {
                             statement.equals(beliefTerm), // ? 【2024-06-10 19:38:32】为何要如此
                             context);
                 /// * 🚩不能消去，但任务是判断句⇒内部引入变量
-                else if (task.isJudgment()) // && !compound.containComponent(component)) {
+                else if (task.isJudgement()) // && !compound.containComponent(component)) {
                     CompositionalRules.introVarInner(
                             statement, (Statement) component,
                             compound,
@@ -960,7 +960,7 @@ public class RuleTables {
         }
         // if (!task.isStructural() && task.isJudgment()) {
         // * 🚩类型不同 且为双判断
-        else if (task.isJudgment()) {
+        else if (task.isJudgement()) {
             final boolean canComposeBoth;
             // * 🚩涉及的陈述是「继承」
             if (statement instanceof Inheritance) {

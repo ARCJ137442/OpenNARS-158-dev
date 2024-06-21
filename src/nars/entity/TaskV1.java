@@ -174,7 +174,7 @@ public class TaskV1 implements Task {
             throw new AssertionError(this + " is not question");
         if (judgment == null)
             throw new AssertionError("judgment == null");
-        if (!judgment.isJudgment())
+        if (!judgment.isJudgement())
             throw new AssertionError(judgment + " is not judgment");
         // * 🚩【2024-06-01 16:37:47】遵照原意，不复制
         this.bestSolution = judgment;
@@ -217,8 +217,8 @@ public class TaskV1 implements Task {
     }
 
     @Override
-    public boolean isJudgment() {
-        return this.sentence.isJudgment();
+    public boolean isJudgement() {
+        return this.sentence.isJudgement();
     }
 
     @Override

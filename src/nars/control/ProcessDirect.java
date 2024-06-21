@@ -84,7 +84,7 @@ public abstract class ProcessDirect {
             else {
                 // * 🚩筛选
                 final boolean shouldAddToNovelTasks;
-                if (task.isJudgment()) {
+                if (task.isJudgement()) {
                     // * 🚩判断句⇒看期望，期望满足⇒放进「新近任务」
                     final double exp = task.asJudgement().getExpectation();
                     shouldAddToNovelTasks = exp > Parameters.DEFAULT_CREATION_EXPECTATION;
@@ -239,7 +239,7 @@ public abstract class ProcessDirect {
         // * 📝【2024-05-18 14:32:20】根据上游调用，此处「传入」的`task`只可能是`context.currentTask`
         final Task task = context.getCurrentTask();
         // * 🚩断言传入任务的「语句」一定是「判断」
-        if (!task.isJudgment())
+        if (!task.isJudgement())
             throw new AssertionError("task " + task + "is not a judgment");
         final Judgement judgment = task.sentenceClone().asJudgement(); // ? 此处是否要将「任务」直接作为「信念」存储
         // * 🚩找到旧信念，并尝试修正
@@ -249,7 +249,7 @@ public abstract class ProcessDirect {
         if (oldBelief != null) {
             if (judgment.evidentialEqual(oldBelief)) {
                 // * 🚩时间戳上重复⇒优先级沉底，避免重复推理
-                if (task.getParentTask().isJudgment()) {
+                if (task.getParentTask().isJudgement()) {
                     task.setPriority(0); // duplicated task
                 } // else: activated belief
                 return;

@@ -87,7 +87,7 @@ public final class CompositionalRules {
             int sharedTermI,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
-        if ((!context.getCurrentTask().isJudgment())
+        if ((!context.getCurrentTask().isJudgement())
                 || !(taskContent.isSameType(beliefContent))) {
             return;
         }
@@ -486,7 +486,7 @@ public final class CompositionalRules {
             DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        if (!task.isJudgment() || (!premise1.isSameType(premise2))
+        if (!task.isJudgement() || (!premise1.isSameType(premise2))
                 || oldCompound.containComponent(premise1)) {
             return;
         }

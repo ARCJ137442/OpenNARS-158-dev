@@ -41,7 +41,7 @@ public interface Judgement extends Sentence, Truth {
     public boolean getRevisable();
 
     @Override
-    default boolean isJudgment() {
+    default boolean isJudgement() {
         return true;
     }
 

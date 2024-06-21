@@ -63,7 +63,7 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
      *
      * @return Whether the object is a Judgment
      */
-    public default boolean isJudgment() {
+    public default boolean isJudgement() {
         return false;
     }
 

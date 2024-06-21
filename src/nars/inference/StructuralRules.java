@@ -77,7 +77,7 @@ final class StructuralRules {
             budget = BudgetInference.compoundBackwardWeak(content, context);
         } else {
             if (compound.size() > 1) {
-                if (task.isJudgment()) {
+                if (task.isJudgement()) {
                     truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
                 } else {
                     return;
@@ -126,7 +126,7 @@ final class StructuralRules {
             truth = null;
             budget = BudgetInference.compoundBackward(content, context);
         } else {
-            if (!(sub instanceof Product) && (sub.size() > 1) && (task.isJudgment())) {
+            if (!(sub instanceof Product) && (sub.size() > 1) && (task.isJudgement())) {
                 return;
             }
             truth = task.asJudgement().truthClone();
@@ -161,7 +161,7 @@ final class StructuralRules {
     static void structuralComposeOne(CompoundTerm compound, short index, Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
-        if (!context.getCurrentTask().isJudgment()) {
+        if (!context.getCurrentTask().isJudgement()) {
             return;
         }
         final Term component = compound.componentAt(index);
@@ -210,7 +210,7 @@ final class StructuralRules {
             Statement statement,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
-        if (!context.getCurrentTask().isJudgment()) {
+        if (!context.getCurrentTask().isJudgement()) {
             return;
         }
         final Term component = compound.componentAt(index);
@@ -340,7 +340,7 @@ final class StructuralRules {
             truth = null;
             budget = BudgetInference.compoundBackward(content, context);
         } else {
-            if ((task.isJudgment()) == (isCompoundFromTask == (compound instanceof Conjunction))) {
+            if ((task.isJudgement()) == (isCompoundFromTask == (compound instanceof Conjunction))) {
                 truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
             } else {
                 truth = TruthFunctions.negation(

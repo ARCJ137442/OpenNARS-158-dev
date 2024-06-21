@@ -58,7 +58,7 @@ public interface DerivationContextConcept extends DerivationContext {
 
     /** 🆕产生新时间戳 from 单前提 */
     default Stamp generateNewStampSingle() {
-        return ((this.getCurrentTask().isJudgment() || !this.hasCurrentBelief())
+        return ((this.getCurrentTask().isJudgement() || !this.hasCurrentBelief())
                 ? new Stamp(this.getCurrentTask(), this.getTime())
                 // to answer a question with negation in NAL-5 --- move to activated task?
                 : new Stamp(this.getCurrentBelief(), this.getTime()));
@@ -191,7 +191,7 @@ public interface DerivationContextConcept extends DerivationContext {
 
     public default void singlePremiseTask(Term newContent, char punctuation, Task currentTask, Budget newBudget) {
         // * 🚩根据「是否为『判断』」复制真值
-        final Truth newTruth = currentTask.isJudgment() ? TruthValue.from(currentTask.asJudgement()) : null;
+        final Truth newTruth = currentTask.isJudgement() ? TruthValue.from(currentTask.asJudgement()) : null;
         singlePremiseTask(newContent, punctuation, newTruth, newBudget);
     }
 
@@ -213,7 +213,7 @@ public interface DerivationContextConcept extends DerivationContext {
         // * 🚩构造新时间戳
         final Stamp newStamp = this.generateNewStampSingle();
         // * 🚩使用新内容构造新语句
-        final boolean revisable = taskSentence.isJudgment()
+        final boolean revisable = taskSentence.isJudgement()
                 // * 🚩判断句⇒返回实际的「可修订」
                 ? taskSentence.asJudgement().getRevisable()
                 // * 🚩疑问句⇒返回一个用不到的空值

@@ -54,7 +54,7 @@ public abstract class ProcessReason {
             // * 🚩若作为「判断」成功⇒直接结束该信念的推理
             // * 📝尚且不能完全迁移出「概念推理」中：需要在一个「推理上下文」中行事
             final boolean hasResult = context.getNewTasks().size() > oldDerivedTasks;
-            if (hasResult && context.getCurrentTask().isJudgment())
+            if (hasResult && context.getCurrentTask().isJudgement())
                 continue;
             // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理
             // * 📌依据：`long_term_stability.nal`
