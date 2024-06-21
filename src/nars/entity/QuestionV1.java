@@ -2,7 +2,6 @@ package nars.entity;
 
 import static nars.io.Symbols.QUESTION_MARK;
 
-import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -96,15 +95,6 @@ public class QuestionV1 extends SentenceV1 implements Question {
     @Override
     public char getPunctuation() {
         return QUESTION_MARK;
-    }
-
-    @Override
-    public Sentence sentenceCloneWithSamePunctuation(Term content,
-            final Term newContent,
-            final Truth newTruth,
-            final Stamp newStamp,
-            final boolean revisable) {
-        return new QuestionV1(content, newStamp);
     }
 
     // impl Evidential for QuestionV1

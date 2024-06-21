@@ -143,15 +143,6 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
         return JUDGMENT_MARK;
     }
 
-    @Override
-    public Sentence sentenceCloneWithSamePunctuation(Term content,
-            final Term newContent,
-            final Truth newTruth,
-            final Stamp newStamp,
-            final boolean revisable) {
-        return new JudgementV1(content, newTruth, newStamp, revisable);
-    }
-
     // impl Evidential for JudgementV1
 
     @Override

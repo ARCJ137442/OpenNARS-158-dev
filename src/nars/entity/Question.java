@@ -28,7 +28,7 @@ public interface Question extends Sentence {
     public default String toKey() {
         final StringBuilder s = new StringBuilder();
         s.append(this.getContent().toString());
-        s.append(this.getPunctuation()).append(" ");
+        s.append(this.getPunctuation());
         return s.toString();
     }
 
@@ -41,7 +41,7 @@ public interface Question extends Sentence {
     public default String sentenceToString() {
         StringBuilder s = new StringBuilder();
         s.append(this.getContent().toString());
-        s.append(this.getPunctuation()).append(" ");
+        s.append(this.getPunctuation());
         s.append(this.stampToString());
         return s.toString();
     }

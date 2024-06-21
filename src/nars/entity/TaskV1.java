@@ -1,7 +1,6 @@
 package nars.entity;
 
 import nars.inference.Budget;
-import nars.inference.Truth;
 import nars.language.Term;
 
 /**
@@ -208,12 +207,6 @@ public class TaskV1 implements Task {
     @Override
     public String sentenceToString() {
         return this.sentence.sentenceToString();
-    }
-
-    @Override
-    public Sentence sentenceCloneWithSamePunctuation(Term content, Term newContent, Truth newTruth, Stamp newStamp,
-            boolean revisable) {
-        return this.sentence.sentenceCloneWithSamePunctuation(content, newContent, newTruth, newStamp, revisable);
     }
 
     @Override

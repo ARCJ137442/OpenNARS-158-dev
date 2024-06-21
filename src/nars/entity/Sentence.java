@@ -1,6 +1,5 @@
 package nars.entity;
 
-import nars.inference.Truth;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.language.VariableProcess;
@@ -121,20 +120,6 @@ public interface Sentence extends ToStringBriefAndLong, Evidential {
     public default String sentenceToStringLong() {
         return this.sentenceToString();
     }
-
-    /**
-     * 🆕用于「新任务建立」
-     * * 🚩使用最大并集（可设置为空）建立同标点新语句
-     * * 📄判断⇒判断，问题⇒问题
-     *
-     * @return
-     */
-    public Sentence sentenceCloneWithSamePunctuation(
-            final Term content,
-            final Term newContent,
-            final Truth newTruth,
-            final Stamp newStamp,
-            final boolean revisable);
 
     /** 🆕一个用于「复用共有字段」的内部对象 */
     public static final class SentenceInner {
