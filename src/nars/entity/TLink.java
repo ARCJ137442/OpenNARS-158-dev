@@ -30,6 +30,8 @@ public interface TLink<Target> {
         /** From C, targeted to "TRANSFORM" <(*, C, B) --> A>; TaskLink only */
         TRANSFORM; // = 8
 
+        // impl TLinkType
+
         /**
          * 🆕获取「链接类型」的「排序」，即原OpenNARS中的编号
          *
@@ -84,6 +86,113 @@ public interface TLink<Target> {
                     throw new Error("Unexpected type: " + this + " not to compound");
             }
         }
+    }
+
+    /**
+     * Get the target of the link
+     *
+     * @return The Term/Task pointed by the link
+     */
+    public Target getTarget();
+
+    /**
+     * Get the link type
+     *
+     * @return Type of the link
+     */
+    public TLinkType getType();
+
+    /**
+     * Get all the indices
+     *
+     * @return The index array
+     */
+    public short[] getIndices();
+
+    /**
+     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+     *
+     * @param type
+     * @return
+     */
+    public static boolean isToComponent(TLinkType type) {
+        switch (type) {
+            // from COMPONENT
+            case COMPONENT: // 1
+            case COMPONENT_STATEMENT: // 3
+            case COMPONENT_CONDITION: // 5
+                return true;
+            // #other
+            default:
+                return false;
+        }
+    }
+
+    public default boolean isToComponent() {
+        return isToComponent(this.getType());
+    }
+
+    /**
+     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
+     *
+     * @param type
+     * @return
+     */
+    public static boolean isToCompound(TLinkType type) {
+        switch (type) {
+            // from COMPONENT
+            case COMPOUND: // 2
+            case COMPOUND_STATEMENT: // 4
+            case COMPOUND_CONDITION: // 6
+                return true;
+            // #other | 🚩【2024-06-04 18:25:26】目前不包括TRANSFORM
+            default:
+                return false;
+        }
+    }
+
+    public default boolean isToCompound() {
+        return isToCompound(this.getType());
+    }
+
+    /**
+     * Set the key of the link
+     * * 📝原`setKey`就是「根据现有信息计算出key，并最终给自身key赋值」的功能
+     * * 🚩【2024-05-30 19:06:30】现在不再有副作用，仅返回key让调用方自行决定
+     * * 📌原`setKey()`要变成`this.key = generateKey(this.type, this.index)`
+     */
+    static String generateKey(final TLinkType type, final short[] index) {
+        // * 🚩先添加左右括弧，分「向元素」和「向整体」表示
+        // * 📌格式：自身 - 目标 | "_"即「元素」
+        // * 📝 向元素: 整体 "@(【索引】)_" 元素
+        // * 📝 向整体: 元素 "_@(【索引】)" 整体
+        final String at1, at2;
+        if (isToComponent(type)) { // to component
+            at1 = Symbols.TO_COMPONENT_1;
+            at2 = Symbols.TO_COMPONENT_2;
+        } else { // to compound
+            at1 = Symbols.TO_COMPOUND_1;
+            at2 = Symbols.TO_COMPOUND_2;
+        }
+        // * 🚩再生成内部索引
+        String in = "T" + type.toOrder();
+        if (index != null) {
+            for (int i = 0; i < index.length; i++) {
+                in += "-" + (index[i] + 1);
+            }
+        }
+        return at1 + in + at2;
+    }
+
+    /**
+     * Get one index by level
+     *
+     * @param i The index level
+     * @return The index value
+     */
+    public default short getIndex(int i) {
+        // * 🚩索引之内⇒正常返回，索引之外⇒返回-1（未找到）
+        return i < getIndices().length ? getIndices()[i] : -1;
     }
 
     /**
@@ -229,112 +338,5 @@ public interface TLink<Target> {
         public final short[] getIndices() {
             return index;
         }
-    }
-
-    /**
-     * Get the target of the link
-     *
-     * @return The Term/Task pointed by the link
-     */
-    public Target getTarget();
-
-    /**
-     * Get the link type
-     *
-     * @return Type of the link
-     */
-    public TLinkType getType();
-
-    /**
-     * Get all the indices
-     *
-     * @return The index array
-     */
-    public short[] getIndices();
-
-    /**
-     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
-     *
-     * @param type
-     * @return
-     */
-    public static boolean isToComponent(TLinkType type) {
-        switch (type) {
-            // from COMPONENT
-            case COMPONENT: // 1
-            case COMPONENT_STATEMENT: // 3
-            case COMPONENT_CONDITION: // 5
-                return true;
-            // #other
-            default:
-                return false;
-        }
-    }
-
-    public default boolean isToComponent() {
-        return isToComponent(this.getType());
-    }
-
-    /**
-     * 🆕判断一个「T链接类型」是否为「从元素链接到复合词项」
-     *
-     * @param type
-     * @return
-     */
-    public static boolean isToCompound(TLinkType type) {
-        switch (type) {
-            // from COMPONENT
-            case COMPOUND: // 2
-            case COMPOUND_STATEMENT: // 4
-            case COMPOUND_CONDITION: // 6
-                return true;
-            // #other | 🚩【2024-06-04 18:25:26】目前不包括TRANSFORM
-            default:
-                return false;
-        }
-    }
-
-    public default boolean isToCompound() {
-        return isToCompound(this.getType());
-    }
-
-    /**
-     * Set the key of the link
-     * * 📝原`setKey`就是「根据现有信息计算出key，并最终给自身key赋值」的功能
-     * * 🚩【2024-05-30 19:06:30】现在不再有副作用，仅返回key让调用方自行决定
-     * * 📌原`setKey()`要变成`this.key = generateKey(this.type, this.index)`
-     */
-    static String generateKey(final TLinkType type, final short[] index) {
-        // * 🚩先添加左右括弧，分「向元素」和「向整体」表示
-        // * 📌格式：自身 - 目标 | "_"即「元素」
-        // * 📝 向元素: 整体 "@(【索引】)_" 元素
-        // * 📝 向整体: 元素 "_@(【索引】)" 整体
-        final String at1, at2;
-        if (isToComponent(type)) { // to component
-            at1 = Symbols.TO_COMPONENT_1;
-            at2 = Symbols.TO_COMPONENT_2;
-        } else { // to compound
-            at1 = Symbols.TO_COMPOUND_1;
-            at2 = Symbols.TO_COMPOUND_2;
-        }
-        // * 🚩再生成内部索引
-        String in = "T" + type.toOrder();
-        if (index != null) {
-            for (int i = 0; i < index.length; i++) {
-                in += "-" + (index[i] + 1);
-            }
-        }
-        return at1 + in + at2;
-    }
-
-    /**
-     * Get one index by level
-     *
-     * @param i The index level
-     * @return The index value
-     */
-    public default short getIndex(int i) {
-        // * 🚩索引之内⇒正常返回，索引之外⇒返回-1（未找到）
-        return i < getIndices().length ? getIndices()[i] : -1;
     }
 }
