@@ -3,7 +3,7 @@ package nars.storage;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import nars.entity.Item;
+import nars.entity.Item.BagItem;
 import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.main.Parameters;
@@ -22,7 +22,7 @@ import nars.main.Parameters;
  *
  * @param <E> The type of the Item in the Bag
  */
-public final class Bag<E extends Item> {
+public final class Bag<E> {
     // struct Bag<E: Item>
     /**
      * priority levels
@@ -47,11 +47,11 @@ public final class Bag<E extends Item> {
     /**
      * mapping from key to item
      */
-    private final HashMap<String, E> nameTable;
+    private final HashMap<String, BagItem<E>> nameTable;
     /**
      * array of lists of items, for items on different level
      */
-    private final ArrayList<LinkedList<E>> itemTable;
+    private final ArrayList<LinkedList<BagItem<E>>> itemTable;
     /**
      * defined in different bags
      */
@@ -106,7 +106,7 @@ public final class Bag<E extends Item> {
     public void init() {
         this.itemTable.clear();
         for (int i = 0; i < TOTAL_LEVEL; i++) {
-            this.itemTable.add(new LinkedList<E>());
+            this.itemTable.add(new LinkedList<>());
         }
         this.nameTable.clear();
         this.currentLevel = TOTAL_LEVEL - 1;
@@ -164,7 +164,7 @@ public final class Bag<E extends Item> {
      * @param it An item
      * @return Whether the Item is in the Bag
      */
-    public final boolean contains(E it) {
+    public final boolean contains(BagItem<E> it) {
         return nameTable.containsValue(it);
     }
 
@@ -184,7 +184,7 @@ public final class Bag<E extends Item> {
      * @param key The key of the Item
      * @return The Item with the given key
      */
-    public final E get(String key) {
+    public final BagItem<E> get(String key) {
         return nameTable.get(key);
     }
 
@@ -195,7 +195,7 @@ public final class Bag<E extends Item> {
      *
      * @param in
      */
-    private final void validateIn(E in) {
+    private final void validateIn(BagItem<E> in) {
         if (in == null)
             throw new AssertionError("尝试放进null");
         if (this.contains(in))
@@ -209,7 +209,7 @@ public final class Bag<E extends Item> {
      *
      * @param in
      */
-    private final E validateOut(E out) {
+    private final BagItem<E> validateOut(BagItem<E> out) {
         // if (out == null)
         // throw new AssertionError("尝试放出null");
         if (!this.has(out.getKey()))
@@ -223,13 +223,13 @@ public final class Bag<E extends Item> {
      * @param newItem The new Item
      * @return Whether the new Item is added into the Bag
      */
-    public final boolean putIn(E newItem) {
+    public final boolean putIn(BagItem<E> newItem) {
         // * 🚩预先检查
         validateIn(newItem);
         // * 🚩新物品的键
         final String newKey = newItem.getKey();
         // * 🚩置入名称表
-        final E oldItem = nameTable.put(newKey, newItem);
+        final BagItem<E> oldItem = nameTable.put(newKey, newItem);
         // * 🚩检查并处理「同名」情况
         if (oldItem != null) { // merge duplications
             // * 🚩重复的键
@@ -237,7 +237,7 @@ public final class Bag<E extends Item> {
             newItem.mergeBudget(oldItem);
         }
         // * 🚩置入层级表
-        final E overflowItem = this.intoBase(newItem); // put the (new or merged) item into itemTable
+        final BagItem<E> overflowItem = this.intoBase(newItem); // put the (new or merged) item into itemTable
         // * 🚩检查并处理「溢出」情况
         if (overflowItem != null) { // remove overflow
             // * 🚩对应移除「名称表」的元素
@@ -258,7 +258,7 @@ public final class Bag<E extends Item> {
      * @param oldItem The Item to put back
      * @return Whether the new Item is added into the Bag
      */
-    public final boolean putBack(E oldItem) {
+    public final boolean putBack(BagItem<E> oldItem) {
         // * 🚩检查
         this.validateIn(oldItem);
         // * 🚩在「放入」前进行一次「遗忘」
@@ -268,7 +268,7 @@ public final class Bag<E extends Item> {
     }
 
     /** 以一定函数修改某个Item的优先级 */
-    public final void forget(E oldItem) {
+    public final void forget(BagItem<E> oldItem) {
         final float newPriority = BudgetFunctions.forget(oldItem, this.forgetRate.get(), RELATIVE_THRESHOLD);
         oldItem.setPriority(newPriority);
     }
@@ -279,7 +279,7 @@ public final class Bag<E extends Item> {
      *
      * @return The selected Item (or null)
      */
-    public final E takeOut() {
+    public final BagItem<E> takeOut() {
         // * 🚩空袋⇒返回空
         if (this.isEmpty()) // empty bag
             return null;
@@ -300,7 +300,7 @@ public final class Bag<E extends Item> {
                     : this.itemTable.get(this.currentLevel).size();
         }
         // * 🚩拿取物品
-        final E selected = this.takeOutFirst(currentLevel); // take out the first item in the level
+        final BagItem<E> selected = this.takeOutFirst(currentLevel); // take out the first item in the level
         this.validateOut(selected);
         this.nameTable.remove(selected.getKey());
         // * 🚩更新计数器、显示呈现
@@ -316,11 +316,11 @@ public final class Bag<E extends Item> {
      * @param key The given key
      * @return The Item with the key (or null)
      */
-    public final E pickOut(String key) {
+    public final BagItem<E> pickOut(String key) {
         // * 🚩从「名称表」中拿出一个物品
         if (this.nameTable.containsKey(key)) {
             // * 🚩真的拿出物品
-            final E picked = this.nameTable.remove(key);
+            final BagItem<E> picked = this.nameTable.remove(key);
             this.outOfBase(picked);
             return picked;
         }
@@ -343,7 +343,7 @@ public final class Bag<E extends Item> {
      * @param item The Item to put in
      * @return The put-in level
      */
-    private final int getLevel(E item) {
+    private final int getLevel(BagItem<E> item) {
         // * 🚩优先级×总层级
         float fl = item.getPriority() * TOTAL_LEVEL;
         // * 🚩舍入 | 💫其中的机制稍许令人困惑
@@ -357,8 +357,8 @@ public final class Bag<E extends Item> {
      * @param newItem The Item to put in
      * @return The overflow Item (may be null)
      */
-    private final E intoBase(E newItem) {
-        E oldItem = null;
+    private final BagItem<E> intoBase(BagItem<E> newItem) {
+        BagItem<E> oldItem = null;
         // * 🚩获取新物品要被放到的层级
         final int inLevel = this.getLevel(newItem);
         // * 🚩容量已满，准备放出物品
@@ -386,14 +386,14 @@ public final class Bag<E extends Item> {
     }
 
     /**
-     * Take out the first or last E in a level from the itemTable
+     * Take out the first or last BagItem<E> in a level from the itemTable
      *
      * @param level The current level
      * @return The first Item
      */
-    private final E takeOutFirst(int level) {
+    private final BagItem<E> takeOutFirst(int level) {
         // * 🚩尝试在指定层级中取出一个元素 | 📝同义重构：获取第一个=移除第一个（后的返回值）
-        final E selected = this.itemTable.get(level).removeFirst();
+        final BagItem<E> selected = this.itemTable.get(level).removeFirst();
         // * 🚩更新自身的「质量」值
         this.mass -= level + 1;
         // * 🚩刷新显示呈现
@@ -406,7 +406,7 @@ public final class Bag<E extends Item> {
      *
      * @param oldItem The Item to be removed
      */
-    private final void outOfBase(E oldItem) {
+    private final void outOfBase(BagItem<E> oldItem) {
         // * 🚩从「层级表」中移除对应物品
         final int level = this.getLevel(oldItem);
         this.itemTable.get(level).remove(oldItem);
@@ -465,7 +465,7 @@ public final class Bag<E extends Item> {
             if (!emptyLevel(i - 1)) {
                 buf = buf.append("\n --- Level ").append(i).append(":\n ");
                 for (int j = 0; j < itemTable.get(i - 1).size(); j++) {
-                    final Item item = itemTable.get(i - 1).get(j);
+                    final BagItem<E> item = itemTable.get(i - 1).get(j);
                     if (item instanceof ToStringBriefAndLong)
                         buf = buf.append(((ToStringBriefAndLong) item).toStringBrief()).append("\n ");
                 }
@@ -484,7 +484,7 @@ public final class Bag<E extends Item> {
             if (!emptyLevel(i - 1)) {
                 buf = buf.append("\n --- LEVEL ").append(i).append(":\n ");
                 for (int j = 0; j < itemTable.get(i - 1).size(); j++) {
-                    final Item item = itemTable.get(i - 1).get(j);
+                    final BagItem<E> item = itemTable.get(i - 1).get(j);
                     if (item instanceof ToStringBriefAndLong)
                         buf = buf.append(((ToStringBriefAndLong) item).toStringLong()).append("\n ");
                 }
@@ -500,7 +500,7 @@ public final class Bag<E extends Item> {
     final String showSizes() {
         StringBuilder buf = new StringBuilder(" ");
         int levels = 0;
-        for (LinkedList<E> items : itemTable) {
+        for (LinkedList<BagItem<E>> items : itemTable) {
             if ((items != null) && !items.isEmpty()) {
                 levels++;
                 buf.append(items.size()).append(" ");
