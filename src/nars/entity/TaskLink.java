@@ -17,6 +17,7 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
 
     /**
      * 🆕纯粹的T链接类型
+     * * 📌对内部封装的「任务」是共享引用
      *
      * * ️📝可空性：非空
      * * 📝可变性：不可变
@@ -87,7 +88,7 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
 
     @Override
     public String getKey() {
-        return token.getKey();
+        return this.token.getKey();
     }
 
     // impl TLink<Task> for TaskLink
@@ -237,7 +238,7 @@ public class TaskLink implements TLink<Task>, Item, ToStringBriefAndLong {
 
     @Override
     public String toString() {
-        final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
+        final String superString = this.token.getBudgetValue().toString() + " " + this.getKey().toString();
         return superString + " " + getTarget().stampToString();
     }
 

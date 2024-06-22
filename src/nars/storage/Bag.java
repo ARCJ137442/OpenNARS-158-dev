@@ -97,13 +97,8 @@ public final class Bag<E extends Item> {
      * @param capacity   the capacity of the bag
      */
     public Bag(AtomicInteger forgetRate, int capacity) {
-        this.capacity = capacity;
-        this.forgetRate = forgetRate;
-        this.itemTable = new ArrayList<>(TOTAL_LEVEL);
-        this.nameTable = new HashMap<>((int) (capacity / LOAD_FACTOR), LOAD_FACTOR);
         // * 📜默认就是「旧的并入新的」
-        this.mergeOrderF = (oldValue, newValue) -> MergeOrder.OldToNew;
-        init();
+        this(forgetRate, capacity, (oldValue, newValue) -> MergeOrder.OldToNew);
     }
 
     /**
@@ -249,13 +244,13 @@ public final class Bag<E extends Item> {
         NewToOld
     }
 
-    /** 决定「预算合并顺序」的函数指针类型 */
+    /** 🆕决定「预算合并顺序」的函数指针类型 */
     @FunctionalInterface
     public static interface MergeOrderF<E> {
         MergeOrder call(E oldValue, E newValue);
     }
 
-    /** 决定「预算合并顺序」的函数指针 */
+    /** 🆕决定「预算合并顺序」的函数指针 */
     private final MergeOrderF<E> mergeOrderF;
 
     /**

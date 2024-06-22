@@ -137,7 +137,6 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
      * 🆕从「目标」与「模板」中产生链接类型
      * * 📝可能在构建「自身→元素」时，也可在构建「元素→自身」时
      *
-     * @param <Target>
      * @param target
      * @param template
      * @return
