@@ -1,7 +1,10 @@
 package nars.inference;
 
+import nars.control.DerivationContext;
 import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
+import nars.entity.Concept;
+import nars.entity.TermLink;
 import nars.inference.BudgetFunctions.BudgetInferenceFunction;
 import nars.inference.BudgetFunctions.BudgetInferenceResult;
 import nars.inference.BudgetFunctions.ReviseResult;
@@ -165,12 +168,39 @@ public final class BudgetInference {
             final Truth truth,
             final Term content,
             final DerivationContextConcept context) {
+        // * 🚩获取有关「词项链」「任务链」的有关参数
+        final Budget tLink = context.getCurrentTaskLink();
+        if (tLink == null)
+            // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
+            throw new AssertionError("t shouldn't be `null`!");
+        final TermLink beliefLink = context.getBeliefLinkForBudgetInference();
+        final float targetActivation = beliefLink == null
+                // * 🚩空值⇒空置（转换推理不会用到）
+                ? 0.0f
+                // * 🚩其它⇒计算
+                : getConceptActivation(beliefLink.getTarget(), context);
         // * 🚩计算新结果
         final BudgetInferenceResult result = BudgetFunctions.budgetForInference(
                 function,
-                truth, content, context);
+                truth, content,
+                tLink, beliefLink, targetActivation);
         // * 🚩应用新结果
         return budgetInferenceApply(result, context.getBeliefLinkForBudgetInference());
+    }
+
+    /**
+     * Get the current activation level of a concept.
+     * * 🚩从「概念」中来
+     * * 🚩【2024-06-22 16:59:34】因涉及控制机制（推理上下文），故放入此中
+     *
+     * @param t       [&] The Term naming a concept
+     * @param context [&] The derivation context
+     * @return [] the priority value of the concept
+     */
+    private static float getConceptActivation(Term t, DerivationContext context) {
+        // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
+        final Concept c = context.termToConcept(t);
+        return c == null ? 0f : c.getPriority();
     }
 
     public static Budget budgetInferenceApply(final BudgetInferenceResult result, Budget beliefLinkBudget) {

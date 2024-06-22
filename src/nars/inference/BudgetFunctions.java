@@ -1,14 +1,11 @@
 package nars.inference;
 
-import nars.control.DerivationContext;
-import nars.control.DerivationContextConcept;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Question;
 import nars.entity.Sentence;
 import nars.entity.Task;
-import nars.entity.TermLink;
 import nars.language.Term;
 import nars.language.Variable;
 
@@ -78,20 +75,6 @@ public final class BudgetFunctions extends UtilityFunctions {
         final float termComplexityFactor = 1.0f / concept.getTerm().getComplexity();
         // * 🚩总体：任意更大就行；结构简单的基本总是最好的；词项越复杂，质量下限越低
         return UtilityFunctions.or(linkPriority, termComplexityFactor);
-    }
-
-    /**
-     * Get the current activation level of a concept.
-     * * 🚩从「概念」中来
-     *
-     * @param t       [&] The Term naming a concept
-     * @param context [&] The derivation context
-     * @return [] the priority value of the concept
-     */
-    private static float getConceptActivation(Term t, DerivationContext context) {
-        // * 🚩尝试获取概念，并获取其优先级；若无概念，返回0
-        final Concept c = context.termToConcept(t);
-        return c == null ? 0f : c.getPriority();
     }
 
     /* ----- Functions used both in direct and indirect processing of tasks ----- */
@@ -476,30 +459,13 @@ public final class BudgetFunctions extends UtilityFunctions {
             final BudgetInferenceFunction inferenceF,
             final Truth truth,
             final Term content,
-            final DerivationContextConcept context) {
-        return budgetForInference(inferenceF.function, truth, content, context);
-    }
-
-    private static BudgetInferenceResult budgetForInference(
-            final BudgetInferenceF inferenceF,
-            final Truth truth,
-            final Term content,
-            final DerivationContextConcept context) {
-        // * 🚩获取有关「词项链」「任务链」的有关参数
-        final Budget tLink = context.getCurrentTaskLink();
-        if (tLink == null)
-            // ! 📝【2024-05-17 15:41:10】`t`不可能为`null`：参见`{@link Concept.fire}`
-            throw new AssertionError("t shouldn't be `null`!");
-        final TermLink beliefLink = context.getBeliefLinkForBudgetInference();
-        final float targetActivation = beliefLink == null
-                // * 🚩空值⇒空置（转换推理不会用到）
-                ? 0.0f
-                // * 🚩其它⇒计算
-                : getConceptActivation(beliefLink.getTarget(), context);
+            final Budget tLinkBudget,
+            final Budget bLinkBudget,
+            final float targetActivation) {
         // * 🚩不带「推理上下文」参与计算
         return budgetInference(
-                inferenceF.calc(truth, content),
-                tLink, beliefLink,
+                inferenceF.function.calc(truth, content),
+                tLinkBudget, bLinkBudget,
                 targetActivation);
     }
 
