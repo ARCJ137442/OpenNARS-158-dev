@@ -36,8 +36,8 @@ public class LocalRules {
      */
     public static void revisionDirect(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
         // * 🚩计算真值/预算值
-        final Truth truth = TruthFunctions.revision(newBelief, oldBelief);
-        final Budget budget = BudgetInference.revise(newBelief, oldBelief, truth, context.getCurrentTask());
+        final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
+        final Budget budget = BudgetInference.revise(newBelief, oldBelief, revisedTruth, context.getCurrentTask());
         final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提
         // * 📝仅在此处用到「当前信念」作为「导出信念」
@@ -50,7 +50,7 @@ public class LocalRules {
         context.doublePremiseTaskRevision(
                 context.getCurrentTask(),
                 content,
-                truth, budget,
+                revisedTruth, budget,
                 newStamp);
     }
 

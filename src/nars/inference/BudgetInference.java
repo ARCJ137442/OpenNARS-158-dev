@@ -29,21 +29,21 @@ public final class BudgetInference {
      * Evaluate the quality of a revision, then de-prioritize the premises
      * * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
      *
-     * @param tTruth            [&] The truth value of the judgment in the task
-     * @param bTruth            [&] The truth value of the belief
-     * @param truth             [&] The truth value of the conclusion of revision
+     * @param newBeliefTruth    [&] The truth value of the judgment in the task
+     * @param oldBeliefTruth    [&] The truth value of the belief
+     * @param revisedTruth      [&] The truth value of the conclusion of revision
      * @param currentTaskBudget [&m] The budget of the current task
      * @return [] The budget for the new task
      */
     static Budget revise(
-            final Truth tTruth,
-            final Truth bTruth,
-            final Truth truth,
+            final Truth newBeliefTruth,
+            final Truth oldBeliefTruth,
+            final Truth revisedTruth,
             // boolean feedbackToLinks = false,
             Budget currentTaskBudget) {
         // * 🚩计算
         final ReviseResult result = BudgetFunctions.revise(
-                tTruth, bTruth, truth,
+                newBeliefTruth, oldBeliefTruth, revisedTruth,
                 currentTaskBudget,
                 null, null);
         // * 🚩应用修改
@@ -56,23 +56,23 @@ public final class BudgetInference {
      * 🆕同{@link BudgetInference#revise}，但是「概念推理」专用
      * * 🚩在「共用逻辑」后，将预算值反馈回「词项链」「任务链」
      *
-     * @param tTruth  [&]
-     * @param bTruth  [&]
-     * @param truth   [&]
-     * @param context [&m]
+     * @param newBeliefTruth [&]
+     * @param oldBeliefTruth [&]
+     * @param revisedTruth   [&]
+     * @param context        [&m]
      * @return []
      */
     static Budget reviseMatching(
-            final Truth tTruth,
-            final Truth bTruth,
-            final Truth truth,
+            final Truth newBeliefTruth,
+            final Truth oldBeliefTruth,
+            final Truth revisedTruth,
             final DerivationContextReason context) {
         final Budget currentTaskBudget = context.getCurrentTask();
         final Budget currentTaskLinkBudget = context.getCurrentTaskLink();
         final Budget currentBeliefLinkBudget = context.getCurrentBeliefLink();
         // * 🚩计算
         final ReviseResult result = BudgetFunctions.revise(
-                tTruth, bTruth, truth,
+                newBeliefTruth, oldBeliefTruth, revisedTruth,
                 context.getCurrentTask(),
                 context.getCurrentTaskLink(),
                 context.getCurrentBeliefLink());

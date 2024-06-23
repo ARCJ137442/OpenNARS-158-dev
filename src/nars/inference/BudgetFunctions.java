@@ -5,7 +5,6 @@ import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Question;
 import nars.entity.Sentence;
-import nars.entity.Task;
 import nars.language.Term;
 import nars.language.Variable;
 
@@ -96,10 +95,10 @@ public final class BudgetFunctions extends UtilityFunctions {
             throw new AssertionError("要对应的解不应为空");
         // * 🚩根据「一般疑问 | 特殊疑问/目标」拆解
         if (Variable.containVarQ(query.getContent())) {
-            // * 🚩【一般疑问】 "yes/no" question
+            // * 🚩【特殊疑问/目标】 "what" question or goal
             return solution.getExpectation() / solution.getContent().getComplexity();
         } else {
-            // * 🚩【特殊疑问/目标】 "what" question or goal
+            // * 🚩【一般疑问】 "yes/no" question
             return solution.getConfidence();
         }
     }
@@ -108,28 +107,28 @@ public final class BudgetFunctions extends UtilityFunctions {
      * Evaluate the quality of a belief as a solution to a problem, then reward
      * the belief and de-prioritize the problem
      *
-     * @param problem      [&] The problem (question or goal) to be solved
-     * @param solution     [&] The belief as solution
-     * @param questionTask [&] The task to be immediately processed, or null for
-     *                     continued process
+     * @param problem            [&] The problem (question or goal) to be solved
+     * @param solution           [&] The belief as solution
+     * @param questionTaskBudget [&] The task to be immediately processed, or null
+     *                           for continued process
      * @return [] The budget for the new task which is the belief activated, if
      *         necessary
      */
     static Budget solutionEval(
             final Question problem,
             final Judgement solution,
-            final Task questionTask) {
+            final Budget questionTaskBudget) {
         if (problem == null)
             throw new AssertionError("待解决的问题必须是疑问句");
         if (solution == null)
             throw new AssertionError("解决方案必须是「判断」");
-        if (questionTask == null || !questionTask.isQuestion())
+        if (questionTaskBudget == null)
             // * 🚩实际上不会有「feedbackToLinks=true」的情况（当前任务非空）
             throw new AssertionError("问题任务必须为「问题」 | solutionEval is Never called in continued processing");
         // * ️📝新优先级 = 任务优先级 | 解决方案质量
-        final float newP = or(questionTask.getPriority(), solutionQuality(problem, solution));
+        final float newP = or(questionTaskBudget.getPriority(), solutionQuality(problem, solution));
         // * 📝新耐久度 = 任务耐久度
-        final float newD = questionTask.getDurability();
+        final float newD = questionTaskBudget.getDurability();
         // * ️📝新质量 = 解决方案の真值→质量
         final float newQ = truthToQuality(solution);
         // 返回
@@ -145,10 +144,10 @@ public final class BudgetFunctions extends UtilityFunctions {
      * * * 新的任务链预算
      * * * 新的词项链预算
      *
-     * @param tTruth                  [&] The truth value of the judgment in the
+     * @param newBeliefTruth          [&] The truth value of the judgment in the
      *                                task
-     * @param bTruth                  [&] The truth value of the belief
-     * @param truth                   [&] The truth value of the conclusion of
+     * @param oldBeliefTruth          [&] The truth value of the belief
+     * @param revisedTruth            [&] The truth value of the conclusion of
      *                                revision
      * @param currentTaskBudget       [&m] The budget of the current task
      * @param currentTaskLinkBudget   [&?]
@@ -156,9 +155,9 @@ public final class BudgetFunctions extends UtilityFunctions {
      * @return [] The budget result for the new task
      */
     final static ReviseResult revise(
-            final Truth tTruth,
-            final Truth bTruth,
-            final Truth truth,
+            final Truth newBeliefTruth, // from task
+            final Truth oldBeliefTruth, // from belief
+            final Truth revisedTruth,
             final Budget currentTaskBudget,
             final Budget currentTaskLinkBudget,
             final Budget currentBeliefLinkBudget) {
@@ -167,9 +166,9 @@ public final class BudgetFunctions extends UtilityFunctions {
         final Budget newTaskBudget;
         final Budget newTaskLinkBudget;
         final Budget newBeliefLinkBudget;
-        // * 🚩计算落差 | 【2024-05-21 10:43:44】此处暂且需要重算一次
-        final float difT = truth.getExpDifAbs(tTruth);
-        final float difB = truth.getExpDifAbs(bTruth);
+        // * 🚩计算落差
+        final float dif2NewTask = revisedTruth.getExpDifAbs(newBeliefTruth);
+        final float dif2OldBelief = revisedTruth.getExpDifAbs(oldBeliefTruth);
         // * 🚩若有：反馈到任务链、信念链
         newTaskLinkBudget = currentTaskLinkBudget == null
                 ? null
@@ -178,8 +177,8 @@ public final class BudgetFunctions extends UtilityFunctions {
                 // * * d = link & !difT
                 // * * q = link
                 : new BudgetValue(
-                        and(currentTaskLinkBudget.getPriority(), not(difT)),
-                        and(currentTaskLinkBudget.getDurability(), not(difT)),
+                        and(currentTaskLinkBudget.getPriority(), not(dif2NewTask)),
+                        and(currentTaskLinkBudget.getDurability(), not(dif2NewTask)),
                         currentTaskLinkBudget.getQuality());
         newBeliefLinkBudget = currentBeliefLinkBudget == null
                 ? null
@@ -188,25 +187,22 @@ public final class BudgetFunctions extends UtilityFunctions {
                 // * * d = link & !difB
                 // * * q = link
                 : new BudgetValue(
-                        and(currentBeliefLinkBudget.getPriority(), not(difB)),
-                        and(currentBeliefLinkBudget.getDurability(), not(difB)),
+                        and(currentBeliefLinkBudget.getPriority(), not(dif2OldBelief)),
+                        and(currentBeliefLinkBudget.getDurability(), not(dif2OldBelief)),
                         currentTaskLinkBudget.getQuality());
 
-        // * 🚩计算期望之差
-        final float difT1 = truth.getExpDifAbs(tTruth);
-        // ! ⚠️【2024-06-10 23:45:42】现场降低预算值，降低之后要立马使用
-        // * 💭或许亦可用「写时复制」的方法（最后再合并回「当前词项链」和「当前任务链」）
         // * 🚩用落差降低优先级、耐久度
         // * 📝当前任务 降低预算：
         // * * p = task & !difT
         // * * d = task & !difT
         // * * q = task
         newTaskBudget = new BudgetValue(
-                and(currentTaskBudget.getPriority(), not(difT1)),
-                and(currentTaskBudget.getDurability(), not(difT1)),
+                and(currentTaskBudget.getPriority(), not(dif2NewTask)),
+                and(currentTaskBudget.getDurability(), not(dif2NewTask)),
                 currentTaskBudget.getQuality());
         // * 🚩用更新后的值计算新差 | ❓此时是否可能向下溢出？
-        final float dif = truth.getConfidence() - Math.max(tTruth.getConfidence(), bTruth.getConfidence());
+        final float dif = revisedTruth.getConfidence()
+                - Math.max(newBeliefTruth.getConfidence(), oldBeliefTruth.getConfidence());
         if (dif < 0)
             throw new AssertionError("【2024-06-10 23:48:25】此处差异不应小于零");
         // * 🚩计算新预算值
@@ -215,16 +211,20 @@ public final class BudgetFunctions extends UtilityFunctions {
         // * 📝质量 = 新真值→质量
         final float priority = or(dif, currentTaskBudget.getPriority());
         final float durability = aveAri(dif, currentTaskBudget.getDurability());
-        final float quality = BudgetFunctions.truthToQuality(truth);
+        final float quality = BudgetFunctions.truthToQuality(revisedTruth);
         newBudget = new BudgetValue(priority, durability, quality);
         // 返回
         return new ReviseResult(newBudget, newTaskBudget, newTaskLinkBudget, newBeliefLinkBudget);
     }
 
     static final class ReviseResult {
+        /** [] 新预算 */
         final Budget newBudget;
+        /** [] 新任务预算 */
         final Budget newTaskBudget;
+        /** [?] 新任务链预算 */
         final Budget newTaskLinkBudget;
+        /** [?] 新信念链预算 */
         final Budget newBeliefLinkBudget;
 
         private ReviseResult(
