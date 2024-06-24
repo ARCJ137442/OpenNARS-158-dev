@@ -2,6 +2,8 @@ package nars.storage;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nars.control.ConceptLinking;
+import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
@@ -182,9 +184,27 @@ public class Memory {
      * @return 已经被置入「概念袋」的概念 | 创建失败时返回`null`
      */
     private Concept makeNewConcept(Term term) {
-        final Concept concept = new Concept(term, this); // the only place to make a new Concept
+        // the only place to make a new Concept
+        final Concept concept = new Concept(
+                term,
+                this.getTaskForgettingRate(),
+                this.getBeliefForgettingRate(),
+                initialConceptBudget(),
+                ConceptLinking.prepareTermLinkTemplates(term));
         final boolean created = concepts.putIn(concept);
         return created ? concept : null;
+    }
+
+    /**
+     * 🆕计算新「概念」的「初始预算值」
+     * * 📝OpenNARS原版仅此一处有「无预算值初始化」
+     * * 🚩【2024-06-24 19:32:29】故将其提取为「超参数」处理
+     */
+    private static final BudgetValue initialConceptBudget() {
+        return new BudgetValue(
+                Parameters.CONCEPT_INITIAL_PRIORITY,
+                Parameters.CONCEPT_INITIAL_DURABILITY,
+                Parameters.CONCEPT_INITIAL_QUALITY);
     }
 
     /* ---------- adjustment functions ---------- */

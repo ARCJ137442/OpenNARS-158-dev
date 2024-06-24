@@ -15,7 +15,6 @@ import nars.storage.ArrayRankTable;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
 import nars.storage.RankTable;
-import nars.storage.Memory;
 
 /**
  * A concept contains information associated with a term, including directly and
@@ -201,31 +200,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
     // impl Concept
 
     /* ---------- constructor and initialization ---------- */
-    /**
-     * Constructor, called in Memory.getConcept only
-     *
-     * @param term   [R] A term corresponding to the concept
-     * @param memory [&] A reference to the memory
-     * @return []
-     */
-    public Concept(Term term, Memory memory) {
-        this(term,
-                memory.getTaskForgettingRate(),
-                memory.getBeliefForgettingRate(),
-                initialBudgetValue());
-    }
-
-    /**
-     * 🆕计算新「概念」的「初始预算值」
-     * * 📝OpenNARS原版仅此一处有「无预算值初始化」
-     * * 🚩【2024-06-24 19:32:29】故将其提取为「超参数」处理
-     */
-    private static final BudgetValue initialBudgetValue() {
-        return new BudgetValue(
-                Parameters.CONCEPT_INITIAL_PRIORITY,
-                Parameters.CONCEPT_INITIAL_DURABILITY,
-                Parameters.CONCEPT_INITIAL_QUALITY);
-    }
 
     /**
      * 🆕完全参数构造函数
@@ -236,8 +210,11 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param termLinkForgettingRate [R]
      * @return []
      */
-    private Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate,
-            Budget initialBudget) {
+    public Concept(
+            Term term,
+            AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate,
+            Budget initialBudget,
+            ArrayList<TermLinkTemplate> linkTemplatesToSelf) {
         this.token = new Token(term.getName(), initialBudget);
         this.term = term;
         this.questions = new ArrayBuffer<Task>(Parameters.MAXIMUM_QUESTIONS_LENGTH);
@@ -246,7 +223,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
         this.termLinks = new Bag<TermLink>(termLinkForgettingRate, Parameters.TERM_LINK_BAG_SIZE);
         // * 🚩只有「复合词项←其内元素」的链接模板
         // * 📝所有信息基于「内容包含」关系
-        this.linkTemplatesToSelf = ConceptLinking.prepareTermLinkTemplates(term);
+        this.linkTemplatesToSelf = linkTemplatesToSelf;
     }
 
     /**
