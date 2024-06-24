@@ -273,7 +273,7 @@ public abstract class ProcessDirect {
                 LocalRules.trySolution(judgment, existedQuestion, context);
             }
             // * 🚩将信念追加至「信念表」
-            addBelief(self, judgment);
+            self.addBelief(judgment);
         }
     }
 
@@ -315,12 +315,6 @@ public abstract class ProcessDirect {
         }
     }
 
-    public static Judgement addBelief(
-            final Concept self,
-            final Judgement newBelief) {
-        return self.getBeliefs().add(newBelief);
-    }
-
     /**
      * 🆕根据输入的任务，寻找并尝试返回已有的问题
      * * ⚠️输出可空，且此时具有含义：概念中并没有「已有问题」
@@ -330,9 +324,8 @@ public abstract class ProcessDirect {
      * @return 已有的问题，或为空
      */
     private static Task findExistedQuestion(final Concept self, final Term taskContent) {
-        final Iterable<Task> questions = self.getQuestions();
         // * 🚩遍历所有已知问题：任意一个问题「词项相等」就返回
-        for (final Task existedQuestion : questions) {
+        for (final Task existedQuestion : self.getQuestions()) {
             final Term questionTerm = existedQuestion.getContent();
             if (questionTerm.equals(taskContent))
                 // * 🚩词项相等⇒返回

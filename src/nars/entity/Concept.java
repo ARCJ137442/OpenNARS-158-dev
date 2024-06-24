@@ -208,6 +208,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param term                   [R]
      * @param taskLinkForgettingRate [R]
      * @param termLinkForgettingRate [R]
+     * @param initialBudget          [&] 零信任的「预算引用」
+     * @param linkTemplatesToSelf    [] 所有到自身的词项链
      * @return []
      */
     public Concept(
@@ -256,6 +258,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
     /**
      * 🆕对外接口：获取「当前信念表」
      * * 🎯从「直接推理」而来
+     * * 📌只读
      *
      * @param &this
      * @return [&]
@@ -277,8 +280,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     /**
-     * 🆕对外接口：获取「当前信念表」
+     * 🆕对外接口：获取「当前所有问题」
      * * 🎯从「直接推理」而来
+     * * 📌只读
      *
      * @param &this
      * @return [&]
@@ -330,6 +334,41 @@ public final class Concept implements Item, ToStringBriefAndLong {
      */
     public void putInTaskLink(TaskLink taskLink) {
         this.taskLinks.putIn(taskLink);
+    }
+
+    /**
+     * 🆕从「任务链袋」获取一个任务链
+     * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @return [?]
+     */
+    public TaskLink takeOutTaskLink() {
+        return this.taskLinks.takeOut();
+    }
+
+    /**
+     * 🆕将一个任务链放回「任务链袋」
+     * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @param link    []
+     * @return []
+     */
+    public boolean putTaskLinkBack(TaskLink link) {
+        return this.taskLinks.putBack(link);
+    }
+
+    /**
+     * 🆕将一个词项链放回「词项链袋」
+     * * 🚩仅用于「概念推理」
+     *
+     * @param &m-this
+     * @param link    []
+     * @return []
+     */
+    public boolean putTermLinkBack(TermLink link) {
+        return this.termLinks.putBack(link);
     }
 
     /* ---------- access local information ---------- */
@@ -385,17 +424,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
     }
 
     /**
-     * 🆕从「任务链袋」获取一个任务链
-     * * 🚩仅用于「概念推理」
-     *
-     * @param &m-this
-     * @return [?]
-     */
-    public TaskLink __takeOutTaskLink() {
-        return this.taskLinks.takeOut();
-    }
-
-    /**
      * Replace default to prevent repeated inference, by checking TaskLink
      * * 📌特殊的「根据任务链拿出词项链（信念链）」
      * * 🎯在「概念推理」的「准备待推理词项链」的过程中用到
@@ -419,30 +447,6 @@ public final class Concept implements Item, ToStringBriefAndLong {
             this.termLinks.putBack(termLink);
         }
         return null;
-    }
-
-    /**
-     * 🆕将一个任务链放回「任务链袋」
-     * * 🚩仅用于「概念推理」
-     *
-     * @param &m-this
-     * @param link    []
-     * @return []
-     */
-    public boolean __putTaskLinkBack(TaskLink link) {
-        return this.taskLinks.putBack(link);
-    }
-
-    /**
-     * 🆕将一个词项链放回「词项链袋」
-     * * 🚩仅用于「概念推理」
-     *
-     * @param &m-this
-     * @param link    []
-     * @return []
-     */
-    public boolean __putTermLinkBack(TermLink link) {
-        return this.termLinks.putBack(link);
     }
 
     /* ---------- display ---------- */

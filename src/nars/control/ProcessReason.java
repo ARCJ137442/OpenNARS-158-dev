@@ -110,7 +110,7 @@ public abstract class ProcessReason {
         // * An atomic step in a concept, only called in {@link Memory#processConcept}
         // * 🚩预点火（实质上仍属于「直接推理」而非「概念推理」）
         // * 🚩从「概念」拿出一个「任务链」准备推理 | 源自`Concept.fire`
-        final TaskLink currentTaskLink = currentConcept.__takeOutTaskLink();
+        final TaskLink currentTaskLink = currentConcept.takeOutTaskLink();
         if (currentTaskLink == null) {
             // * 🚩中途返回时要回收
             self.getMemory().putBackConcept(currentConcept);

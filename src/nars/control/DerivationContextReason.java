@@ -181,7 +181,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
         updateCurrentBelief();
 
         // * ♻️回收弹出的旧词项链（所有权转移）
-        this.getCurrentConcept().__putTermLinkBack(oldTermLink);
+        this.getCurrentConcept().putTermLinkBack(oldTermLink);
 
         // * 🚩收尾：返回被替换下来的「旧词项链」
         return oldTermLink;
@@ -218,7 +218,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
     @Override
     public TermLink getBeliefLinkForBudgetInference() {
         return this.currentBeliefLink;
-     }
+    }
 
     @Override
     public TaskLink getCurrentTaskLink() {
@@ -265,9 +265,9 @@ public final class DerivationContextReason implements DerivationContextConcept {
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
-        this.getCurrentConcept().__putTermLinkBack(currentBeliefLink);
+        this.getCurrentConcept().putTermLinkBack(currentBeliefLink);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
-        this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
+        this.getCurrentConcept().putTaskLinkBack(this.currentTaskLink);
         // * 🚩销毁「当前信念」 | 变量值仅临时推理用
         this.currentBelief = null;
         drop(currentBelief);

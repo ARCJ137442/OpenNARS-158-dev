@@ -158,7 +158,7 @@ public final class DerivationContextTransform implements DerivationContextConcep
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
-        this.getCurrentConcept().__putTaskLinkBack(this.currentTaskLink);
+        this.getCurrentConcept().putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续
         this.core.absorbedByReasoner(reasoner);
     }
