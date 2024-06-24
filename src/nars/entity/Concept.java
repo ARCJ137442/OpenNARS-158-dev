@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
+import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
@@ -210,7 +211,20 @@ public final class Concept implements Item, ToStringBriefAndLong {
     public Concept(Term term, Memory memory) {
         this(term,
                 memory.getTaskForgettingRate(),
-                memory.getBeliefForgettingRate());
+                memory.getBeliefForgettingRate(),
+                initialBudgetValue());
+    }
+
+    /**
+     * 🆕计算新「概念」的「初始预算值」
+     * * 📝OpenNARS原版仅此一处有「无预算值初始化」
+     * * 🚩【2024-06-24 19:32:29】故将其提取为「超参数」处理
+     */
+    private static final BudgetValue initialBudgetValue() {
+        return new BudgetValue(
+                Parameters.CONCEPT_INITIAL_PRIORITY,
+                Parameters.CONCEPT_INITIAL_DURABILITY,
+                Parameters.CONCEPT_INITIAL_QUALITY);
     }
 
     /**
@@ -222,8 +236,9 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * @param termLinkForgettingRate [R]
      * @return []
      */
-    private Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate) {
-        this.token = new Token(term.getName());
+    private Concept(Term term, AtomicInteger taskLinkForgettingRate, AtomicInteger termLinkForgettingRate,
+            Budget initialBudget) {
+        this.token = new Token(term.getName(), initialBudget);
         this.term = term;
         this.questions = new ArrayBuffer<Task>(Parameters.MAXIMUM_QUESTIONS_LENGTH);
         this.beliefs = createBeliefTable();

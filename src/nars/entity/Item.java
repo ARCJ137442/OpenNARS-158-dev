@@ -109,15 +109,6 @@ public interface Item extends Budget {
         }
 
         /**
-         * Constructor with default budget
-         *
-         * @param key The key value
-         */
-        public Token(final String key) {
-            this(key, new BudgetValue());
-        }
-
-        /**
          * Constructor with initial budget
          * * 🚩零信任：拷贝预算值，以避免意外的所有权共享
          *

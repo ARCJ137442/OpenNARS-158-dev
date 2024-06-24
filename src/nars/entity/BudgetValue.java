@@ -35,16 +35,6 @@ public class BudgetValue implements Cloneable, Budget {
     }
 
     /**
-     * Default constructor
-     */
-    public BudgetValue() {
-        // priority = new ShortFloat(0.01f);
-        // durability = new ShortFloat(0.01f);
-        // quality = new ShortFloat(0.01f);
-        this(0.01f, 0.01f, 0.01f);
-    }
-
-    /**
      * Constructor with initialization
      * * 📌完全参数构造函数
      *
