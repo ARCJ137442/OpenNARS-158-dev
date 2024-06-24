@@ -157,8 +157,8 @@ public final class Concept implements Item, ToStringBriefAndLong {
     @Override
     public String toString() { // called from concept bag
         if (detailedString) {
-            final String superString = this.token.getBudgetValue().toString() + " " + getKey().toString();
-            return (superString + " " + getKey());
+            // * 🚩同义修正：本身就是「预算值+自身key」
+            return this.token.getBudgetValue().toString() + " " + this.getKey().toString();
         } else {
             return getKey();
         }

@@ -203,6 +203,11 @@ public final class BudgetInference {
         return c == null ? 0f : c.getPriority();
     }
 
+    /**
+     * 🆕根据计算出的「预算函数」应用其中的结果
+     * * 🚩覆盖各处预算值，并以此更新
+     * * 🚩返回得出的「新预算值」
+     */
     public static Budget budgetInferenceApply(final BudgetInferenceResult result, Budget beliefLinkBudget) {
         // * 🚩拿出「新信念链预算」并更新
         if (beliefLinkBudget != null) {

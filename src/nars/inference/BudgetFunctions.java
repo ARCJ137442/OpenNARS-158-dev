@@ -161,6 +161,9 @@ public final class BudgetFunctions extends UtilityFunctions {
             final Budget currentTaskBudget,
             final Budget currentTaskLinkBudget,
             final Budget currentBeliefLinkBudget) {
+        // * 🚩任务链和信念链同时为空或同时非空
+        if ((currentTaskLinkBudget == null) != (currentBeliefLinkBudget == null))
+            throw new AssertionError("【2024-06-24 18:51:31】任务链和信念链同时为空或同时非空 断言失败");
         // * 📌四个返回值
         final Budget newBudget;
         final Budget newTaskBudget;
@@ -452,7 +455,6 @@ public final class BudgetFunctions extends UtilityFunctions {
      *
      * @param inferenceQuality [] Quality of the inference
      * @param complexity       [] Syntactic complexity of the conclusion
-     * @param context          [&m] The derivation context
      * @return [] Budget of the conclusion task
      */
     public static BudgetInferenceResult budgetForInference(
@@ -474,7 +476,7 @@ public final class BudgetFunctions extends UtilityFunctions {
      *
      * @param parameters       [] 通过「推理形式」给出的参数
      * @param taskLinkBudget   [&] 任务链的预算值
-     * @param beliefLinkBudget [&] 信念链的预算值
+     * @param beliefLinkBudget [&?] 信念链的预算值
      * @param targetActivation [] 来自「信念链」的「目标激活度」
      * @return [] 推理结果
      */
@@ -518,13 +520,13 @@ public final class BudgetFunctions extends UtilityFunctions {
             // * 📝d = belief | quality
             // * 📝q = belief
             // * 🚩提升优先级
-            final float newBeliefLinkPriority = UtilityFunctions.or(
+            final float newBeliefLinkPriority = or(
                     beliefLinkBudget.getPriority(),
                     // * ✅【2024-06-20 18:44:13】↓以下两个值的or嵌套可以消除：差异精度控制在5.9604645E-8内
                     quality,
                     targetActivation);
             // * 🚩提升耐久度
-            final float newBeliefLinkDurability = UtilityFunctions.or(
+            final float newBeliefLinkDurability = or(
                     beliefLinkBudget.getDurability(),
                     quality);
             final float newBeliefLinkQuality = beliefLinkBudget.getQuality();
@@ -541,7 +543,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         /**
          * 推理出来的新预算
          *
-         * * 📝可空性：可空
+         * * 📝可空性：非空
          * * 📝可变性：不变
          * * 📝所有权：具所有权
          */
@@ -549,7 +551,7 @@ public final class BudgetFunctions extends UtilityFunctions {
         /**
          * 新的「任务链预算值」（若有）
          *
-         * * 📝可空性：非空
+         * * 📝可空性：可空
          * * 📝可变性：不变
          * * 📝所有权：具所有权
          */
