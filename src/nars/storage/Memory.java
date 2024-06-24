@@ -127,19 +127,6 @@ public class Memory {
     }
 
     /**
-     * Get a Term for a given name of a Concept or Operator
-     * <p>
-     * called in StringParser and the make methods of compound terms.
-     *
-     * @param name the name of a concept or operator
-     * @return a Term or null (if no Concept/Operator has this name)
-     */
-    public Term nameToListedTerm(String name) {
-        final Concept concept = concepts.get(name);
-        return concept == null ? null : concept.getTerm();
-    }
-
-    /**
      * Get an existing Concept for a given Term.
      *
      * @param term The Term naming a concept
@@ -213,6 +200,7 @@ public class Memory {
      * <p>
      * called in Concept.insertTaskLink only
      * * 🚩实际上也被「直接推理」调用
+     * * 🔬出于「借用明确」目的，此处需要拆分看待
      *
      * @param concept      the concept to be adjusted
      * @param incomeBudget the new BudgetValue
@@ -221,11 +209,31 @@ public class Memory {
         // * 🚩存在性检查
         final boolean hasConcept = this.concepts.contains(concept);
         // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置
+        if (hasConcept)
+            activateConceptInner(concept, incomeBudget);
+        // * 🚩若没有⇒放回→拿出
+        else
+            activateConceptOuter(concept, incomeBudget);
+    }
+
+    public void activateConceptInner(final Concept concept, final Budget incomeBudget) {
+        // * 🚩存在性检查
+        final boolean hasConcept = this.concepts.contains(concept);
+        // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置
         if (hasConcept) {
             this.concepts.pickOut(concept.getKey());
             activateConceptBudget(concept, incomeBudget);
             this.concepts.putBack(concept);
-        }
+        } else
+            throw new AssertionError("激活「内部的概念」需要已有概念！");
+    }
+
+    public void activateConceptOuter(final Concept concept, final Budget incomeBudget) {
+        // * 🚩存在性检查
+        final boolean hasConcept = this.concepts.contains(concept);
+        // * 🚩若已有⇒拿出→放回 | 会改变「概念」的优先级，因此可能会调整位置
+        if (hasConcept)
+            throw new AssertionError("激活「外部的概念」需要概念不在！");
         // * 🚩若没有⇒放回→拿出
         else {
             activateConceptBudget(concept, incomeBudget);

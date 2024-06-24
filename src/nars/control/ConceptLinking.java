@@ -216,6 +216,7 @@ public abstract class ConceptLinking {
         // * 🚩建立任务链："子项 ~> 任务"
         // * 📌为子项的概念构造新词项链，并在其中使用模板（的类型和索引）
         // * ⚠️注意此处让「元素词项对应的概念」也插入了任务链——干涉其它「概念」的运作
+        // * ⚠️【2024-06-25 02:30:39】此处导致「概念激活」不能明确「概念是否在记忆区内」，需要进一步排查摸清
         final TaskLink link = TaskLink.fromTemplate(task, template, subBudget);
         insertTaskLink(componentConcept, memory, link);
     }
