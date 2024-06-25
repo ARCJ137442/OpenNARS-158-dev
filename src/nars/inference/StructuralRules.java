@@ -3,12 +3,12 @@ package nars.inference;
 import java.util.ArrayList;
 
 import nars.control.DerivationContextReason;
+import nars.control.Parameters;
 import nars.entity.*;
 import static nars.io.Symbols.*;
 import static nars.language.MakeTerm.*;
 
 import nars.language.*;
-import nars.main.Parameters;
 
 /**
  * Single-premise inference rules involving compound terms. Input are one

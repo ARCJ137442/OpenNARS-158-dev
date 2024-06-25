@@ -2,11 +2,12 @@ package nars.io;
 
 import java.util.*;
 
+import nars.control.Parameters;
 import nars.entity.*;
 import nars.inference.*;
 import nars.language.*;
 import static nars.language.MakeTerm.*;
-import nars.main.Parameters;
+
 import nars.storage.Memory;
 
 /**

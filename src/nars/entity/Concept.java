@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
+import nars.control.Parameters;
 import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
 import nars.main.NARS;
-import nars.main.Parameters;
 import nars.storage.ArrayBuffer;
 import nars.storage.ArrayRankTable;
 import nars.storage.Bag;

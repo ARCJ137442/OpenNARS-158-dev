@@ -1,9 +1,9 @@
 package nars.entity;
 
+import nars.control.Parameters;
 import nars.inference.Budget;
 import nars.io.ToStringBriefAndLong;
 import nars.language.Term;
-import nars.main.Parameters;
 
 /**
  * Reference to a Task.

@@ -17,7 +17,6 @@ import nars.io.OutputChannel;
 import nars.io.StringParser;
 import nars.io.Symbols;
 import nars.main.NARS;
-import nars.main.Parameters;
 import nars.storage.Bag;
 import nars.storage.Bag.MergeOrderF;
 import nars.storage.BagObserver;
@@ -321,7 +320,7 @@ public class Reasoner {
      * add Objects into exportStrings. Currently only Strings are added, though
      * in the future there can be outgoing Tasks; also if exportStrings is empty
      * display the current value of timer ( exportStrings is emptied in
-     * {@link Reasoner#doTick()} - TODO fragile mechanism)
+     * {@link Reasoner#doTick()} - TODo fragile mechanism)
      *
      */
     public void report(Sentence sentence, ReportType type) {
@@ -413,7 +412,7 @@ public class Reasoner {
             reset();
             this.exportStrings.add(text);
         } else if (c != Symbols.COMMENT_MARK) {
-            // read NARS language or an integer : TODO duplicated code
+            // read NARS language or an integer : TODo duplicated code
             try {
                 final int i = Integer.parseInt(text);
                 walk(i);

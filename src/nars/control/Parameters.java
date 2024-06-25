@@ -1,4 +1,4 @@
-package nars.main;
+package nars.control;
 
 /**
  * Collected system parameters. To be modified before compiling.

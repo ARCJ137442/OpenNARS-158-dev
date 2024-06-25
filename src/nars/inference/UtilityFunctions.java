@@ -1,6 +1,6 @@
 package nars.inference;
 
-import nars.main.Parameters;
+import nars.control.Parameters;
 
 /**
  * Common functions on real numbers, mostly in [0,1].

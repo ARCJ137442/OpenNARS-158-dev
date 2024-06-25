@@ -18,6 +18,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import nars.control.Parameters;
 import nars.control.Reasoner;
 import nars.entity.Concept;
 import nars.entity.Task;
@@ -25,7 +26,6 @@ import nars.io.ExperienceReader;
 import nars.io.ExperienceWriter;
 import nars.io.IInferenceRecorder;
 import nars.io.OutputChannel;
-import nars.main.Parameters;
 import nars.storage.Memory;
 
 /**

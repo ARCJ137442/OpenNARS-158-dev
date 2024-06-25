@@ -1,8 +1,8 @@
 package nars.inference;
 
+import nars.control.Parameters;
 import nars.entity.ShortFloat;
 import nars.io.Symbols;
-import nars.main.Parameters;
 
 /**
  * 🆕标记【可预算的】对象

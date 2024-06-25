@@ -18,8 +18,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import nars.control.Parameters;
 import nars.entity.Item;
-import nars.main.Parameters;
 import nars.storage.Bag;
 import nars.storage.BagObserver;
 

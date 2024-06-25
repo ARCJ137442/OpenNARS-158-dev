@@ -3,12 +3,12 @@ package nars.storage;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nars.control.ConceptLinking;
+import nars.control.Parameters;
 import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.inference.Budget;
 import nars.inference.BudgetFunctions;
 import nars.language.Term;
-import nars.main.Parameters;
 
 /**
  * The memory of the system.

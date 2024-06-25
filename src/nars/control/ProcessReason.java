@@ -9,7 +9,6 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
 import nars.inference.MatchingRules;
-import nars.main.Parameters;
 
 public abstract class ProcessReason {
 

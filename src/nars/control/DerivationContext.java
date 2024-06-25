@@ -14,7 +14,6 @@ import nars.entity.Task;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
-import nars.main.Parameters;
 import nars.storage.Memory;
 
 /**
