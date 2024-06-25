@@ -1,5 +1,7 @@
 package nars.main;
 
+import nars.control.Reasoner;
+
 /**
  * The parameters used when the system is invoked from command line
  */

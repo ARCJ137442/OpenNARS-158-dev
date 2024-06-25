@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import nars.control.Reasoner;
 import nars.io.InputChannel;
 import nars.io.OutputChannel;
 

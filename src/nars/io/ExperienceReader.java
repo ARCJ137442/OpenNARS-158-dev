@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import nars.main.Reasoner;
+import nars.control.Reasoner;
 
 /**
  * To read and write experience as Task streams

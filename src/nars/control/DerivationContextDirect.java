@@ -5,7 +5,6 @@ import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.Task;
-import nars.main.Reasoner;
 import nars.storage.Memory;
 import static nars.control.DerivationContext.drop;
 

@@ -4,7 +4,7 @@ import java.awt.FileDialog;
 import java.io.*;
 import java.util.*;
 
-import nars.main.Reasoner;
+import nars.control.Reasoner;
 
 /**
  * To read and write experience as Task streams

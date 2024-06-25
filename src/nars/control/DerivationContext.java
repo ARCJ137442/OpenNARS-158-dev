@@ -15,7 +15,6 @@ import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
 import nars.main.Parameters;
-import nars.main.Reasoner;
 import nars.storage.Memory;
 
 /**

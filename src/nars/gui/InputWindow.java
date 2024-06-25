@@ -11,9 +11,9 @@ import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import nars.control.Reasoner;
 import nars.io.ExperienceReader;
 import nars.io.InputChannel;
-import nars.main.Reasoner;
 
 /**
  * Input window, accepting user tasks

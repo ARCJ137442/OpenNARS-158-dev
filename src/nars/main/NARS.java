@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+import nars.control.Reasoner;
 import nars.entity.Concept;
 import nars.io.ExperienceReader;
 import nars.io.ExperienceWriter;

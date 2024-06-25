@@ -10,7 +10,6 @@ import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
 import nars.inference.MatchingRules;
 import nars.main.Parameters;
-import nars.main.Reasoner;
 
 public abstract class ProcessReason {
 

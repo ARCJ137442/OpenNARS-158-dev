@@ -1,13 +1,9 @@
-package nars.main;
+package nars.control;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import nars.control.DerivationContext;
-import nars.control.ProcessDirect;
-import nars.control.ProcessReason;
-import nars.control.ReportType;
 import nars.entity.Concept;
 import nars.entity.Sentence;
 import nars.entity.Task;
@@ -15,10 +11,13 @@ import nars.gui.MainWindow;
 import nars.inference.InferenceEngine;
 import nars.inference.InferenceEngineV1;
 import nars.io.IInferenceRecorder;
+import nars.io.IInferenceRecorder.NullInferenceRecorder;
 import nars.io.InputChannel;
 import nars.io.OutputChannel;
 import nars.io.StringParser;
 import nars.io.Symbols;
+import nars.main.NARS;
+import nars.main.Parameters;
 import nars.storage.Bag;
 import nars.storage.Bag.MergeOrderF;
 import nars.storage.BagObserver;
@@ -555,41 +554,5 @@ public class Reasoner {
         return item == null ? ""
                 : "\n " + title + ":\n"
                         + item.toString();
-    }
-
-    class NullInferenceRecorder implements IInferenceRecorder {
-
-        @Override
-        public void init() {
-        }
-
-        @Override
-        public void show() {
-        }
-
-        @Override
-        public void play() {
-        }
-
-        @Override
-        public void stop() {
-        }
-
-        @Override
-        public void append(String s) {
-        }
-
-        @Override
-        public void openLogFile() {
-        }
-
-        @Override
-        public void closeLogFile() {
-        }
-
-        @Override
-        public boolean isLogging() {
-            return false;
-        }
     }
 }

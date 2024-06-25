@@ -1,9 +1,9 @@
 package nars.gui;
 
+import nars.control.Reasoner;
 import nars.io.ExperienceReader;
 import nars.main.CommandLineParameters;
 import nars.main.NARS;
-import nars.main.Reasoner;
 
 /**
  * The main class of the open-nars project.

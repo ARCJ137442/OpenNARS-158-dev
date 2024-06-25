@@ -10,7 +10,6 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.RuleTables;
 import nars.language.Term;
-import nars.main.Reasoner;
 import nars.storage.Memory;
 
 import static nars.control.DerivationContext.drop;

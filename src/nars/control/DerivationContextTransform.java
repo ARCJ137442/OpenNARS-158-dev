@@ -6,7 +6,6 @@ import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.RuleTables;
-import nars.main.Reasoner;
 import nars.storage.Memory;
 
 import java.util.ArrayList;
