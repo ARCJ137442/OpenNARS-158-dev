@@ -41,9 +41,9 @@ public class InputWindow extends NarsFrame implements ActionListener, InputChann
     public InputWindow(Reasoner reasoner, String title) {
         super(title + " - Input Window");
         getContentPane().setBackground(SINGLE_WINDOW_COLOR);
-        GridBagLayout gridbag = new GridBagLayout();
+        GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
-        setLayout(gridbag);
+        setLayout(gridBag);
         c.ipadx = 3;
         c.ipady = 3;
         c.insets = new Insets(5, 5, 5, 5);
@@ -53,27 +53,27 @@ public class InputWindow extends NarsFrame implements ActionListener, InputChann
         c.weighty = 1.0;
         inputText = new JTextArea("");
         JScrollPane scrollPane = new JScrollPane(inputText);
-        // gridbag.setConstraints(inputText, c);
-        gridbag.setConstraints(scrollPane, c);
+        // gridBag.setConstraints(inputText, c);
+        gridBag.setConstraints(scrollPane, c);
         add(scrollPane);
         // add(inputText);
         c.weighty = 0.0;
         c.gridwidth = 1;
         okButton = new JButton("OK");
         okButton.addActionListener(this);
-        gridbag.setConstraints(okButton, c);
+        gridBag.setConstraints(okButton, c);
         add(okButton);
         holdButton = new JButton("Hold");
         holdButton.addActionListener(this);
-        gridbag.setConstraints(holdButton, c);
+        gridBag.setConstraints(holdButton, c);
         add(holdButton);
         clearButton = new JButton("Clear");
         clearButton.addActionListener(this);
-        gridbag.setConstraints(clearButton, c);
+        gridBag.setConstraints(clearButton, c);
         add(clearButton);
         closeButton = new JButton("Hide");
         closeButton.addActionListener(this);
-        gridbag.setConstraints(closeButton, c);
+        gridBag.setConstraints(closeButton, c);
         add(closeButton);
         setBounds(0, 22, 600, 200);
         setVisible(true);
@@ -118,7 +118,7 @@ public class InputWindow extends NarsFrame implements ActionListener, InputChann
 
     /**
      * Accept text input in a tick, which can be multiple lines
-     * TODO some duplicated code with {@link ExperienceReader#nextInput()}
+     * TODo some duplicated code with {@link ExperienceReader#nextInput()}
      *
      * @return Whether to check this channel again
      */
@@ -152,7 +152,7 @@ public class InputWindow extends NarsFrame implements ActionListener, InputChann
                     reasoner.textInputLine(line);
                 } catch (NullPointerException e1) {
                     System.out.println("InputWindow.nextInput() - NullPointerException: please correct the input");
-                    // throw new RuntimeException( "Uncorrect line: please correct the input", e1 );
+                    // throw new RuntimeException( "Incorrect line: please correct the input", e1 );
                     ready = false;
                     return false;
                 }

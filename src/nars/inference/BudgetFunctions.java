@@ -23,8 +23,6 @@ import nars.language.Variable;
  */
 public final class BudgetFunctions extends UtilityFunctions {
 
-    // TODO: 后续或许能使用「预算函数枚举」实现「传递『要用哪个函数』的信息，控制端独立计算预算值」的「推理器与控制区分离」
-
     /* ----------------------- Belief evaluation ----------------------- */
     /**
      * Determine the quality of a judgment by its truth value alone

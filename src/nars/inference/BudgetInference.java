@@ -23,7 +23,6 @@ import nars.language.*;
  * * * [Rm] ⇒ 传递可变共享引用（共享读写）
  */
 public final class BudgetInference {
-    // TODO: 过程注释 & 参数标注
 
     /**
      * Evaluate the quality of a revision, then de-prioritize the premises

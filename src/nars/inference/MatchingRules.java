@@ -20,7 +20,6 @@ public abstract class MatchingRules {
      * The task and belief have the same content
      * <p>
      * called in RuleTables.reason
-     * TODO: 【2024-06-08 09:18:23】预计将所有「本地规则」均迁移到「直接推理」中
      *
      * @param task    The task
      * @param belief  The belief
@@ -41,14 +40,15 @@ public abstract class MatchingRules {
                     revision(currentTask.asJudgement(), belief, context);
                 return;
             // * 🚩问题⇒尝试回答「特殊疑问」（此处用「变量替换」解决查询变量）
+            // * 📝只有「匹配已知」才能回答「特殊疑问」，「一般疑问」交由「直接推理」回答
             case QUESTION_MARK:
                 // * 🚩查看是否可以替换「查询变量」，具体替换从「特殊疑问」转变为「一般疑问」
                 // * 📄Task :: SentenceV1@49 "<{?1} --> murder>? {105 : 6} "
                 // * & Belief: SentenceV1@39 "<{tom} --> murder>. %1.0000;0.7290% {147 : 3;4;2}"
                 // * ⇒ Unified SentenceV1@23 "<{tom} --> murder>? {105 : 6} "
                 final boolean hasUnified = VariableProcess.hasUnificationQ(
-                        currentTask.getContent().clone(),
-                        belief.getContent().clone());
+                        currentTask.getContent(),
+                        belief.getContent());
                 // * ⚠️只针对「特殊疑问」：传入的只有「带变量问题」，因为「一般疑问」通过直接推理就完成了
                 if (hasUnified)
                     // * 🚩此时「当前任务」「当前信念」仍然没变

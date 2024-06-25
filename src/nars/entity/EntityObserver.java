@@ -23,7 +23,7 @@ public interface EntityObserver {
 	/**
 	 * Set the observed Concept
 	 *
-	 * @param showLinks unused : TODO : is this forgotten ?
+	 * @param showLinks unused : TODo : is this forgotten ?
 	 */
 	public abstract void startPlay(Concept concept, boolean showLinks);
 

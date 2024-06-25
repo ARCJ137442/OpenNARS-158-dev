@@ -458,7 +458,7 @@ public final class Concept implements Item, ToStringBriefAndLong {
      * {@link nars.gui.BagWindow}; see
      * {@link nars.storage.Bag#addBagObserver(BagObserver, String)}
      *
-     * @param entityObserver {@link EntityObserver} to set; TODO make it a real
+     * @param entityObserver {@link EntityObserver} to set; TODo make it a real
      *                       observer pattern (i.e. with a plurality of observers)
      * @param showLinks      Whether to display the task links
      */

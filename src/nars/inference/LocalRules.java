@@ -88,6 +88,7 @@ public class LocalRules {
         final Question problem = questionTask.asQuestion();
         final Budget budget = BudgetFunctions.solutionEval(problem, belief, questionTask);
         // * 🚩更新「问题任务」的预算值
+        // * 📝解决问题后，在「已解决的问题」之预算中 降低（已经解决了，就将算力多留到「未解决问题」上）
         final float solutionQuality = BudgetFunctions.solutionQuality(problem, belief);
         final float updatedQuestionPriority = Math.min(
                 UtilityFunctions.not(solutionQuality),

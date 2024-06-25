@@ -153,7 +153,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
      * * 📝所有权：可变引用
      */
     public TermLink getCurrentBeliefLink() {
-        // TODO: 内化「预算更新」，使之变为不可变引用
+        // ? 【2024-06-26 00:45:39】后续可做：内化「预算更新」，使之变为不可变引用
         return this.currentBeliefLink;
     }
 

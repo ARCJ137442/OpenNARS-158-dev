@@ -46,7 +46,7 @@ public class NARS_UI implements Runnable {
     }
 
     /**
-     * TODO multiple files
+     * TODo multiple files
      *
      * @param args Input file
      */

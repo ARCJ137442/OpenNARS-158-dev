@@ -290,7 +290,7 @@ public class MainWindow extends NarsFrame implements ActionListener, OutputChann
                     record.openLogFile();
                 }
             } else if (label.equals("Initialize")) {
-                /// TODO mixture of modifier and reporting
+                /// TODo mixture of modifier and reporting
                 reasoner.reset();
                 reasoner.getExportStrings().add("*****RESET*****");
             } else if (label.equals("Concepts")) {
