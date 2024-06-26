@@ -1,8 +1,5 @@
 package nars.control;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-
 import nars.entity.Concept;
 import nars.entity.Task;
 import nars.storage.Memory;
@@ -91,16 +88,29 @@ public final class DerivationContextDirect implements DerivationContext {
         return this.getMemory();
     }
 
-    public LinkedList<Task> getNewTasks() {
-        return this.core.newTasks;
+    @Override
+    public boolean noNewTask() {
+        return this.core.newTasks.isEmpty();
     }
 
-    public ArrayList<String> getExportStrings() {
-        return this.core.exportStrings;
+    @Override
+    public int numNewTasks() {
+        return this.core.newTasks.size();
     }
 
-    public ArrayList<String> getStringsToRecord() {
-        return this.core.stringsToRecord;
+    @Override
+    public void addNewTask(Task newTask) {
+        this.core.newTasks.add(newTask);
+    }
+
+    @Override
+    public void addExportString(String exportedString) {
+        this.core.exportStrings.add(exportedString);
+    }
+
+    @Override
+    public void addStringToRecord(String stringToRecord) {
+        this.core.stringsToRecord.add(stringToRecord);
     }
 
     /**

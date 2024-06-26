@@ -46,12 +46,12 @@ public abstract class ProcessReason {
         for (;;) {
             // * 🔥启动概念推理：点火！ | 此时已经预设「当前信念」「当前信念链」「新时间戳」准备完毕
             // * 🚩有当前信念 ⇒ 先尝试匹配处理
-            final int oldDerivedTasks = context.getNewTasks().size();
+            final int oldDerivedTasks = context.numNewTasks();
             if (context.hasCurrentBelief())
                 MatchingRules.matchTaskAndBelief(context);
             // * 🚩若作为「判断」成功⇒直接结束该信念的推理
             // * 📝尚且不能完全迁移出「概念推理」中：需要在一个「推理上下文」中行事
-            final boolean hasResult = context.getNewTasks().size() > oldDerivedTasks;
+            final boolean hasResult = context.numNewTasks() > oldDerivedTasks;
             if (hasResult && context.getCurrentTask().isJudgement())
                 continue;
             // ! 📝此处OpenNARS原意是：若「之前通过『直接推理』或『概念推理/本地推理』获得了结果」，则不再进行下一步推理

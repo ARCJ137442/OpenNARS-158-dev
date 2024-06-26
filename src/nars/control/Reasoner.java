@@ -30,46 +30,94 @@ public class Reasoner {
 
     /**
      * global DEBUG print switch
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变 | 会被外部类修改
+     * * 📝所有权：具所有权
      */
     public static boolean DEBUG = false;
     /**
      * The name of the reasoner
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：不变
+     * * 📝所有权：具所有权
      */
     protected final String name;
     /**
      * The memory of the reasoner
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：仅内部可变
+     * * 📝所有权：具所有权
      */
     protected final Memory memory;
     /**
      * The input channels of the reasoner
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：仅内部可变
+     * * 📝所有权：具所有权
      */
     protected final ArrayList<InputChannel> inputChannels;
     /**
      * The output channels of the reasoner
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：仅内部可变
+     * * 📝所有权：具所有权
      */
     protected final ArrayList<OutputChannel> outputChannels;
     /**
      * System clock, relatively defined to guarantee the repeatability of
      * behaviors
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private long clock;
     /**
      * Flag for running continuously
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private boolean running;
     /**
      * The remaining number of steps to be carried out (walk mode)
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private int walkingSteps;
     /**
      * determines the end of {@link NARS} program (set but not accessed in
      * this class)
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private boolean finishedInputs;
     /**
      * System clock - number of cycles since last output
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private long timer;
+
+    /**
+     * The current silence level
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：内部可变
+     * * 📝所有权：具所有权
+     */
     private final AtomicInteger silenceValue = new AtomicInteger(Parameters.SILENT_LEVEL);
 
     /**
@@ -77,11 +125,19 @@ public class Reasoner {
      * * 📌当前时间戳序列号
      * * 📝每个新创建的「时间戳」都有一个属于自身的「序列号」
      * * 🚩从`Stamp.currentSerial`迁移过来
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private long stampCurrentSerial = 0;
 
     /**
      * 🆕使用的推理引擎
+     *
+     * * 📝可空性：非空
+     * * 📝可变性：可变
+     * * 📝所有权：具所有权
      */
     private final InferenceEngine inferenceEngine = new InferenceEngineV1();
 

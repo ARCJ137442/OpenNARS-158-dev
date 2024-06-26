@@ -8,9 +8,6 @@ import nars.entity.TermLink;
 import nars.inference.RuleTables;
 import nars.storage.Memory;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-
 /**
  * 「转换推理上下文」
  * * 📄从「推理上下文」中派生，用于在「直接推理」「概念推理」之间的「转换推理」
@@ -135,18 +132,28 @@ public final class DerivationContextTransform implements DerivationContextConcep
     }
 
     @Override
-    public LinkedList<Task> getNewTasks() {
-        return this.core.newTasks;
+    public boolean noNewTask() {
+        return this.core.newTasks.isEmpty();
     }
 
     @Override
-    public ArrayList<String> getExportStrings() {
-        return this.core.exportStrings;
+    public int numNewTasks() {
+        return this.core.newTasks.size();
     }
 
     @Override
-    public ArrayList<String> getStringsToRecord() {
-        return this.core.stringsToRecord;
+    public void addNewTask(Task newTask) {
+        this.core.newTasks.add(newTask);
+    }
+
+    @Override
+    public void addExportString(String exportedString) {
+        this.core.exportStrings.add(exportedString);
+    }
+
+    @Override
+    public void addStringToRecord(String stringToRecord) {
+        this.core.stringsToRecord.add(stringToRecord);
     }
 
     @Override

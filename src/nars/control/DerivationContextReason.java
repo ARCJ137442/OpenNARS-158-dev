@@ -1,6 +1,5 @@
 package nars.control;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import nars.entity.Concept;
@@ -242,18 +241,28 @@ public final class DerivationContextReason implements DerivationContextConcept {
     }
 
     @Override
-    public LinkedList<Task> getNewTasks() {
-        return this.core.newTasks;
+    public boolean noNewTask() {
+        return this.core.newTasks.isEmpty();
     }
 
     @Override
-    public ArrayList<String> getExportStrings() {
-        return this.core.exportStrings;
+    public int numNewTasks() {
+        return this.core.newTasks.size();
     }
 
     @Override
-    public ArrayList<String> getStringsToRecord() {
-        return this.core.stringsToRecord;
+    public void addNewTask(Task newTask) {
+        this.core.newTasks.add(newTask);
+    }
+
+    @Override
+    public void addExportString(String exportedString) {
+        this.core.exportStrings.add(exportedString);
+    }
+
+    @Override
+    public void addStringToRecord(String stringToRecord) {
+        this.core.stringsToRecord.add(stringToRecord);
     }
 
     @Override

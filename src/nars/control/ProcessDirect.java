@@ -141,7 +141,7 @@ public abstract class ProcessDirect {
         // * 🔥开始「直接推理」
         directProcess(context);
 
-        final boolean noResult = context.noResult();
+        final boolean noResult = context.noNewTask();
 
         // * 🚩吸收并清空上下文
         self.absorbContext(context);

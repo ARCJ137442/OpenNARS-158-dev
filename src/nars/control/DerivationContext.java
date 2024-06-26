@@ -64,15 +64,15 @@ public interface DerivationContext {
      * * 📝可变性：只读
      * * 📝所有权：仅引用
      */
-    public default boolean noResult() {
-        return getNewTasks().isEmpty();
-    }
+    public boolean noNewTask();
 
-    public LinkedList<Task> getNewTasks();
+    public int numNewTasks();
 
-    public ArrayList<String> getExportStrings();
+    public void addNewTask(Task newTask);
 
-    public ArrayList<String> getStringsToRecord();
+    public void addExportString(String exportedString);
+
+    public void addStringToRecord(String stringToRecord);
 
     public Concept getCurrentConcept();
 
@@ -116,7 +116,7 @@ public interface DerivationContext {
         // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
         final BudgetValue newBudget = BudgetValue.from(budget);
         final Task task = new Task(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
-        this.getStringsToRecord().add("!!! Activated: " + task.toString() + "\n");
+        this.addStringToRecord("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
         if (newTask.isQuestion()) {
             final float s = task.budgetSummary();
@@ -125,7 +125,7 @@ public interface DerivationContext {
             }
         }
         // * 🚩将新创建的「导出任务」添加到「新任务」中
-        this.getNewTasks().add(task);
+        this.addNewTask(task);
     }
 
     /* --------------- new task building --------------- */
@@ -138,17 +138,17 @@ public interface DerivationContext {
     default void derivedTask(Task task) {
         // * 🚩判断「导出的新任务」是否有价值
         if (!task.budgetAboveThreshold()) {
-            this.getStringsToRecord().add("!!! Ignored: " + task + "\n");
+            this.addStringToRecord("!!! Ignored: " + task + "\n");
             return;
         }
         // * 🚩报告
-        this.getStringsToRecord().add("!!! Derived: " + task + "\n");
+        this.addStringToRecord("!!! Derived: " + task + "\n");
         final float budget = task.budgetSummary();
         if (budget > this.getSilencePercent()) { // only report significant derived Tasks
             report(task, ReportType.OUT);
         }
         // * 🚩将「导出的新任务」添加到「新任务表」中
-        this.getNewTasks().add(task);
+        this.addNewTask(task);
     }
 
     /** 🆕仅源自「修正规则」调用，没有「父信念」 */
@@ -177,7 +177,7 @@ public interface DerivationContext {
      */
     public default void report(Sentence sentence, ReportType type) {
         final String s = generateReportString(sentence, type);
-        this.getExportStrings().add(s);
+        this.addExportString(s);
     }
 
     /**
