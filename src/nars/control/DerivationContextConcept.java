@@ -9,17 +9,14 @@ import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.entity.TruthValue;
 import nars.inference.Budget;
-import nars.inference.RuleTables;
 import nars.inference.Truth;
 import nars.language.Term;
 
 /**
- * 「转换推理上下文」
- * * 📄从「推理上下文」中派生，用于在「直接推理」「概念推理」之间的「转换推理」
- * * 📌唯一的理由仅仅只是「此时没有『当前信念』『当前信念链』与『待推理词项链表』」
- * * 📌类名源自「预备函数」{@link ProcessReason#preprocessConcept}
- * * 📝以{@link RuleTables#transformTask}
- * * 🚩此处的`currentBelief`总是`null`，实际上不使用（以免产生更复杂的类型）
+ * 「概念推理（中层）上下文」
+ * * 🎯用于统一「转换推理」与「概念推理」的逻辑
+ * * * 🚩统一的「当前信念」（一致可空）、「用于预算推理的当前信念链」等附加要求
+ * * * ✨更多的「单前提结论」「多前提结论」导出方法
  */
 public interface DerivationContextConcept extends DerivationContext {
 
@@ -53,19 +50,34 @@ public interface DerivationContextConcept extends DerivationContext {
         return this.getCurrentBelief() != null;
     }
 
+    /**
+     * * 📄「转换推理上下文」「概念推理上下文」仅作为「当前任务链之目标」
+     */
+    @Override
+    public default Task getCurrentTask() {
+        return this.getCurrentTaskLink().getTarget();
+    }
+
+    public TaskLink getCurrentTaskLink();
+
     // ! 📌删除「新时间戳」：只需在推理的最后「导出结论」时构造
 
     /** 🆕产生新时间戳 from 单前提 */
     default Stamp generateNewStampSingle() {
-        return ((this.getCurrentTask().isJudgement() || !this.hasCurrentBelief())
+        return (this.getCurrentTask().isJudgement() || !this.hasCurrentBelief()
                 ? new Stamp(this.getCurrentTask(), this.getTime())
                 // to answer a question with negation in NAL-5 --- move to activated task?
                 : new Stamp(this.getCurrentBelief(), this.getTime()));
     }
 
-    /** 🆕产生新时间戳 from 双前提 */
+    /**
+     * 🆕产生新时间戳 from 双前提
+     * * ⚠️产生的时间戳可能为空：必须要有「当前信念」
+     */
     default Stamp generateNewStampDouble() {
         // * 🚩使用「当前任务」和「当前信念」产生新时间戳
+        if (!this.hasCurrentBelief())
+            throw new AssertionError("【2024-06-27 00:13:29】调用此函数时一定具有「当前信念」");
         return this.hasCurrentBelief()
                 // * 🚩具有「当前信念」⇒直接合并
                 ? Stamp.uncheckedMerge( // ! 此前已在`getBelief`处检查
@@ -78,16 +90,6 @@ public interface DerivationContextConcept extends DerivationContext {
                         this.getMaxEvidenceBaseLength())
                 : null;
     }
-
-    /**
-     * * 📄「转换推理上下文」「概念推理上下文」仅作为「当前任务链之目标」
-     */
-    @Override
-    public default Task getCurrentTask() {
-        return this.getCurrentTaskLink().getTarget();
-    }
-
-    public TaskLink getCurrentTaskLink();
 
     /* --------------- new task building --------------- */
 
@@ -106,7 +108,8 @@ public interface DerivationContextConcept extends DerivationContext {
     }
 
     /**
-     * 🆕其直接调用来自组合规则、本地规则（修正）
+     * 🆕其直接调用来自组合规则、匹配规则（修正）
+     * * 📌完全参数方法
      * * 🎯避免对`currentTask`的赋值，解耦调用（并让`currentTask`不可变）
      * * 🎯避免对`newStamp`的复制，解耦调用（让「新时间戳」的赋值止步在「推理开始」之前）
      *
@@ -115,6 +118,7 @@ public interface DerivationContextConcept extends DerivationContext {
      * @param newTruth
      * @param newBudget
      * @param newStamp
+     * @param revisable
      */
     public default void doublePremiseTask(
             final Task currentTask,
@@ -122,28 +126,21 @@ public interface DerivationContextConcept extends DerivationContext {
             final Truth newTruth,
             final Budget newBudget,
             final Stamp newStamp) {
-        if (newContent == null)
-            return;
-        // * 🚩仅在「任务内容」可用时构造
-        final char newPunctuation = currentTask.getPunctuation();
-        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
-                newStamp, true);
-        final Task newTask = new Task(
-                newSentence,
-                newBudget,
-                this.getCurrentTask(),
-                this.getCurrentBelief());
-        derivedTask(newTask);
+        doublePremiseTask(currentTask, newContent, newTruth, newBudget, newStamp, true);
     }
 
     /** 🆕重定向 */
-    public default void doublePremiseTask(Term newContent, Truth newTruth, Budget newBudget, boolean revisable) {
-        doublePremiseTask(newContent, generateNewStampDouble(), newTruth, newBudget, revisable);
+    public default void doublePremiseTaskNotRevisable(
+            Term newContent,
+            Truth newTruth,
+            Budget newBudget) {
+        doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, generateNewStampDouble(), false);
+        // TODO: 【2024-06-27 01:10:02】有待交叉测试验明同义性
     }
 
     /**
-     * Shared final operations by all double-premise rules, called from the
-     * rules except StructuralRules
+     * Shared final operations by all double-premise rules,
+     * called from the rules except StructuralRules
      *
      * @param newContent The content of the sentence in task
      * @param newTruth   The truth value of the sentence in task
@@ -152,20 +149,21 @@ public interface DerivationContextConcept extends DerivationContext {
      * @param revisable  Whether the sentence is revisable
      */
     default void doublePremiseTask(
+            final Task currentTask,
             final Term newContent,
-            final Stamp newStamp,
             final Truth newTruth,
             final Budget newBudget,
+            final Stamp newStamp,
             final boolean revisable) {
         if (newContent == null)
-            return;
-
+            throw new AssertionError("【2024-06-27 00:54:04】任务内容不可能为空");
         // * 🚩仅在「任务内容」可用时构造
-        final Sentence taskSentence = this.getCurrentTask();
-        final char newPunctuation = taskSentence.getPunctuation();
-        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(newContent, newPunctuation, newTruth,
-                newStamp,
-                revisable);
+        final char newPunctuation = currentTask.getPunctuation();
+        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(
+                newContent,
+                newPunctuation,
+                newTruth,
+                newStamp, revisable);
         final Task newTask = new Task(
                 newSentence,
                 newBudget,

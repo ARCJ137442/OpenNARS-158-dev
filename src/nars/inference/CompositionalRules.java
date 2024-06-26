@@ -465,7 +465,7 @@ public final class CompositionalRules {
         content = makeConjunction(newState1, newState2);
         truth = TruthFunctions.intersection(truthT, truthB);
         budget = BudgetInference.compoundForward(truth, content, context);
-        context.doublePremiseTask(content, truth, budget, false);
+        context.doublePremiseTaskNotRevisable(content, truth, budget);
     }
 
     /**
@@ -511,7 +511,7 @@ public final class CompositionalRules {
         VariableProcess.applySubstitute(content, substitute);
         Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
         Budget budget = BudgetInference.forward(truth, context);
-        context.doublePremiseTask(content, truth, budget, false);
+        context.doublePremiseTaskNotRevisable(content, truth, budget);
         substitute.clear();
         substitute.put(commonTerm1, makeVarI("varInd1".hashCode()));
         if (commonTerm2 != null) {
