@@ -322,7 +322,7 @@ public class Reasoner {
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段
-        this.mut_novelTasks().refresh();
+        this.novelTasks.refresh();
     }
 
     /* ---------- Short-term workspace for a single cycle ---------- */
@@ -416,22 +416,29 @@ public class Reasoner {
         context.absorbedByReasoner(this);
     }
 
-    /**
-     * 🆕对外接口：获取可变的「新任务」列表
-     * * 🚩获取的「新任务」可变
-     * * 🎯用于「直接推理」
-     */
-    public final LinkedList<Task> mut_newTasks() {
-        return newTasks;
+    /** 🆕对外接口：添加新任务 */
+    public final void addNewTask(Task newTask) {
+        this.newTasks.add(newTask);
     }
 
-    /**
-     * 🆕对外接口：获取可变的「新任务」列表
-     * * 🚩获取的「新任务」可变
-     * * 🎯用于「直接推理」
-     */
-    public final Bag<Task> mut_novelTasks() {
-        return this.novelTasks;
+    /** 🆕对外接口：判断「是否有新任务」 */
+    public final boolean hasNewTask() {
+        return !this.newTasks.isEmpty();
+    }
+
+    /** 🆕接口方法：从「新任务」中拿出（第）一个任务 */
+    public final Task takeANewTask() {
+        return this.newTasks.removeFirst();
+    }
+
+    /** 🆕接口方法：将一个任务放进「新近任务袋」 */
+    public final void putInNovelTasks(Task task) {
+        this.novelTasks.putIn(task);
+    }
+
+    /** 🆕接口方法：从「新近任务袋」拿出一个任务 */
+    public final Task takeANovelTask() {
+        return this.novelTasks.takeOut();
     }
 
     public ArrayList<String> getExportStrings() {

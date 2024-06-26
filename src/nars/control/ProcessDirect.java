@@ -68,12 +68,11 @@ public abstract class ProcessDirect {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
         final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final Memory memory = self.getMemory();
-        final LinkedList<Task> mut_newTasks = self.mut_newTasks();
         // don't include new tasks produced in the current workCycle
         // * 🚩处理「新任务缓冲区」中的所有任务
-        while (!mut_newTasks.isEmpty()) {
+        while (self.hasNewTask()) {
             // * 🚩拿出第一个
-            final Task task = mut_newTasks.removeFirst();
+            final Task task = self.takeANewTask();
             // * 🚩是输入 或 已有对应概念 ⇒ 将参与「直接推理」
             if (task.isInput() || memory.hasConcept(task.getContent())) {
                 tasksToProcess.add(task); // new input or existing concept
@@ -90,7 +89,7 @@ public abstract class ProcessDirect {
                     shouldAddToNovelTasks = false;
                 // * 🚩添加
                 if (shouldAddToNovelTasks)
-                    self.mut_novelTasks().putIn(task);
+                    self.putInNovelTasks(task);
                 else
                     // * 🚩忽略
                     self.getRecorder().append("!!! Neglected: " + task + "\n");
@@ -107,7 +106,7 @@ public abstract class ProcessDirect {
         // select a task from novelTasks
         // one of the two places where this variable is set
         // * 🚩从「新近任务袋」中拿出一个任务，若有⇒添加进列表
-        final Task task = self.mut_novelTasks().takeOut();
+        final Task task = self.takeANovelTask();
         if (task != null)
             tasksToProcess.add(task);
         return tasksToProcess;

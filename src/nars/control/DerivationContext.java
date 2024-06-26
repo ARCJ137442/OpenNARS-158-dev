@@ -66,14 +66,22 @@ public interface DerivationContext {
      */
     public boolean noNewTask();
 
+    /** 获取「新任务」的数量 */
     public int numNewTasks();
 
+    /** 添加「新任务」 */
     public void addNewTask(Task newTask);
 
     public void addExportString(String exportedString);
 
     public void addStringToRecord(String stringToRecord);
 
+    /**
+     * 获取「当前概念」
+     * * ️📝可空性：非空
+     * * 📝可变性：内部可变
+     * * 📝所有权：临时所有（推理结束时归还）
+     */
     public Concept getCurrentConcept();
 
     /**
@@ -118,12 +126,15 @@ public interface DerivationContext {
         final Task task = new Task(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
         this.addStringToRecord("!!! Activated: " + task.toString() + "\n");
         // * 🚩若为「问题」⇒输出显著的「导出结论」
-        if (newTask.isQuestion()) {
-            final float s = task.budgetSummary();
-            if (s > this.getSilencePercent()) { // only report significant derived Tasks
-                report(task, ReportType.OUT);
-            }
-        }
+        // * ❓【2024-06-26 20:14:00】貌似此处永不发生，禁用之
+        if (newTask.isQuestion())
+            throw new AssertionError("【2024-06-26 20:14:19】目前只有「判断句」会参与「任务激活」");
+        // if (newTask.isQuestion()) {
+        // final float s = task.budgetSummary();
+        // if (s > this.getSilencePercent()) { // only report significant derived Tasks
+        // report(task, ReportType.OUT);
+        // }
+        // }
         // * 🚩将新创建的「导出任务」添加到「新任务」中
         this.addNewTask(task);
     }
@@ -153,7 +164,6 @@ public interface DerivationContext {
 
     /** 🆕仅源自「修正规则」调用，没有「父信念」 */
     public default void doublePremiseTaskRevision(
-            final Task currentTask,
             final Term newContent,
             final Truth newTruth,
             final Budget newBudget,
@@ -161,6 +171,7 @@ public interface DerivationContext {
         if (newContent == null)
             return;
         // * 🚩仅在「任务内容」可用时构造
+        final Task currentTask = this.getCurrentTask();
         final char newPunctuation = currentTask.getPunctuation();
         final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(
                 newContent,
@@ -216,6 +227,7 @@ public interface DerivationContext {
      * * 🎯让「概念推理」可以在「拿出概念」的时候运行，同时不影响具体推理过程
      * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
      * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
+     * * 📝【2024-06-26 20:45:59】目前所有逻辑纯只读：最多为「获取其中的信念」
      */
     public default Concept termToConcept(Term term) {
         if (term.equals(this.getCurrentTerm()))
@@ -311,7 +323,7 @@ public interface DerivationContext {
          *
          * @param memory
          */
-        DerivationContextCore(
+        private DerivationContextCore(
                 final Reasoner reasoner,
                 final Concept currentConcept,
                 final LinkedList<Task> newTasks,
@@ -332,7 +344,7 @@ public interface DerivationContext {
             memory.putBackConcept(this.currentConcept);
             // * 🚩将推理导出的「新任务」添加到自身新任务中（先进先出）
             for (final Task newTask : this.newTasks) {
-                reasoner.mut_newTasks().add(newTask);
+                reasoner.addNewTask(newTask);
             }
             // * 🚩将推理导出的「导出字串」添加到自身「导出字串」中（先进先出）
             for (final String output : this.exportStrings) {

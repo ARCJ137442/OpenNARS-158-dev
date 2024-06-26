@@ -48,7 +48,6 @@ public class LocalRules {
                 context.getTime(),
                 context.getMaxEvidenceBaseLength());
         context.doublePremiseTaskRevision(
-                context.getCurrentTask(),
                 content,
                 revisedTruth, budget,
                 newStamp);
