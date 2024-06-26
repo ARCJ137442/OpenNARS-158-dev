@@ -18,7 +18,6 @@ import static nars.language.MakeTerm.*;
  * introduction) can also be used backward.
  */
 public final class CompositionalRules {
-
     static void IntroVarSameSubjectOrPredicate(
             Judgement originalMainSentence,
             Judgement subSentence, Term component,
