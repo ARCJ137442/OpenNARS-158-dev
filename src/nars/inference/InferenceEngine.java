@@ -1,5 +1,6 @@
 package nars.inference;
 
+import nars.control.DerivationContextDirect;
 import nars.control.DerivationContextReason;
 import nars.control.DerivationContextTransform;
 
@@ -9,6 +10,13 @@ import nars.control.DerivationContextTransform;
  * * 📌只处理会「推陈出新」的「转换推理」与「概念推理」
  */
 public abstract class InferenceEngine {
+    /**
+     * 直接推理 入口
+     *
+     * @param context
+     */
+    public abstract void directProcess(DerivationContextDirect context);
+
     /**
      * 转换推理 入口
      *

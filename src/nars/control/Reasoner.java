@@ -327,7 +327,7 @@ public class Reasoner {
         this.recorder.append(" --- " + this.getTime() + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
-        final boolean noResult = ProcessDirect.processDirect(this);
+        final boolean noResult = ProcessDirect.processDirect(this, this.inferenceEngine);
 
         // * 🚩内部概念高级推理 阶段 * //
         if (noResult) // * 📝OpenNARS的逻辑：一次工作周期，只能在「直接推理」与「概念推理」中选择一个
