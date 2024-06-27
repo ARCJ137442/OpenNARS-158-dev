@@ -124,20 +124,20 @@ public final class DerivationContextReason implements DerivationContextConcept {
             final Concept currentConcept,
             final Task currentTask,
             final TaskLink currentTaskLink,
-            final TermLink currentBeliefLink,
-            final LinkedList<TermLink> toReasonLinks) {
+            final LinkedList<TermLink> beliefLinksToReason) {
         // * 🚩构造核心
         this.core = new DerivationContextCore(reasoner, currentConcept);
 
         // * 🚩特有字段
         this.currentTaskLink = currentTaskLink;
         this.memory = reasoner.getMemory();
-        this.currentBeliefLink = currentBeliefLink;
-        this.termLinksToReason = toReasonLinks;
-        this.currentBelief = null; // * 🚩默认置空
+
+        // * 🚩 先将首个元素作为「当前信念链」
+        this.currentBeliefLink = beliefLinksToReason.poll();
+        this.termLinksToReason = beliefLinksToReason;
 
         // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
-        updateCurrentBelief();
+        this.currentBelief = this.updatedCurrentBelief();
 
         // * 🚩检验
         verify(this);
@@ -186,10 +186,16 @@ public final class DerivationContextReason implements DerivationContextConcept {
     }
 
     /**
-     * 通过设置好的（非空的）「当前信念链」更新「当前信念」与「新时间戳」
+     * 通过设置好的（非空的）「当前信念链」更新「当前信念」
      * * ❓是否要考虑「归还信念链」？此处使用的是值还是引用？所有权如何变更？
      */
     private void updateCurrentBelief() {
+        // * 🚩最后设置当前信念（可空性相对独立）
+        this.currentBelief = this.updatedCurrentBelief();
+    }
+
+    /** 🆕通过设置好的（非空的）「当前信念链」返回更新的「当前信念」（所有权） */
+    private Judgement updatedCurrentBelief() {
         // * 🚩背景变量
         final TermLink newBeliefLink = this.currentBeliefLink;
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
@@ -200,8 +206,8 @@ public final class DerivationContextReason implements DerivationContextConcept {
                 // * 🚩找到新的「信念」充当currentBelief
                 // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」
                 : beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
-        // * 🚩最后设置当前信念（可空性相对独立）
-        this.currentBelief = newBelief;
+        // * 🚩最后返回当前信念（可空性相对独立）
+        return newBelief;
     }
 
     /* ---------- Short-term workspace for a single cycle ---------- */

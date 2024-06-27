@@ -142,21 +142,17 @@ public abstract class ProcessReason {
         }
 
         // * 🚩从选取的「任务链」获取要（分别）参与推理的「词项链」
-        final TermLink currentBeliefLink;
-        final LinkedList<TermLink> toReasonLinks = chooseTermLinksToReason(
+        final LinkedList<TermLink> beliefLinksToReason = chooseTermLinksToReason(
                 self,
                 currentConcept,
                 currentTaskLink);
-        if (toReasonLinks.isEmpty()) {
+        if (beliefLinksToReason.isEmpty()) {
             // * 🚩中途返回时要回收
             // ! ❓↓这个「当前任务链」不知为何，按理应该放回，但若放回则推不出结果
             // * 🚩【2024-05-24 22:53:16】目前「维持原判」不放回「当前任务链」
             // currentConcept.__putTaskLinkBack(currentTaskLink);
             self.getMemory().putBackConcept(currentConcept);
             return null;
-        } else {
-            // 先将首个元素作为「当前信念链」
-            currentBeliefLink = toReasonLinks.poll();
         }
 
         // * 🚩在最后构造并返回
@@ -165,8 +161,7 @@ public abstract class ProcessReason {
                 currentConcept,
                 currentTask,
                 currentTaskLink,
-                currentBeliefLink,
-                toReasonLinks);
+                beliefLinksToReason);
         return context;
     }
 

@@ -60,6 +60,8 @@ public interface DerivationContextConcept extends DerivationContext {
 
     public TaskLink getCurrentTaskLink();
 
+    /* ---- 与「导出结论」有关的方法 ---- */
+
     // ! 📌删除「新时间戳」：只需在推理的最后「导出结论」时构造
 
     /** 🆕产生新时间戳 from 单前提 */
@@ -126,16 +128,17 @@ public interface DerivationContextConcept extends DerivationContext {
             final Truth newTruth,
             final Budget newBudget,
             final Stamp newStamp) {
+        // * 🚩默认「可修正」，其它相同
         doublePremiseTask(currentTask, newContent, newTruth, newBudget, newStamp, true);
     }
 
     /** 🆕重定向 */
     public default void doublePremiseTaskNotRevisable(
-            Term newContent,
-            Truth newTruth,
-            Budget newBudget) {
+            final Term newContent,
+            final Truth newTruth,
+            final Budget newBudget) {
+        // * 🚩默认「不可修正」，其它相同
         doublePremiseTask(this.getCurrentTask(), newContent, newTruth, newBudget, generateNewStampDouble(), false);
-        // TODO: 【2024-06-27 01:10:02】有待交叉测试验明同义性
     }
 
     /**
@@ -190,13 +193,17 @@ public interface DerivationContextConcept extends DerivationContext {
 
     public default void singlePremiseTask(Term newContent, char punctuation, Task currentTask, Budget newBudget) {
         // * 🚩根据「是否为『判断』」复制真值
-        final Truth newTruth = currentTask.isJudgement() ? TruthValue.from(currentTask.asJudgement()) : null;
+        final Truth newTruth = currentTask.isJudgement()
+                // * 🚩判断句⇒拷贝真值
+                ? TruthValue.from(currentTask.asJudgement())
+                // * 🚩其它⇒空
+                : null;
         singlePremiseTask(newContent, punctuation, newTruth, newBudget);
     }
 
     /**
-     * Shared final operations by all single-premise rules, called in
-     * StructuralRules
+     * Shared final operations by all single-premise rules,
+     * called in StructuralRules
      *
      * @param newContent  The content of the sentence in task
      * @param punctuation The punctuation of the sentence in task
