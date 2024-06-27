@@ -4,7 +4,6 @@ import java.util.LinkedList;
 
 import nars.entity.Concept;
 import nars.entity.TLink.TLinkType;
-import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
@@ -118,7 +117,6 @@ public abstract class ProcessReason {
         // * ❓这里的「信念链」是否可空
         // * 📝此处应该是「重置信念链，以便后续拿取词项链做『概念推理』」
         self.getRecorder().append(" * Selected TaskLink: " + currentTaskLink + "\n");
-        final Task currentTask = currentTaskLink.getTarget();
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TLinkType.TRANSFORM) {
@@ -159,7 +157,6 @@ public abstract class ProcessReason {
         final DerivationContextReason context = new DerivationContextReason(
                 self,
                 currentConcept,
-                currentTask,
                 currentTaskLink,
                 beliefLinksToReason);
         return context;

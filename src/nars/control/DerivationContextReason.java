@@ -80,7 +80,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
      * * 🚩目前对于「第一个要准备的词项链」会直接存储在「当前词项链（信念链）」中
      * * 📌类似Rust所有权规则：始终只有一处持有「完全独占引用（所有权）」
      */
-    private final LinkedList<TermLink> termLinksToReason;
+    private final LinkedList<TermLink> beliefLinksToReason;
 
     // impl DerivationContextReason
 
@@ -111,7 +111,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
             throw new AssertionError("currentBeliefLink: 不符预期的可空情况");
         if (self.getCurrentTaskLink() == null)
             throw new AssertionError("currentTaskLink: 不符预期的可空情况");
-        if (self.termLinksToReason.isEmpty() && !self.termLinksToReason.isEmpty()) // * 📝可空：有可能只有一个词项链
+        if (self.beliefLinksToReason.isEmpty() && !self.beliefLinksToReason.isEmpty()) // * 📝可空：有可能只有一个词项链
             throw new AssertionError("termLinksToReason: 不符预期的可空情况");
     }
 
@@ -122,7 +122,6 @@ public final class DerivationContextReason implements DerivationContextConcept {
     public DerivationContextReason(
             final Reasoner reasoner,
             final Concept currentConcept,
-            final Task currentTask,
             final TaskLink currentTaskLink,
             final LinkedList<TermLink> beliefLinksToReason) {
         // * 🚩构造核心
@@ -134,7 +133,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
         // * 🚩 先将首个元素作为「当前信念链」
         this.currentBeliefLink = beliefLinksToReason.poll();
-        this.termLinksToReason = beliefLinksToReason;
+        this.beliefLinksToReason = beliefLinksToReason;
 
         // * 🚩从「当前信念链」出发，尝试获取并更新「当前信念」「新时间戳」
         this.currentBelief = this.updatedCurrentBelief();
@@ -166,7 +165,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
     public TermLink nextBelief() {
         // * 🚩先尝试拿出下一个词项链，若拿不出则返回空值
         final TermLink oldTermLink = this.getCurrentBeliefLink();
-        final TermLink currentBeliefLink = this.termLinksToReason.poll();
+        final TermLink currentBeliefLink = this.beliefLinksToReason.poll();
 
         // * 🚩若没有更多词项链了⇒返回空表示「已结束」
         if (currentBeliefLink == null)
@@ -190,7 +189,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
      * * ❓是否要考虑「归还信念链」？此处使用的是值还是引用？所有权如何变更？
      */
     private void updateCurrentBelief() {
-        // * 🚩最后设置当前信念（可空性相对独立）
+        // * 🚩设置当前信念（可空性相对独立）
         this.currentBelief = this.updatedCurrentBelief();
     }
 
@@ -204,7 +203,6 @@ public final class DerivationContextReason implements DerivationContextConcept {
         final Judgement newBelief = beliefConcept == null
                 ? null
                 // * 🚩找到新的「信念」充当currentBelief
-                // * 🚩将「当前任务」和新的「信念」合并成「新时间戳」
                 : beliefConcept.getBelief(this.getCurrentTask()); // ! may be null
         // * 🚩最后返回当前信念（可空性相对独立）
         return newBelief;
@@ -279,7 +277,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
         // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
-        this.getCurrentConcept().putTermLinkBack(currentBeliefLink);
+        this.getCurrentConcept().putTermLinkBack(this.currentBeliefLink);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().putTaskLinkBack(this.currentTaskLink);
         // * 🚩销毁「当前信念」 | 变量值仅临时推理用
