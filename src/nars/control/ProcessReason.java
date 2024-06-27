@@ -16,14 +16,12 @@ public abstract class ProcessReason {
      */
     public static void processReason(
             final Reasoner self,
-            final InferenceEngine inferenceEngine,
-            final boolean noResult) {
+            final InferenceEngine inferenceEngine) {
         // * 🚩从「直接推理」到「概念推理」过渡 阶段 * //
         // * 🚩选择概念、选择任务链、选择词项链（中间亦有推理）⇒构建「概念推理上下文」
         final DerivationContextReason context = ProcessReason.preprocessConcept(
                 self,
-                inferenceEngine,
-                noResult);
+                inferenceEngine);
         if (context == null)
             return;
 
@@ -86,12 +84,7 @@ public abstract class ProcessReason {
      */
     private static DerivationContextReason preprocessConcept(
             final Reasoner self,
-            final InferenceEngine inferenceEngine,
-            final boolean noResult) {
-        // * 🚩推理前判断「是否有必要」
-        if (!noResult) // necessary?
-            return null;
-
+            final InferenceEngine inferenceEngine) {
         // * 🚩从「记忆区」拿出一个「概念」准备推理 | 源自`processConcept`
 
         // * 🚩拿出一个概念，准备点火

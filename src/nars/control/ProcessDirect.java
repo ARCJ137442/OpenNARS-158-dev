@@ -20,17 +20,16 @@ public abstract class ProcessDirect {
      */
     public static boolean processDirect(final Reasoner self) {
         // * 🚩处理已有任务（新任务/新近任务）
-        boolean noResult = processNewTask(self);
+        final boolean noResultNew = processNewTask(self);
         // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
-        if (noResult) { // necessary?
-            // ! ❌【2024-05-19 22:51:03】不能内联逻辑：后边的「处理任务」受到前边任务处理条件的制约
-            // * 🚩【2024-05-19 22:51:22】故不能同义实现「统一获取任务，统一立即处理」的机制
-            final boolean noResultNovel = processNovelTask(self);
-            if (!noResultNovel)
-                noResult = false;
-        }
+        // ! ❌【2024-05-19 22:51:03】不能内联逻辑：后边的「处理任务」受到前边任务处理条件的制约
+        // * 🚩【2024-05-19 22:51:22】故不能同义实现「统一获取任务，统一立即处理」的机制
+        // * 🔬【2024-06-27 21:29:28】再次尝试内联逻辑：「长期稳定性」测试通过
+        // * 🚩【2024-06-27 21:44:49】非破坏性重构：允许同时处理「新任务」与「新近任务」
+        // * * 📝在NARS的「直接推理」过程中，本身就有可能要处理多个任务，无论来源
+        final boolean noResultNovel = processNovelTask(self);
         // * 🚩推理结束
-        return noResult;
+        return noResultNew && noResultNovel;
     }
 
     /**

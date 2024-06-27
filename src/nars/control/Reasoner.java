@@ -141,6 +141,22 @@ public class Reasoner {
      */
     private final InferenceEngine inferenceEngine = new InferenceEngineV1();
 
+    /* ---------- Short-term workspace for a single cycle ---------- */
+    /**
+     * List of new tasks accumulated in one cycle, to be processed in the next
+     * cycle
+     * * 🚩没有上限，不适合作为「缓冲区」使用
+     */
+    private final LinkedList<Task> newTasks;
+    /**
+     * New tasks with novel composed terms, for delayed and selective processing
+     */
+    private final Bag<Task> novelTasks;
+    /**
+     * List of Strings or Tasks to be sent to the output channels
+     */
+    private final ArrayList<String> exportStrings;
+
     /**
      * 🆕获取自身时间戳序列号，并在此同时更新
      * * 🚩原先在「时间戳」中便是「先++，再构造」
@@ -245,10 +261,6 @@ public class Reasoner {
      * only.
      */
     public void tick() {
-        doTick();
-    }
-
-    public void doTick() {
         if (DEBUG)
             handleDebug();
 
@@ -269,7 +281,7 @@ public class Reasoner {
         }
     }
 
-    public void handleInput() {
+    private void handleInput() {
         if (walkingSteps == 0) {
             boolean reasonerShouldRun = false;
             for (final InputChannel channelIn : inputChannels) {
@@ -290,7 +302,7 @@ public class Reasoner {
         }
     }
 
-    public void handleWorkCycle() {
+    private void handleWorkCycle() {
         if (running || walkingSteps > 0) {
             clock++;
             tickTimer();
@@ -315,37 +327,17 @@ public class Reasoner {
         this.recorder.append(" --- " + this.getTime() + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
+        // * 📝
         final boolean noResult = ProcessDirect.processDirect(this);
 
         // * 🚩内部概念高级推理 阶段 * //
-        ProcessReason.processReason(this, this.inferenceEngine, noResult);
+        if (noResult) // * 📝OpenNARS的逻辑：一次工作周期，只能在「直接推理」与「概念推理」中选择一个
+            ProcessReason.processReason(this, this.inferenceEngine);
 
         // * 🚩最后收尾 阶段 * //
         // * 🚩原「清空上下文」已迁移至各「推理」阶段
         this.novelTasks.refresh();
     }
-
-    /* ---------- Short-term workspace for a single cycle ---------- */
-    /**
-     * List of new tasks accumulated in one cycle, to be processed in the next
-     * cycle
-     * * 🚩没有上限，不适合作为「缓冲区」使用
-     */
-    private final LinkedList<Task> newTasks;
-    /**
-     * New tasks with novel composed terms, for delayed and selective processing
-     */
-    private final Bag<Task> novelTasks;
-    /**
-     * List of Strings or Tasks to be sent to the output channels
-     */
-    private final ArrayList<String> exportStrings;
-
-    // /**
-    // * 🆕新的「推理上下文」对象
-    // * * 🚩【2024-05-18 17:12:03】目前重复使用，好像它就是「记忆区中变量的一部分」一样
-    // */
-    // public DerivationContext context = new DerivationContext(this);
 
     /* ---------- new task entries ---------- */
 
@@ -376,7 +368,7 @@ public class Reasoner {
      * add Objects into exportStrings. Currently only Strings are added, though
      * in the future there can be outgoing Tasks; also if exportStrings is empty
      * display the current value of timer ( exportStrings is emptied in
-     * {@link Reasoner#doTick()} - TODo fragile mechanism)
+     * {@link Reasoner#tick()} - TODo fragile mechanism)
      *
      */
     public void report(Sentence sentence, ReportType type) {

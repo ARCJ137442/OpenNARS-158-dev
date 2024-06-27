@@ -41,7 +41,7 @@ public class ReasonerUI extends Reasoner {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                reasoner.doTick();
+                reasoner.tick();
             }
         });
     }
