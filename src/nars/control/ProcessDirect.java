@@ -124,7 +124,7 @@ public abstract class ProcessDirect {
 
         // * 🚩调整概念的预算值
         // * 📌断言：此处一定是「概念在记忆区之外」
-        self.getMemory().activateConceptOuter(context.getCurrentConcept(), taskInput);
+        self.getMemory().activateConceptOuter(context.getCurrentConcept(), context.getCurrentTask());
 
         // * 🔥开始「直接推理」
         directProcess(context);
