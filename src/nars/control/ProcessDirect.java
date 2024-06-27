@@ -17,55 +17,46 @@ public abstract class ProcessDirect {
     /**
      * 🆕本地直接推理
      * * 🚩最终只和「本地规则」与{@link Concept#directProcess}有关
+     * * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
+     * ! ❌【2024-05-19 22:51:03】不能内联逻辑：后边的「处理任务」受到前边任务处理条件的制约
+     * * 🚩【2024-05-19 22:51:22】故不能同义实现「统一获取任务，统一立即处理」的机制
+     * * 🔬【2024-06-27 21:29:28】再次尝试内联逻辑：「长期稳定性」测试通过
+     * * 🚩【2024-06-27 21:44:49】非破坏性重构：允许同时处理「新任务」与「新近任务」
+     * * * 📝在NARS的「直接推理」过程中，本身就有可能要处理多个任务，无论来源
      */
     public static boolean processDirect(final Reasoner self) {
-        // * 🚩处理已有任务（新任务/新近任务）
-        final boolean noResultNew = processNewTask(self);
-        // * 📝`processNewTask`可能会产生新任务，此举将影响到`noResult`的值
-        // ! ❌【2024-05-19 22:51:03】不能内联逻辑：后边的「处理任务」受到前边任务处理条件的制约
-        // * 🚩【2024-05-19 22:51:22】故不能同义实现「统一获取任务，统一立即处理」的机制
-        // * 🔬【2024-06-27 21:29:28】再次尝试内联逻辑：「长期稳定性」测试通过
-        // * 🚩【2024-06-27 21:44:49】非破坏性重构：允许同时处理「新任务」与「新近任务」
-        // * * 📝在NARS的「直接推理」过程中，本身就有可能要处理多个任务，无论来源
-        final boolean noResultNovel = processNovelTask(self);
-        // * 🚩推理结束
-        return noResultNew && noResultNovel;
-    }
+        // * 🚩加载任务 | 新任务/新近任务
+        final LinkedList<Task> tasksToProcess = loadFromTasks(self);
 
-    /**
-     * Process the newTasks accumulated in the previous workCycle, accept input
-     * ones and those that corresponding to existing concepts, plus one from the
-     * buffer.
-     */
-    private static boolean processNewTask(final Reasoner self) {
-        // * 🚩获取新任务
-        final LinkedList<Task> tasksToProcess = loadFromNewTasks(self);
         // * 🚩处理新任务
         final boolean noResult = immediateProcess(self, tasksToProcess);
-        // * 🚩清理收尾
+
+        // * 🚩推理结束，清理收尾
         tasksToProcess.clear();
         return noResult;
     }
 
-    /**
-     * Select a novel task to process.
-     */
-    private static boolean processNovelTask(final Reasoner self) {
-        // * 🚩获取新近任务
-        final LinkedList<Task> tasksToProcess = loadFromNovelTasks(self);
-        // * 🚩处理新近任务
-        final boolean noResult = immediateProcess(self, tasksToProcess);
-        // * 🚩清理收尾
-        tasksToProcess.clear();
-        return noResult;
+    private static LinkedList<Task> loadFromTasks(final Reasoner self) {
+        // * 🚩创建并装载「将要处理的任务」
+        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+        loadFromNewTasks(self, tasksToProcess);
+        loadFromNovelTasks(self, tasksToProcess);
+        // * 🚩【2024-06-27 22:58:33】现在合并逻辑，一个个处理
+        // * 📝逻辑上不影响：
+        // * 1. 「直接推理」的过程中不会用到「新任务」与「新近任务」
+        // * 2. 仍然保留了「在『从新任务获取将处理任务』时，将部分任务放入『新近任务袋』」的逻辑
+        return tasksToProcess;
     }
 
     /**
      * 🆕获取「要处理的新任务」列表
+     *
+     * Process the newTasks accumulated in the previous workCycle, accept input
+     * ones and those that corresponding to existing concepts, plus one from the
+     * buffer.
      */
-    private static LinkedList<Task> loadFromNewTasks(final Reasoner self) {
+    private static void loadFromNewTasks(final Reasoner self, LinkedList<Task> tasksToProcess) {
         // * 🚩处理新输入：立刻处理 or 加入「新近任务」 or 忽略
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
         final Memory memory = self.getMemory();
         // don't include new tasks produced in the current workCycle
         // * 🚩处理「新任务缓冲区」中的所有任务
@@ -94,21 +85,20 @@ public abstract class ProcessDirect {
                     self.getRecorder().append("!!! Neglected: " + task + "\n");
             }
         }
-        return tasksToProcess;
     }
 
     /**
      * 🆕获取「要处理的新近任务」列表
+     *
+     * Select a novel task to process.
      */
-    private static LinkedList<Task> loadFromNovelTasks(final Reasoner self) {
-        final LinkedList<Task> tasksToProcess = new LinkedList<>();
+    private static void loadFromNovelTasks(final Reasoner self, LinkedList<Task> tasksToProcess) {
         // select a task from novelTasks
         // one of the two places where this variable is set
         // * 🚩从「新近任务袋」中拿出一个任务，若有⇒添加进列表
         final Task task = self.takeANovelTask();
         if (task != null)
             tasksToProcess.add(task);
-        return tasksToProcess;
     }
 
     /* ---------- task processing ---------- */

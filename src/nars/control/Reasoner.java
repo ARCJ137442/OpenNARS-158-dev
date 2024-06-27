@@ -327,7 +327,6 @@ public class Reasoner {
         this.recorder.append(" --- " + this.getTime() + " ---\n");
 
         // * 🚩本地任务直接处理 阶段 * //
-        // * 📝
         final boolean noResult = ProcessDirect.processDirect(this);
 
         // * 🚩内部概念高级推理 阶段 * //
@@ -435,13 +434,6 @@ public class Reasoner {
 
     public ArrayList<String> getExportStrings() {
         return this.exportStrings;
-    }
-
-    /**
-     * Actually means that there are no new Tasks
-     */
-    public boolean noResult() {
-        return this.newTasks.isEmpty();
     }
 
     // 输入输出 //
