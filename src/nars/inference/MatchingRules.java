@@ -14,18 +14,19 @@ import nars.language.VariableProcess;
  * * 🎯用于在「概念推理」中【匹配】内容相近的语句
  * * 📌现在诸多规则已迁移到「三段论规则」中
  */
-public abstract class MatchingRules {
+abstract class MatchingRules {
 
     /**
      * The task and belief have the same content
-     * <p>
-     * called in RuleTables.reason
+     * * 🚩【2024-06-28 17:23:54】目前作为「匹配推理」的入口，不再直接暴露在控制机制中
+     * * 📝「匹配推理」的核心：拿到一个任务链，再拿到一个信念链，先直接在其中做匹配
+     * * 📝「匹配推理」的作用：信念修正任务、信念回答「特殊疑问」
      *
      * @param task    The task
      * @param belief  The belief
      * @param context Reference to the derivation context
      */
-    public static void matchTaskAndBelief(DerivationContextReason context) {
+    static void matchTaskAndBelief(DerivationContextReason context) {
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`task`一定是`context.currentTask`
         final Task currentTask = context.getCurrentTask();
         // * 📝【2024-05-18 14:35:35】自调用者溯源：此处的`belief`一定是`context.currentBelief`

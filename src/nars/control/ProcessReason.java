@@ -7,7 +7,6 @@ import nars.entity.TLink.TLinkType;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
 import nars.inference.InferenceEngine;
-import nars.inference.MatchingRules;
 
 public abstract class ProcessReason {
 
@@ -45,7 +44,7 @@ public abstract class ProcessReason {
             // * 🚩有当前信念 ⇒ 先尝试匹配处理
             final int oldDerivedTasks = context.numNewTasks();
             if (context.hasCurrentBelief())
-                MatchingRules.matchTaskAndBelief(context);
+                inferenceEngine.match(context);
             // * 🚩若作为「判断」成功⇒直接结束该信念的推理
             // * 📝尚且不能完全迁移出「概念推理」中：需要在一个「推理上下文」中行事
             final boolean hasResult = context.numNewTasks() > oldDerivedTasks;

@@ -9,25 +9,32 @@ import nars.control.DerivationContextTransform;
  * * 📌只处理「推理上下文」，修改其中传入的对象
  * * 📌只处理会「推陈出新」的「转换推理」与「概念推理」
  */
-public abstract class InferenceEngine {
+public interface InferenceEngine {
     /**
      * 直接推理 入口
      *
      * @param context
      */
-    public abstract void directProcess(DerivationContextDirect context);
+    public void directProcess(DerivationContextDirect context);
 
     /**
      * 转换推理 入口
      *
      * @param context
      */
-    public abstract void transform(DerivationContextTransform context);
+    public void transform(DerivationContextTransform context);
+
+    /**
+     * 匹配推理 入口
+     *
+     * @param context
+     */
+    public void match(DerivationContextReason context);
 
     /**
      * 概念推理 入口
      *
      * @param context
      */
-    public abstract void reason(DerivationContextReason context);
+    public void reason(DerivationContextReason context);
 }
