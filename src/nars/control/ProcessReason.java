@@ -45,6 +45,7 @@ public abstract class ProcessReason {
             final int oldDerivedTasks = context.numNewTasks();
             if (context.hasCurrentBelief())
                 inferenceEngine.match(context);
+
             // * 🚩若作为「判断」成功⇒直接结束该信念的推理
             // * 📝尚且不能完全迁移出「概念推理」中：需要在一个「推理上下文」中行事
             final boolean hasResult = context.numNewTasks() > oldDerivedTasks;
@@ -57,6 +58,7 @@ public abstract class ProcessReason {
             // * 2. `<{tim} --> murder>. %1.000000; 0.810000%`
             // * 📄OpenNARS 3.1.0的结果：`Answer <{tim} --> murder>. %1.00;0.85%`
             // * 📝目前的结果是：`ANSWER: <{tim} --> murder>. %1.00;0.81% {195 : 5;7}`
+
             // * 🚩交给推理引擎做「概念推理」
             inferenceEngine.reason(context);
             // * 🚩切换上下文中的「当前信念」「当前信念链」「新时间戳」 | 每次「概念推理」只更改「当前信念」与「当前信念链」
@@ -65,6 +67,7 @@ public abstract class ProcessReason {
                 // * 🚩没有更多词项链⇒结束
                 break;
         }
+
         // * ✅归还「当前任务链/当前信念链」的工作已经在「吸收上下文」中被执行
         // * 🚩吸收并清空上下文
         context.absorbedByReasoner(self);
@@ -112,22 +115,7 @@ public abstract class ProcessReason {
         // self.getRecorder().append(" * Selected Task: " + task + "\n");
         // for debugging
         if (currentTaskLink.getType() == TLinkType.TRANSFORM) {
-            // * 🚩创建「转换推理上下文」
-            // * ⚠️此处「当前信念链」为空，可空情况不一致，使用一个专门的「推理上下文」类型
-            // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
-            // * @ C="livingIn"
-            // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
-            // * @ C="{graz}"
-            final DerivationContextTransform context = new DerivationContextTransform(
-                    self,
-                    currentConcept,
-                    currentTaskLink);
-            // * 🚩交给「推理引擎」开始做「转换推理」
-            inferenceEngine.transform(context);
-            // to turn this into structural inference as below?
-            // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
-            // * 🚩独立吸收上下文
-            self.absorbContext(context);
+            processConceptTransform(self, inferenceEngine, currentConcept, currentTaskLink);
             return null;
         }
 
@@ -152,6 +140,34 @@ public abstract class ProcessReason {
                 currentTaskLink,
                 beliefLinksToReason);
         return context;
+    }
+
+    /**
+     * 处理「转换推理」
+     * * 📌拥有独立的「转换推理上下文」
+     * * 🚩推理后调用者即中途返回
+     */
+    private static void processConceptTransform(
+            final Reasoner self,
+            final InferenceEngine inferenceEngine,
+            final Concept currentConcept,
+            final TaskLink currentTaskLink) {
+        // * 🚩创建「转换推理上下文」
+        // * ⚠️此处「当前信念链」为空，可空情况不一致，使用一个专门的「推理上下文」类型
+        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+        // * @ C="livingIn"
+        // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
+        // * @ C="{graz}"
+        final DerivationContextTransform context = new DerivationContextTransform(
+                self,
+                currentConcept,
+                currentTaskLink);
+        // * 🚩交给「推理引擎」开始做「转换推理」
+        inferenceEngine.transform(context);
+        // to turn this into structural inference as below?
+        // ? ↑【2024-05-17 23:13:45】似乎该注释意味着「应该放在『概念推理』而非『直接推理』中」
+        // * 🚩独立吸收上下文
+        self.absorbContext(context);
     }
 
     /**
