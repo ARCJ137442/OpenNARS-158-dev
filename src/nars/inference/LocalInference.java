@@ -13,7 +13,7 @@ import nars.language.Term;
  * * 🎯承载原先「直接推理」的部分
  * * 📝其中包含「修订规则」等
  */
-public abstract class LocalInference {
+final class LocalInference {
     /**
      * 入口
      *

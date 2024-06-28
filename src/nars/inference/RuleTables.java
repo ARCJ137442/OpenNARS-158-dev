@@ -11,7 +11,7 @@ import static nars.io.Symbols.*;
  * belief. Used in indirect processing of a task, to dispatch inference cases
  * to the relevant inference rules.
  */
-public class RuleTables {
+final class RuleTables {
 
     /**
      * Entry point of the inference engine

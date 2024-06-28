@@ -14,7 +14,7 @@ import nars.language.VariableProcess;
  * * 🎯用于在「概念推理」中【匹配】内容相近的语句
  * * 📌现在诸多规则已迁移到「三段论规则」中
  */
-abstract class MatchingRules {
+final class MatchingRules {
 
     /**
      * The task and belief have the same content

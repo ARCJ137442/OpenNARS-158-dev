@@ -17,7 +17,7 @@ import static nars.language.MakeTerm.*;
  * Forward inference only, except the last group (dependent variable
  * introduction) can also be used backward.
  */
-public final class CompositionalRules {
+class CompositionalRules {
     static void IntroVarSameSubjectOrPredicate(
             Judgement originalMainSentence,
             Judgement subSentence, Term component,

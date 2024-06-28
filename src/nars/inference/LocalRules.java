@@ -18,7 +18,7 @@ import nars.control.ReportType;
  * conversion: between different inheritance relations.
  * * 🚩【2024-06-10 10:04:13】此注释已过时；现在仅用于「直接推理」
  */
-public class LocalRules {
+final class LocalRules {
 
     /* -------------------- same contents -------------------- */
 
