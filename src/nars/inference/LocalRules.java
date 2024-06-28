@@ -1,9 +1,7 @@
 package nars.inference;
 
 import nars.entity.*;
-import nars.language.*;
 import nars.control.DerivationContext;
-import nars.control.DerivationContextDirect;
 import nars.control.ReportType;
 
 /**
@@ -17,41 +15,12 @@ import nars.control.ReportType;
  * merge: between items of the same type and stamp;
  * conversion: between different inheritance relations.
  * * 🚩【2024-06-10 10:04:13】此注释已过时；现在仅用于「直接推理」
+ * * 🚩【2024-06-29 03:31:42】再更新：此内函数现在只用于「共用逻辑」
+ * * * 📄「直接推理」与「匹配推理」均要「解决问题」
  */
 final class LocalRules {
 
     /* -------------------- same contents -------------------- */
-
-    // * 直接推理 * //
-
-    /**
-     * Belief revision
-     * <p>
-     * called from Concept.reviseTable and match
-     *
-     * @param newBelief       The new belief in task
-     * @param oldBelief       The previous belief with the same content
-     * @param feedbackToLinks Whether to send feedback to the links
-     * @param context         Reference to the derivation context
-     */
-    public static void revisionDirect(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
-        // * 🚩计算真值/预算值
-        final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
-        final Budget budget = BudgetInference.revise(newBelief, oldBelief, revisedTruth, context.getCurrentTask());
-        final Term content = newBelief.getContent();
-        // * 🚩创建并导入结果：双前提
-        // * 📝仅在此处用到「当前信念」作为「导出信念」
-        // * 📝此处用不到「当前信念」（旧信念）
-        // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
-        final Stamp newStamp = Stamp.uncheckedMerge(
-                newBelief, oldBelief,
-                context.getTime(),
-                context.getMaxEvidenceBaseLength());
-        context.doublePremiseTaskRevision(
-                content,
-                revisedTruth, budget,
-                newStamp);
-    }
 
     /**
      * Check if a Sentence provide a better answer to a Question or Goal
@@ -60,7 +29,7 @@ final class LocalRules {
      * @param questionTask The task to be processed
      * @param context      Reference to the derivation context
      */
-    public static void trySolution(Judgement belief, Task questionTask, DerivationContext context) {
+    static void trySolution(Judgement belief, Task questionTask, DerivationContext context) {
         // * 🚩预设&断言
         final Judgement oldBest = questionTask.getBestSolution();
         if (belief == null)

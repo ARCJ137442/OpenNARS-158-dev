@@ -4,6 +4,7 @@ import nars.control.DerivationContextDirect;
 import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
+import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.io.Symbols;
 import nars.language.Term;
@@ -72,7 +73,7 @@ final class LocalInference {
                 if (!hasOverlap) {
                     // * 📌【2024-06-07 11:38:02】现在由于「新时间戳」的内置，经检查不再需要设置「当前信念」
                     // * 📌此处的「当前信念」直接取`oldBelief`，并以此构造时间戳
-                    LocalRules.revisionDirect(judgment, oldBelief, context);
+                    revisionDirect(judgment, oldBelief, context);
                 }
             }
         }
@@ -124,6 +125,35 @@ final class LocalInference {
         if (newQuestion) {
             self.addQuestion(questionTask);
         }
+    }
+
+    /**
+     * Belief revision
+     * <p>
+     * called from Concept.reviseTable and match
+     *
+     * @param newBelief       The new belief in task
+     * @param oldBelief       The previous belief with the same content
+     * @param feedbackToLinks Whether to send feedback to the links
+     * @param context         Reference to the derivation context
+     */
+    private static void revisionDirect(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
+        // * 🚩计算真值/预算值
+        final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
+        final Budget budget = BudgetInference.revise(newBelief, oldBelief, revisedTruth, context.getCurrentTask());
+        final Term content = newBelief.getContent();
+        // * 🚩创建并导入结果：双前提
+        // * 📝仅在此处用到「当前信念」作为「导出信念」
+        // * 📝此处用不到「当前信念」（旧信念）
+        // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
+        final Stamp newStamp = Stamp.uncheckedMerge(
+                newBelief, oldBelief,
+                context.getTime(),
+                context.getMaxEvidenceBaseLength());
+        context.doublePremiseTaskRevision(
+                content,
+                revisedTruth, budget,
+                newStamp);
     }
 
     /**
