@@ -148,48 +148,48 @@ public abstract class ConceptLinking {
      * The only method that calls the TaskLink constructor.
      * * 📝【2024-05-30 00:37:39】此时该方法从「直接推理」被调用，同时「概念」「任务」「记忆区」均来自「直接推理上下文」
      *
-     * @param context [&m] 推理上下文
+     * @param self [&m] 推理上下文
      */
-    public static void linkConceptToTask(final DerivationContextDirect context) {
-        final Concept self = context.getCurrentConcept();
-        final Memory memory = context.mutMemory(); // ! 可变：需要「取/创建 概念」
-        final Task task = context.getCurrentTask();
+    public static void linkConceptToTask(final DerivationContextDirect self) {
+        final Concept currentConcept = self.getCurrentConcept();
+        final Task task = self.getCurrentTask();
         // * 🚩构建任务链
-        buildTaskLinks(self, memory, task);
+        buildTaskLinks(self, currentConcept, task);
         // * 🚩构建词项链
-        buildTermLinks(self, memory, task); // recursively insert TermLink
+        buildTermLinks(self, currentConcept, task); // recursively insert TermLink
     }
 
     /**
      * 构建任务链
      *
-     * @param self   [&m]
+     * @param currentConcept [&m]
      * @param memory
      * @param task
      */
     private static void buildTaskLinks(
-            final Concept self,
-            final Memory memory,
+            final DerivationContextDirect self,
+            final Concept currentConcept,
             final Task task) {
+        final Memory memory = self.mutMemory(); // ! 可变：需要「取/创建 概念」
         // 对自身 //
         // * 🚩对当前任务构造任务链，链接到传入的任务 | 构造「自身」
         final TaskLink selfLink = TaskLink.newSelf(task); // link type: SELF
-        insertTaskLink(self, memory, selfLink);
+        insertTaskLink(currentConcept, memory, selfLink);
 
         // 对子项 //
         // * 🚩仅在「自身为复合词项」且「词项链模板非空」时准备
         // * 📝只有复合词项会有「对子项的词项链」，子项不会持有「对所属词项的词项链」
-        if (!(self.getTerm() instanceof CompoundTerm && self.getLinkTemplatesToSelf().size() > 0))
+        if (!(currentConcept.getTerm() instanceof CompoundTerm && currentConcept.getLinkTemplatesToSelf().size() > 0))
             return;
         // * 🚩分发并指数递减预算值
         final Budget subBudget = BudgetFunctions.distributeAmongLinks(
                 task,
                 // ! ⚠️↓预算函数要求这里不能为零：要作为除数
-                self.getLinkTemplatesToSelf().size());
+                currentConcept.getLinkTemplatesToSelf().size());
         if (!subBudget.budgetAboveThreshold())
             return;
         // * 🚩仅在「预算达到阈值」时：遍历预先构建好的所有「子项词项链模板」，递归链接到任务
-        for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {
+        for (final TermLinkTemplate template : currentConcept.getLinkTemplatesToSelf()) {
             linkTaskLinkFromTemplate(template, memory, task, subBudget);
         }
     }
@@ -239,42 +239,45 @@ public abstract class ConceptLinking {
      * Recursively build TermLinks between a compound and its components
      * <p>
      * called only from Memory.continuedProcess
-     * * ❌【2024-05-30 00:49:19】无法断言原先传入的「当前概念」「当前记忆区」「当前任务预算值」都来自「直接推理上下文」
-     * * 📝原因：需要递归处理，并在这其中改变self、memory与taskBudget三个参数
+     * * ❌【2024-05-30 00:49:19】无法断言原先传入的「概念」「预算值」都来自「直接推理上下文」
+     * * 📝原因：需要递归处理，并在这其中改变「上下文」「概念」等参数
      *
      * @param sourceBudget The Budget of the task
      */
-    private static void buildTermLinks(final Concept self, final Memory memory, final Budget sourceBudget) {
+    private static void buildTermLinks(
+            final DerivationContextDirect self,
+            final Concept current,
+            final Budget sourceBudget) {
         // * 🚩仅在有「词项链模板」时
-        if (self.getLinkTemplatesToSelf().isEmpty())
+        if (current.getLinkTemplatesToSelf().isEmpty())
             return;
         // * 🚩分派链接，更新预算值，继续
         // * 📝太大的词项、太远的链接 根据AIKR有所取舍
         final Budget subBudget = BudgetFunctions.distributeAmongLinks(
                 sourceBudget,
-                self.getLinkTemplatesToSelf().size());
+                current.getLinkTemplatesToSelf().size());
         if (!subBudget.budgetAboveThreshold())
             return;
         // * 🚩仅在超过阈值时：遍历所有「词项链模板」
-        for (final TermLinkTemplate template : self.getLinkTemplatesToSelf()) {
+        for (final TermLinkTemplate template : current.getLinkTemplatesToSelf()) {
             if (template.getType() == TLinkType.TRANSFORM)
                 continue;
             // * 🚩仅在链接类型不是「转换」时
             final Term component = template.getTarget();
-            final Term selfTerm = self.getTerm();
-            final Concept componentConcept = memory.getConceptOrCreate(component);
+            final Term selfTerm = current.getTerm();
+            final Concept componentConcept = self.getConceptOrCreate(component);
             // * 🚩仅在「元素词项所对应概念」存在时
             if (componentConcept == null)
                 continue;
             // * 🚩建立双向链接：整体⇒元素
             final TermLink termLink1 = TermLink.fromTemplate(component, template, subBudget);
-            insertTermLink(self, termLink1); // this termLink to that
+            insertTermLink(current, termLink1); // this termLink to that
             // * 🚩建立双向链接：元素⇒整体
             final TermLink termLink2 = TermLink.fromTemplate(selfTerm, template, subBudget);
             insertTermLink(componentConcept, termLink2); // that termLink to this
             // * 🚩对复合子项 继续深入递归
             if (component instanceof CompoundTerm) {
-                buildTermLinks(componentConcept, memory, subBudget);
+                buildTermLinks(self, componentConcept, subBudget);
             }
         }
     }

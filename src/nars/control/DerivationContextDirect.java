@@ -2,6 +2,7 @@ package nars.control;
 
 import nars.entity.Concept;
 import nars.entity.Task;
+import nars.language.Term;
 import nars.storage.Memory;
 import static nars.control.DerivationContext.drop;
 
@@ -86,6 +87,23 @@ public final class DerivationContextDirect implements DerivationContext {
      */
     public Memory mutMemory() {
         return this.getMemory();
+    }
+
+    /**
+     * 获取「已存在的概念」或（在记忆区）创建新概念
+     * * 🎯让「概念推理」可以在「拿出概念」的时候运行，同时不影响具体推理过程
+     * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
+     * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
+     * * 📝【2024-06-26 20:45:59】目前所有逻辑纯只读：最多为「获取其中的信念」
+     * 
+     * @param &m-self
+     * @param term    [&]
+     */
+    public Concept getConceptOrCreate(Term term) {
+        if (term.equals(this.getCurrentTerm()))
+            return this.getCurrentConcept();
+        else
+            return this.getMemory().getConceptOrCreate(term);
     }
 
     @Override
