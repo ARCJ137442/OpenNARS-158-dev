@@ -17,7 +17,8 @@ final class RuleTables {
      * Entry point of the inference engine
      * * 📌推理引擎「概念推理」的入口
      *
-     * TODO: 追溯调用是否均以「导出结论」终止（若有）
+     * * 📝追溯「是否有导出结论」或许可行，但应用价值不大
+     * * * ✅通过追踪「导出结论集」足以用非侵入式方法实现同样功能
      *
      * @param tLink   The selected TaskLink, which will provide a task
      * @param bLink   The selected TermLink, which may provide a belief
@@ -465,7 +466,7 @@ final class RuleTables {
                 // * 🚩尝试统一查询变量
                 if (VariableProcess.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
-                    SyllogisticRules.matchReverse(context);
+                    matchReverse(context);
                 else
                     // * 🚩未有统一 ⇒ 演绎+举例
                     SyllogisticRules.dedExe(term1, term2, task, belief, context);
@@ -489,7 +490,7 @@ final class RuleTables {
                 // * 🚩尝试统一查询变量
                 if (VariableProcess.unifyQ(term1, term2, tTerm, bTerm))
                     // * 🚩成功统一 ⇒ 匹配反向
-                    SyllogisticRules.matchReverse(context);
+                    matchReverse(context);
                 else
                     // * 🚩未有统一 ⇒ 演绎+举例
                     SyllogisticRules.dedExe(term1, term2, task, belief, context);
@@ -513,8 +514,7 @@ final class RuleTables {
                 // TODO: 或许可以在这个过程中返回「推理结果」？在其中加入「导出的结论」「要更新的预算」等
                 final boolean applied = SyllogisticRules.conditionalAbd(term1, term2, tTerm, bTerm, context);
                 if (applied)
-                    return;
-                // if conditional abduction, skip the following
+                    return; // if conditional abduction, skip the following
                 // * 🚩尝试构建复合词项
                 CompositionalRules.composeCompound(tTerm, bTerm, 1, context);
                 // * 🚩归因+归纳+比较
@@ -558,7 +558,7 @@ final class RuleTables {
                 unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
-                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                    matchAsymSym(asym, sym, context);
                 else
                     // * 🚩未有统一 ⇒ 类比
                     SyllogisticRules.analogy(term2, term1, asym, sym, context);
@@ -579,7 +579,7 @@ final class RuleTables {
                 unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
-                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                    matchAsymSym(asym, sym, context);
                 else
                     // * 🚩未有统一 ⇒ 类比
                     SyllogisticRules.analogy(term2, term1, asym, sym, context);
@@ -600,7 +600,7 @@ final class RuleTables {
                 unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
-                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                    matchAsymSym(asym, sym, context);
                 else
                     // * 🚩未有统一 ⇒ 类比
                     SyllogisticRules.analogy(term1, term2, asym, sym, context);
@@ -621,11 +621,69 @@ final class RuleTables {
                 unifiedQ = VariableProcess.unifyQ(term1, term2, asymS, symS);
                 if (unifiedQ)
                     // * 🚩能统一 ⇒ 继续分派
-                    SyllogisticRules.matchAsymSym(asym, sym, context);
+                    matchAsymSym(asym, sym, context);
                 else
                     // * 🚩未有统一 ⇒ 类比
                     SyllogisticRules.analogy(term1, term2, asym, sym, context);
                 return;
+        }
+    }
+
+    // * 📝【2024-06-10 15:25:14】以下函数最初处在「本地规则」，后来迁移到「匹配规则」，现在放置于「三段论规则」
+
+    /* -------------------- same terms, difference relations -------------------- */
+    /**
+     * The task and belief match reversely
+     * * 📄<A --> B> + <B --> A>
+     * * * inferToSym: <A --> B>. => <A <-> B>.
+     * * * conversion: <A --> B>? => <A --> B>.
+     *
+     * @param context Reference to the derivation context
+     */
+    private static void matchReverse(DerivationContextReason context) {
+        // 📄Task@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
+        // %1.00;0.45% {503 : 38;37}
+        // 📄JudgementV1@43 "<<toothbrush --> $1> ==> <cup --> $1>>. %1.0000;0.4475%
+        // {483 : 36;39} "
+        final Task task = context.getCurrentTask();
+        final Judgement belief = context.getCurrentBelief();
+        switch (task.getPunctuation()) {
+            // * 🚩判断句⇒尝试合并成对称形式（继承⇒相似，蕴含⇒等价）
+            case JUDGMENT_MARK:
+                SyllogisticRules.inferToSym(task.asJudgement(), belief, context);
+                return;
+            // * 🚩疑问句⇒尝试执行转换规则
+            case QUESTION_MARK:
+                SyllogisticRules.conversion(task.asQuestion(), belief, context);
+                return;
+            // * 🚩其它⇒报错
+            default:
+                throw new Error("Unknown punctuation of task: " + task.toStringLong());
+        }
+    }
+
+    /**
+     * Inheritance/Implication matches Similarity/Equivalence
+     *
+     * @param asym    A Inheritance/Implication sentence
+     * @param sym     A Similarity/Equivalence sentence
+     * @param figure  location of the shared term
+     * @param context Reference to the derivation context
+     */
+    private static void matchAsymSym(Sentence asym, Sentence sym, DerivationContextReason context) {
+        final Task task = context.getCurrentTask();
+        switch (task.getPunctuation()) {
+            // * 🚩判断句⇒尝试合并到非对称形式（相似⇒继承，等价⇒蕴含）
+            case JUDGMENT_MARK:
+                // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
+                SyllogisticRules.inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
+                return;
+            // * 🚩疑问句⇒尝试「继承⇄相似」「蕴含⇄等价」
+            case QUESTION_MARK:
+                SyllogisticRules.convertRelation(task.asQuestion(), context);
+                return;
+            default:
+                throw new Error("Unknown punctuation of task: " + task.toStringLong());
         }
     }
 

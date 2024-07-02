@@ -7,8 +7,6 @@ import nars.language.VariableProcess.AppliedCompounds;
 import nars.language.VariableProcess.Unification;
 import nars.io.Symbols;
 
-import static nars.io.Symbols.JUDGMENT_MARK;
-import static nars.io.Symbols.QUESTION_MARK;
 import static nars.language.MakeTerm.*;
 
 import nars.control.DerivationContextReason;
@@ -28,81 +26,122 @@ final class SyllogisticRules {
      * {<S ==> M>, <M ==> P>} |- {<S ==> P>, <P ==> S>}
      * </pre>
      *
-     * @param term1    Subject of the first new task
-     * @param term2    Predicate of the first new task
-     * @param sentence The first premise
-     * @param belief   The second premise
-     * @param context  Reference to the derivation context
+     * * 🚩演绎 & 举例
+     * * * 📝一个强推理，一个弱推理
+     *
+     * @param term1   Subject of the first new task
+     * @param term2   Predicate of the first new task
+     * @param task    The first premise
+     * @param belief  The second premise
+     * @param context Reference to the derivation context
      */
-    static void dedExe(Term term1, Term term2, Sentence sentence, Judgement belief,
+    static void dedExe(
+            Term term1, Term term2,
+            Sentence task, Judgement belief,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (Statement.invalidStatement(term1, term2)) {
+        // * 🚩陈述有效才行
+        if (Statement.invalidStatement(term1, term2))
             return;
-        }
-        final Statement content = (Statement) sentence.getContent();
-        final Statement content1 = makeStatement(content, term1, term2);
-        final Statement content2 = makeStatement(content, term2, term1);
-        Truth truth1 = null;
-        Truth truth2 = null;
-        final Budget budget1, budget2;
-        if (sentence.isQuestion()) {
-            budget1 = BudgetInference.backwardWeak(belief, context);
-            budget2 = BudgetInference.backwardWeak(belief, context);
-        } else {
-            final Truth value1 = sentence.asJudgement();
-            truth1 = TruthFunctions.deduction(value1, belief);
-            truth2 = TruthFunctions.exemplification(value1, belief);
-            budget1 = BudgetInference.forward(truth1, context);
-            budget2 = BudgetInference.forward(truth2, context);
-        }
+        // * 🚩后续根据「是否反向推理」安排真值和预算值
+        final boolean backward = task.isQuestion();
+        final Statement oldContent = (Statement) task.getContent();
+
+        // * 🚩演绎 & 举例
+        deduction(term1, term2, task, belief, context, backward, oldContent);
+        exemplification(term1, term2, task, belief, context, backward, oldContent);
+    }
+
+    /** 🆕演绎规则 */
+    private static void deduction(
+            Term term1, Term term2,
+            Sentence task, Judgement belief,
+            DerivationContextReason context,
+            final boolean backward, final Statement oldContent) {
+        // * 🚩词项
+        final Statement content1 = makeStatement(oldContent, term1, term2);
+        // * 🚩真值
+        final Truth truth1 = backward ? null : TruthFunctions.deduction(task.asJudgement(), belief);
+        // * 🚩预算
+        final Budget budget1 = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth1, context);
+        // * 🚩结论
         context.doublePremiseTask(content1, truth1, budget1);
+    }
+
+    /** 🆕举例规则 */
+    private static void exemplification(
+            Term term1, Term term2,
+            Sentence task, Judgement belief,
+            DerivationContextReason context,
+            final boolean backward, final Statement oldContent) {
+        // * 🚩词项
+        final Statement content2 = makeStatement(oldContent, term2, term1);
+        // * 🚩真值
+        final Truth truth2 = backward ? null : TruthFunctions.exemplification(task.asJudgement(), belief);
+        // * 🚩预算
+        final Budget budget2 = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth2, context);
+        // * 🚩结论
         context.doublePremiseTask(content2, truth2, budget2);
     }
 
     /**
      * {<M ==> S>, <M ==> P>} |- {<S ==> P>, <P ==> S>, <S <=> P>}
+     * * 📝归因 & 归纳 & 比较
      *
-     * @param term1        Subject of the first new task
-     * @param term2        Predicate of the first new task
-     * @param taskSentence The first premise
-     * @param belief       The second premise
-     * @param context      Reference to the derivation context
+     * @param term1   Subject of the first new task
+     * @param term2   Predicate of the first new task
+     * @param task    The first premise
+     * @param belief  The second premise
+     * @param context Reference to the derivation context
      */
-    static void abdIndCom(Term term1, Term term2, Sentence taskSentence, Judgement belief,
+    static void abdIndCom(
+            Term term1, Term term2,
+            Sentence task, Judgement belief,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName())) {
+        // * 🚩判断结论合法性
+        if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName()))
             return;
-        }
-        final Statement taskContent = (Statement) taskSentence.getContent();
-        Truth truth1 = null;
-        Truth truth2 = null;
-        Truth truth3 = null;
-        final Budget budget1, budget2, budget3;
-        if (taskSentence.isQuestion()) {
-            budget1 = BudgetInference.backward(belief, context);
-            budget2 = BudgetInference.backwardWeak(belief, context);
-            budget3 = BudgetInference.backward(belief, context);
-        } else {
-            final Truth value1 = taskSentence.asJudgement();
-            truth1 = TruthFunctions.abduction(value1, belief);
-            truth2 = TruthFunctions.abduction(belief, value1);
-            truth3 = TruthFunctions.comparison(value1, belief);
-            budget1 = BudgetInference.forward(truth1, context);
-            budget2 = BudgetInference.forward(truth2, context);
-            budget3 = BudgetInference.forward(truth3, context);
-        }
+        // * 🚩提取信息
+        final Statement taskContent = (Statement) task.getContent();
+        final boolean backward = task.isQuestion();
+
+        // * 🚩词项
         final Statement statement1 = makeStatement(taskContent, term1, term2);
-        final Statement statement2 = makeStatement(taskContent, term2, term1);
-        final Statement statement3 = makeStatementSymmetric(taskContent, term1, term2);
+        // * 🚩真值
+        final Truth truth1 = backward ? null : TruthFunctions.abduction(task.asJudgement(), belief);
+        // * 🚩预算
+        final Budget budget1 = backward ? BudgetInference.backward(belief, context)
+                : BudgetInference.forward(truth1, context);
+        // * 🚩结论
         context.doublePremiseTask(statement1, truth1, budget1);
+
+        // * 🚩词项
+        final Statement statement2 = makeStatement(taskContent, term2, term1);
+        // * 🚩真值
+        final Truth truth2 = backward ? null : TruthFunctions.abduction(belief, task.asJudgement());
+        // * 🚩预算
+        final Budget budget2 = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth2, context);
+        // * 🚩结论
         context.doublePremiseTask(statement2, truth2, budget2);
+
+        // * 🚩词项
+        final Statement statement3 = makeStatementSymmetric(taskContent, term1, term2);
+        // * 🚩真值
+        final Truth truth3 = backward ? null : TruthFunctions.comparison(task.asJudgement(), belief);
+        // * 🚩预算
+        final Budget budget3 = backward ? BudgetInference.backward(belief, context)
+                : BudgetInference.forward(truth3, context);
+        // * 🚩结论
         context.doublePremiseTask(statement3, truth3, budget3);
+
     }
 
     /**
      * {<S ==> P>, <M <=> P>} |- <S ==> P>
+     * * 📌类比
+     * * 📝【2024-07-02 13:27:22】弱推理🆚强推理、前向推理🆚反向推理 不是一个事儿
      *
      * @param subj       Subject of the new task
      * @param pred       Predicate of the new task
@@ -110,67 +149,75 @@ final class SyllogisticRules {
      * @param symmetric  The symmetric premise
      * @param context    Reference to the derivation context
      */
-    static void analogy(Term subj, Term pred, Sentence asymmetric, Sentence symmetric,
+    static void analogy(
+            Term subj, Term pred,
+            Sentence asymmetric, Sentence symmetric,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (Statement.invalidStatement(subj, pred)) {
+        // * 🚩验明合法性
+        if (Statement.invalidStatement(subj, pred))
             return;
-        }
-        final Statement st = (Statement) asymmetric.getContent();
-        final Truth truth;
-        final Budget budget;
+        // * 🚩提取参数
         final Sentence sentence = context.getCurrentTask();
-        final CompoundTerm taskTerm = (CompoundTerm) sentence.getContent();
-        if (sentence.isQuestion()) {
-            truth = null;
-            if (taskTerm.isCommutative()) {
-                budget = BudgetInference.backwardWeak(asymmetric.asJudgement(), context);
-            } else {
-                budget = BudgetInference.backward(symmetric.asJudgement(), context);
-            }
-        } else {
-            truth = TruthFunctions.analogy(asymmetric.asJudgement(), symmetric.asJudgement());
-            budget = BudgetInference.forward(truth, context);
-        }
-        Term content = makeStatement(st, subj, pred);
+        final boolean backward = sentence.isQuestion();
+        final CompoundTerm task = (CompoundTerm) sentence.getContent();
+        // * 🚩词项
+        // * 📝取「反对称」那个词项的系词
+        final Statement asym = (Statement) asymmetric.getContent();
+        Term content = makeStatement(asym, subj, pred);
+        // * 🚩真值
+        final Truth truth = backward ? null : TruthFunctions.analogy(asymmetric.asJudgement(), symmetric.asJudgement());
+        // * 🚩预算
+        final Budget budget = backward
+                ? (task.isCommutative()
+                        // * 🚩可交换⇒弱推理
+                        ? BudgetInference.backwardWeak(asymmetric.asJudgement(), context)
+                        // * 🚩不可交换⇒强推理
+                        : BudgetInference.backward(symmetric.asJudgement(), context))
+                : BudgetInference.forward(truth, context);
+        // * 🚩结论
         context.doublePremiseTask(content, truth, budget);
     }
 
     /**
      * {<S <=> M>, <M <=> P>} |- <S <=> P>
      *
-     * @param term1    Subject of the new task
-     * @param term2    Predicate of the new task
-     * @param belief   The first premise
-     * @param sentence The second premise
-     * @param context  Reference to the derivation context
+     * @param subject   Subject of the new task
+     * @param predicate Predicate of the new task
+     * @param belief    The first premise
+     * @param task      The second premise
+     * @param context   Reference to the derivation context
      */
-    static void resemblance(Term term1, Term term2, Judgement belief, Sentence sentence,
+    static void resemblance(
+            Term subject, Term predicate,
+            Judgement belief, Sentence task,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (Statement.invalidStatement(term1, term2)) {
+        // * 🚩合法性
+        if (Statement.invalidStatement(subject, predicate))
             return;
-        }
+        // * 🚩提取参数
+        final boolean backward = task.isQuestion();
         final Statement st = (Statement) belief.getContent();
-        final Truth truth;
-        final Budget budget;
-        if (sentence.isQuestion()) {
-            truth = null;
-            budget = BudgetInference.backward(belief, context);
-        } else {
-            truth = TruthFunctions.resemblance(belief, sentence.asJudgement());
-            budget = BudgetInference.forward(truth, context);
-        }
-        final Term statement = makeStatement(st, term1, term2);
+        // * 🚩词项
+        final Term statement = makeStatement(st, subject, predicate);
+        // * 🚩真值
+        final Truth truth = backward ? null : TruthFunctions.resemblance(belief, task.asJudgement());
+        // * 🚩预算
+        final Budget budget = backward ? BudgetInference.backward(belief, context)
+                : BudgetInference.forward(truth, context);
+        // * 🚩结论
         context.doublePremiseTask(statement, truth, budget);
     }
 
     /* --------------- rules used only in conditional inference --------------- */
     /**
+     * <pre>
      * {<<M --> S> ==> <M --> P>>, <M --> S>} |- <M --> P>
      * {<<M --> S> ==> <M --> P>>, <M --> P>} |- <M --> S>
      * {<<M --> S> <=> <M --> P>>, <M --> S>} |- <M --> P>
      * {<<M --> S> <=> <M --> P>>, <M --> P>} |- <M --> S>
+     * </pre>
+     *
+     * * 📝分离规则
      *
      * @param mainSentence The implication/equivalence premise
      * @param subSentence  The premise on part of s1
@@ -179,59 +226,74 @@ final class SyllogisticRules {
      */
     static void detachment(Sentence mainSentence, Sentence subSentence, int side,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Statement statement = (Statement) mainSentence.getContent();
-        if (!(statement instanceof Implication) && !(statement instanceof Equivalence)) {
+        // * 🚩合法性
+        if (!(mainSentence.getContent() instanceof Implication)
+                && !(mainSentence.getContent() instanceof Equivalence)) {
             return;
         }
+
+        // * 🚩提取参数
+        final Statement statement = (Statement) mainSentence.getContent();
         final Term subject = statement.getSubject();
         final Term predicate = statement.getPredicate();
-        final Term content;
+        final Task task = context.getCurrentTask();
+        final Judgement belief = context.getCurrentBelief();
+        final boolean backward = task.isQuestion();
+
+        // * 🚩词项
         final Term term = subSentence.getContent();
-        if ((side == 0) && term.equals(subject)) {
+        final Term content; // * 【2024-07-02 13:47:18】💭此处在Rust中能改成match，但因为有return，反而不好改写
+        if (side == 0 && term.equals(subject)) {
             content = predicate;
-        } else if ((side == 1) && term.equals(predicate)) {
+        } else if (side == 1 && term.equals(predicate)) {
             content = subject;
         } else {
             return;
         }
-        // * 📄【2024-06-15 11:39:40】可能存在「变量统一」后词项无效的情况
-        // * * main"<<bird --> bird> ==> <bird --> swimmer>>"
-        // * * content"<bird --> bird>"
-        // * * sub"<bird --> swimmer>"
-        if ((content instanceof Statement) && ((Statement) content).invalid()) {
+        if (content instanceof Statement && ((Statement) content).invalid()) {
+            // * 📄【2024-06-15 11:39:40】可能存在「变量统一」后词项无效的情况
+            // * * main"<<bird --> bird> ==> <bird --> swimmer>>"
+            // * * content"<bird --> bird>"
+            // * * sub"<bird --> swimmer>"
             return;
         }
-        final Task task = context.getCurrentTask();
-        final Judgement belief = context.getCurrentBelief();
-        final Truth truth;
-        final Budget budget;
-        if (task.isQuestion()) {
-            truth = null;
-            if (statement instanceof Equivalence) {
-                budget = BudgetInference.backward(belief, context);
-            } else if (side == 0) {
-                budget = BudgetInference.backwardWeak(belief, context);
-            } else {
-                budget = BudgetInference.backward(belief, context);
-            }
-        } else {
-            if (statement instanceof Equivalence) {
-                truth = TruthFunctions.analogy(subSentence.asJudgement(), mainSentence.asJudgement());
-            } else if (side == 0) {
-                truth = TruthFunctions.deduction(mainSentence.asJudgement(), subSentence.asJudgement());
-            } else {
-                truth = TruthFunctions.abduction(subSentence.asJudgement(), mainSentence.asJudgement());
-            }
-            budget = BudgetInference.forward(truth, context);
-        }
+
+        // * 🚩真值
+        final Truth truth = backward
+                // * 🚩反向推理⇒空
+                ? null
+                : statement instanceof Equivalence
+                        // * 🚩等价⇒类比
+                        ? TruthFunctions.analogy(subSentence.asJudgement(), mainSentence.asJudgement())
+                        : side == 0
+                                // * 🚩非对称 & 主词 ⇒ 演绎
+                                ? TruthFunctions.deduction(mainSentence.asJudgement(), subSentence.asJudgement())
+                                // * 🚩其它 ⇒ 归纳
+                                : TruthFunctions.abduction(subSentence.asJudgement(), mainSentence.asJudgement());
+
+        // * 🚩预算
+        final Budget budget = backward
+                ? (
+                // * 🚩等价 ⇒ 反向
+                statement instanceof Equivalence ? BudgetInference.backward(belief, context)
+                        // * 🚩非对称 & 主词 ⇒ 反向弱
+                        : side == 0 ? BudgetInference.backwardWeak(belief, context)
+                                // * 🚩其它 ⇒ 反向
+                                : BudgetInference.backward(belief, context))
+                : BudgetInference.forward(truth, context);
+
+        // * 🚩结论
         context.doublePremiseTask(content, truth, budget);
     }
 
     /**
+     * <pre>
      * {<(&&, S1, S2, S3) ==> P>, S1} |- <(&&, S2, S3) ==> P>
      * {<(&&, S2, S3) ==> P>, <S1 ==> S2>} |- <(&&, S1, S3) ==> P>
      * {<(&&, S1, S3) ==> P>, <S1 ==> S2>} |- <(&&, S2, S3) ==> P>
+     * </pre>
+     *
+     * * 📝条件演绎/条件归纳
      *
      * @param conditional The conditional premise
      * @param index       The location of the shared term in the condition of
@@ -246,12 +308,15 @@ final class SyllogisticRules {
             Implication conditional, short index,
             Term premise2, int side,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
+        // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean deduction = (side != 0);
         final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
+        final boolean backward = task.isQuestion();
+        final boolean deduction = (side != 0);
+
+        // * 🚩词项 * //
         // * 🚩获取公共项
         final Term commonComponent;
         final Term newComponent;
@@ -279,6 +344,7 @@ final class SyllogisticRules {
             conditionalUnified = conditional.clone();
         } else {
             // * 🚩尝试数次匹配，将其中的变量归一化
+            // * 📝两次尝试的变量类型相同，但应用的位置不同
             final Term conditionToUnify = oldCondition.componentAt(index);
             final Unification unification1 = VariableProcess.unifyFindI(conditionToUnify, commonComponent);
             if (unification1.hasUnification()) {
@@ -289,6 +355,7 @@ final class SyllogisticRules {
             } else {
                 if (commonComponent.isSameType(oldCondition)) {
                     final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
+                    // * 🚩尝试寻找并应用变量归一化
                     final Unification unification2 = VariableProcess.unifyFindI(
                             conditionToUnify, commonComponentComponent);
                     if (unification2.hasUnification()) {
@@ -301,18 +368,6 @@ final class SyllogisticRules {
                 } else
                     return;
             }
-            // boolean hasMatch = VariableProcess.unifyI(
-            // oldCondition.componentAt(index), commonComponent,
-            // premise1, premise2);
-            // if (!hasMatch && (commonComponent.isSameType(oldCondition))) {
-            // hasMatch = VariableProcess.unifyI(
-            // oldCondition.componentAt(index), ((CompoundTerm)
-            // commonComponent).componentAt(index),
-            // premise1, premise2);
-            // }
-            // if (!hasMatch) {
-            // return;
-            // }
         }
         // * 🚩构造「新条件」
         final Term newCondition;
@@ -331,63 +386,70 @@ final class SyllogisticRules {
         if (content == null) {
             return;
         }
-        final Truth truth;
-        final Budget budget;
-        if (task.isQuestion()) {
-            truth = null;
-            budget = BudgetInference.backwardWeak(belief, context);
-        } else {
-            final Truth truth1 = task.asJudgement();
-            if (deduction) {
-                truth = TruthFunctions.deduction(truth1, belief);
-            } else if (conditionalTask) {
-                truth = TruthFunctions.induction(belief, truth1);
-            } else {
-                truth = TruthFunctions.induction(truth1, belief);
-            }
-            budget = BudgetInference.forward(truth, context);
-        }
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩演绎 ⇒ 演绎
+                : deduction ? TruthFunctions.deduction(task.asJudgement(), belief)
+                        // * 🚩任务是条件句 ⇒ 归纳（任务→信念，就是反过来的归因）
+                        : conditionalTask ? TruthFunctions.induction(belief, task.asJudgement())
+                                // * 🚩其它 ⇒ 归纳（信念⇒任务）
+                                : TruthFunctions.induction(task.asJudgement(), belief);
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向⇒弱推理
+                ? BudgetInference.backwardWeak(belief, context)
+                // * 🚩其它⇒正向
+                : BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
     }
 
     /**
      * {<(&&, S1, S2) <=> P>, (&&, S1, S2)} |- P
+     * * 📝条件类比
      *
      * @param premise1 The equivalence premise
      * @param index    The location of the shared term in the condition of
      *                 premise1
      * @param premise2 The premise which, or part of which, appears in the
      *                 condition of premise1
-     * @param side     The location of the shared term in premise2: 0 for
-     *                 subject, 1
-     *                 for predicate, -1 for the whole term
+     * @param side     The location of the shared term in premise2:
+     *                 0 for subject, 1 for predicate, -1 for the whole term
      * @param context  Reference to the derivation context
      */
     static void conditionalAna(
             Equivalence premise1, short index,
             Implication premise2, int side,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
+        // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
         final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
+        final boolean backward = task.isQuestion();
+
+        // * 🚩词项 * //
         final Term commonComponent;
         final Term newComponent;
-        if (side == 0) {
+        if (side == 0) { // * 主项
             commonComponent = ((Statement) premise2).getSubject();
             newComponent = ((Statement) premise2).getPredicate();
-        } else if (side == 1) {
+        } else if (side == 1) { // * 谓项
             commonComponent = ((Statement) premise2).getPredicate();
             newComponent = ((Statement) premise2).getSubject();
-        } else {
+        } else { // 整个词项
             commonComponent = premise2;
             newComponent = null;
         }
-        final Term tm = premise1.getSubject();
-        if (!(tm instanceof Conjunction))
+        // * 🚩尝试消解条件中的变量，匹配数次未果则返回
+        // TODO: 有待函数式化
+        final Term oldConjunction = premise1.getSubject();
+        if (!(oldConjunction instanceof Conjunction))
             return;
-        final Conjunction oldCondition = (Conjunction) tm;
+        final Conjunction oldCondition = (Conjunction) oldConjunction;
         boolean match = VariableProcess.unifyD(
                 oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
@@ -414,25 +476,29 @@ final class SyllogisticRules {
         if (content == null) {
             return;
         }
-        final Truth truth;
-        final Budget budget;
-        if (task.isQuestion()) {
-            truth = null;
-            budget = BudgetInference.backwardWeak(belief, context);
-        } else {
-            final Truth truth1 = task.asJudgement();
-            if (conditionalTask) {
-                truth = TruthFunctions.comparison(truth1, belief);
-            } else {
-                truth = TruthFunctions.analogy(truth1, belief);
-            }
-            budget = BudgetInference.forward(truth, context);
-        }
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩条件性任务 ⇒ 比较
+                : conditionalTask ? TruthFunctions.comparison(task.asJudgement(), belief)
+                        // * 🚩其它 ⇒ 类比
+                        : TruthFunctions.analogy(task.asJudgement(), belief);
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向 ⇒ 弱推理
+                ? BudgetInference.backwardWeak(belief, context)
+                // * 🚩其它 ⇒ 正向推理
+                : BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
     }
 
     /**
      * {<(&&, S2, S3) ==> P>, <(&&, S1, S3) ==> P>} |- <S1 ==> S2>
+     * * 📝条件归因，消去S3、P，可能构造<S1 ==> S2>也可能构造<S2 ==> S1>
+     * * 🚩返回「是否应用成功」，用于规则表分派
      *
      * @param cond1   The condition of the first premise
      * @param cond2   The condition of the second premise
@@ -441,72 +507,85 @@ final class SyllogisticRules {
      * @param context Reference to the derivation context
      * @return Whether there are derived tasks
      */
-    static boolean conditionalAbd(Term cond1, Term cond2, Statement st1, Statement st2,
+    static boolean conditionalAbd(
+            Term cond1, Term cond2,
+            Statement st1, Statement st2,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
+        // * 🚩检验合法性 * //
         if (!(st1 instanceof Implication) || !(st2 instanceof Implication)) {
             return false;
         }
         if (!(cond1 instanceof Conjunction) && !(cond2 instanceof Conjunction)) {
             return false;
         }
-        final Term term1;
-        final Term term2;
-        // if ((cond1 instanceof Conjunction) &&
-        // !Variable.containVarDep(cond1.getName())) {
-        if (cond1 instanceof Conjunction) {
-            term1 = reduceComponents((Conjunction) cond1, cond2);
-        } else {
-            term1 = null;
-        }
-        // if ((cond2 instanceof Conjunction) &&
-        // !Variable.containVarDep(cond2.getName())) {
-        if (cond2 instanceof Conjunction) {
-            term2 = reduceComponents((Conjunction) cond2, cond1);
-        } else {
-            term2 = null;
-        }
-        if ((term1 == null) && (term2 == null)) {
-            return false;
-        }
+
+        // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
+        final boolean backward = task.isQuestion();
+
+        // * 🚩预置词项：分别消去彼此间的「内含条件」
+        final Term term1 =
+                // if ((cond1 instanceof Conjunction) &&
+                // !Variable.containVarDep(cond1.getName())) {
+                cond1 instanceof Conjunction
+                        // * 🚩合取⇒消去另一半的元素
+                        ? reduceComponents((Conjunction) cond1, cond2)
+                        // * 🚩其它⇒空
+                        : null;
+        final Term term2 =
+                // if ((cond2 instanceof Conjunction) &&
+                // !Variable.containVarDep(cond2.getName())) {
+                cond2 instanceof Conjunction
+                        // * 🚩合取⇒消去另一半的元素
+                        ? reduceComponents((Conjunction) cond2, cond1)
+                        // * 🚩其它⇒空
+                        : null;
+
+        // * 🚩都消没了⇒推理失败
+        if ((term1 == null) && (term2 == null))
+            return false;
         if (term1 != null) {
-            final Term content;
-            final Truth truth;
-            final Budget budget;
-            if (term2 != null) {
-                content = makeStatement(st2, term2, term1);
-            } else {
-                content = term1;
-            }
-            if (task.isQuestion()) {
-                truth = null;
-                budget = BudgetInference.backwardWeak(belief, context);
-            } else {
-                truth = TruthFunctions.abduction(belief, task.asJudgement());
-                budget = BudgetInference.forward(truth, context);
-            }
+            // * 🚩词项 * //
+            final Term content = term2 != null
+                    // * 🚩仍然是条件句
+                    ? makeStatement(st2, term2, term1)
+                    // * 🚩只剩下条件
+                    : term1;
+            // * 🚩真值 * //
+            final Truth truth = backward ? null
+                    // * 🚩类比
+                    : TruthFunctions.abduction(belief, task.asJudgement());
+            // * 🚩预算 * //
+            final Budget budget = backward
+                    // * 🚩反向 ⇒ 弱
+                    ? BudgetInference.backwardWeak(belief, context)
+                    // * 🚩其它 ⇒ 正向
+                    : BudgetInference.forward(truth, context);
+            // * 🚩结论 * //
             context.doublePremiseTask(content, truth, budget);
         }
         if (term2 != null) {
-            final Term content2;
-            final Truth truth2;
-            final Budget budget2;
-            if (term1 != null) {
-                content2 = makeStatement(st1, term1, term2);
-            } else {
-                content2 = term2;
-            }
-            if (task.isQuestion()) {
-                truth2 = null;
-                budget2 = BudgetInference.backwardWeak(belief, context);
-            } else {
-                truth2 = TruthFunctions.abduction(task.asJudgement(), belief);
-                budget2 = BudgetInference.forward(truth2, context);
-            }
+            // * 🚩词项 * //
+            final Term content2 = term1 != null
+                    // * 🚩仍然是条件句
+                    ? makeStatement(st1, term1, term2)
+                    // * 🚩只剩下条件
+                    : term2;
+            // * 🚩真值 * //
+            final Truth truth2 = backward ? null :
+            // * 🚩类比
+                    TruthFunctions.abduction(task.asJudgement(), belief);
+            // * 🚩预算 * //
+            final Budget budget2 = backward
+                    // * 🚩反向 ⇒ 弱
+                    ? BudgetInference.backwardWeak(belief, context)
+                    // * 🚩其它 ⇒ 正向
+                    : BudgetInference.forward(truth2, context);
+            // * 🚩结论 * //
             context.doublePremiseTask(content2, truth2, budget2);
         }
+        // * 🚩匹配成功
         return true;
     }
 
@@ -522,83 +601,35 @@ final class SyllogisticRules {
             CompoundTerm compound, Term component,
             boolean isCompoundFromTask,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
+        // * 🚩提取参数 * //
+        final Task task = context.getCurrentTask();
+        final Judgement belief = context.getCurrentBelief();
+        final boolean backward = task.isQuestion();
+
+        // * 🚩词项 * //
         final Term content = reduceComponents(compound, component);
         if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
             return;
-        final Task task = context.getCurrentTask();
-        final Judgement belief = context.getCurrentBelief();
-        final Truth truth;
-        final Budget budget;
-        if (task.isQuestion()) {
-            truth = null;
-            budget = (isCompoundFromTask ? BudgetInference.backward(belief, context)
-                    : BudgetInference.backwardWeak(belief, context));
-        } else {
-            final Truth v1 = task.asJudgement();
-            truth = (isCompoundFromTask ? TruthFunctions.anonymousAnalogy(v1, belief)
-                    : TruthFunctions.anonymousAnalogy(belief, v1));
-            budget = BudgetInference.compoundForward(truth, content, context);
-        }
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩复合词项来自任务 ⇒ 任务，信念
+                : isCompoundFromTask ? TruthFunctions.anonymousAnalogy(task.asJudgement(), belief)
+                        // * 🚩否则 ⇒ 信念，任务
+                        : TruthFunctions.anonymousAnalogy(belief, task.asJudgement());
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                ? (isCompoundFromTask
+                        // * 🚩复合词项来自任务 ⇒ 反向
+                        ? BudgetInference.backward(belief, context)
+                        // * 🚩其它 ⇒ 反向弱推理
+                        : BudgetInference.backwardWeak(belief, context))
+                // * 🚩正向推理
+                : BudgetInference.compoundForward(truth, content, context);
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
-    }
-
-    // * 📝【2024-06-10 15:25:14】以下函数最初处在「本地规则」，后来迁移到「匹配规则」，现在放置于「三段论规则」
-
-    /* -------------------- same terms, difference relations -------------------- */
-    /**
-     * The task and belief match reversely
-     * * 📄<A --> B> + <B --> A>
-     * * <A --> B>. => <A <-> B>.
-     * * <A --> B>? => <A --> B>.
-     *
-     * @param context Reference to the derivation context
-     */
-    static void matchReverse(DerivationContextReason context) {
-        // 📄Task@21 "$0.9913;0.1369;0.1447$ <<cup --> $1> ==> <toothbrush --> $1>>.
-        // %1.00;0.45% {503 : 38;37}
-        // 📄JudgementV1@43 "<<toothbrush --> $1> ==> <cup --> $1>>. %1.0000;0.4475%
-        // {483 : 36;39} "
-        final Task task = context.getCurrentTask();
-        final Judgement belief = context.getCurrentBelief();
-        switch (task.getPunctuation()) {
-            // * 🚩判断句⇒尝试合并成对称形式（继承⇒相似，蕴含⇒等价）
-            case JUDGMENT_MARK:
-                inferToSym(task.asJudgement(), belief, context);
-                return;
-            // * 🚩疑问句⇒尝试执行转换规则
-            case QUESTION_MARK:
-                conversion(task.asQuestion(), belief, context);
-                return;
-            // * 🚩其它⇒报错
-            default:
-                throw new Error("Unknown punctuation of task: " + task.toStringLong());
-        }
-    }
-
-    /**
-     * Inheritance/Implication matches Similarity/Equivalence
-     *
-     * @param asym    A Inheritance/Implication sentence
-     * @param sym     A Similarity/Equivalence sentence
-     * @param figure  location of the shared term
-     * @param context Reference to the derivation context
-     */
-    static void matchAsymSym(Sentence asym, Sentence sym, DerivationContextReason context) {
-        final Task task = context.getCurrentTask();
-        switch (task.getPunctuation()) {
-            // * 🚩判断句⇒尝试合并到非对称形式（相似⇒继承，等价⇒蕴含）
-            case JUDGMENT_MARK:
-                // * 🚩若「当前任务」是「判断」，则两个都会是「判断」
-                inferToAsym(asym.asJudgement(), sym.asJudgement(), context);
-                return;
-            // * 🚩疑问句⇒尝试「继承⇄相似」「蕴含⇄等价」
-            case QUESTION_MARK:
-                convertRelation(task.asQuestion(), context);
-                return;
-            default:
-                throw new Error("Unknown punctuation of task: " + task.toStringLong());
-        }
     }
 
     /* -------------------- two-premise inference rules -------------------- */
@@ -606,45 +637,55 @@ final class SyllogisticRules {
      * {<S --> P>, <P --> S} |- <S <-> p>
      * Produce Similarity/Equivalence from a pair of reversed
      * Inheritance/Implication
+     * * 📝非对称⇒对称（正向推理）
      *
      * @param judgment1 The first premise
      * @param judgment2 The second premise
      * @param context   Reference to the derivation context
      */
-    private static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
-        // * 🚩提取内容
+    static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
+        // * 🚩词项 * //
         final Statement statement1 = (Statement) judgment1.getContent();
         final Term term1 = statement1.getSubject();
         final Term term2 = statement1.getPredicate();
-        // * 🚩构建内容 | 📝直接使用「制作对称」方法
         final Term content = makeStatementSymmetric(statement1, term1, term2);
-        // * 🚩计算真值&预算
+
+        // * 🚩真值 * //
         final Truth truth = TruthFunctions.intersection(judgment1, judgment2);
+
+        // * 🚩预算 * //
         final Budget budget = BudgetInference.forward(truth, context);
-        // * 🚩双前提结论
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
     }
 
     /**
      * {<S <-> P>, <P --> S>} |- <S --> P> Produce an Inheritance/Implication
      * from a Similarity/Equivalence and a reversed Inheritance/Implication
+     * * 📝对称⇒非对称（正向推理）
      *
      * @param asym    The asymmetric premise
      * @param sym     The symmetric premise
      * @param context Reference to the derivation context
      */
-    private static void inferToAsym(Judgement asym, Judgement sym, DerivationContextReason context) {
+    static void inferToAsym(Judgement asym, Judgement sym, DerivationContextReason context) {
+        // * 🚩词项 * //
         // * 🚩提取 | 📄<S --> P> => S, P
         final Statement asymStatement = (Statement) asym.getContent();
         // * 🚩构建新的相反陈述 | 📄S, P => <P --> S>
         final Term newSubject = asymStatement.getPredicate();
         final Term newPredicate = asymStatement.getSubject();
         final Statement content = makeStatement(asymStatement, newSubject, newPredicate);
-        // * 🚩构建真值，更新预算
-        // TODO: 后续可使用函数指针延迟计算
+
+        // * 🚩真值 * //
         final Truth truth = TruthFunctions.reduceConjunction(sym, asym);
+
+        // * 🚩预算 * //
         final Budget budget = BudgetInference.forward(truth, context);
-        // * 🚩双前提结论
+        // TODO: 后续可使用函数指针延迟计算
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -652,12 +693,14 @@ final class SyllogisticRules {
     /**
      * {<P --> S>} |- <S --> P> Produce an Inheritance/Implication from a
      * reversed Inheritance/Implication
+     * * 📝转换（反向推理，但使用正向预算值）
      *
      * @param context Reference to the derivation context
      */
-    private static void conversion(Question taskQuestion, Judgement belief, DerivationContextReason context) {
-        // * 🚩构建真值和预算值
+    static void conversion(Question taskQuestion, Judgement belief, DerivationContextReason context) {
+        // * 🚩真值 * //
         final Truth truth = TruthFunctions.conversion(context.getCurrentBelief());
+        // * 🚩预算 * //
         final Budget budget = BudgetInference.forward(truth, context);
         // * 🚩转发到统一的逻辑
         convertedJudgment(truth, budget, context);
@@ -667,11 +710,12 @@ final class SyllogisticRules {
      * {<S --> P>} |- <S <-> P>
      * {<S <-> P>} |- <S --> P> Switch between
      * Inheritance/Implication and Similarity/Equivalence
+     * * 📝非对称⇔对称
      *
      * @param context Reference to the derivation context
      */
-    private static void convertRelation(Question taskQuestion, DerivationContextReason context) {
-        // * 🚩根据「可交换性」分派真值函数
+    static void convertRelation(Question taskQuestion, DerivationContextReason context) {
+        // * 🚩真值 * //
         final TruthFAnalytic truthF = ((Statement) taskQuestion.getContent()).isCommutative()
                 // * 🚩可交换（相似/等价）⇒归纳
                 ? TruthFunctions::analyticAbduction
@@ -681,8 +725,10 @@ final class SyllogisticRules {
                 // * 🚩基于「当前信念」
                 context.getCurrentBelief(),
                 1.0f);
-        // * 🚩分派预算值
+
+        // * 🚩预算 * //
         final Budget budget = BudgetInference.forward(newTruth, context);
+
         // * 🚩继续向下分派函数
         convertedJudgment(newTruth, budget, context);
     }
@@ -697,7 +743,7 @@ final class SyllogisticRules {
      * @param context Reference to the derivation context
      */
     private static void convertedJudgment(Truth newTruth, Budget newBudget, DerivationContextReason context) {
-        // * 🚩提取内容
+        // * 🚩词项 * //
         final Statement taskContent = (Statement) context.getCurrentTask().getContent();
         final Statement beliefContent = (Statement) context.getCurrentBelief().getContent();
         final Term subjT = taskContent.getSubject();
@@ -720,7 +766,8 @@ final class SyllogisticRules {
             newPredicate = predT;
         }
         final Term newContent = makeStatement(taskContent, newSubject, newPredicate);
-        // * 🚩导出任务
+
+        // * 🚩结论 * //
         context.singlePremiseTask(newContent, Symbols.JUDGMENT_MARK, newTruth, newBudget);
     }
 }
