@@ -34,7 +34,7 @@ public final class BudgetInference {
      * @param currentTaskBudget [&m] The budget of the current task
      * @return [] The budget for the new task
      */
-    static Budget revise(
+    static Budget reviseDirect(
             final Truth newBeliefTruth,
             final Truth oldBeliefTruth,
             final Truth revisedTruth,

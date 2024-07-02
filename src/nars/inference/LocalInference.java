@@ -138,11 +138,15 @@ final class LocalInference {
      * @param context         Reference to the derivation context
      */
     private static void revisionDirect(Judgement newBelief, Judgement oldBelief, DerivationContextDirect context) {
-        // * 🚩计算真值/预算值
-        final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
-        final Budget budget = BudgetInference.revise(newBelief, oldBelief, revisedTruth, context.getCurrentTask());
+        // * 🚩词项
         final Term content = newBelief.getContent();
-        // * 🚩创建并导入结果：双前提
+        // * 🚩真值
+        final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
+        // * 🚩预算值
+        final Budget budget = BudgetInference.reviseDirect(
+            newBelief, oldBelief, revisedTruth,
+                context.getCurrentTask());
+        // * 🚩导出
         // * 📝仅在此处用到「当前信念」作为「导出信念」
         // * 📝此处用不到「当前信念」（旧信念）
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
