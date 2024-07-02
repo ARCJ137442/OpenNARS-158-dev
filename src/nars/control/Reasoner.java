@@ -371,7 +371,7 @@ public class Reasoner {
      *
      */
     public void report(Sentence sentence, ReportType type) {
-        report(DerivationContext.generateReportString(sentence, type));
+        report(DerivationOut.generateReportString(sentence, type));
     }
 
     /**

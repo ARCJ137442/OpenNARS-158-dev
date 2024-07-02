@@ -4,15 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
 
-import nars.entity.BudgetValue;
 import nars.entity.Concept;
-import nars.entity.Judgement;
-import nars.entity.Sentence;
-import nars.entity.SentenceV1;
-import nars.entity.Stamp;
 import nars.entity.Task;
-import nars.inference.Budget;
-import nars.inference.Truth;
 import nars.language.Term;
 import nars.storage.Memory;
 
@@ -20,185 +13,14 @@ import nars.storage.Memory;
  * 🆕新的「推理上下文」对象
  * * 📄仿自OpenNARS 3.1.0
  */
-public interface DerivationContext {
-
-    /**
-     * 🆕获取记忆区（不可变引用）
-     */
-    public Memory getMemory();
-
-    /**
-     * 🆕访问「当前时间」
-     * * 🎯用于在推理过程中构建「新时间戳」
-     * * ️📝可空性：非空
-     * * 📝可变性：只读
-     */
-    public long getTime();
-
-    // /**
-    // * 🆕访问「当前超参数」
-    // * * 🎯用于在推理过程中构建「新时间戳」（作为「最大长度」参数）
-    // * * ️📝可空性：非空
-    // * * 📝可变性：只读
-    // */
-    // public Parameters getParameters();
-    public default int getMaxEvidenceBaseLength() {
-        return Parameters.MAXIMUM_STAMP_LENGTH;
-    }
-
-    /**
-     * 获取「静默值」
-     * * 🎯在「推理上下文」中无需获取「推理器」`getReasoner`
-     * * ️📝可空性：非空
-     * * 📝可变性：只读
-     *
-     * @return 静默值
-     */
-    public float getSilencePercent();
-
-    /**
-     * Actually means that there are no new Tasks
-     * * 🚩【2024-05-21 11:50:51】现在从「记忆区」迁移而来
-     * * ❓【2024-05-21 12:04:35】尚未实装：若靠「局部是否有结果」则会改变推理结果
-     * * ️📝可空性：非空
-     * * 📝可变性：只读
-     * * 📝所有权：仅引用
-     */
-    public boolean noNewTask();
-
-    /** 获取「新任务」的数量 */
-    public int numNewTasks();
-
-    /** 添加「新任务」 */
-    public void addNewTask(Task newTask);
-
-    public void addExportString(String exportedString);
-
-    public void addStringToRecord(String stringToRecord);
-
-    /**
-     * 获取「当前概念」
-     * * ️📝可空性：非空
-     * * 📝可变性：内部可变
-     * * 📝所有权：临时所有（推理结束时归还）
-     */
-    public Concept getCurrentConcept();
-
-    /**
-     * * 📝在所有使用场景中，均为「当前概念要处理的词项」且只读
-     * * 🚩【2024-05-20 09:15:59】故此处仅保留getter，并且不留存多余字段（减少共享引用）
-     * * ️📝可空性：非空
-     * * 📝可变性：只读 | 完全依赖「当前概念」而定，且「当前概念」永不变更词项
-     * * 📝所有权：仅引用
-     */
-    public default Term getCurrentTerm() {
-        // ! 🚩需要假定`this.getCurrentConcept() != null`
-        return this.getCurrentConcept().getTerm();
-    }
-
-    /**
-     * The selected task
-     * * 🚩【2024-05-21 22:40:21】现在改为抽象方法：不同实现有不同的用法
-     * * 📄「直接推理上下文」将其作为字段，而「转换推理上下文」「概念推理上下文」均只用作「当前任务链的目标」
-     */
-    public abstract Task getCurrentTask();
+@SuppressWarnings("unused")
+public interface DerivationContext extends DerivationIn, DerivationOut {
 
     /**
      * 重置全局状态
      */
     public static void init() {
         DerivationContextCore.randomNumber = new Random(1);
-    }
-
-    /**
-     * Activated task called in MatchingRules.trySolution and
-     * Concept.processGoal
-     * * 📝仅被「答问」调用
-     *
-     * @param budget          The budget value of the new Task
-     * @param newTask         The content of the new Task
-     * @param candidateBelief The belief to be used in future inference, for
-     *                        forward/backward correspondence
-     */
-    public default void activatedTask(final Budget budget, final Judgement newTask, final Judgement candidateBelief) {
-        // * 🚩回答问题后，开始从「信念」中生成新任务：以「当前任务」为父任务，以「候选信念」为父信念
-        final BudgetValue newBudget = BudgetValue.from(budget);
-        final Task task = new Task(newTask, newBudget, this.getCurrentTask(), newTask, candidateBelief);
-        this.addStringToRecord("!!! Activated: " + task.toString() + "\n");
-        // * 🚩若为「问题」⇒输出显著的「导出结论」
-        // * ❓【2024-06-26 20:14:00】貌似此处永不发生，禁用之
-        if (newTask.isQuestion())
-            throw new AssertionError("【2024-06-26 20:14:19】目前只有「判断句」会参与「任务激活」");
-        // if (newTask.isQuestion()) {
-        // final float s = task.budgetSummary();
-        // if (s > this.getSilencePercent()) { // only report significant derived Tasks
-        // report(task, ReportType.OUT);
-        // }
-        // }
-        // * 🚩将新创建的「导出任务」添加到「新任务」中
-        this.addNewTask(task);
-    }
-
-    /* --------------- new task building --------------- */
-
-    /**
-     * Derived task comes from the inference rules.
-     *
-     * @param task the derived task
-     */
-    default void derivedTask(Task task) {
-        // * 🚩判断「导出的新任务」是否有价值
-        if (!task.budgetAboveThreshold()) {
-            this.addStringToRecord("!!! Ignored: " + task + "\n");
-            return;
-        }
-        // * 🚩报告
-        this.addStringToRecord("!!! Derived: " + task + "\n");
-        final float budget = task.budgetSummary();
-        if (budget > this.getSilencePercent()) { // only report significant derived Tasks
-            report(task, ReportType.OUT);
-        }
-        // * 🚩将「导出的新任务」添加到「新任务表」中
-        this.addNewTask(task);
-    }
-
-    /** 🆕仅源自「修正规则」调用，没有「父信念」 */
-    public default void doublePremiseTaskRevision(
-            final Term newContent,
-            final Truth newTruth,
-            final Budget newBudget,
-            final Stamp newStamp) {
-        if (newContent == null)
-            return;
-        // * 🚩仅在「任务内容」可用时构造
-        final Task currentTask = this.getCurrentTask();
-        final char newPunctuation = currentTask.getPunctuation();
-        final Sentence newSentence = SentenceV1.newSentenceFromPunctuation(
-                newContent,
-                newPunctuation, newTruth,
-                newStamp, true);
-        final Task newTask = new Task(newSentence, newBudget, this.getCurrentTask(), null);
-        derivedTask(newTask);
-    }
-
-    /**
-     * 🆕此处「报告」与记忆区的「报告」不同
-     * * 🚩记忆区在「吸收上下文」时产生记忆区的「报告」
-     * * 📌原则：此处不应涉及有关「记忆区」的内容
-     */
-    public default void report(Sentence sentence, ReportType type) {
-        final String s = generateReportString(sentence, type);
-        this.addExportString(s);
-    }
-
-    /**
-     * 🆕生成「输出报告字符串」
-     * * 🎯在「记忆区」与「推理上下文」中一同使用
-     */
-    public static String generateReportString(Sentence sentence, ReportType type) {
-        // ! ⚠️由于「语句」和「任务」的扁平化（`.getSentence()`的消失），此处将直接打印作为「语句」的「任务」
-        // * 💭思想：「任务」也是一种「语句」，只不过带了「物品」特性，可以被「袋」分派而已
-        return type.toString() + ": " + sentence.toStringBrief();
     }
 
     /**
@@ -220,20 +42,6 @@ public interface DerivationContext {
     // }
 
     static void drop(Object any) {
-    }
-
-    /**
-     * 获取「已存在的概念」
-     * * 🎯让「概念推理」可以在「拿出概念」的时候运行，同时不影响具体推理过程
-     * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
-     * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
-     * * 📝【2024-06-26 20:45:59】目前所有逻辑纯只读：最多为「获取其中的信念」
-     */
-    public default Concept termToConcept(Term term) {
-        if (term.equals(this.getCurrentTerm()))
-            return this.getCurrentConcept();
-        else
-            return this.getMemory().termToConcept(term);
     }
 
     /** 🆕内置公开结构体，用于公共读取 */
