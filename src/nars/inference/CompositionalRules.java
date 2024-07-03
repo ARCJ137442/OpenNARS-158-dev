@@ -7,8 +7,6 @@ import nars.entity.*;
 import nars.inference.TruthFunctions.TruthFDouble;
 import nars.language.*;
 
-import static nars.io.Symbols.JUDGMENT_MARK;
-import static nars.io.Symbols.QUESTION_MARK;
 import static nars.language.MakeTerm.*;
 
 /**
@@ -246,76 +244,75 @@ class CompositionalRules {
             DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
+        final boolean backward = task.isQuestion();
         // * 🚩删去指定的那个元素，用删去之后的剩余元素做结论
         final Term content = reduceComponents(compound, component);
         if (content == null)
             return;
         final Truth truth;
         final Budget budget;
-        switch (task.getPunctuation()) {
-            case QUESTION_MARK:
-                // * 📄(||,A,B)? + A. => B?
-                // * 🚩先将剩余部分作为「问题」提出
-                // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
-                if (!content.zeroComplexity()) {
-                    budget = BudgetInference.compoundBackward(content, context);
-                    context.doublePremiseTask(content, null, budget);
-                }
-                // * 🚩再将对应有「概念」与「信念」的内容作为新的「信念」放出
-                // special inference to answer conjunctive questions with query variables
-                if (!Variable.containVarQ(task.getContent()))
-                    return;
-                // * 🚩只有在「回答合取问题」时，取出其中的项构建新任务
-                final Concept contentConcept = context.termToConcept(content);
-                if (contentConcept == null)
-                    return;
-                // * 🚩只在「内容对应了概念」时，取出「概念」中的信念
-                final Judgement contentBelief = contentConcept.getBelief(task);
-                if (contentBelief == null)
-                    return;
-                // * 🚩只在「概念中有信念」时，以这个信念作为「当前信念」构建新任务
-                final Stamp newStamp = Stamp.uncheckedMerge(
-                        task,
-                        contentBelief, // * 🚩实际上就是需要与「已有信念」的证据基合并
-                        context.getTime(),
-                        context.getMaxEvidenceBaseLength());
-                // * 🚩【2024-06-07 13:41:16】现在直接从「任务」构造新的「预算值」
-                final Task contentTask = new Task(contentBelief, task);
-                // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
-                final Term conj = makeConjunction(component, content);
-                // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                final Truth truth1 = TruthFunctions.intersection(contentBelief, belief);
-                // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-                final Budget budget1 = BudgetInference.compoundForward(truth1, conj, context);
-                // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
-                // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
-                context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
+        // * 🚩反向推理：尝试答问
+        if (backward) {
+            // * 📄(||,A,B)? + A. => B?
+            // * 🚩先将剩余部分作为「问题」提出
+            // ! 📄原版bug：当输入 (||,A,?1)? 时，因「弹出的变量复杂度为零」预算推理「除以零」爆炸
+            if (!content.zeroComplexity()) {
+                budget = BudgetInference.compoundBackward(content, context);
+                context.doublePremiseTask(content, null, budget);
+            }
+            // * 🚩再将对应有「概念」与「信念」的内容作为新的「信念」放出
+            // special inference to answer conjunctive questions with query variables
+            if (!Variable.containVarQ(task.getContent()))
                 return;
-            case JUDGMENT_MARK:
-                // * 🚩选取前提真值 | ⚠️前后件语义不同
-                final Truth v1, v2;
-                if (isCompoundFromTask) {
-                    v1 = task.asJudgement();
-                    v2 = belief;
-                } else {
-                    v1 = belief;
-                    v2 = task.asJudgement();
-                }
-                // * 🚩选取真值函数
-                final TruthFDouble truthF;
-                if (compound instanceof Conjunction)
-                    truthF = TruthFunctions::reduceConjunction;
-                else if (compound instanceof Disjunction)
-                    truthF = TruthFunctions::reduceDisjunction;
-                else
-                    return;
-                // * 🚩构造真值、预算值，双前提结论
-                truth = truthF.call(v1, v2);
-                budget = BudgetInference.compoundForward(truth, content, context);
-                context.doublePremiseTask(content, truth, budget);
+            // * 🚩只有在「回答合取问题」时，取出其中的项构建新任务
+            final Concept contentConcept = context.termToConcept(content);
+            if (contentConcept == null)
                 return;
-            default:
-                System.err.println("未知的语句类型: " + task);
+            // * 🚩只在「内容对应了概念」时，取出「概念」中的信念
+            final Judgement contentBelief = contentConcept.getBelief(task);
+            if (contentBelief == null)
+                return;
+            // * 🚩只在「概念中有信念」时，以这个信念作为「当前信念」构建新任务
+            final Stamp newStamp = Stamp.uncheckedMerge(
+                    task,
+                    contentBelief, // * 🚩实际上就是需要与「已有信念」的证据基合并
+                    context.getTime(),
+                    context.getMaxEvidenceBaseLength());
+            // * 🚩【2024-06-07 13:41:16】现在直接从「任务」构造新的「预算值」
+            final Task contentTask = new Task(contentBelief, task);
+            // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
+            final Term conj = makeConjunction(component, content);
+            // * ↓不会用到`context.getCurrentTask()`、`newStamp`
+            final Truth truth1 = TruthFunctions.intersection(contentBelief, belief);
+            // * ↓不会用到`context.getCurrentTask()`、`newStamp`
+            final Budget budget1 = BudgetInference.compoundForward(truth1, conj, context);
+            // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
+            // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
+            context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
+        }
+        // * 🚩前向推理：直接用于构造信念
+        else {
+            // * 🚩选取前提真值 | ⚠️前后件语义不同
+            final Truth v1, v2;
+            if (isCompoundFromTask) {
+                v1 = task.asJudgement();
+                v2 = belief;
+            } else {
+                v1 = belief;
+                v2 = task.asJudgement();
+            }
+            // * 🚩选取真值函数
+            final TruthFDouble truthF;
+            if (compound instanceof Conjunction)
+                truthF = TruthFunctions::reduceConjunction;
+            else if (compound instanceof Disjunction)
+                truthF = TruthFunctions::reduceDisjunction;
+            else
+                return;
+            // * 🚩构造真值、预算值，双前提结论
+            truth = truthF.call(v1, v2);
+            budget = BudgetInference.compoundForward(truth, content, context);
+            context.doublePremiseTask(content, truth, budget);
         }
     }
 
