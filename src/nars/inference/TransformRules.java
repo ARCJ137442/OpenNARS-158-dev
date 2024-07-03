@@ -26,6 +26,17 @@ import nars.language.Term;
  */
 public class TransformRules {
 
+    static String s2s(short[] s) {
+        String str = "[";
+        for (int i = 0; i < s.length; i++) {
+            str += s[i];
+            if (i != s.length - 1) {
+                str += ", ";
+            }
+        }
+        return str + "]";
+    }
+
     /* ----- inference with one TaskLink only ----- */
     /**
      * The TaskLink is of type TRANSFORM,
@@ -37,31 +48,165 @@ public class TransformRules {
      * @param context Reference to the derivation context
      */
     static void transformTask(DerivationContextTransform context) {
-        // TODO: 过程笔记注释
         // * 🚩预处理 | 📌【2024-06-07 23:12:34】断定其中的「tLink」就是「当前任务链」
         final TaskLink tLink = context.getCurrentTaskLink();
-        final CompoundTerm clonedContent = (CompoundTerm) context.getCurrentTask().getContent().clone();
+        final CompoundTerm taskContent = (CompoundTerm) context.getCurrentTask().getContent();
         final short[] indices = tLink.getIndices();
+
+        // * 🚩提取其中的继承词项
         final Term inh;
-        if ((indices.length == 2) || (clonedContent instanceof Inheritance)) { // <(*, term, #) --> #>
-            inh = clonedContent;
-        } else if (indices.length == 3) { // <<(*, term, #) --> #> ==> #>
-            inh = clonedContent.componentAt(indices[0]);
-        } else if (indices.length == 4) { // <(&&, <(*, term, #) --> #>, #) ==> #>
-            Term component = clonedContent.componentAt(indices[0]);
-            if ((component instanceof Conjunction)
-                    && (((clonedContent instanceof Implication) && (indices[0] == 0))
-                            || (clonedContent instanceof Equivalence))) {
-                inh = ((CompoundTerm) component).componentAt(indices[1]);
-            } else {
-                return;
-            }
-        } else {
+        // * 🚩本身是乘积 | <(*, term, #) --> #>
+        if (indices.length == 2 || (taskContent instanceof Inheritance)) {
+            inh = taskContent;
+            // * 📄currentConcept = "a",
+            // * * content = "<(*,a,b) --> like>",
+            // * * indices = [0, 0]
+            // * * => inh = "<(*,a,b) --> like>"
+            // * 📄currentConcept = "a",
+            // * * content = "<like --> (*,a,b)>",
+            // * * indices = [1, 0]
+            // * * => inh = "<like --> (*,a,b)>"
+            // * 📄currentConcept = "a",
+            // * * content = "<like <-> (*,a,b)>",
+            // * * indices = [1, 0]
+            // * * => inh = "<like <-> (*,a,b)>"
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<(/,(*,0),_) --> num>",
+            // * * indices = [0, 0]
+            // * * => inh = "<(/,(*,0),_) --> num>"
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<num --> (/,(*,0),_)>",
+            // * * indices = [1, 0]
+            // * * => inh = "<num --> (/,(*,0),_)>"
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<(/,num,_) --> (/,(*,0),_)>",
+            // * * indices = [1, 0]
+            // * * => inh = "<(/,num,_) --> (/,(*,0),_)>"
+            // * 📄currentConcept = "worms",
+            // * * content = "<(*,{Tweety},worms) --> food>",
+            // * * indices = [0, 1]
+            // * * => inh = "<(*,{Tweety},worms) --> food>"
+            // * 📄currentConcept = "{lock1}",
+            // * * content = "<(/,open,_,{lock1}) --> key>",
+            // * * indices = [0, 1]
+            // * * => inh = "<(/,open,_,{lock1}) --> key>"
+            // * 📄currentConcept = "{lock1}",
+            // * * content = "<key --> (/,open,_,{lock1})>",
+            // * * indices = [1, 1]
+            // * * => inh = "<key --> (/,open,_,{lock1})>"
+            // * 📄currentConcept = "acid",
+            // * * content = "<soda <-> (\,reaction,acid,_)>",
+            // * * indices = [1, 0]
+            // * * => inh = "<soda <-> (\,reaction,acid,_)>"
+        }
+        // * 🚩乘积在蕴含里边 | <<(*, term, #) --> #> ==> #>
+        else if (indices.length == 3) {
+            inh = taskContent.componentAt(indices[0]);
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<(*,(*,(*,0))) ==> num>",
+            // * * indices = [0, 0, 0]
+            // * * => inh = "(*,(*,(*,0)))"
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<num <-> (*,(*,(*,0)))>",
+            // * * indices = [1, 0, 0]
+            // * * => inh = "(*,(*,(*,0)))"
+            // * 📄currentConcept = "(*,0)",
+            // * * content = "<num <=> (*,(*,(*,0)))>",
+            // * * indices = [1, 0, 0]
+            // * * => inh = "(*,(*,(*,0)))"
+            // * 📄currentConcept = "a",
+            // * * content = "<like <-> (*,a,(/,like,_,a))>",
+            // * * indices = [1, 1, 1]
+            // * * => inh = "(*,a,(/,like,_,a))"
+            // * 📄currentConcept = "b",
+            // * * content = "<like <-> (*,(/,like,b,_),b)>",
+            // * * indices = [1, 0, 0]
+            // * * => inh = "(*,(/,like,b,_),b)"
+            // * 📄currentConcept = "(/,num,_)",
+            // * * content = "<num <-> (/,(*,(/,num,_)),_)>",
+            // * * indices = [1, 0, 0]
+            // * * => inh = "(/,(*,(/,num,_)),_)"
+            // * 📄currentConcept = "num",
+            // * * content = "<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>",
+            // * * indices = [0, 1, 0]
+            // * * => inh = "<$1 --> (/,num,_)>"
+            // * 📄currentConcept = "(*,num)",
+            // * * content = "(&&,<#1 --> num>,<#1 --> (/,(*,num),_)>)",
+            // * * indices = [1, 1, 0]
+            // * * => inh = "<#1 --> (/,(*,num),_)>"
+            // * 📄currentConcept = "(*,num)",
+            // * * content = "<<$1 --> (/,(*,num),_)> ==> <$1 --> num>>",
+            // * * indices = [0, 1, 0]
+            // * * => inh = "<$1 --> (/,(*,num),_)>"
+            // * 📄currentConcept = "(*,num)",
+            // * * content = "<<$1 --> num> <=> <$1 --> (/,(*,num),_)>>",
+            // * * indices = [1, 1, 0]
+            // * * => inh = "<$1 --> (/,(*,num),_)>"
+        }
+        // * 🚩乘积在蕴含的条件中 | <(&&, <(*, term, #) --> #>, #) ==> #>
+        else if (indices.length == 4) {
+            // * 🚩提取其中的继承项
+            final Term contentSubject = taskContent.componentAt(indices[0]);
+            // * 🚩判断「条件句」
+            // * 主项是「合取」
+            final boolean conditionSubject = contentSubject instanceof Conjunction;
+            // * 整体是「等价」或「合取在前头的『蕴含』」
+            final boolean conditionWhole = (taskContent instanceof Implication && indices[0] == 0)
+                    || taskContent instanceof Equivalence;
+            if (conditionSubject && conditionWhole) {
+                // * 🚩条件句⇒提取
+                inh = ((CompoundTerm) contentSubject).componentAt(indices[1]);
+                // * 📄currentConcept = "worms",
+                // ****content="<(&&,<$1-->[with_wings]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
+                // * * indices = [0, 1, 0, 1]
+                // * * => inh = "<(*,$1,worms) --> food>"
+                // * 📄currentConcept = "worms",
+                // ****content="<(&&,<$1-->flyer>,<$1-->[chirping]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
+                // * * indices = [0, 2, 0, 1]
+                // * * => inh = "<(*,$1,worms) --> food>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<$1-->[(/,open,$2,_)]>,<$1-->(/,open,key,_)>)==><$1-->[(/,open,{$2},_)]>>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<$1 --> (/,open,key,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(&,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(*,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(-,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(|,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(~,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "open",
+                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(||,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+                // * * indices = [0, 1, 1, 1]
+                // * * => inh = "<#1 --> (/,open,$2,_)>"
+                // * 📄currentConcept = "worms",
+                // ****content="<(&&,<{Tweety}-->[chirping]>,<(*,{Tweety},worms)-->food>)==><{Tweety}-->bird>>",
+                // * * indices = [0, 1, 0, 1]
+                // * * => inh = "<(*,{Tweety},worms) --> food>"
+            } else
+                // * 🚩失败⇒空⇒返回
+                inh = null;
+        } else
+            // * 🚩失败⇒空⇒返回
             inh = null;
-        }
-        if (inh instanceof Inheritance) {
-            transformProductImage((Inheritance) inh, clonedContent, indices, context);
-        }
+
+        // * 🚩提取出了继承项⇒开始转换
+        if (inh instanceof Inheritance)
+            // * 🚩【2024-07-03 11:35:40】修改：传入时复制
+            transformProductImage((Inheritance) inh.clone(), taskContent.clone(), indices, context);
     }
 
     /* -------------------- products and images transform -------------------- */
@@ -81,85 +226,95 @@ public class TransformRules {
             Inheritance inh, CompoundTerm oldContent,
             short[] indices,
             DerivationContextTransform context) {
-        // TODO: 过程笔记注释
+        // * 🚩提取参数
         final Term inhSubject = inh.getSubject();
         final Term inhPredicate = inh.getPredicate();
+        final boolean backward = context.isBackward();
+        // * 🚩预先分派 @ 转换的是整体
         if (inh.equals(oldContent)) {
-            if (inhSubject instanceof CompoundTerm) {
+            if (inhSubject instanceof CompoundTerm)
+                // * 🚩转换前项
                 transformSubjectProductImage((CompoundTerm) inhSubject, inhPredicate, context);
-            }
-            if (inhPredicate instanceof CompoundTerm) {
+            if (inhPredicate instanceof CompoundTerm)
+                // * 🚩转换后项
                 transformPredicateProductImage(inhSubject, (CompoundTerm) inhPredicate, context);
-            }
             return;
         }
+        // * 🚩词项 * //
+        // * 📝此处针对各类「条件句」等复杂逻辑
+        // * 🚩决定前后项
+        // TODO: 过程笔记注释，例子
         final short index = indices[indices.length - 1];
         final short side = indices[indices.length - 2];
-        final CompoundTerm comp = (CompoundTerm) inh.componentAt(side);
+        final CompoundTerm inhInner = (CompoundTerm) inh.componentAt(side);
         final Term subject;
         final Term predicate;
-        if (comp instanceof Product) {
+        if (inhInner instanceof Product)
             if (side == 0) {
-                subject = comp.componentAt(index);
-                predicate = makeImageExt((Product) comp, inh.getPredicate(), index);
+                subject = inhInner.componentAt(index);
+                predicate = makeImageExt((Product) inhInner, inh.getPredicate(), index);
             } else {
-                subject = makeImageInt((Product) comp, inh.getSubject(), index);
-                predicate = comp.componentAt(index);
+                subject = makeImageInt((Product) inhInner, inh.getSubject(), index);
+                predicate = inhInner.componentAt(index);
             }
-        } else if ((comp instanceof ImageExt) && (side == 1)) {
-            if (index == ((ImageExt) comp).getRelationIndex()) {
-                subject = makeProduct(comp, inh.getSubject(), index);
-                predicate = comp.componentAt(index);
+        else if ((inhInner instanceof ImageExt) && (side == 1))
+            if (index == ((ImageExt) inhInner).getRelationIndex()) {
+                subject = makeProduct(inhInner, inh.getSubject(), index);
+                predicate = inhInner.componentAt(index);
             } else {
-                subject = comp.componentAt(index);
-                predicate = makeImageExt((ImageExt) comp, inh.getSubject(), index);
+                subject = inhInner.componentAt(index);
+                predicate = makeImageExt((ImageExt) inhInner, inh.getSubject(), index);
             }
-        } else if ((comp instanceof ImageInt) && (side == 0)) {
-            if (index == ((ImageInt) comp).getRelationIndex()) {
-                subject = comp.componentAt(index);
-                predicate = makeProduct(comp, inh.getPredicate(), index);
+        else if ((inhInner instanceof ImageInt) && (side == 0))
+            if (index == ((ImageInt) inhInner).getRelationIndex()) {
+                subject = inhInner.componentAt(index);
+                predicate = makeProduct(inhInner, inh.getPredicate(), index);
             } else {
-                subject = makeImageInt((ImageInt) comp, inh.getPredicate(), index);
-                predicate = comp.componentAt(index);
+                subject = makeImageInt((ImageInt) inhInner, inh.getPredicate(), index);
+                predicate = inhInner.componentAt(index);
             }
-        } else {
+        else
             return;
-        }
+        // * 🚩构造「继承」，选择最终内容
         final Inheritance newInh = makeInheritance(subject, predicate);
-        Term content = null;
-        if (indices.length == 2) {
+        final Term content;
+        if (indices.length == 2)
             content = newInh;
-        } else if ((oldContent instanceof Statement) && (indices[0] == 1)) {
+        else if ((oldContent instanceof Statement) && (indices[0] == 1))
             content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh);
-        } else {
-            ArrayList<Term> componentList;
-            Term condition = oldContent.componentAt(0);
+        else {
+            final ArrayList<Term> componentList;
+            final Term condition = oldContent.componentAt(0);
             if (((oldContent instanceof Implication) || (oldContent instanceof Equivalence))
                     && (condition instanceof Conjunction)) {
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
-                Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
+                final Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
                 content = makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate());
             } else {
                 componentList = oldContent.cloneComponents();
                 componentList.set(indices[0], newInh);
-                if (oldContent instanceof Conjunction) {
+                if (oldContent instanceof Conjunction)
                     content = makeCompoundTerm(oldContent, componentList);
-                } else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence)) {
+                else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence))
                     content = makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1));
-                }
+                else
+                    content = null;
             }
         }
-        if (content == null) {
+        if (content == null)
             return;
-        }
+
+        // * 🚩预算 * //
         final Task task = context.getCurrentTask();
-        final Budget budget;
-        if (task.isQuestion()) {
-            budget = BudgetInference.compoundBackward(content, context);
-        } else {
-            budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
-        }
+        final Budget budget = backward
+                // * 🚩复合反向
+                ? BudgetInference.compoundBackward(content, context)
+                // * 🚩复合前向
+                : BudgetInference.compoundForward(task.asJudgement(), content, context);
+
+        // * 🚩结论 * //
+        // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
         context.singlePremiseTask(content, task, budget);
     }
 
@@ -167,55 +322,73 @@ public class TransformRules {
      * Equivalent transformation between products and images when the subject is a
      * compound
      * {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
-     * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
-     * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
+     * {<(\, P, _, M) --> S>, P@(\, P, _, M)} |- <P --> (*, S, M)>
+     * {<(\, P, _, M) --> S>, M@(\, P, _, M)} |- <(\, P, S, _) --> M>
      *
      * @param subject   The subject term
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformSubjectProductImage(CompoundTerm subject, Term predicate,
+    private static void transformSubjectProductImage(
+            CompoundTerm subject, Term predicate,
             DerivationContextTransform context) {
-        // TODO: 过程笔记注释
+        // * 🚩预置变量
         final Task task = context.getCurrentTask();
+        final boolean backward = task.isQuestion();
         Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
+        // * 🚩积⇒外延像
         if (subject instanceof Product) {
-            Product product = (Product) subject;
+            final Product product = (Product) subject;
+            // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < product.size(); i++) {
+                // * 🚩词项 * //
                 newSubj = product.componentAt(i);
                 newPred = makeImageExt(product, predicate, i);
                 inheritance = makeInheritance(newSubj, newPred);
-                if (inheritance != null) {
-                    if (task.isQuestion()) {
-                        budget = BudgetInference.compoundBackward(inheritance, context);
-                    } else {
-                        budget = BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
-                    }
-                    context.singlePremiseTask(inheritance, task, budget);
-                }
+                if (inheritance == null)
+                    continue;
+                // * 🚩预算 * //
+                budget = backward
+                        // * 🚩复合反向
+                        ? BudgetInference.compoundBackward(inheritance, context)
+                        // * 🚩复合前向
+                        : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
+                // * 🚩结论 * //
+                // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
+                context.singlePremiseTask(inheritance, task, budget);
             }
-        } else if (subject instanceof ImageInt) {
+        }
+        // * 🚩内涵像⇒积/其它内涵像
+        else if (subject instanceof ImageInt) {
             final ImageInt image = (ImageInt) subject;
             final int relationIndex = image.getRelationIndex();
+            // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < image.size(); i++) {
+                // * 🚩词项 * //
+                // * 🚩根据「链接索引」与「关系索引（占位符位置）」的关系决定「积/像」
                 if (i == relationIndex) {
+                    // * 🚩转换回「积」
                     newSubj = image.componentAt(relationIndex);
                     newPred = makeProduct(image, predicate, relationIndex);
                 } else {
+                    // * 🚩更改位置
                     newSubj = makeImageInt((ImageInt) image, predicate, i);
                     newPred = image.componentAt(i);
                 }
                 inheritance = makeInheritance(newSubj, newPred);
-                if (inheritance != null) {
-                    if (task.isQuestion()) {
-                        budget = BudgetInference.compoundBackward(inheritance, context);
-                    } else {
-                        budget = BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
-                    }
-                    context.singlePremiseTask(inheritance, task, budget);
-                }
+                if (inheritance == null)
+                    continue;
+                // * 🚩预算 * //
+                budget = backward
+                        // * 🚩复合反向
+                        ? BudgetInference.compoundBackward(inheritance, context)
+                        // * 🚩复合前向
+                        : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
+                // * 🚩结论 * //
+                // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
+                context.singlePremiseTask(inheritance, task, budget);
             }
         }
     }
@@ -223,7 +396,7 @@ public class TransformRules {
     /**
      * Equivalent transformation between products and images when the predicate is a
      * compound
-     * {<(*, S, M) --> P>, S@(*, S, M)} |- <S --> (/, P, _, M)>
+     * {<P --> (*, S, M)>, S@(*, S, M)} |- <(\, P, _, M) --> S>
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
      * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
@@ -233,46 +406,63 @@ public class TransformRules {
      */
     private static void transformPredicateProductImage(Term subject, CompoundTerm predicate,
             DerivationContextTransform context) {
-        // TODO: 过程笔记注释
+        // * 🚩预置变量
         final Task task = context.getCurrentTask();
+        final boolean backward = task.isQuestion();
         Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
+        // * 🚩积⇒外延像
         if (predicate instanceof Product) {
             final Product product = (Product) predicate;
+            // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < product.size(); i++) {
+                // * 🚩词项 * //
                 newSubj = makeImageInt(product, subject, i);
                 newPred = product.componentAt(i);
                 inheritance = makeInheritance(newSubj, newPred);
-                if (inheritance != null) {
-                    if (task.isQuestion()) {
-                        budget = BudgetInference.compoundBackward(inheritance, context);
-                    } else {
-                        budget = BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
-                    }
-                    context.singlePremiseTask(inheritance, task, budget);
-                }
+                if (inheritance == null)
+                    continue;
+                // * 🚩预算 * //
+                budget = backward
+                        // * 🚩复合反向
+                        ? BudgetInference.compoundBackward(inheritance, context)
+                        // * 🚩复合前向
+                        : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
+                // * 🚩结论 * //
+                // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
+                context.singlePremiseTask(inheritance, task, budget);
             }
-        } else if (predicate instanceof ImageExt) {
+        }
+        // * 🚩内涵像⇒积/其它内涵像
+        else if (predicate instanceof ImageExt) {
             final ImageExt image = (ImageExt) predicate;
             final int relationIndex = image.getRelationIndex();
+            // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < image.size(); i++) {
+                // * 🚩词项 * //
+                // * 🚩根据「链接索引」与「关系索引（占位符位置）」的关系决定「积/像」
                 if (i == relationIndex) {
+                    // * 🚩转换回「积」
                     newSubj = makeProduct(image, subject, relationIndex);
                     newPred = image.componentAt(relationIndex);
                 } else {
+                    // * 🚩更改位置
                     newSubj = image.componentAt(i);
                     newPred = makeImageExt((ImageExt) image, subject, i);
                 }
                 inheritance = makeInheritance(newSubj, newPred);
-                if (inheritance != null) { // jmv <<<<<
-                    if (task.isQuestion()) {
-                        budget = BudgetInference.compoundBackward(inheritance, context);
-                    } else {
-                        budget = BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
-                    }
-                    context.singlePremiseTask(inheritance, task, budget);
-                }
+                if (inheritance == null)
+                    continue;
+                // * 🚩预算 * //
+                budget = backward // jmv <<<<<
+                        // * 🚩复合反向
+                        ? BudgetInference.compoundBackward(inheritance, context)
+                        // * 🚩复合前向
+                        : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
+                // * 🚩结论 * //
+                // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
+                context.singlePremiseTask(inheritance, task, budget);
             }
         }
     }
