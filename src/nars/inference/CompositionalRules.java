@@ -316,6 +316,9 @@ class CompositionalRules {
         }
     }
 
+    /* --------------- rules used for variable introduction --------------- */
+
+    /** 🆕入口之一：变量引入 */
     static void introVarSameSubjectOrPredicate(
             Judgement originalMainSentence,
             Judgement subSentence, Term component,
@@ -366,7 +369,6 @@ class CompositionalRules {
         }
     }
 
-    /* --------------- rules used for variable introduction --------------- */
     /**
      * Introduce a dependent variable in an outer-layer conjunction
      *
