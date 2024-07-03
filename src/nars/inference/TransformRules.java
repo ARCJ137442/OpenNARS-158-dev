@@ -42,6 +42,36 @@ public class TransformRules {
         final CompoundTerm taskContent = (CompoundTerm) context.getCurrentTask().getContent();
         final short[] indices = tLink.getIndices();
 
+        // * 🚩获取有待转换的「继承」陈述（引用）
+        final Term inh = getInheritanceToBeTransform(taskContent, indices);
+
+        // * 🚩提取出了继承项⇒开始转换
+        // * 🚩【2024-07-03 11:35:40】修改：传入时复制
+        if (!(inh instanceof Inheritance))
+            return;
+        // * 🚩拷贝词项以隔离修改
+        final CompoundTerm oldContent = taskContent.clone();
+        final Inheritance inheritanceToBeTransform = (Inheritance) inh.clone();
+
+        // * 🚩预先分派 @ 转换的是整体
+        if (inheritanceToBeTransform.equals(oldContent)) {
+            // * 🚩待转换词项为整体（自身）⇒特别分派（可能转换多次）
+            final Term inhSubject = inheritanceToBeTransform.getSubject();
+            final Term inhPredicate = inheritanceToBeTransform.getPredicate();
+            if (inhSubject instanceof CompoundTerm)
+                // * 🚩转换前项
+                transformSubjectProductImage((CompoundTerm) inhSubject, inhPredicate, context);
+            if (inhPredicate instanceof CompoundTerm)
+                // * 🚩转换后项
+                transformPredicateProductImage(inhSubject, (CompoundTerm) inhPredicate, context);
+        }
+        // * 🚩其它⇒转换内部的「继承」系词
+        else
+            transformProductImage(inheritanceToBeTransform, oldContent, indices, context);
+    }
+
+    /** 🆕获取【需要参与后续「转换」操作】的「继承」陈述 */
+    private static Term getInheritanceToBeTransform(final CompoundTerm taskContent, final short[] indices) {
         // * 🚩提取其中的继承词项
         final Term inh;
         // * 🚩本身是乘积 | <(*, term, #) --> #>
@@ -191,11 +221,7 @@ public class TransformRules {
         } else
             // * 🚩失败⇒空⇒返回
             inh = null;
-
-        // * 🚩提取出了继承项⇒开始转换
-        if (inh instanceof Inheritance)
-            // * 🚩【2024-07-03 11:35:40】修改：传入时复制
-            transformProductImage((Inheritance) inh.clone(), taskContent.clone(), indices, context);
+        return inh;
     }
 
     /* -------------------- products and images transform -------------------- */
@@ -205,109 +231,27 @@ public class TransformRules {
      * {<S --> (/, P, _, M)>, P@(/, P, _, M)} |- <(*, S, M) --> P>
      * {<S --> (/, P, _, M)>, M@(/, P, _, M)} |- <M --> (/, P, S, _)>
      *
-     * @param inh        An Inheritance statement
-     * @param oldContent The whole content
-     * @param indices    The indices of the TaskLink
-     * @param task       The task
-     * @param context    Reference to the derivation context
+     * @param inheritanceToBeTransform An Inheritance statement
+     * @param oldContent               The whole content
+     * @param indices                  The indices of the TaskLink
+     * @param task                     The task
+     * @param context                  Reference to the derivation context
      */
     private static void transformProductImage(
-            Inheritance inh, CompoundTerm oldContent,
-            short[] indices,
-            DerivationContextTransform context) {
+            final Inheritance inheritanceToBeTransform,
+            final CompoundTerm oldContent,
+            final short[] indices,
+            final DerivationContextTransform context) {
         // * 🚩提取参数
-        final Term inhSubject = inh.getSubject();
-        final Term inhPredicate = inh.getPredicate();
         final boolean backward = context.isBackward();
-        // * 🚩预先分派 @ 转换的是整体
-        if (inh.equals(oldContent)) {
-            if (inhSubject instanceof CompoundTerm)
-                // * 🚩转换前项
-                transformSubjectProductImage((CompoundTerm) inhSubject, inhPredicate, context);
-            if (inhPredicate instanceof CompoundTerm)
-                // * 🚩转换后项
-                transformPredicateProductImage(inhSubject, (CompoundTerm) inhPredicate, context);
-            return;
-        }
-        
+
         // * 🚩词项 * //
         // * 📝此处针对各类「条件句」等复杂逻辑
-        // * 📄inh="<#1 --> (*,(/,num,_))>"
-        // * * oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
-        // * * indices=[1, 1, 0]
-        // * 📄inh="<$1 --> (*,(/,num,_))>"
-        // * * oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
-        // * * indices=[0, 1, 0]
-        // * 📄inh="<$1 --> (*,(/,num,_))>"
-        // * * oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
-        // * * indices=[1, 1, 0]
-        // * 📄inh="<$1 --> (*,(/,num,_))>"
-        // * * oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
-        // * * indices=[1, 1, 0]
-        // * 📄inh="<$1 --> (/,(*,num),_)>"
-        // * * oldContent="<<$1 --> (/,(*,num),_)> ==> <$1 --> num>>"
-        // * * indices=[0, 1, 0]
-        // * 📄inh="<$1 --> (/,(*,num),_)>"
-        // * * oldContent="<<$1 --> num> ==> <$1 --> (/,(*,num),_)>>"
-        // * * indices=[1, 1, 0]
-        // * 📄inh="<$1 --> (/,num,_)>"
-        // * * oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
-        // * * indices=[0, 1, 0]
-        // * 📄inh="<(*,$1,lock1) --> open>"
-        // * * oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
-        // * * indices=[1, 0, 1]
-        // * 📄inh="<#1 --> (*,acid,base)>"
-        // * * oldContent="(&&,<#1 --> reaction>,<#1 --> (*,acid,base)>)"
-        // * * indices=[1, 1, 1]
-        // * 📄inh="<$1 --> (/,(*,num),_)>"
-        // * * oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
-        // * * indices=[0, 1, 0]
-        // * 🚩转换构造新的「继承」
-        final Inheritance newInh = transformInheritance(inh, indices);
+        final Inheritance newInh = transformInheritance(inheritanceToBeTransform, indices);
         if (newInh == null)
             return;
 
         // * 🚩用新构造的「继承」产生【在替换旧有内容中替换之后的】新词项
-        // * 📄oldContent="<<(*,$1,lock1) --> open> ==> <lock1 --> (/,open,$1,_)>>"
-        // * * indices=[0, 0, 1]
-        // * * newInh="<lock1 --> (/,open,$1,_)>"
-        // *=> content=null
-        // * 📄oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
-        // * * indices=[1, 1, 0]
-        // * * newInh="<(\,#1,_) --> (/,num,_)>"
-        // *=> content="(&&,<#1 --> num>,<(\,#1,_) --> (/,num,_)>)"
-        // * 📄oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
-        // * * indices=[0, 1, 0]
-        // * * newInh="<(\,$1,_) --> (/,num,_)>"
-        // *=> content="<<(\,$1,_) --> (/,num,_)> ==> <$1 --> num>>"
-        // * 📄oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
-        // * * indices=[0, 1, 0]
-        // * * newInh="<(*,$1) --> (*,num)>"
-        // *=> content="<<(*,$1) --> num> <=> <(*,$1) --> (*,num)>>"
-        // * 📄oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
-        // * * indices=[0, 1, 0]
-        // * * newInh="<(*,$1) --> num>"
-        // *=> content="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
-        // * 📄oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
-        // * * indices=[1, 1, 0]
-        // * * newInh="<(\,$1,_) --> (/,num,_)>"
-        // *=> content="<<$1 --> num> <=> <(\,$1,_) --> (/,num,_)>>"
-        // * 📄oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
-        // * * indices=[1, 1, 0]
-        // * * newInh="<(\,$1,_) --> (/,num,_)>"
-        // *=> content="<<$1 --> num> ==> <(\,$1,_) --> (/,num,_)>>"
-        // * 📄oldContent="<<lock1 --> (/,open,$1,_)> ==> <$1 --> key>>"
-        // * * indices=[0, 1, 1]
-        // * * newInh="<(*,$1,lock1) --> open>"
-        // *=> content="<<(*,$1,lock1) --> open> ==> <$1 --> key>>"
-        // * 📄oldContent="(&&,<#1 --> (/,num,_)>,<#1 --> (/,(*,num),_)>)"
-        // * * indices=[1, 1, 0]
-        // * * newInh="<(*,#1) --> (*,num)>"
-        // *=> content="(&&,<#1 --> (/,num,_)>,<(*,#1) --> (*,num)>)"
-        // * 📄oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
-        // * * indices=[1, 0, 1]
-        // * * newInh="<lock1 --> (/,open,$1,_)>"
-        // *=> content="<<$1 --> key> ==> <lock1 --> (/,open,$1,_)>>"
         final Term content = replacedTransformedContent(oldContent, indices, newInh);
         if (content == null)
             return;
@@ -329,6 +273,47 @@ public class TransformRules {
      * 🆕使用转换后的「关系继承句」回替词项
      * * 🚩按照词项链索引，在「转换后的词项」中找回其位置，并替换原有的词项
      * * ⚠️返回值可能为空
+     *
+     * * 📄oldContent="<<(*,$1,lock1) --> open> ==> <lock1 --> (/,open,$1,_)>>"
+     * * * indices=[0, 0, 1]
+     * * * newInh="<lock1 --> (/,open,$1,_)>"
+     * *=> content=null
+     * * 📄oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
+     * * * indices=[1, 1, 0]
+     * * * newInh="<(\,#1,_) --> (/,num,_)>"
+     * *=> content="(&&,<#1 --> num>,<(\,#1,_) --> (/,num,_)>)"
+     * * 📄oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
+     * * * indices=[0, 1, 0]
+     * * * newInh="<(\,$1,_) --> (/,num,_)>"
+     * *=> content="<<(\,$1,_) --> (/,num,_)> ==> <$1 --> num>>"
+     * * 📄oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+     * * * indices=[0, 1, 0]
+     * * * newInh="<(*,$1) --> (*,num)>"
+     * *=> content="<<(*,$1) --> num> <=> <(*,$1) --> (*,num)>>"
+     * * 📄oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
+     * * * indices=[0, 1, 0]
+     * * * newInh="<(*,$1) --> num>"
+     * *=> content="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+     * * 📄oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
+     * * * indices=[1, 1, 0]
+     * * * newInh="<(\,$1,_) --> (/,num,_)>"
+     * *=> content="<<$1 --> num> <=> <(\,$1,_) --> (/,num,_)>>"
+     * * 📄oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
+     * * * indices=[1, 1, 0]
+     * * * newInh="<(\,$1,_) --> (/,num,_)>"
+     * *=> content="<<$1 --> num> ==> <(\,$1,_) --> (/,num,_)>>"
+     * * 📄oldContent="<<lock1 --> (/,open,$1,_)> ==> <$1 --> key>>"
+     * * * indices=[0, 1, 1]
+     * * * newInh="<(*,$1,lock1) --> open>"
+     * *=> content="<<(*,$1,lock1) --> open> ==> <$1 --> key>>"
+     * * 📄oldContent="(&&,<#1 --> (/,num,_)>,<#1 --> (/,(*,num),_)>)"
+     * * * indices=[1, 1, 0]
+     * * * newInh="<(*,#1) --> (*,num)>"
+     * *=> content="(&&,<#1 --> (/,num,_)>,<(*,#1) --> (*,num)>)"
+     * * 📄oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
+     * * * indices=[1, 0, 1]
+     * * * newInh="<lock1 --> (/,open,$1,_)>"
+     * *=> content="<<$1 --> key> ==> <lock1 --> (/,open,$1,_)>>"
      */
     private static Term replacedTransformedContent(CompoundTerm oldContent, short[] indices, final Inheritance newInh) {
         // * 🚩选择或构建最终内容：模仿链接重构词项
@@ -391,6 +376,38 @@ public class TransformRules {
     /**
      * 🆕从「转换 乘积/像」中提取出的「转换继承」函数
      * * ⚠️返回值可能为空
+     * * 🚩转换构造新的「继承」
+     *
+     * * 📄inh="<#1 --> (*,(/,num,_))>"
+     * * * oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
+     * * * indices=[1, 1, 0]
+     * * 📄inh="<$1 --> (*,(/,num,_))>"
+     * * * oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
+     * * * indices=[0, 1, 0]
+     * * 📄inh="<$1 --> (*,(/,num,_))>"
+     * * * oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
+     * * * indices=[1, 1, 0]
+     * * 📄inh="<$1 --> (*,(/,num,_))>"
+     * * * oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
+     * * * indices=[1, 1, 0]
+     * * 📄inh="<$1 --> (/,(*,num),_)>"
+     * * * oldContent="<<$1 --> (/,(*,num),_)> ==> <$1 --> num>>"
+     * * * indices=[0, 1, 0]
+     * * 📄inh="<$1 --> (/,(*,num),_)>"
+     * * * oldContent="<<$1 --> num> ==> <$1 --> (/,(*,num),_)>>"
+     * * * indices=[1, 1, 0]
+     * * 📄inh="<$1 --> (/,num,_)>"
+     * * * oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
+     * * * indices=[0, 1, 0]
+     * * 📄inh="<(*,$1,lock1) --> open>"
+     * * * oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
+     * * * indices=[1, 0, 1]
+     * * 📄inh="<#1 --> (*,acid,base)>"
+     * * * oldContent="(&&,<#1 --> reaction>,<#1 --> (*,acid,base)>)"
+     * * * indices=[1, 1, 1]
+     * * 📄inh="<$1 --> (/,(*,num),_)>"
+     * * * oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+     * * * indices=[0, 1, 0]
      */
     private static Inheritance transformInheritance(
             final Statement inh,
