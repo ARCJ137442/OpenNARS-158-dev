@@ -26,6 +26,7 @@ import nars.language.Term;
  */
 public class TransformRules {
 
+    /** 数组转字符串 */
     static String s2s(short[] s) {
         String str = "[";
         for (int i = 0; i < s.length; i++) {
@@ -242,50 +243,51 @@ public class TransformRules {
         }
         // * 🚩词项 * //
         // * 📝此处针对各类「条件句」等复杂逻辑
-        // * 🚩决定前后项
-        // TODO: 过程笔记注释，例子
-        final short index = indices[indices.length - 1];
-        final short side = indices[indices.length - 2];
-        final CompoundTerm inhInner = (CompoundTerm) inh.componentAt(side);
-        final Term subject;
-        final Term predicate;
-        if (inhInner instanceof Product)
-            if (side == 0) {
-                subject = inhInner.componentAt(index);
-                predicate = makeImageExt((Product) inhInner, inh.getPredicate(), index);
-            } else {
-                subject = makeImageInt((Product) inhInner, inh.getSubject(), index);
-                predicate = inhInner.componentAt(index);
-            }
-        else if ((inhInner instanceof ImageExt) && (side == 1))
-            if (index == ((ImageExt) inhInner).getRelationIndex()) {
-                subject = makeProduct(inhInner, inh.getSubject(), index);
-                predicate = inhInner.componentAt(index);
-            } else {
-                subject = inhInner.componentAt(index);
-                predicate = makeImageExt((ImageExt) inhInner, inh.getSubject(), index);
-            }
-        else if ((inhInner instanceof ImageInt) && (side == 0))
-            if (index == ((ImageInt) inhInner).getRelationIndex()) {
-                subject = inhInner.componentAt(index);
-                predicate = makeProduct(inhInner, inh.getPredicate(), index);
-            } else {
-                subject = makeImageInt((ImageInt) inhInner, inh.getPredicate(), index);
-                predicate = inhInner.componentAt(index);
-            }
-        else
+        // * 📄inh="<#1 --> (*,(/,num,_))>"
+        // * * oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
+        // * * indices=[1, 1, 0]
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
+        // * * indices=[0, 1, 0]
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> (/,(*,num),_)> ==> <$1 --> num>>"
+        // * * indices=[0, 1, 0]
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> num> ==> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[1, 1, 0]
+        // * 📄inh="<$1 --> (/,num,_)>"
+        // * * oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[0, 1, 0]
+        // * 📄inh="<(*,$1,lock1) --> open>"
+        // * * oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
+        // * * indices=[1, 0, 1]
+        // * 📄inh="<#1 --> (*,acid,base)>"
+        // * * oldContent="(&&,<#1 --> reaction>,<#1 --> (*,acid,base)>)"
+        // * * indices=[1, 1, 1]
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+        // * * indices=[0, 1, 0]
+        // * 🚩转换构造新的「继承」
+        final Inheritance newInh = transformInheritance(inh, indices);
+        if (newInh == null)
             return;
-        // * 🚩构造「继承」，选择最终内容
-        final Inheritance newInh = makeInheritance(subject, predicate);
+
+        // * 🚩选择或构建最终内容：模仿链接重构词项
         final Term content;
-        if (indices.length == 2)
+        if (indices.length == 2) // * 📄A @ <(*, A, B) --> R>
             content = newInh;
-        else if ((oldContent instanceof Statement) && (indices[0] == 1))
+        else if (oldContent instanceof Statement && indices[0] == 1)
             content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh);
         else {
             final ArrayList<Term> componentList;
             final Term condition = oldContent.componentAt(0);
-            if (((oldContent instanceof Implication) || (oldContent instanceof Equivalence))
+            if ((oldContent instanceof Implication || oldContent instanceof Equivalence)
                     && (condition instanceof Conjunction)) {
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
@@ -316,6 +318,96 @@ public class TransformRules {
         // * 🚩结论 * //
         // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
         context.singlePremiseTask(content, task, budget);
+    }
+
+    /** 🆕从「转换 乘积/像」中提取出的「转换继承」函数 */
+    private static Inheritance transformInheritance(
+            final Statement inh,
+            final short[] indices) {
+        // * 📄inh="<$1 --> (/,num,_)>"
+        // * * oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[0, 1, 0]
+        // *=> newInh="<(*,$1) --> num>"
+        // * 📄inh="<#1 --> (/,(*,num),_)>"
+        // * * oldContent="(&&,<#1 --> num>,<#1 --> (/,(*,num),_)>)"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(*,#1) --> (*,num)>"
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> (/,(*,num),_)> ==> <$1 --> num>>"
+        // * * indices=[0, 1, 0]
+        // *=> newInh="<(*,$1) --> (*,num)>"
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> num> <=> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(*,$1) --> (*,num)>"
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> num> ==> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(*,$1) --> (*,num)>"
+        // * 📄inh="<#1 --> (*,(/,num,_))>"
+        // * * oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(\,#1,_) --> (/,num,_)>"
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
+        // * * indices=[0, 1, 0]
+        // *=> newInh="<(\,$1,_) --> (/,num,_)>"
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(\,$1,_) --> (/,num,_)>"
+        // * 📄inh="<$1 --> (*,(/,num,_))>"
+        // * * oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // *=> newInh="<(\,$1,_) --> (/,num,_)>"
+        // * 📄inh="<$1 --> (/,(*,num),_)>"
+        // * * oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+        // * * indices=[0, 1, 0]
+        // *=> newInh="<(*,$1) --> (*,num)>"
+        // * 🚩决定前后项（此时已完成对「继承」的转换）
+        final short index = indices[indices.length - 1]; // * 📝取索引 @ 复合词项内 | 📄B@(/, R, B, _) => 1
+        final short side = indices[indices.length - 2]; // * 📝取索引 @ 复合词项所属继承句 | (*, A, B)@<(*, A, B) --> R> => 0
+        final CompoundTerm inhInner = (CompoundTerm) inh.componentAt(side); // * 📝拿到「继承」中的复合词项
+        final Term subject;
+        final Term predicate;
+        if (inhInner instanceof Product)
+            // * 🚩乘积⇒转像
+            if (side == 0) {
+                // * 🚩乘积在左侧⇒外延像
+                // * 📝占位符位置：与词项链位置有关
+                subject = inhInner.componentAt(index);
+                predicate = makeImageExt((Product) inhInner, inh.getPredicate(), index);
+            } else {
+                // * 🚩乘积在右侧⇒内涵像
+                // * 📝占位符位置：与词项链位置有关
+                subject = makeImageInt((Product) inhInner, inh.getSubject(), index);
+                predicate = inhInner.componentAt(index);
+            }
+        else if (inhInner instanceof ImageExt && (side == 1))
+            // * 🚩外延像⇒乘积/换索引
+            if (index == ((ImageExt) inhInner).getRelationIndex()) {
+                // * 🚩链接来源正好是「关系词项」⇒转乘积
+                // * * 📄「关系词项」如："open" @ "(/,open,$1,_)" | 始终在第一位，只是存储时放占位符的位置上
+                subject = makeProduct(inhInner, inh.getSubject(), index);
+                predicate = inhInner.componentAt(index);
+            } else {
+                // * 🚩其它⇒调转占位符位置
+                // * * 📄「关系词项」如
+                subject = inhInner.componentAt(index);
+                predicate = makeImageExt((ImageExt) inhInner, inh.getSubject(), index);
+            }
+        else if (inhInner instanceof ImageInt && (side == 0))
+            if (index == ((ImageInt) inhInner).getRelationIndex()) {
+                subject = inhInner.componentAt(index);
+                predicate = makeProduct(inhInner, inh.getPredicate(), index);
+            } else {
+                subject = makeImageInt((ImageInt) inhInner, inh.getPredicate(), index);
+                predicate = inhInner.componentAt(index);
+            }
+        else
+            return null;
+        // * 🚩最终返回二元数组
+        return makeInheritance(subject, predicate);
     }
 
     /**
