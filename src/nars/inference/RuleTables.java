@@ -797,14 +797,14 @@ final class RuleTables {
                     // * mainStatement="<<toothbrush --> $1> ==> <cup --> $1>>"
                     CompositionalRules.introVarInner((Statement) content, s2, mainStatement, context);
                 }
-                CompositionalRules.IntroVarSameSubjectOrPredicate(
+                CompositionalRules.introVarSameSubjectOrPredicate(
                         highOrderSentence.asJudgement(), subSentence.asJudgement(),
                         component, content,
                         index, context);
                 return;
             }
             if (mainStatement instanceof Equivalence) {
-                CompositionalRules.IntroVarSameSubjectOrPredicate(
+                CompositionalRules.introVarSameSubjectOrPredicate(
                         highOrderSentence.asJudgement(), subSentence.asJudgement(),
                         component, content,
                         index, context);

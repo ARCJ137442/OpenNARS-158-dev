@@ -18,56 +18,6 @@ import static nars.language.MakeTerm.*;
  * introduction) can also be used backward.
  */
 class CompositionalRules {
-    static void IntroVarSameSubjectOrPredicate(
-            Judgement originalMainSentence,
-            Judgement subSentence, Term component,
-            CompoundTerm content, int index,
-            DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        final Sentence cloned = originalMainSentence.sentenceClone();
-        final Term T1 = cloned.getContent();
-        if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
-            return;
-        }
-        CompoundTerm T = (CompoundTerm) T1;
-        CompoundTerm T2 = content.clone();
-        if ((component instanceof Inheritance && content instanceof Inheritance) ||
-                (component instanceof Similarity && content instanceof Similarity)) {
-            // CompoundTerm result = T;
-            if (component.equals(content)) {
-                // wouldn't make sense to create a conjunction here,
-                // would contain a statement twice
-                return;
-            }
-            if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
-                    && !(((Statement) component).getPredicate() instanceof Variable)) {
-                final Variable V = makeVarD("depIndVar1".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
-                final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
-                T2 = (CompoundTerm) setComponent(T2, 1, V);
-                if (zw2 == null || T2 == null || zw2.equals(T2)) {
-                    return;
-                }
-                final Conjunction res = (Conjunction) makeConjunction(zw, T2);
-                T = (CompoundTerm) setComponent(T, index, res);
-            } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
-                    && !(((Statement) component).getSubject() instanceof Variable)) {
-                final Variable V = makeVarD("depIndVar2".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
-                final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
-                T2 = (CompoundTerm) setComponent(T2, 0, V);
-                if (zw2 == null || T2 == null || zw2.equals(T2)) {
-                    return;
-                }
-                final Conjunction res = (Conjunction) makeConjunction(zw2, T2);
-                T = (CompoundTerm) setComponent(T, index, res);
-            }
-            final Truth truth = TruthFunctions.induction(originalMainSentence, subSentence);
-            final Budget budget = BudgetInference.compoundForward(truth, T, context);
-            context.doublePremiseTask(T, truth, budget);
-        }
-    }
-
     /* -------------------- intersections and differences -------------------- */
     /**
      * {<S ==> M>, <P ==> M>} |- {
@@ -366,6 +316,56 @@ class CompositionalRules {
                 return;
             default:
                 System.err.println("未知的语句类型: " + task);
+        }
+    }
+
+    static void introVarSameSubjectOrPredicate(
+            Judgement originalMainSentence,
+            Judgement subSentence, Term component,
+            CompoundTerm content, int index,
+            DerivationContextReason context) {
+        // TODO: 过程笔记注释
+        final Sentence cloned = originalMainSentence.sentenceClone();
+        final Term T1 = cloned.getContent();
+        if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
+            return;
+        }
+        CompoundTerm T = (CompoundTerm) T1;
+        CompoundTerm T2 = content.clone();
+        if ((component instanceof Inheritance && content instanceof Inheritance) ||
+                (component instanceof Similarity && content instanceof Similarity)) {
+            // CompoundTerm result = T;
+            if (component.equals(content)) {
+                // wouldn't make sense to create a conjunction here,
+                // would contain a statement twice
+                return;
+            }
+            if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
+                    && !(((Statement) component).getPredicate() instanceof Variable)) {
+                final Variable V = makeVarD("depIndVar1".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
+                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
+                final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
+                T2 = (CompoundTerm) setComponent(T2, 1, V);
+                if (zw2 == null || T2 == null || zw2.equals(T2)) {
+                    return;
+                }
+                final Conjunction res = (Conjunction) makeConjunction(zw, T2);
+                T = (CompoundTerm) setComponent(T, index, res);
+            } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
+                    && !(((Statement) component).getSubject() instanceof Variable)) {
+                final Variable V = makeVarD("depIndVar2".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
+                final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
+                final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
+                T2 = (CompoundTerm) setComponent(T2, 0, V);
+                if (zw2 == null || T2 == null || zw2.equals(T2)) {
+                    return;
+                }
+                final Conjunction res = (Conjunction) makeConjunction(zw2, T2);
+                T = (CompoundTerm) setComponent(T, index, res);
+            }
+            final Truth truth = TruthFunctions.induction(originalMainSentence, subSentence);
+            final Budget budget = BudgetInference.compoundForward(truth, T, context);
+            context.doublePremiseTask(T, truth, budget);
         }
     }
 
