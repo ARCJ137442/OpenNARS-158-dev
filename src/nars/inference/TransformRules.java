@@ -26,18 +26,6 @@ import nars.language.Term;
  */
 public class TransformRules {
 
-    /** 数组转字符串 */
-    static String s2s(short[] s) {
-        String str = "[";
-        for (int i = 0; i < s.length; i++) {
-            str += s[i];
-            if (i != s.length - 1) {
-                str += ", ";
-            }
-        }
-        return str + "]";
-    }
-
     /* ----- inference with one TaskLink only ----- */
     /**
      * The TaskLink is of type TRANSFORM,
@@ -241,6 +229,7 @@ public class TransformRules {
                 transformPredicateProductImage(inhSubject, (CompoundTerm) inhPredicate, context);
             return;
         }
+        
         // * 🚩词项 * //
         // * 📝此处针对各类「条件句」等复杂逻辑
         // * 📄inh="<#1 --> (*,(/,num,_))>"
@@ -278,32 +267,48 @@ public class TransformRules {
         if (newInh == null)
             return;
 
-        // * 🚩选择或构建最终内容：模仿链接重构词项
-        final Term content;
-        if (indices.length == 2) // * 📄A @ <(*, A, B) --> R>
-            content = newInh;
-        else if (oldContent instanceof Statement && indices[0] == 1)
-            content = makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh);
-        else {
-            final ArrayList<Term> componentList;
-            final Term condition = oldContent.componentAt(0);
-            if ((oldContent instanceof Implication || oldContent instanceof Equivalence)
-                    && (condition instanceof Conjunction)) {
-                componentList = ((CompoundTerm) condition).cloneComponents();
-                componentList.set(indices[1], newInh);
-                final Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
-                content = makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate());
-            } else {
-                componentList = oldContent.cloneComponents();
-                componentList.set(indices[0], newInh);
-                if (oldContent instanceof Conjunction)
-                    content = makeCompoundTerm(oldContent, componentList);
-                else if ((oldContent instanceof Implication) || (oldContent instanceof Equivalence))
-                    content = makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1));
-                else
-                    content = null;
-            }
-        }
+        // * 🚩用新构造的「继承」产生【在替换旧有内容中替换之后的】新词项
+        // * 📄oldContent="<<(*,$1,lock1) --> open> ==> <lock1 --> (/,open,$1,_)>>"
+        // * * indices=[0, 0, 1]
+        // * * newInh="<lock1 --> (/,open,$1,_)>"
+        // *=> content=null
+        // * 📄oldContent="(&&,<#1 --> num>,<#1 --> (*,(/,num,_))>)"
+        // * * indices=[1, 1, 0]
+        // * * newInh="<(\,#1,_) --> (/,num,_)>"
+        // *=> content="(&&,<#1 --> num>,<(\,#1,_) --> (/,num,_)>)"
+        // * 📄oldContent="<<$1 --> (*,(/,num,_))> ==> <$1 --> num>>"
+        // * * indices=[0, 1, 0]
+        // * * newInh="<(\,$1,_) --> (/,num,_)>"
+        // *=> content="<<(\,$1,_) --> (/,num,_)> ==> <$1 --> num>>"
+        // * 📄oldContent="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+        // * * indices=[0, 1, 0]
+        // * * newInh="<(*,$1) --> (*,num)>"
+        // *=> content="<<(*,$1) --> num> <=> <(*,$1) --> (*,num)>>"
+        // * 📄oldContent="<<$1 --> (/,num,_)> <=> <$1 --> (/,(*,num),_)>>"
+        // * * indices=[0, 1, 0]
+        // * * newInh="<(*,$1) --> num>"
+        // *=> content="<<$1 --> (/,(*,num),_)> <=> <(*,$1) --> num>>"
+        // * 📄oldContent="<<$1 --> num> <=> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // * * newInh="<(\,$1,_) --> (/,num,_)>"
+        // *=> content="<<$1 --> num> <=> <(\,$1,_) --> (/,num,_)>>"
+        // * 📄oldContent="<<$1 --> num> ==> <$1 --> (*,(/,num,_))>>"
+        // * * indices=[1, 1, 0]
+        // * * newInh="<(\,$1,_) --> (/,num,_)>"
+        // *=> content="<<$1 --> num> ==> <(\,$1,_) --> (/,num,_)>>"
+        // * 📄oldContent="<<lock1 --> (/,open,$1,_)> ==> <$1 --> key>>"
+        // * * indices=[0, 1, 1]
+        // * * newInh="<(*,$1,lock1) --> open>"
+        // *=> content="<<(*,$1,lock1) --> open> ==> <$1 --> key>>"
+        // * 📄oldContent="(&&,<#1 --> (/,num,_)>,<#1 --> (/,(*,num),_)>)"
+        // * * indices=[1, 1, 0]
+        // * * newInh="<(*,#1) --> (*,num)>"
+        // *=> content="(&&,<#1 --> (/,num,_)>,<(*,#1) --> (*,num)>)"
+        // * 📄oldContent="<<$1 --> key> ==> <(*,$1,lock1) --> open>>"
+        // * * indices=[1, 0, 1]
+        // * * newInh="<lock1 --> (/,open,$1,_)>"
+        // *=> content="<<$1 --> key> ==> <lock1 --> (/,open,$1,_)>>"
+        final Term content = replacedTransformedContent(oldContent, indices, newInh);
         if (content == null)
             return;
 
@@ -320,7 +325,73 @@ public class TransformRules {
         context.singlePremiseTask(content, task, budget);
     }
 
-    /** 🆕从「转换 乘积/像」中提取出的「转换继承」函数 */
+    /**
+     * 🆕使用转换后的「关系继承句」回替词项
+     * * 🚩按照词项链索引，在「转换后的词项」中找回其位置，并替换原有的词项
+     * * ⚠️返回值可能为空
+     */
+    private static Term replacedTransformedContent(CompoundTerm oldContent, short[] indices, final Inheritance newInh) {
+        // * 🚩选择或构建最终内容：模仿链接重构词项
+        if (indices.length == 2)
+            // * 🚩只有两层 ⇒ 只有「继承+关系」两层 ⇒ 直接使用
+            // * 📄A @ <(*, A, B) --> R>
+            return newInh;
+        else if (oldContent instanceof Statement && indices[0] == 1)
+            // * 🚩三层 ⇒ 只有「继承+关系」两层 ⇒ 直接使用
+            // * 📄A @ <<(*, A, B) --> R> ==> C>
+            // * 📄oldContent="<(&&,<$1 --> key>,<$2 --> lock>) ==> <$2 --> (/,open,$1,_)>>"
+            // * * indices=[1, 1, 1]
+            // * * newInh="<(*,$1,$2) --> open>"
+            // *=> content="<(&&,<$1 --> key>,<$2 --> lock>) ==> <(*,$1,$2) --> open>>"
+            if (indices.length != 3)
+                throw new AssertionError("【2024-07-03 21:55:34】此处原意是「三层、陈述、在谓项中」");
+            else
+                return makeStatement((Statement) oldContent, oldContent.componentAt(0), newInh);
+        else {
+            final ArrayList<Term> componentList;
+            final Term condition = oldContent.componentAt(0);
+            final boolean isConditional = (oldContent instanceof Implication || oldContent instanceof Equivalence)
+                    && condition instanceof Conjunction;
+            if (isConditional) {
+                // * 🚩复合条件⇒四层：蕴含/等价 ⇒ 条件 ⇒ 关系继承 ⇒ 积/像
+                // * 📄oldContent="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>C>"
+                // * * indices=[0, 1, 1, 1]
+                // * * newInh="<(*,$2,#1)-->open>"
+                // *=> content="<(&&,<#1-->lock>,<(*,$2,#1)-->open>)==>C>"
+                if (indices.length != 4)
+                    throw new AssertionError("【2024-07-03 21:55:34】此处原意是「四层、在条件中」");
+                componentList = ((CompoundTerm) condition).cloneComponents();
+                componentList.set(indices[1], newInh);
+                final Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
+                return makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate());
+            } else {
+                if (indices.length != 3)
+                    throw new AssertionError("【2024-07-03 21:55:34】此处原意是「三层、不在条件中」");
+                // * 🚩非条件⇒三层：蕴含/等价/合取 ⇒ 结论=关系继承 ⇒ 积/像
+                // * 📄oldContent="(&&,<#1 --> lock>,<#1 --> (/,open,#2,_)>,<#2 --> key>)"
+                // * * indices=[1, 1, 1] @ "open"
+                // * * newInh="<(*,#2,#1) --> open>"
+                // *=> content="(&&,<#1 --> lock>,<#2 --> key>,<(*,#2,#1) --> open>)"
+                // * 📄oldContent="<<$1 --> (/,open,_,{lock1})> ==> <$1 --> key>>"
+                // * * indices=[0, 1, 0] @ "open"
+                // * * newInh="<(*,$1,{lock1}) --> open>"
+                // *=> content="<<(*,$1,{lock1}) --> open> ==> <$1 --> key>>"
+                componentList = oldContent.cloneComponents();
+                componentList.set(indices[0], newInh);
+                if (oldContent instanceof Conjunction)
+                    return makeCompoundTerm(oldContent, componentList);
+                else if (oldContent instanceof Implication || oldContent instanceof Equivalence)
+                    return makeStatement((Statement) oldContent, componentList.get(0), componentList.get(1));
+                else
+                    return null;
+            }
+        }
+    }
+
+    /**
+     * 🆕从「转换 乘积/像」中提取出的「转换继承」函数
+     * * ⚠️返回值可能为空
+     */
     private static Inheritance transformInheritance(
             final Statement inh,
             final short[] indices) {
