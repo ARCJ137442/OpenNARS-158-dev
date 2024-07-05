@@ -95,7 +95,7 @@ public final class DerivationContextDirect implements DerivationContext {
      * * 🚩先与「当前概念」做匹配，若没有再在记忆区中寻找
      * * 📌【2024-05-24 22:07:42】目前专供「推理规则」调用
      * * 📝【2024-06-26 20:45:59】目前所有逻辑纯只读：最多为「获取其中的信念」
-     * 
+     *
      * @param &m-self
      * @param term    [&]
      */

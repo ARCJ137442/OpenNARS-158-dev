@@ -4,6 +4,7 @@ import static nars.language.MakeTerm.*;
 
 import java.util.ArrayList;
 
+import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextTransform;
 import nars.entity.Task;
 import nars.entity.TaskLink;
@@ -73,7 +74,7 @@ public class TransformRules {
     /** 🆕获取【需要参与后续「转换」操作】的「继承」陈述 */
     private static Term getInheritanceToBeTransform(final CompoundTerm taskContent, final short[] indices) {
         // * 🚩本身是乘积 | <(*, term, #) --> #>
-        if (indices.length == 2 || (taskContent instanceof Inheritance)) {
+        if (indices.length == 2 || taskContent instanceof Inheritance) {
             return taskContent;
             // * 📄currentConcept = "a",
             // * * content = "<(*,a,b) --> like>",
@@ -161,61 +162,64 @@ public class TransformRules {
             // * * => inh = "<$1 --> (/,(*,num),_)>"
         }
         // * 🚩乘积在蕴含的条件中 | <(&&, <(*, term, #) --> #>, #) ==> #>
+        // ! ❌【2024-07-05 17:04:02】不再考虑支持「等价」陈述的词项链转换
         else if (indices.length == 4) {
-            // * 🚩提取其中的继承项
-            final Term contentSubject = taskContent.componentAt(indices[0]);
+            if (taskContent instanceof Equivalence)
+                throw new Error("【2024-07-05 17:03:18】简化代码：早已去掉「等价」系词的「复合条件」词项链！");
+            final int conditionIndex = indices[0];
+            final Term contentCondition = taskContent.componentAt(conditionIndex);
             // * 🚩判断「条件句」
-            // * 主项是「合取」
-            final boolean conditionSubject = contentSubject instanceof Conjunction;
+            // * 选取的「条件项」是「合取」
+            final boolean conditionCondition = contentCondition instanceof Conjunction;
             // * 整体是「等价」或「合取在前头的『蕴含』」
-            final boolean conditionWhole = (taskContent instanceof Implication && indices[0] == 0)
+            final boolean conditionWhole = (taskContent instanceof Implication && conditionIndex == 0)
                     || taskContent instanceof Equivalence;
-            if (conditionSubject && conditionWhole) {
-                // * 🚩条件句⇒提取
-                return ((CompoundTerm) contentSubject).componentAt(indices[1]);
-                // * 📄currentConcept = "worms",
-                // ****content="<(&&,<$1-->[with_wings]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
-                // * * indices = [0, 1, 0, 1]
-                // * * => inh = "<(*,$1,worms) --> food>"
-                // * 📄currentConcept = "worms",
-                // ****content="<(&&,<$1-->flyer>,<$1-->[chirping]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
-                // * * indices = [0, 2, 0, 1]
-                // * * => inh = "<(*,$1,worms) --> food>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<$1-->[(/,open,$2,_)]>,<$1-->(/,open,key,_)>)==><$1-->[(/,open,{$2},_)]>>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<$1 --> (/,open,key,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(&,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(*,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(-,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(|,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(~,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "open",
-                // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(||,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
-                // * * indices = [0, 1, 1, 1]
-                // * * => inh = "<#1 --> (/,open,$2,_)>"
-                // * 📄currentConcept = "worms",
-                // ****content="<(&&,<{Tweety}-->[chirping]>,<(*,{Tweety},worms)-->food>)==><{Tweety}-->bird>>",
-                // * * indices = [0, 1, 0, 1]
-                // * * => inh = "<(*,{Tweety},worms) --> food>"
-            } else
-                // * 🚩失败⇒空⇒返回
+            // * 🚩整个条件，不满足⇒空
+            final boolean conditional = conditionCondition && conditionWhole;
+            if (!conditional)
                 return null;
+            // * 🚩条件句⇒提取
+            return ((CompoundTerm) contentCondition).componentAt(indices[1]);
+            // * 📄currentConcept = "worms",
+            // ****content="<(&&,<$1-->[with_wings]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
+            // * * indices = [0, 1, 0, 1]
+            // * * => inh = "<(*,$1,worms) --> food>"
+            // * 📄currentConcept = "worms",
+            // ****content="<(&&,<$1-->flyer>,<$1-->[chirping]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
+            // * * indices = [0, 2, 0, 1]
+            // * * => inh = "<(*,$1,worms) --> food>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<$1-->[(/,open,$2,_)]>,<$1-->(/,open,key,_)>)==><$1-->[(/,open,{$2},_)]>>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<$1 --> (/,open,key,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(&,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(*,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(-,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(|,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(~,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "open",
+            // ****content="<(&&,<#1-->lock>,<#1-->(/,open,$2,_)>)==>(||,<#1-->lock>,<#1-->(/,open,$2,_)>)>",
+            // * * indices = [0, 1, 1, 1]
+            // * * => inh = "<#1 --> (/,open,$2,_)>"
+            // * 📄currentConcept = "worms",
+            // ****content="<(&&,<{Tweety}-->[chirping]>,<(*,{Tweety},worms)-->food>)==><{Tweety}-->bird>>",
+            // * * indices = [0, 1, 0, 1]
+            // * * => inh = "<(*,{Tweety},worms) --> food>"
         } else
             // * 🚩失败⇒空⇒返回
             return null;
@@ -240,6 +244,7 @@ public class TransformRules {
             final short[] indices,
             final DerivationContextTransform context) {
         // * 🚩提取参数
+        final Task task = context.getCurrentTask();
         final boolean backward = context.isBackward();
 
         // * 🚩词项 * //
@@ -253,8 +258,10 @@ public class TransformRules {
         if (content == null)
             return;
 
+        // * 🚩真值 * //
+        final Truth truth = DerivationContextConcept.truthFromTask(task);
+
         // * 🚩预算 * //
-        final Task task = context.getCurrentTask();
         final Budget budget = backward
                 // * 🚩复合反向
                 ? BudgetInference.compoundBackward(content, context)
@@ -263,7 +270,7 @@ public class TransformRules {
 
         // * 🚩结论 * //
         // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
-        context.singlePremiseTask(content, task, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /**
@@ -512,6 +519,7 @@ public class TransformRules {
         // * 🚩预置变量
         final Task task = context.getCurrentTask();
         final boolean backward = task.isQuestion();
+        Truth truth;
         Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
@@ -526,6 +534,8 @@ public class TransformRules {
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance == null)
                     continue;
+                // * 🚩真值 * //
+                truth = DerivationContextConcept.truthFromTask(task);
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -534,7 +544,7 @@ public class TransformRules {
                         : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
                 // * 🚩结论 * //
                 // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
-                context.singlePremiseTask(inheritance, task, budget);
+                context.singlePremiseTaskStructural(inheritance, truth, budget);
             }
         }
         // * 🚩内涵像⇒积/其它内涵像
@@ -557,6 +567,8 @@ public class TransformRules {
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance == null)
                     continue;
+                // * 🚩真值 * //
+                truth = DerivationContextConcept.truthFromTask(task);
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -565,7 +577,7 @@ public class TransformRules {
                         : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
                 // * 🚩结论 * //
                 // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
-                context.singlePremiseTask(inheritance, task, budget);
+                context.singlePremiseTaskStructural(inheritance, truth, budget);
             }
         }
     }
@@ -586,6 +598,7 @@ public class TransformRules {
         // * 🚩预置变量
         final Task task = context.getCurrentTask();
         final boolean backward = task.isQuestion();
+        Truth truth;
         Budget budget;
         Inheritance inheritance;
         Term newSubj, newPred;
@@ -600,6 +613,8 @@ public class TransformRules {
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance == null)
                     continue;
+                // * 🚩真值 * //
+                truth = DerivationContextConcept.truthFromTask(task);
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -608,7 +623,7 @@ public class TransformRules {
                         : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
                 // * 🚩结论 * //
                 // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
-                context.singlePremiseTask(inheritance, task, budget);
+                context.singlePremiseTaskStructural(inheritance, truth, budget);
             }
         }
         // * 🚩内涵像⇒积/其它内涵像
@@ -631,6 +646,8 @@ public class TransformRules {
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance == null)
                     continue;
+                // * 🚩真值 * //
+                truth = DerivationContextConcept.truthFromTask(task);
                 // * 🚩预算 * //
                 budget = backward // jmv <<<<<
                         // * 🚩复合反向
@@ -639,7 +656,7 @@ public class TransformRules {
                         : BudgetInference.compoundForward(task.asJudgement(), inheritance, context);
                 // * 🚩结论 * //
                 // * 📝「真值」在「导出任务」时（从「当前任务」）自动生成
-                context.singlePremiseTask(inheritance, task, budget);
+                context.singlePremiseTaskStructural(inheritance, truth, budget);
             }
         }
     }

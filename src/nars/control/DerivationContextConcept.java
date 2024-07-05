@@ -183,22 +183,22 @@ public interface DerivationContextConcept extends DerivationContext {
      * @param newTruth   The truth value of the sentence in task
      * @param newBudget  The budget value in task
      */
-    public default void singlePremiseTask(Term newContent, Truth newTruth, Budget newBudget) {
+    public default void singlePremiseTaskStructural(Term newContent, Truth newTruth, Budget newBudget) {
         singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
     }
 
-    public default void singlePremiseTask(Term newContent, Task currentTask, Budget newBudget) {
-        singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), currentTask, newBudget);
-    }
-
-    public default void singlePremiseTask(Term newContent, char punctuation, Task currentTask, Budget newBudget) {
-        // * 🚩根据「是否为『判断』」复制真值
-        final Truth newTruth = currentTask.isJudgement()
+    /**
+     * 🆕原「单前提结论」中「从某任务提取真值」的函数
+     * * 🎯统一将「获取任务信息」外推到「推理过程」中
+     * * * 📌尽量不要在「导出结论」时读取额外信息
+     */
+    public static Truth truthFromTask(Task task) {
+        // * 🚩根据「传入的任务」推理
+        return task.isJudgement()
                 // * 🚩判断句⇒拷贝真值
-                ? TruthValue.from(currentTask.asJudgement())
+                ? TruthValue.from(task.asJudgement())
                 // * 🚩其它⇒空
                 : null;
-        singlePremiseTask(newContent, punctuation, newTruth, newBudget);
     }
 
     /**
@@ -210,7 +210,11 @@ public interface DerivationContextConcept extends DerivationContext {
      * @param newTruth    The truth value of the sentence in task
      * @param newBudget   The budget value in task
      */
-    public default void singlePremiseTask(Term newContent, char punctuation, Truth newTruth, Budget newBudget) {
+    public default void singlePremiseTask(
+            Term newContent,
+            char punctuation,
+            Truth newTruth,
+            Budget newBudget) {
         final Task parentTask = this.getCurrentTask().getParentTask();
         // * 🚩对于「结构转换」的单前提推理，若已有父任务且该任务与父任务相同⇒中止，避免重复推理
         if (parentTask != null && newContent.equals(parentTask.getContent()))

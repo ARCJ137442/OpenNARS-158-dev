@@ -2,6 +2,7 @@ package nars.inference;
 
 import java.util.ArrayList;
 
+import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
 import nars.control.Parameters;
 import nars.entity.*;
@@ -87,7 +88,7 @@ final class StructuralRules {
             }
             budget = BudgetInference.compoundForward(truth, content, context);
         }
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /**
@@ -132,7 +133,7 @@ final class StructuralRules {
             truth = task.asJudgement().truthClone();
             budget = BudgetInference.compoundForward(truth, content, context);
         }
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /**
@@ -263,7 +264,7 @@ final class StructuralRules {
             final Term content = makeStatement((Statement) oldContent, subject, predicate);
             if (content != null) {
                 final Budget budget = BudgetInference.compoundForward(truth, content, context);
-                context.singlePremiseTask(content, truth, budget);
+                context.singlePremiseTaskStructural(content, truth, budget);
             }
         }
     }
@@ -305,13 +306,14 @@ final class StructuralRules {
             return;
         }
         final Task task = context.getCurrentTask();
+        final Truth truth = DerivationContextConcept.truthFromTask(task);
         final Budget budget;
         if (task.isQuestion()) {
             budget = BudgetInference.compoundBackward(content, context);
         } else {
             budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
         }
-        context.singlePremiseTask(content, task, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /* --------------- Disjunction and Conjunction transform --------------- */
@@ -350,7 +352,7 @@ final class StructuralRules {
             }
             budget = BudgetInference.forward(truth, context);
         }
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /* --------------- Negation related rules --------------- */
@@ -379,7 +381,7 @@ final class StructuralRules {
                 throw new AssertionError("未知的标点");
         }
         // * 🚩直接导出结论
-        context.singlePremiseTask(content, truth, budget);
+        context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /**
