@@ -72,11 +72,9 @@ public class TransformRules {
 
     /** 🆕获取【需要参与后续「转换」操作】的「继承」陈述 */
     private static Term getInheritanceToBeTransform(final CompoundTerm taskContent, final short[] indices) {
-        // * 🚩提取其中的继承词项
-        final Term inh;
         // * 🚩本身是乘积 | <(*, term, #) --> #>
         if (indices.length == 2 || (taskContent instanceof Inheritance)) {
-            inh = taskContent;
+            return taskContent;
             // * 📄currentConcept = "a",
             // * * content = "<(*,a,b) --> like>",
             // * * indices = [0, 0]
@@ -120,7 +118,7 @@ public class TransformRules {
         }
         // * 🚩乘积在蕴含里边 | <<(*, term, #) --> #> ==> #>
         else if (indices.length == 3) {
-            inh = taskContent.componentAt(indices[0]);
+            return taskContent.componentAt(indices[0]);
             // * 📄currentConcept = "(*,0)",
             // * * content = "<(*,(*,(*,0))) ==> num>",
             // * * indices = [0, 0, 0]
@@ -174,7 +172,7 @@ public class TransformRules {
                     || taskContent instanceof Equivalence;
             if (conditionSubject && conditionWhole) {
                 // * 🚩条件句⇒提取
-                inh = ((CompoundTerm) contentSubject).componentAt(indices[1]);
+                return ((CompoundTerm) contentSubject).componentAt(indices[1]);
                 // * 📄currentConcept = "worms",
                 // ****content="<(&&,<$1-->[with_wings]>,<(*,$1,worms)-->food>)==><$1-->bird>>",
                 // * * indices = [0, 1, 0, 1]
@@ -217,11 +215,10 @@ public class TransformRules {
                 // * * => inh = "<(*,{Tweety},worms) --> food>"
             } else
                 // * 🚩失败⇒空⇒返回
-                inh = null;
+                return null;
         } else
             // * 🚩失败⇒空⇒返回
-            inh = null;
-        return inh;
+            return null;
     }
 
     /* -------------------- products and images transform -------------------- */
