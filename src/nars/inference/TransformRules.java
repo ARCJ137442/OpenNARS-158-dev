@@ -573,15 +573,16 @@ public class TransformRules {
             // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < image.size(); i++) {
                 // * 🚩词项 * //
+                final Term component = image.componentAt(i);
                 // * 🚩根据「链接索引」与「关系索引（占位符位置）」的关系决定「积/像」
                 if (i == relationIndex) {
                     // * 🚩转换回「积」
-                    newSubj = image.componentAt(relationIndex);
+                    newSubj = component;
                     newPred = makeProduct(image, predicate, relationIndex);
                 } else {
                     // * 🚩更改位置
                     newSubj = makeImageInt((ImageInt) image, predicate, i);
-                    newPred = image.componentAt(i);
+                    newPred = component;
                 }
                 inheritance = makeInheritance(newSubj, newPred);
                 if (inheritance == null)
@@ -655,14 +656,15 @@ public class TransformRules {
             // * 🚩一次多个：遍历所有可能的索引
             for (short i = 0; i < image.size(); i++) {
                 // * 🚩词项 * //
+                final Term component = image.componentAt(i);
                 // * 🚩根据「链接索引」与「关系索引（占位符位置）」的关系决定「积/像」
                 if (i == relationIndex) {
                     // * 🚩转换回「积」
                     newSubj = makeProduct(image, subject, relationIndex);
-                    newPred = image.componentAt(relationIndex);
+                    newPred = component;
                 } else {
                     // * 🚩更改位置
-                    newSubj = image.componentAt(i);
+                    newSubj = component;
                     newPred = makeImageExt((ImageExt) image, subject, i);
                 }
                 inheritance = makeInheritance(newSubj, newPred);
