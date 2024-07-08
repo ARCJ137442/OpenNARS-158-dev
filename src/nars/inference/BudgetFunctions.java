@@ -547,7 +547,7 @@ public final class BudgetFunctions extends UtilityFunctions {
          */
         private Budget newBudget;
         /**
-         * 新的「任务链预算值」（若有）
+         * 新的「信念链预算值」（若有）
          *
          * * 📝可空性：可空
          * * 📝可变性：不变

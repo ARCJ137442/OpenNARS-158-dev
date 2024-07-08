@@ -4,7 +4,6 @@ import static nars.language.MakeTerm.*;
 
 import java.util.ArrayList;
 
-import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextTransform;
 import nars.entity.Task;
 import nars.entity.TaskLink;
@@ -259,7 +258,8 @@ public class TransformRules {
             return;
 
         // * 🚩真值 * //
-        final Truth truth = DerivationContextConcept.truthFromTask(task);
+        // * 🚩【2024-07-08 23:57:37】现在采用「反向⇒空，前向⇒真值函数『恒等』」而非「获取任务真值」
+        final Truth truth = backward ? null : TruthFunctions.identity(task.asJudgement());
 
         // * 🚩预算 * //
         final Budget budget = backward
@@ -351,7 +351,11 @@ public class TransformRules {
                     throw new AssertionError("【2024-07-03 21:55:34】此处原意是「四层、在条件中」");
                 componentList = ((CompoundTerm) condition).cloneComponents();
                 componentList.set(indices[1], newInh);
-                final Term newCond = makeCompoundTerm((CompoundTerm) condition, componentList);
+                final Term newCond = makeCompoundTerm((CompoundTerm) condition,
+                        componentList);
+                final Term newCond2 = setComponent((CompoundTerm) condition, indices[1], newInh);
+                if (!newCond.equals(newCond2))
+                    throw new AssertionError("不等价");
                 return makeStatement((Statement) oldContent, newCond, ((Statement) oldContent).getPredicate());
             } else {
                 if (indices.length != 3)
@@ -476,29 +480,43 @@ public class TransformRules {
                 predicate = inhInner.componentAt(index);
             }
         else if (inhInner instanceof ImageExt && (side == 1))
-            // * 🚩外延像⇒乘积/换索引
+            // * 🚩外延像@后项⇒乘积/换索引
             if (index == ((ImageExt) inhInner).getRelationIndex()) {
                 // * 🚩链接来源正好是「关系词项」⇒转乘积
+                // * * ℹ️新陈述：积 --> 关系词项
                 // * * 📄「关系词项」如："open" @ "(/,open,$1,_)" | 始终在第一位，只是存储时放占位符的位置上
                 subject = makeProduct(inhInner, inh.getSubject(), index);
                 predicate = inhInner.componentAt(index);
             } else {
                 // * 🚩其它⇒调转占位符位置
-                // * * 📄「关系词项」如
+                // * * ℹ️新陈述：另一元素 --> 新像
+                // * * 📄「关系词项」如"{lock1}" @ "(/,open,_,{lock1})"
+                // * * inh="<$1 --> (/,open,_,{lock1})>"
+                // * * => "(/,open,$1,_)"
                 subject = inhInner.componentAt(index);
                 predicate = makeImageExt((ImageExt) inhInner, inh.getSubject(), index);
             }
         else if (inhInner instanceof ImageInt && (side == 0))
+            // * 🚩内涵像@前项⇒乘积/换索引
             if (index == ((ImageInt) inhInner).getRelationIndex()) {
+                // * 🚩链接来源正好是「关系词项」⇒转乘积
+                // * * ℹ️新陈述：关系词项 --> 积
+                // * * 📄「关系词项」如："open" @ "(\,open,$1,_)" | 始终在第一位，只是存储时放占位符的位置上
                 subject = inhInner.componentAt(index);
                 predicate = makeProduct(inhInner, inh.getPredicate(), index);
             } else {
+                // * 🚩其它⇒调转占位符位置
+                // * * ℹ️新陈述：新像 --> 另一元素
+                // * * 📄「关系词项」如"neutralization" @ "(\,neutralization,_,$1)"
+                // * * inh="<(\,neutralization,acid,_) --> $1>"
+                // * * => "<(\,neutralization,_,$1) --> acid>"
                 subject = makeImageInt((ImageInt) inhInner, inh.getPredicate(), index);
                 predicate = inhInner.componentAt(index);
             }
         else
+            // * 🚩其它⇒无效
             return null;
-        // * 🚩最终返回二元数组
+        // * 🚩最终返回构造好的陈述
         return makeInheritance(subject, predicate);
     }
 
@@ -535,7 +553,8 @@ public class TransformRules {
                 if (inheritance == null)
                     continue;
                 // * 🚩真值 * //
-                truth = DerivationContextConcept.truthFromTask(task);
+                // * 🚩【2024-07-08 23:57:37】现在采用「反向⇒空，前向⇒真值函数『恒等』」而非「获取任务真值」
+                truth = backward ? null : TruthFunctions.identity(task.asJudgement());
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -568,7 +587,8 @@ public class TransformRules {
                 if (inheritance == null)
                     continue;
                 // * 🚩真值 * //
-                truth = DerivationContextConcept.truthFromTask(task);
+                // * 🚩【2024-07-08 23:57:37】现在采用「反向⇒空，前向⇒真值函数『恒等』」而非「获取任务真值」
+                truth = backward ? null : TruthFunctions.identity(task.asJudgement());
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -593,7 +613,8 @@ public class TransformRules {
      * @param predicate The predicate term
      * @param context   Reference to the derivation context
      */
-    private static void transformPredicateProductImage(Term subject, CompoundTerm predicate,
+    private static void transformPredicateProductImage(
+            Term subject, CompoundTerm predicate,
             DerivationContextTransform context) {
         // * 🚩预置变量
         final Task task = context.getCurrentTask();
@@ -614,7 +635,8 @@ public class TransformRules {
                 if (inheritance == null)
                     continue;
                 // * 🚩真值 * //
-                truth = DerivationContextConcept.truthFromTask(task);
+                // * 🚩【2024-07-08 23:57:37】现在采用「反向⇒空，前向⇒真值函数『恒等』」而非「获取任务真值」
+                truth = backward ? null : TruthFunctions.identity(task.asJudgement());
                 // * 🚩预算 * //
                 budget = backward
                         // * 🚩复合反向
@@ -647,7 +669,8 @@ public class TransformRules {
                 if (inheritance == null)
                     continue;
                 // * 🚩真值 * //
-                truth = DerivationContextConcept.truthFromTask(task);
+                // * 🚩【2024-07-08 23:57:37】现在采用「反向⇒空，前向⇒真值函数『恒等』」而非「获取任务真值」
+                truth = backward ? null : TruthFunctions.identity(task.asJudgement());
                 // * 🚩预算 * //
                 budget = backward // jmv <<<<<
                         // * 🚩复合反向

@@ -45,6 +45,22 @@ final class TruthFunctions extends UtilityFunctions {
 
     /* ----- Single argument functions, called in MatchingRules ----- */
     /**
+     * {<(*, A, B) --> R>} |- <A --> (/, R, _, B)>
+     * 🆕恒等真值函数，用于转换推理
+     * * 🎯维护「真值计算」的一致性：所有真值计算均通过真值函数
+     *
+     * @param v1 [&] Truth value of the premise
+     * @return Truth value of the conclusion
+     */
+    static Truth identity(Truth v1) {
+        float f1 = v1.getFrequency();
+        float c1 = v1.getConfidence();
+        // * 📝频率=旧频率
+        // * 📝信度=旧信度
+        return new TruthValue(f1, c1);
+    }
+
+    /**
      * {<A ==> B>} |- <B ==> A>
      *
      * @param v1 [&] Truth value of the premise
@@ -486,6 +502,7 @@ final class TruthFunctions extends UtilityFunctions {
      */
     static abstract class FunctionTable {
         // * 📌单真值函数
+        TruthFSingle identity = TruthFunctions::identity;
         TruthFSingle conversion = TruthFunctions::conversion;
         TruthFSingle negation = TruthFunctions::negation;
         TruthFSingle contraposition = TruthFunctions::contraposition;

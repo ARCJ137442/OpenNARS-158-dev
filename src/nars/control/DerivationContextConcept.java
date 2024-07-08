@@ -7,7 +7,6 @@ import nars.entity.Stamp;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
-import nars.entity.TruthValue;
 import nars.inference.Budget;
 import nars.inference.Truth;
 import nars.language.Term;
@@ -185,20 +184,6 @@ public interface DerivationContextConcept extends DerivationContext {
      */
     public default void singlePremiseTaskStructural(Term newContent, Truth newTruth, Budget newBudget) {
         singlePremiseTask(newContent, this.getCurrentTask().getPunctuation(), newTruth, newBudget);
-    }
-
-    /**
-     * 🆕原「单前提结论」中「从某任务提取真值」的函数
-     * * 🎯统一将「获取任务信息」外推到「推理过程」中
-     * * * 📌尽量不要在「导出结论」时读取额外信息
-     */
-    public static Truth truthFromTask(Task task) {
-        // * 🚩根据「传入的任务」推理
-        return task.isJudgement()
-                // * 🚩判断句⇒拷贝真值
-                ? TruthValue.from(task.asJudgement())
-                // * 🚩其它⇒空
-                : null;
     }
 
     /**
