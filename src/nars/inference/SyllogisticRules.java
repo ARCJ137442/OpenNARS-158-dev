@@ -352,22 +352,20 @@ final class SyllogisticRules {
                         conditional, (CompoundTerm) premise2,
                         unification1);
                 conditionalUnified = (Statement) appliedCompounds.extractApplied1();
-            } else {
-                if (commonComponent.isSameType(oldCondition)) {
-                    final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
-                    // * 🚩尝试寻找并应用变量归一化
-                    final Unification unification2 = VariableProcess.unifyFindI(
-                            conditionToUnify, commonComponentComponent);
-                    if (unification2.hasUnification()) {
-                        final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
-                                conditional, (CompoundTerm) premise2,
-                                unification2);
-                        conditionalUnified = (Statement) appliedCompounds.extractApplied1();
-                    } else
-                        return;
+            } else if (commonComponent.isSameType(oldCondition)) {
+                final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
+                // * 🚩尝试寻找并应用变量归一化
+                final Unification unification2 = VariableProcess.unifyFindI(
+                        conditionToUnify, commonComponentComponent);
+                if (unification2.hasUnification()) {
+                    final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
+                            conditional, (CompoundTerm) premise2,
+                            unification2);
+                    conditionalUnified = (Statement) appliedCompounds.extractApplied1();
                 } else
                     return;
-            }
+            } else
+                return;
         }
         // * 🚩构造「新条件」
         final Term newCondition;
@@ -410,6 +408,8 @@ final class SyllogisticRules {
     /**
      * {<(&&, S1, S2) <=> P>, (&&, S1, S2)} |- P
      * * 📝条件类比
+     * * 💭【2024-07-09 18:18:41】实际上是死代码
+     * * * 📄禁用「等价⇒复合条件」后，「等价」不再能自`reason_compoundAndCompoundCondition`分派
      *
      * @param premise1 The equivalence premise
      * @param index    The location of the shared term in the condition of
@@ -444,16 +444,33 @@ final class SyllogisticRules {
             commonComponent = premise2;
             newComponent = null;
         }
+
         // * 🚩尝试消解条件中的变量，匹配数次未果则返回
         // TODO: 有待函数式化
         final Term oldConjunction = premise1.getSubject();
         if (!(oldConjunction instanceof Conjunction))
             return;
         final Conjunction oldCondition = (Conjunction) oldConjunction;
+
+        // * 🚩【2024-07-09 18:20:33】尝试「函数式化」但无法验证有效性
+        // final Unification result1 = VariableProcess.unifyFindD(
+        // oldCondition.componentAt(index), commonComponent);
+        // if (result1.hasUnification()) {
+        // VariableProcess.unifyApply(premise1, premise2, result1);
+        // } else if (commonComponent.isSameType(oldCondition)) {
+        // final Unification result2 = VariableProcess.unifyFindD(
+        // oldCondition.componentAt(index),
+        // ((CompoundTerm) commonComponent).componentAt(index));
+        // if (result2.hasUnification()) {
+        // VariableProcess.unifyApply(premise1, premise2, result2);
+        // } else {
+        // return;
+        // }
+        // }
         boolean match = VariableProcess.unifyD(
                 oldCondition.componentAt(index), commonComponent,
                 premise1, premise2);
-        if (!match && (commonComponent.isSameType(oldCondition))) {
+        if (!match && commonComponent.isSameType(oldCondition)) {
             match = VariableProcess.unifyD(
                     oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
                     premise1, premise2);
