@@ -109,13 +109,12 @@ final class LocalInference {
         final Concept self = context.getCurrentConcept();
 
         // * 🚩尝试寻找已有问题，若已有相同问题则直接处理已有问题
-        final Task existedQuestion = findExistedQuestion(self, questionTask.getContent());
-        final boolean newQuestion = existedQuestion == null;
-        final Sentence question = newQuestion ? questionTask : existedQuestion;
+        final boolean newQuestion = findExistedQuestion(self, questionTask.getContent()) == null;
+        final Sentence query = newQuestion ? questionTask : findExistedQuestion(self, questionTask.getContent());
 
         // * 🚩实际上「先找答案，再新增『问题任务』」区别不大——找答案的时候，不会用到「问题任务」
         final Judgement newAnswer = evaluation(
-                question, self.getBeliefs(),
+                query, self.getBeliefs(),
                 BudgetFunctions::solutionQuality);
         if (newAnswer != null) {
             // LocalRules.trySolution(ques, newAnswer, task, memory);
@@ -144,7 +143,7 @@ final class LocalInference {
         final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
         // * 🚩预算值
         final Budget budget = BudgetInference.reviseDirect(
-            newBelief, oldBelief, revisedTruth,
+                newBelief, oldBelief, revisedTruth,
                 context.getCurrentTask());
         // * 🚩导出
         // * 📝仅在此处用到「当前信念」作为「导出信念」
