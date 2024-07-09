@@ -2,7 +2,6 @@ package nars.inference;
 
 import java.util.ArrayList;
 
-import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
 import nars.control.Parameters;
 import nars.entity.*;
@@ -306,13 +305,10 @@ final class StructuralRules {
             return;
         }
         final Task task = context.getCurrentTask();
-        final Truth truth = DerivationContextConcept.truthFromTask(task);
-        final Budget budget;
-        if (task.isQuestion()) {
-            budget = BudgetInference.compoundBackward(content, context);
-        } else {
-            budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
-        }
+        final boolean backward = context.isBackward();
+        final Truth truth = backward ? null : TruthFunctions.identity(task.asJudgement());
+        final Budget budget = backward ? BudgetInference.compoundBackward(content, context)
+                : BudgetInference.compoundForward(task.asJudgement(), content, context);
         context.singlePremiseTaskStructural(content, truth, budget);
     }
 

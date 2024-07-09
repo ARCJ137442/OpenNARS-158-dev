@@ -68,10 +68,11 @@ final class MatchingRules {
      * * 💭【2024-06-09 01:35:41】需要合并逻辑
      */
     private static void revision(Judgement newBelief, Judgement oldBelief, DerivationContextReason context) {
+        // * 🚩内容
+        final Term content = newBelief.getContent();
         // * 🚩计算真值/预算值
         final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
         final Budget budget = BudgetInference.reviseMatching(newBelief, oldBelief, revisedTruth, context);
-        final Term content = newBelief.getContent();
         // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp newStamp = Stamp.uncheckedMerge(
