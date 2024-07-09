@@ -22,6 +22,16 @@ public class InferenceEngineV1 implements InferenceEngine {
     }
 
     public void reason(DerivationContextReason context) {
+        final String oldTContent = context.getCurrentTask().getContent().toString();
+        final String oldBContent = context.hasCurrentBelief() ? context.getCurrentBelief().getContent().toString()
+                : null;
         RuleTables.reason(context);
+        final String newTContent = context.getCurrentTask().getContent().toString();
+        final String newBContent = context.hasCurrentBelief() ? context.getCurrentBelief().getContent().toString()
+                : null;
+        if (!oldTContent.equals(newTContent))
+            throw new AssertionError("概念推理改变了当前任务的内容！" + oldTContent + "->" + newTContent);
+        if (oldBContent != null && !oldBContent.equals(newBContent))
+            throw new AssertionError("概念推理改变了当前信念的内容！" + oldBContent + "->" + newBContent);
     }
 }

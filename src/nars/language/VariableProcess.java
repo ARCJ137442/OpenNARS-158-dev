@@ -159,49 +159,6 @@ public abstract class VariableProcess {
 
     // from Variable //
 
-    // ! 🚩【2024-06-09 14:19:35】弃用：目前无需用到
-    // /**
-    // * To unify two terms
-    // * * ⚠️会改变词项自身
-    // *
-    // * @param type The type of variable that can be substituted
-    // * @param t1 The first term
-    // * @param t2 The second term
-    // * @return Whether the unification is possible
-    // */
-    // private static boolean unify(char type, Term t1, Term t2) {
-    // // * 🚩以词项自身开始
-    // return unify(type, t1, t2, t1, t2);
-    // }
-
-    /**
-     * To unify two terms
-     * * ⚠️会改变词项自身
-     *
-     * @param type      [] The type of variable that can be substituted
-     * @param t1        [&] The first term to be unified
-     * @param t2        [&] The second term to be unified
-     * @param compound1 [&m] The compound containing the first term
-     * @param compound2 [&m] The compound containing the second term
-     * @return Whether the unification is possible
-     */
-    private static boolean unifyCompound(
-            final char type,
-            final Term t1, final Term t2,
-            CompoundTerm compound1,
-            CompoundTerm compound2) {
-        // * 🚩在两个子项中寻找「归一映射」
-        final Unification result = unifyFind(type, t1, t2);
-        // * 🚩复制其中的部分结果用作返回值
-        final boolean hasSubs = result.hasUnification();
-        // * 🚩继续根据结果，对复合词项应用「归一映射」
-        unifyApply(compound1, compound2, result);
-        // * 📝唯一会修改传入词项的一处
-        // * 🚩返回「是否替代成功」
-        return hasSubs;
-
-    }
-
     /**
      * @param type [] 要寻找的变量类型
      * @param t1   [&] 寻找所发生在的词项1
@@ -262,6 +219,19 @@ public abstract class VariableProcess {
             this.unification2 = null;
             return map;
         }
+
+        /**
+         * 重定向到{@link VariableProcess#unifyApply}
+         * * 🚩【2024-07-09 21:48:43】目前作为一个实用的「链式应用方法」用以替代公开的`unifyApply`
+         *
+         * @param this
+         * @param parent1 [&m]
+         * @param parent2 [&m]
+         * @return
+         */
+        public boolean applyTo(CompoundTerm parent1, CompoundTerm parent2) {
+            return VariableProcess.unifyApply(parent1, parent2, this);
+        }
     }
 
     /**
@@ -272,11 +242,11 @@ public abstract class VariableProcess {
      * @param parent2 [&m] 要被修改的复合词项2
      * @param result  [] 上一个「寻找归一映射」的结果
      */
-    public static void unifyApply(CompoundTerm parent1, CompoundTerm parent2, Unification result) {
+    private static boolean unifyApply(CompoundTerm parent1, CompoundTerm parent2, Unification result) {
         // * 🚩主逻辑/应用替代
         // * 📝就是在这里修改了两个复合词项
         if (!result.hasUnification())
-            return;
+            return false;
         // * 🚩有替代⇒应用替代
         // * 🚩拿出里头生成的两个映射表
         final HashMap<Term, Term> map1 = result.extractUnification1();
@@ -286,6 +256,7 @@ public abstract class VariableProcess {
         // renameVar(map2, compound2, "-2");
         applyUnifyOne(parent1, map1);
         applyUnifyOne(parent2, map2);
+        return result.hasUnification();
     }
 
     /**
@@ -338,38 +309,6 @@ public abstract class VariableProcess {
             this.applied2 = null;
             return term;
         }
-    }
-
-    /**
-     * 🆕【对外接口】统一两个词项
-     * * 📌实际上只对复合词项起作用
-     * * * 🚩二者皆为复合词项时，开始归一化；否则直接返回否
-     */
-    private static boolean unify(
-            final char type,
-            Term t1, Term t2,
-            Term whole1,
-            Term whole2) {
-        // * 🚩皆为复合词项⇒正式归一化
-        if (whole1 instanceof CompoundTerm && whole2 instanceof CompoundTerm)
-            return unifyCompound(type, t1, t2, (CompoundTerm) whole1, (CompoundTerm) whole2);
-        // * 🚩任一不是复合词项⇒否
-        return false;
-    }
-
-    /** 🆕【对外接口】统一独立变量 */
-    public static boolean unifyI(Term t1, Term t2, Term whole1, Term whole2) {
-        return unify(VAR_INDEPENDENT, t1, t2, whole1, whole2);
-    }
-
-    /** 🆕【对外接口】统一非独变量 */
-    public static boolean unifyD(Term t1, Term t2, Term whole1, Term whole2) {
-        return unify(VAR_DEPENDENT, t1, t2, whole1, whole2);
-    }
-
-    /** 🆕【对外接口】统一查询变量 */
-    public static boolean unifyQ(Term t1, Term t2, Term whole1, Term whole2) {
-        return unify(VAR_QUERY, t1, t2, whole1, whole2);
     }
 
     /**

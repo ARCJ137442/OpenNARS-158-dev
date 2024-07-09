@@ -313,8 +313,8 @@ final class SyllogisticRules {
         final Judgement belief = context.getCurrentBelief();
         final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
-        final boolean backward = task.isQuestion();
-        final boolean deduction = (side != 0);
+        final boolean backward = context.isBackward();
+        final boolean deduction = side != 0;
 
         // * 🚩词项 * //
         // * 🚩获取公共项
@@ -446,38 +446,21 @@ final class SyllogisticRules {
         }
 
         // * 🚩尝试消解条件中的变量，匹配数次未果则返回
-        // TODO: 有待函数式化
         final Term oldConjunction = premise1.getSubject();
         if (!(oldConjunction instanceof Conjunction))
             return;
         final Conjunction oldCondition = (Conjunction) oldConjunction;
 
-        // * 🚩【2024-07-09 18:20:33】尝试「函数式化」但无法验证有效性
-        // final Unification result1 = VariableProcess.unifyFindD(
-        // oldCondition.componentAt(index), commonComponent);
-        // if (result1.hasUnification()) {
-        // VariableProcess.unifyApply(premise1, premise2, result1);
-        // } else if (commonComponent.isSameType(oldCondition)) {
-        // final Unification result2 = VariableProcess.unifyFindD(
-        // oldCondition.componentAt(index),
-        // ((CompoundTerm) commonComponent).componentAt(index));
-        // if (result2.hasUnification()) {
-        // VariableProcess.unifyApply(premise1, premise2, result2);
-        // } else {
-        // return;
-        // }
-        // }
-        boolean match = VariableProcess.unifyD(
-                oldCondition.componentAt(index), commonComponent,
-                premise1, premise2);
+        // * 📌【2024-07-09 18:20:33】已尝试「函数式化」但无法验证有效性
+        boolean match = VariableProcess.unifyFindD(oldCondition.componentAt(index), commonComponent)
+                .applyTo(premise1, premise2);
         if (!match && commonComponent.isSameType(oldCondition)) {
-            match = VariableProcess.unifyD(
-                    oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index),
-                    premise1, premise2);
+            match = VariableProcess
+                    .unifyFindD(oldCondition.componentAt(index), ((CompoundTerm) commonComponent).componentAt(index))
+                    .applyTo(premise1, premise2);
         }
-        if (!match) {
+        if (!match)
             return;
-        }
         final Term newCondition;
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
