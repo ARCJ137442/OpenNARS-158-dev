@@ -386,23 +386,37 @@ public abstract class VariableProcess {
             final Term term1, final Term term2,
             HashMap<Term, Term> map1, HashMap<Term, Term> map2) {
         // * 🚩🆕预先计算好判据（及早求值）
-        final boolean isCorrectVar1 = term1 instanceof Variable && ((Variable) term1).getType() == type;
-        final boolean isCorrectVar2 = term2 instanceof Variable && ((Variable) term2).getType() == type;
+        // * 📝此中的「共同变量」类型一定是「当前类型」：
+        // * * 存在条件`isCorrectVar1 && term1 instanceof CommonVariable`成立
+        // * 📌亦即如下条件恒成立：
+        // * * `!(term1 instanceof CommonVariable) || isCorrectVar1`
+        // * * `!(term2 instanceof CommonVariable) || isCorrectVar2`
+        // * 📝【2024-07-09 22:47:34】似乎只在 `to_be_unified_1` 中出现「共用变量」
+        final boolean isCorrectVar1 = CommonVariable.is(term1)
+                || (term1 instanceof Variable && ((Variable) term1).getType() == type);
+        final boolean isCorrectVar2 = CommonVariable.is(term2)
+                || (term2 instanceof Variable && ((Variable) term2).getType() == type);
+        // if (term1 instanceof CommonVariable && !isCorrectVar1)
+        // throw new AssertionError();
+        // if (term2 instanceof CommonVariable && !isCorrectVar2)
+        // throw new AssertionError();
         final boolean isSameTypeCompound = term1 instanceof CompoundTerm && term1.isSameType(term2);
+        final Variable var1, var2;
         // * 🚩[$1 x ?] 对应位置是变量
         if (isCorrectVar1) {
-            final Variable var1 = (Variable) term1;
+            var1 = (Variable) term1;
             // * 🚩已有替换⇒直接使用已有替换（看子项有无替换） | 递归深入
             if (map1.containsKey(var1)) // already mapped
                 return findUnification(type, map1.get(var1), term2, map1, map2);
             // * 🚩[$1 x $2] 若同为变量⇒统一二者（制作一个「共同变量」）
             if (isCorrectVar2) { // not mapped yet
+                var2 = (Variable) term2;
                 // * 🚩生成一个外界输入中不可能的变量词项作为「匿名变量」
-                final Variable commonVar = new CommonVariable(var1, (Variable) term2);
+                final Variable commonVar = new CommonVariable(var1, var2);
                 // * 🚩建立映射：var1 -> commonVar @ term1
-                // * 🚩建立映射：term2 -> commonVar @ term2
+                // * 🚩建立映射：var2 -> commonVar @ term2
                 map1.put(var1, commonVar); // unify
-                map2.put(term2, commonVar); // unify
+                map2.put(var2, commonVar); // unify
             }
             // * 🚩[$1 x _2] 若并非变量⇒尝试消元划归
             // * 📝此处意味「两个变量合并成一个变量」 | 后续「重命名变量」会将其消去
@@ -418,12 +432,12 @@ public abstract class VariableProcess {
         }
         // * 🚩[? x $2] 对应位置是变量
         else if (isCorrectVar2) {
-            final Variable var2 = (Variable) term2;
+            var2 = (Variable) term2;
             // * 🚩已有替换⇒直接使用已有替换（看子项有无替换） | 递归深入
             if (map2.containsKey(var2)) // already mapped
                 return findUnification(type, term1, map2.get(var2), map1, map2);
             // not mapped yet
-            // * 🚩[_1 x $2] 均非变量⇒尝试消元划归
+            // * 🚩[_1 x $2] 若非变量⇒尝试消元划归
             /*
              * 📝【2024-04-22 00:13:19】发生在如下场景：
              * <(&&, <A-->C>, <B-->$2>) ==> <C-->$2>>.
@@ -476,7 +490,6 @@ public abstract class VariableProcess {
      * * * ⚠️否则会导致「长期稳定性」不一致
      */
     private static class CommonVariable extends Variable {
-
         CommonVariable(Variable v1, Variable v2) {
             // super('/', (long) ((v1.getName() + v2.getName() + '$').hashCode()));
             // super(v1.getName() + v2.getName() + '$');
@@ -507,14 +520,17 @@ public abstract class VariableProcess {
                 new HashMap<Term, Term>(), new HashMap<Term, Term>());
     }
 
+    /** 🆕【对外接口】查找独立变量归一方式 */
     public static boolean hasUnificationI(Term term1, Term term2) {
         return hasUnification(VAR_INDEPENDENT, term1, term2);
     }
 
+    /** 🆕【对外接口】查找非独变量归一方式 */
     public static boolean hasUnificationD(Term term1, Term term2) {
         return hasUnification(VAR_DEPENDENT, term1, term2);
     }
 
+    /** 🆕【对外接口】查找查询变量归一方式 */
     public static boolean hasUnificationQ(Term term1, Term term2) {
         return hasUnification(VAR_QUERY, term1, term2);
     }
