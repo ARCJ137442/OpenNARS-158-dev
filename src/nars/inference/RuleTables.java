@@ -27,13 +27,13 @@ final class RuleTables {
      * @param context Reference to the derivation context
      */
     static void reason(DerivationContextReason context) {
-        final Term conceptTerm = context.getCurrentTerm();
         final TaskLink tLink = context.getCurrentTaskLink();
         final TermLink bLink = context.getCurrentBeliefLink();
         final Task task = context.getCurrentTask();
+        final Judgement belief = context.getCurrentBelief();
+        final Term conceptTerm = context.getCurrentTerm().clone(); // cloning for substitution
         final Term taskTerm = task.getContent().clone(); // cloning for substitution
         final Term beliefTerm = bLink.getTarget().clone(); // cloning for substitution
-        final Judgement belief = context.getCurrentBelief();
 
         // * 📝词项链所指的词项，不一定指向一个确切的「信念」（并非「语句链」）
         final short tIndex = tLink.getIndex(0);
@@ -62,27 +62,27 @@ final class RuleTables {
                     case COMPONENT:
                         // * 📄T="(&&,<#1 --> object>,<#1 --> (/,made_of,_,plastic)>)"
                         // * + B="object"
-                        // * @ C="(&&,<#1 --> object>,<#1 --> (/,made_of,_,plastic)>)"
+                        // * @ C=T
                         compoundAndSelf((CompoundTerm) taskTerm, beliefTerm, true, context);
                         return;
                     case COMPOUND:
                         // * 📄T="<<$1 --> [aggressive]> ==> <$1 --> murder>>"
                         // * + B="[aggressive]"
-                        // * @ C="<<$1 --> [aggressive]> ==> <$1 --> murder>>"
+                        // * @ C=T
                         compoundAndSelf((CompoundTerm) beliefTerm, taskTerm, false, context);
                         return;
                     case COMPONENT_STATEMENT:
                         // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
                         // * + B="{tim}"
-                        // * @ C="<{tim} --> (/,livingIn,_,{graz})>"
-                        if (belief != null)
+                        // * @ C=T
+                        if (belief != null) // * 📝为何要统一用`bIndex`：信念链才是`XXX_STATEMENT`
                             SyllogisticRules.detachment(task, belief, bIndex, context);
                         return;
                     case COMPOUND_STATEMENT:
                         // *📄T="<{tim} --> (/,own,_,sunglasses)>"
                         // * + B="<<{tim} --> (/,own,_,sunglasses)> ==> <{tim} --> murder>>"
                         // * @ C=T
-                        if (belief != null)
+                        if (belief != null) // * 📝为何要统一用`bIndex`：信念链才是`XXX_STATEMENT`
                             SyllogisticRules.detachment(belief, task, bIndex, context);
                         return;
                     case COMPONENT_CONDITION:

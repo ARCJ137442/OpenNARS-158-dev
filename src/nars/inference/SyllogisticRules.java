@@ -220,11 +220,12 @@ final class SyllogisticRules {
      * * 📝分离规则
      *
      * @param mainSentence The implication/equivalence premise
-     * @param subSentence  The premise on part of s1
-     * @param side         The location of s2 in s1
+     * @param subSentence  The premise on part of mainSentence
+     * @param side         The location of subSentence in mainSentence
      * @param context      Reference to the derivation context
      */
-    static void detachment(Sentence mainSentence, Sentence subSentence, int side,
+    static void detachment(
+            Sentence mainSentence, Sentence subSentence, int side,
             DerivationContextReason context) {
         // * 🚩合法性
         if (!(mainSentence.getContent() instanceof Implication)
