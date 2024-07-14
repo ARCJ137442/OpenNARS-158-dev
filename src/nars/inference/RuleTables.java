@@ -242,6 +242,7 @@ final class RuleTables {
         // ! unreachable
     }
 
+    /** 🆕匹配分支：复合条件×复合陈述 */
     private static void compoundConditionAndCompoundStatement(
             final DerivationContextReason context,
             final Task task, final Implication taskTerm, final short tIndex,
