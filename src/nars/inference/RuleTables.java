@@ -232,7 +232,7 @@ final class RuleTables {
                         if (!(beliefTerm instanceof Statement))
                             throw new AssertionError("【2024-06-18 20:11:03】信念链是「复合陈述」的，当前信念一定是「陈述」");
                         if (belief != null)
-                            reason_compoundConditionAndCompoundStatement(
+                            compoundConditionAndCompoundStatement(
                                     context,
                                     task, (Implication) taskTerm, tIndex,
                                     belief, (Statement) beliefTerm, bIndex);
@@ -242,7 +242,7 @@ final class RuleTables {
         // ! unreachable
     }
 
-    private static void reason_compoundConditionAndCompoundStatement(
+    private static void compoundConditionAndCompoundStatement(
             final DerivationContextReason context,
             final Task task, final Implication taskTerm, final short tIndex,
             final Judgement belief, final Statement beliefTerm, final short bIndex) {
@@ -320,8 +320,8 @@ final class RuleTables {
         final SyllogismFigure figure;
         switch (taskTerm.operator() + beliefTerm.operator()) {
             // * 🚩非对称×非对称
-            case INHERITANCE_RELATION + INHERITANCE_RELATION: // * 🚩继承+继承
-            case IMPLICATION_RELATION + IMPLICATION_RELATION: // * 🚩蕴含+蕴含
+            case INHERITANCE_RELATION + INHERITANCE_RELATION: // * 🚩继承×继承
+            case IMPLICATION_RELATION + IMPLICATION_RELATION: // * 🚩蕴含×蕴含
                 figure = indexToFigure(tLink, bLink);
                 asymmetricAsymmetric(task, belief, figure, context);
                 return;
