@@ -25,6 +25,18 @@ public abstract class MakeTerm {
 
     /* Variable */
 
+    public static final long maximumVariableId(final Term... terms) {
+        // * 🚩多个词项的「最大id」是所有词项的最大id
+        long maximumVariableId = 0;
+        for (final Term inner : terms) {
+            final long innerMax = maximumVariableId(inner);
+            if (innerMax > maximumVariableId) {
+                maximumVariableId = innerMax;
+            }
+        }
+        return maximumVariableId;
+    }
+
     public static final long maximumVariableId(final Term term) {
         if (term instanceof Variable) {
             // * 🚩变量的「最大id」就是其自身id
@@ -62,17 +74,17 @@ public abstract class MakeTerm {
     }
 
     /** 🆕创建新 独立变量，保证【不与「基于的词项」中变量的id重复】 */
-    public static final Variable makeVarI(final Term baseOfMaximumID) {
+    public static final Variable makeVarI(final Term... baseOfMaximumID) {
         return new Variable(Symbols.VAR_INDEPENDENT, maximumVariableId(baseOfMaximumID) + 1);
     }
 
     /** 🆕创建新 非独变量，保证【不与「基于的词项」中变量的id重复】 */
-    public static final Variable makeVarD(final Term baseOfMaximumID) {
+    public static final Variable makeVarD(final Term... baseOfMaximumID) {
         return new Variable(Symbols.VAR_DEPENDENT, maximumVariableId(baseOfMaximumID) + 1);
     }
 
     /** 🆕创建新 查询变量，保证【不与「基于的词项」中变量的id重复】 */
-    public static final Variable makeVarQ(final Term baseOfMaximumID) {
+    public static final Variable makeVarQ(final Term... baseOfMaximumID) {
         return new Variable(Symbols.VAR_QUERY, maximumVariableId(baseOfMaximumID) + 1);
     }
 

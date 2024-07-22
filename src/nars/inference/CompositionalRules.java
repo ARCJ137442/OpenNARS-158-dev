@@ -469,7 +469,7 @@ class CompositionalRules {
         final Term content;
         if (componentS.getPredicate().equals(subContentS.getPredicate())
                 && !(componentS.getPredicate() instanceof Variable)) {
-            final Variable V = makeVarD("depIndVar1".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
+            final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
             final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
             subCompound = (CompoundTerm) setComponent(subCompound, 1, V);
@@ -480,7 +480,7 @@ class CompositionalRules {
             content = (CompoundTerm) setComponent(mainCompound, index, res);
         } else if (componentS.getSubject().equals(subContentS.getSubject())
                 && !(componentS.getSubject() instanceof Variable)) {
-            final Variable V = makeVarD("depIndVar2".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
+            final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
             final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
             subCompound = (CompoundTerm) setComponent(subCompound, 0, V);
@@ -589,7 +589,7 @@ class CompositionalRules {
         budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTask(content, truth, budget);
 
-        final Variable varDep = makeVarD("varDep".hashCode());
+        final Variable varDep = makeVarD(taskContent, beliefContent);
         final Statement newState1, newState2;
         if (index == 0) {
             newState1 = makeInheritance(varDep, taskContent.getPredicate());
