@@ -213,26 +213,41 @@ class CompositionalRules {
      * @param implication        The implication term to be decomposed
      * @param componentCommon    The part of the implication to be removed
      * @param term1              The other term in the contentInd
-     * @param index              The location of the shared term: 0 for subject, 1
+     * @param side               The location of the shared term: 0 for subject, 1
      *                           for predicate
      * @param isCompoundFromTask Whether the implication comes from the task
      * @param context            Reference to the derivation context
      */
     private static void decomposeCompound(
             CompoundTerm compound, Term component,
-            Term term1, int index,
+            Term term1, int side,
             boolean isCompoundFromTask, DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if ((compound instanceof Statement) || (compound instanceof ImageExt) || (compound instanceof ImageInt)) {
+        // * 🚩「参考的复合词项」是 陈述/像 ⇒ 不解构
+        if (compound instanceof Statement || compound instanceof ImageExt || compound instanceof ImageInt)
             return;
-        }
+
+        // * 🚩将当前元素从复合词项中移除
         final Term term2 = reduceComponents(compound, component);
-        if (term2 == null) {
+        if (term2 == null)
             return;
-        }
-        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
+
+        final Task task = context.getCurrentTask();
+
+        // * 🚩词项 * //
+        final Statement oldTaskContent = (Statement) task.getContent();
+        final Term content = side == 0
+                // * 🚩共有前项
+                ? makeStatement(oldTaskContent, term1, term2)
+                // * 🚩共有后项
+                : makeStatement(oldTaskContent, term2, term1);
+        if (content == null)
+            return;
+
+        // * 🚩真值 * //
+        if (!task.isJudgement())
+            return; // ! 只能是判断句、正向推理
         final Judgement belief = context.getCurrentBelief();
-        final Statement oldContent = (Statement) taskJudgement.getContent();
+        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
         final Truth v1, v2;
         if (isCompoundFromTask) {
             v1 = taskJudgement;
@@ -241,69 +256,95 @@ class CompositionalRules {
             v1 = belief;
             v2 = taskJudgement;
         }
-        Truth truth = null;
-        final Term content;
-        if (index == 0) {
-            content = makeStatement(oldContent, term1, term2);
-            if (content == null) {
-                return;
-            }
-            if (oldContent instanceof Inheritance) {
-                if (compound instanceof IntersectionExt) {
+
+        // * 🚩根据各词项类型分派
+        final Truth truth;
+        if (side == 0) {
+            // * 🚩共用主项
+            if (oldTaskContent instanceof Inheritance)
+                // * 🚩旧任务内容 <: 继承
+                if (compound instanceof IntersectionExt)
+                    // * 🚩外延交 ⇒ 合取
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if (compound instanceof IntersectionInt) {
+                else if (compound instanceof IntersectionInt)
+                    // * 🚩内涵交 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                } else if ((compound instanceof SetInt) && (component instanceof SetInt)) {
+                else if (compound instanceof SetInt && component instanceof SetInt)
+                    // * 🚩内涵集-内涵集 ⇒ 合取
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if ((compound instanceof SetExt) && (component instanceof SetExt)) {
+                else if (compound instanceof SetExt && component instanceof SetExt)
+                    // * 🚩外延集-外延集 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                } else if (compound instanceof DifferenceExt) {
-                    if (compound.componentAt(0).equals(component)) {
+                else if (compound instanceof DifferenceExt)
+                    // * 🚩外延差
+                    if (compound.componentAt(0).equals(component))
+                        // * 🚩内容正好为被减项 ⇒ 析取（反向）
                         truth = TruthFunctions.reduceDisjunction(v2, v1);
-                    } else {
+                    else
+                        // * 🚩其它 ⇒ 合取否定
                         truth = TruthFunctions.reduceConjunctionNeg(v1, v2);
-                    }
-                }
-            } else if (oldContent instanceof Implication) {
-                if (compound instanceof Conjunction) {
+                else
+                    // * 🚩其它 ⇒ 否决
+                    return;
+            else if (oldTaskContent instanceof Implication)
+                // * 🚩旧任务内容 <: 蕴含
+                if (compound instanceof Conjunction)
+                    // * 🚩合取 ⇒ 合取
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if (compound instanceof Disjunction) {
+                else if (compound instanceof Disjunction)
+                    // * 🚩析取 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                }
-            }
+                else
+                    // * 🚩其它 ⇒ 否决
+                    return;
+            else
+                // * 🚩其它 ⇒ 否决
+                return;
         } else {
-            content = makeStatement(oldContent, term2, term1);
-            if (content == null) {
-                return;
-            }
-            if (oldContent instanceof Inheritance) {
-                if (compound instanceof IntersectionInt) {
+            // * 🚩共用谓项
+            if (oldTaskContent instanceof Inheritance)
+                // * 🚩旧任务内容 <: 继承
+                if (compound instanceof IntersectionInt)
+                    // * 🚩内涵交 ⇒ 合取
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if (compound instanceof IntersectionExt) {
+                else if (compound instanceof IntersectionExt)
+                    // * 🚩外延交 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                } else if ((compound instanceof SetExt) && (component instanceof SetExt)) {
+                else if (compound instanceof SetExt && component instanceof SetExt)
+                    // * 🚩外延集-外延集 ⇒ 合取
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if ((compound instanceof SetInt) && (component instanceof SetInt)) {
+                else if (compound instanceof SetInt && component instanceof SetInt)
+                    // * 🚩内涵集-内涵集 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                } else if (compound instanceof DifferenceInt) {
-                    if (compound.componentAt(1).equals(component)) {
+                else if (compound instanceof DifferenceInt)
+                    // * 🚩内涵差
+                    if (compound.componentAt(1).equals(component))
+                        // * 🚩内容正好为所减项 ⇒ 析取（反向）
                         truth = TruthFunctions.reduceDisjunction(v2, v1);
-                    } else {
+                    else
+                        // * 🚩其它 ⇒ 合取否定
                         truth = TruthFunctions.reduceConjunctionNeg(v1, v2);
-                    }
-                }
-            } else if (oldContent instanceof Implication) {
-                if (compound instanceof Disjunction) {
+                else
+                    return;
+            else if (oldTaskContent instanceof Implication)
+                // * 🚩旧任务内容 <: 蕴含
+                if (compound instanceof Disjunction)
                     truth = TruthFunctions.reduceConjunction(v1, v2);
-                } else if (compound instanceof Conjunction) {
+                else if (compound instanceof Conjunction)
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
-                }
-            }
+                else
+                    // * 🚩其它 ⇒ 否决
+                    return;
+            else
+                // * 🚩其它 ⇒ 否决
+                return;
         }
-        if (truth != null) {
-            final Budget budget = BudgetInference.compoundForward(truth, content, context);
-            context.doublePremiseTask(content, truth, budget);
-        }
+
+        // * 🚩预算 * //
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
+
+        // * 🚩结论 * //
+        context.doublePremiseTask(content, truth, budget);
     }
 
     /**
