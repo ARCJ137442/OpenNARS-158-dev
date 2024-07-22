@@ -29,113 +29,139 @@ final class SyllogisticRules {
      * * 🚩演绎 & 举例
      * * * 📝一个强推理，一个弱推理
      *
-     * @param term1   Subject of the first new task
-     * @param term2   Predicate of the first new task
+     * @param sub     Subject of the first new task
+     * @param pre     Predicate of the first new task
      * @param task    The first premise
      * @param belief  The second premise
      * @param context Reference to the derivation context
      */
     static void dedExe(
-            Term term1, Term term2,
+            Term sub, Term pre,
             Sentence task, Judgement belief,
             DerivationContextReason context) {
         // * 🚩陈述有效才行
-        if (Statement.invalidStatement(term1, term2))
+        if (Statement.invalidStatement(sub, pre))
             return;
         // * 🚩后续根据「是否反向推理」安排真值和预算值
         final boolean backward = task.isQuestion();
         final Statement oldContent = (Statement) task.getContent();
 
         // * 🚩演绎 & 举例
-        deduction(term1, term2, task, belief, context, backward, oldContent);
-        exemplification(term1, term2, task, belief, context, backward, oldContent);
+        deduction(sub, pre, task, belief, context, backward, oldContent);
+        exemplification(sub, pre, task, belief, context, backward, oldContent);
     }
 
     /** 🆕演绎规则 */
     private static void deduction(
-            Term term1, Term term2,
+            Term sub, Term pre,
             Sentence task, Judgement belief,
             DerivationContextReason context,
             final boolean backward, final Statement oldContent) {
         // * 🚩词项
-        final Statement content1 = makeStatement(oldContent, term1, term2);
+        final Statement content = makeStatement(oldContent, sub, pre);
         // * 🚩真值
-        final Truth truth1 = backward ? null : TruthFunctions.deduction(task.asJudgement(), belief);
+        final Truth truth = backward ? null : TruthFunctions.deduction(task.asJudgement(), belief);
         // * 🚩预算
-        final Budget budget1 = backward ? BudgetInference.backwardWeak(belief, context)
-                : BudgetInference.forward(truth1, context);
+        final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth, context);
         // * 🚩结论
-        context.doublePremiseTask(content1, truth1, budget1);
+        context.doublePremiseTask(content, truth, budget);
     }
 
     /** 🆕举例规则 */
     private static void exemplification(
-            Term term1, Term term2,
+            Term sub, Term pre,
             Sentence task, Judgement belief,
             DerivationContextReason context,
             final boolean backward, final Statement oldContent) {
         // * 🚩词项
-        final Statement content2 = makeStatement(oldContent, term2, term1);
+        final Statement content = makeStatement(oldContent, pre, sub);
         // * 🚩真值
-        final Truth truth2 = backward ? null : TruthFunctions.exemplification(task.asJudgement(), belief);
+        final Truth truth = backward ? null : TruthFunctions.exemplification(task.asJudgement(), belief);
         // * 🚩预算
-        final Budget budget2 = backward ? BudgetInference.backwardWeak(belief, context)
-                : BudgetInference.forward(truth2, context);
+        final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth, context);
         // * 🚩结论
-        context.doublePremiseTask(content2, truth2, budget2);
+        context.doublePremiseTask(content, truth, budget);
     }
 
     /**
      * {<M ==> S>, <M ==> P>} |- {<S ==> P>, <P ==> S>, <S <=> P>}
      * * 📝归因 & 归纳 & 比较
      *
-     * @param term1   Subject of the first new task
-     * @param term2   Predicate of the first new task
+     * @param sub     Subject of the first new task
+     * @param pre     Predicate of the first new task
      * @param task    The first premise
      * @param belief  The second premise
      * @param context Reference to the derivation context
      */
     static void abdIndCom(
-            Term term1, Term term2,
+            Term sub, Term pre,
             Sentence task, Judgement belief,
             DerivationContextReason context) {
         // * 🚩判断结论合法性
-        if (Statement.invalidStatement(term1, term2) || Statement.invalidPair(term1.getName(), term2.getName()))
+        if (Statement.invalidStatement(sub, pre) || Statement.invalidPair(sub.getName(), pre.getName()))
             return;
         // * 🚩提取信息
         final Statement taskContent = (Statement) task.getContent();
         final boolean backward = task.isQuestion();
 
-        // * 🚩词项
-        final Statement statement1 = makeStatement(taskContent, term1, term2);
-        // * 🚩真值
-        final Truth truth1 = backward ? null : TruthFunctions.abduction(task.asJudgement(), belief);
-        // * 🚩预算
-        final Budget budget1 = backward ? BudgetInference.backward(belief, context)
-                : BudgetInference.forward(truth1, context);
-        // * 🚩结论
-        context.doublePremiseTask(statement1, truth1, budget1);
+        // * 🚩归因 & 归纳 & 比较
+        abduction(sub, pre, task, belief, context, taskContent, backward);
+        induction(sub, pre, task, belief, context, taskContent, backward);
+        comparison(sub, pre, task, belief, context, taskContent, backward);
 
-        // * 🚩词项
-        final Statement statement2 = makeStatement(taskContent, term2, term1);
-        // * 🚩真值
-        final Truth truth2 = backward ? null : TruthFunctions.abduction(belief, task.asJudgement());
-        // * 🚩预算
-        final Budget budget2 = backward ? BudgetInference.backwardWeak(belief, context)
-                : BudgetInference.forward(truth2, context);
-        // * 🚩结论
-        context.doublePremiseTask(statement2, truth2, budget2);
+    }
 
+    /** 🆕归因 */
+    private static void abduction(
+            Term sub, Term pre,
+            Sentence task, Judgement belief,
+            DerivationContextReason context,
+            final Statement taskContent, final boolean backward) {
         // * 🚩词项
-        final Statement statement3 = makeStatementSymmetric(taskContent, term1, term2);
+        final Statement statement = makeStatement(taskContent, sub, pre);
         // * 🚩真值
-        final Truth truth3 = backward ? null : TruthFunctions.comparison(task.asJudgement(), belief);
+        final Truth truth = backward ? null : TruthFunctions.abduction(task.asJudgement(), belief);
         // * 🚩预算
-        final Budget budget3 = backward ? BudgetInference.backward(belief, context)
-                : BudgetInference.forward(truth3, context);
+        final Budget budget = backward ? BudgetInference.backward(belief, context)
+                : BudgetInference.forward(truth, context);
         // * 🚩结论
-        context.doublePremiseTask(statement3, truth3, budget3);
+        context.doublePremiseTask(statement, truth, budget);
+    }
 
+    /** 🆕归纳 */
+    private static void induction(
+            Term sub, Term pre,
+            Sentence task, Judgement belief,
+            DerivationContextReason context,
+            final Statement taskContent, final boolean backward) {
+        // * 🚩词项
+        final Statement statement = makeStatement(taskContent, pre, sub);
+        // * 🚩真值
+        final Truth truth = backward ? null : TruthFunctions.abduction(belief, task.asJudgement());
+        // * 🚩预算
+        final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth, context);
+        // * 🚩结论
+        context.doublePremiseTask(statement, truth, budget);
+    }
+
+    /** 🆕比较 */
+    private static void comparison(
+            Term sub, Term pre,
+            Sentence task, Judgement belief,
+            DerivationContextReason context,
+            final Statement taskContent, final boolean backward) {
+        // * 🚩词项
+        final Statement statement = makeStatementSymmetric(taskContent, sub, pre);
+        // * 🚩真值
+        final Truth truth = backward ? null : TruthFunctions.comparison(task.asJudgement(), belief);
+        // * 🚩预算
+        final Budget budget = backward ? BudgetInference.backward(belief, context)
+                : BudgetInference.forward(truth, context);
+        // * 🚩结论
+        context.doublePremiseTask(statement, truth, budget);
     }
 
     /**
