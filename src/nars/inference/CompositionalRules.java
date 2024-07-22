@@ -16,6 +16,11 @@ import static nars.language.MakeTerm.*;
  * introduction) can also be used backward.
  */
 class CompositionalRules {
+    /** 🆕用于下边switch分派 */
+    private static final String negativeTruthS(Truth truth) {
+        return truth.isNegative() ? "N" : "P";
+    }
+
     /* -------------------- intersections and differences -------------------- */
     /**
      * {<S ==> M>, <P ==> M>} |- {
@@ -33,79 +38,148 @@ class CompositionalRules {
             Statement beliefContent,
             int sharedTermI,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if ((!context.getCurrentTask().isJudgement())
-                || !(taskContent.isSameType(beliefContent))) {
+        // * 🚩前提：任务是判断句（前向推理）、任务与信念类型相同
+        if (!context.getCurrentTask().isJudgement()
+                || !taskContent.isSameType(beliefContent)) {
             return;
         }
-        final Term componentT = taskContent.componentAt(1 - sharedTermI);
-        final Term componentB = beliefContent.componentAt(1 - sharedTermI);
+        // * 🚩提取词项
+        final int otherSideI = 1 - sharedTermI;
         final Term componentCommon = taskContent.componentAt(sharedTermI);
-        if ((componentT instanceof CompoundTerm) && ((CompoundTerm) componentT).containAllComponents(componentB)) {
+        final Term componentT = taskContent.componentAt(otherSideI);
+        final Term componentB = beliefContent.componentAt(otherSideI);
+        // * 🚩预判，分派到「解构」中
+        if (componentT instanceof CompoundTerm && ((CompoundTerm) componentT).containAllComponents(componentB)) {
+            // * 🚩「任务词项中的另一项」包含「信念词项的另一侧」的所有元素
             decomposeCompound((CompoundTerm) componentT, componentB, componentCommon, sharedTermI, true, context);
             return;
-        } else if ((componentB instanceof CompoundTerm)
-                && ((CompoundTerm) componentB).containAllComponents(componentT)) {
+        } else if (componentB instanceof CompoundTerm && ((CompoundTerm) componentB).containAllComponents(componentT)) {
+            // * 🚩「信念词项中的另一项」包含「任务词项的另一侧」的所有元素
             decomposeCompound((CompoundTerm) componentB, componentT, componentCommon, sharedTermI, false, context);
             return;
         }
-        final Truth truthT = context.getCurrentTask().asJudgement();
-        final Truth truthB = context.getCurrentBelief();
-        final Truth truthOr = TruthFunctions.union(truthT, truthB);
-        final Truth truthAnd = TruthFunctions.intersection(truthT, truthB);
-        Truth truthDif = null;
-        Term termOr = null;
-        Term termAnd = null;
-        Term termDif = null;
-        if (sharedTermI == 0) {
-            if (taskContent instanceof Inheritance) {
-                termOr = makeIntersectionInt(componentT, componentB);
-                termAnd = makeIntersectionExt(componentT, componentB);
-                if (truthB.isNegative()) {
-                    if (!truthT.isNegative()) {
-                        termDif = makeDifferenceExt(componentT, componentB);
-                        truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
-                    }
-                } else if (truthT.isNegative()) {
-                    termDif = makeDifferenceExt(componentB, componentT);
-                    truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
-                }
-            } else if (taskContent instanceof Implication) {
-                termOr = makeDisjunction(componentT, componentB);
-                termAnd = makeConjunction(componentT, componentB);
-            }
-            processComposed(taskContent, componentCommon.clone(), termOr, truthOr, context);
-            processComposed(taskContent, componentCommon.clone(), termAnd, truthAnd, context);
-            processComposed(taskContent, componentCommon.clone(), termDif, truthDif, context);
-        } else { // index == 1
-            if (taskContent instanceof Inheritance) {
-                termOr = makeIntersectionExt(componentT, componentB);
-                termAnd = makeIntersectionInt(componentT, componentB);
-                if (truthB.isNegative()) {
-                    if (!truthT.isNegative()) {
-                        termDif = makeDifferenceInt(componentT, componentB);
-                        truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
-                    }
-                } else if (truthT.isNegative()) {
-                    termDif = makeDifferenceInt(componentB, componentT);
-                    truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
-                }
-            } else if (taskContent instanceof Implication) {
-                termOr = makeConjunction(componentT, componentB);
-                termAnd = makeDisjunction(componentT, componentB);
-            }
-            processComposed(taskContent, termOr, componentCommon.clone(), truthOr, context);
-            processComposed(taskContent, termAnd, componentCommon.clone(), truthAnd, context);
-            processComposed(taskContent, termDif, componentCommon.clone(), truthDif, context);
-        }
+
+        // * 🚩NAL-3规则：交并差
+        composeAsSet(taskContent, sharedTermI, componentCommon, componentT, componentB, context);
+
+        // * 🚩引入变量
         if (taskContent instanceof Inheritance) {
             introVarOuter(taskContent, beliefContent, sharedTermI, context);
             // introVarImage(taskContent, beliefContent, index);
         }
     }
 
+    /** 🆕作为「集合」操作：交并差 */
+    private static void composeAsSet(
+            Statement taskContent, int sharedTermI,
+            final Term componentCommon, final Term componentT, final Term componentB,
+            DerivationContextReason context) {
+        final Truth truthT = context.getCurrentTask().asJudgement();
+        final Truth truthB = context.getCurrentBelief();
+        final Truth truthOr = TruthFunctions.union(truthT, truthB);
+        final Truth truthAnd = TruthFunctions.intersection(truthT, truthB);
+        final Truth truthDif;
+        final Term termOr;
+        final Term termAnd;
+        final Term termDif;
+
+        // * 🚩根据「共有词项的位置」分派
+        if (sharedTermI == 0) {
+            // * 🚩共有在主项 ⇒ 内涵交，外延交，外延差
+            // * 📄"<M ==> S>", "<M ==> P>"
+            if (taskContent instanceof Inheritance) {
+                // * 🚩「或」内涵交
+                termOr = makeIntersectionInt(componentT, componentB);
+                // * 🚩「与」外延交
+                termAnd = makeIntersectionExt(componentT, componentB);
+                // * 🚩根据「真值是否负面」决定「差」的真值
+                switch (negativeTruthS(truthT) + negativeTruthS(truthB)) {
+                    // * 🚩同正/同负 ⇒ 不予生成
+                    case "P" + "P":
+                    case "N" + "N":
+                        termDif = null;
+                        truthDif = null;
+                        break;
+                    // * 🚩任务正，信念负 ⇒ 词项="(任务-信念)"，真值=任务 ∩ ¬信念
+                    case "P" + "N":
+                        termDif = makeDifferenceExt(componentT, componentB);
+                        truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
+                        break;
+                    // * 🚩任务负，信念正 ⇒ 词项="(信念-任务)"，真值=信念 ∩ ¬任务
+                    case "N" + "P":
+                        termDif = makeDifferenceExt(componentB, componentT);
+                        truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
+                        break;
+                    // * 🚩其它⇒不可达
+                    default:
+                        throw new IllegalStateException("unreachable");
+                }
+            } else if (taskContent instanceof Implication) {
+                termOr = makeDisjunction(componentT, componentB);
+                termAnd = makeConjunction(componentT, componentB);
+                termDif = null;
+                truthDif = null;
+            } else {
+                termOr = null;
+                termAnd = null;
+                termDif = null;
+                truthDif = null;
+            }
+            // * 🚩统一导出结论："<公共项 ==> 新词项>"
+            processComposed(taskContent, componentCommon.clone(), termOr, truthOr, context);
+            processComposed(taskContent, componentCommon.clone(), termAnd, truthAnd, context);
+            processComposed(taskContent, componentCommon.clone(), termDif, truthDif, context);
+        } else { // index == 1
+            // * 🚩共有在谓项 ⇒ 内涵交，外延交，内涵差
+            // * 📄"<S ==> M>", "<P ==> M>"
+            if (taskContent instanceof Inheritance) {
+                // * 🚩「或」外延交
+                termOr = makeIntersectionExt(componentT, componentB);
+                // * 🚩「与」内涵交
+                termAnd = makeIntersectionInt(componentT, componentB);
+                // * 🚩根据「真值是否负面」决定「差」的真值
+                switch (negativeTruthS(truthT) + negativeTruthS(truthB)) {
+                    // * 🚩同正/同负 ⇒ 不予生成
+                    case "P" + "P":
+                    case "N" + "N":
+                        termDif = null;
+                        truthDif = null;
+                        break;
+                    // * 🚩任务正，信念负 ⇒ 词项="(任务-信念)"，真值=任务 ∩ ¬信念
+                    case "P" + "N":
+                        termDif = makeDifferenceInt(componentT, componentB);
+                        truthDif = TruthFunctions.intersection(truthT, TruthFunctions.negation(truthB));
+                        break;
+                    // * 🚩任务负，信念正 ⇒ 词项="(信念-任务)"，真值=信念 ∩ ¬任务
+                    case "N" + "P":
+                        termDif = makeDifferenceInt(componentB, componentT);
+                        truthDif = TruthFunctions.intersection(truthB, TruthFunctions.negation(truthT));
+                        break;
+                    // * 🚩其它⇒不可达
+                    default:
+                        throw new IllegalStateException("unreachable");
+                }
+            } else if (taskContent instanceof Implication) {
+                termOr = makeConjunction(componentT, componentB);
+                termAnd = makeDisjunction(componentT, componentB);
+                termDif = null;
+                truthDif = null;
+            } else {
+                termOr = null;
+                termAnd = null;
+                termDif = null;
+                truthDif = null;
+            }
+            // * 🚩统一导出结论："<新词项 ==> 公共项>"
+            processComposed(taskContent, termOr, componentCommon.clone(), truthOr, context);
+            processComposed(taskContent, termAnd, componentCommon.clone(), truthAnd, context);
+            processComposed(taskContent, termDif, componentCommon.clone(), truthDif, context);
+        }
+    }
+
     /**
      * Finish composing implication term
+     * * 📌根据主谓项、真值 创建新内容，并导出结论
      *
      * @param premise1  Type of the contentInd
      * @param subject   Subject of contentInd
@@ -114,19 +188,22 @@ class CompositionalRules {
      * @param context   Reference to the derivation context
      */
     private static void processComposed(
-            Statement statement,
+            Statement taskContent,
             Term subject, Term predicate, Truth truth,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if ((subject == null) || (predicate == null)) {
+        // * 🚩跳过空值
+        if (subject == null || predicate == null)
             return;
-        }
-        final Term content = makeStatement(statement, subject, predicate);
-        if ((content == null) || content.equals(statement)
-                || content.equals(context.getCurrentBelief().getContent())) {
+
+        // * 🚩词项：不能跟任务、信念 内容相同
+        final Term content = makeStatement(taskContent, subject, predicate);
+        final Term beliefContent = context.getCurrentBelief().getContent(); // ! 假定一定有「当前信念」
+        if (content == null || content.equals(taskContent) || content.equals(beliefContent))
             return;
-        }
+
+        // * 🚩预算：复合前向
         final Budget budget = BudgetInference.compoundForward(truth, content, context);
+        // * 🚩结论
         context.doublePremiseTask(content, truth, budget);
     }
 
@@ -244,7 +321,7 @@ class CompositionalRules {
             DerivationContextReason context) {
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
         // * 🚩删去指定的那个元素，用删去之后的剩余元素做结论
         final Term content = reduceComponents(compound, component);
         if (content == null)
@@ -283,12 +360,12 @@ class CompositionalRules {
             // ! 🚩【2024-05-19 20:29:17】现在移除：直接在「导出结论」处指定
             final Term conj = makeConjunction(component, content);
             // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-            final Truth truth1 = TruthFunctions.intersection(contentBelief, belief);
+            truth = TruthFunctions.intersection(contentBelief, belief);
             // * ↓不会用到`context.getCurrentTask()`、`newStamp`
-            final Budget budget1 = BudgetInference.compoundForward(truth1, conj, context);
+            final Budget budget1 = BudgetInference.compoundForward(truth, conj, context);
             // ! ⚠️↓会用到`context.getCurrentTask()`、`newStamp`：构建新结论时要用到
             // * ✅【2024-05-21 22:38:52】现在通过「参数传递」抵消了对`context.getCurrentTask`的访问
-            context.doublePremiseTask(contentTask, conj, truth1, budget1, newStamp);
+            context.doublePremiseTask(contentTask, conj, truth, budget1, newStamp);
         }
         // * 🚩前向推理：直接用于构造信念
         else {
@@ -374,14 +451,15 @@ class CompositionalRules {
      *
      * @param taskContent   The first premise <M --> S>
      * @param beliefContent The second premise <M --> P>
-     * @param index         The location of the shared term: 0 for subject, 1 for
-     *                      predicate
+     * @param index         The location of the shared term:
+     *                      0 for subject, 1 for predicate
      * @param context       Reference to the derivation context
      */
     private static void introVarOuter(
             Statement taskContent,
             Statement beliefContent,
-            int index, DerivationContextReason context) {
+            int index,
+            DerivationContextReason context) {
         // TODO: 过程笔记注释
         final Truth truthT = context.getCurrentTask().asJudgement();
         final Truth truthB = context.getCurrentBelief();
@@ -395,11 +473,12 @@ class CompositionalRules {
             term21 = varInd;
             term12 = taskContent.getPredicate();
             term22 = beliefContent.getPredicate();
-            if ((term12 instanceof ImageExt) && (term22 instanceof ImageExt)) {
+            // * 🚩对「外延像」的特殊处理
+            if (term12 instanceof ImageExt && term22 instanceof ImageExt) {
                 commonTerm = ((ImageExt) term12).getTheOtherComponent();
-                if ((commonTerm == null) || !((ImageExt) term22).containTerm(commonTerm)) {
+                if (commonTerm == null || !((ImageExt) term22).containTerm(commonTerm)) {
                     commonTerm = ((ImageExt) term22).getTheOtherComponent();
-                    if ((commonTerm == null) || !((ImageExt) term12).containTerm(commonTerm)) {
+                    if (commonTerm == null || !((ImageExt) term12).containTerm(commonTerm)) {
                         commonTerm = null;
                     }
                 }
@@ -414,11 +493,12 @@ class CompositionalRules {
             term21 = beliefContent.getSubject();
             term12 = varInd;
             term22 = varInd;
-            if ((term11 instanceof ImageInt) && (term21 instanceof ImageInt)) {
+            // * 🚩对「内涵像」的特殊处理
+            if (term11 instanceof ImageInt && term21 instanceof ImageInt) {
                 commonTerm = ((ImageInt) term11).getTheOtherComponent();
-                if ((commonTerm == null) || !((ImageInt) term21).containTerm(commonTerm)) {
+                if (commonTerm == null || !((ImageInt) term21).containTerm(commonTerm)) {
                     commonTerm = ((ImageInt) term21).getTheOtherComponent();
-                    if ((commonTerm == null) || !((ImageInt) term11).containTerm(commonTerm)) {
+                    if (commonTerm == null || !((ImageInt) term11).containTerm(commonTerm)) {
                         commonTerm = null;
                     }
                 }
