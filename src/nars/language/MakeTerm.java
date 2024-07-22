@@ -25,6 +25,27 @@ public abstract class MakeTerm {
 
     /* Variable */
 
+    public static final long maximumVariableId(final Term term) {
+        if (term instanceof Variable) {
+            // * 🚩变量的「最大id」就是其自身id
+            return ((Variable) term).getId();
+        } else if (term instanceof CompoundTerm) {
+            // * 🚩复合词项的「最大id」是内部所有词项的最大id
+            final CompoundTerm compound = (CompoundTerm) term;
+            long maximumVariableId = 0;
+            for (final Term inner : compound.components) {
+                final long innerMax = maximumVariableId(inner);
+                if (innerMax > maximumVariableId) {
+                    maximumVariableId = innerMax;
+                }
+            }
+            return maximumVariableId;
+        } else {
+            // * 🚩其它情况 ⇒ 0
+            return 0;
+        }
+    }
+
     /** 🆕创建新 独立变量 */
     public static final Variable makeVarI(final long id) {
         return new Variable(Symbols.VAR_INDEPENDENT, id);
@@ -38,6 +59,21 @@ public abstract class MakeTerm {
     /** 🆕创建新 查询变量 */
     public static final Variable makeVarQ(final long id) {
         return new Variable(Symbols.VAR_QUERY, id);
+    }
+
+    /** 🆕创建新 独立变量，保证【不与「基于的词项」中变量的id重复】 */
+    public static final Variable makeVarI(final Term baseOfMaximumID) {
+        return new Variable(Symbols.VAR_INDEPENDENT, maximumVariableId(baseOfMaximumID) + 1);
+    }
+
+    /** 🆕创建新 非独变量，保证【不与「基于的词项」中变量的id重复】 */
+    public static final Variable makeVarD(final Term baseOfMaximumID) {
+        return new Variable(Symbols.VAR_DEPENDENT, maximumVariableId(baseOfMaximumID) + 1);
+    }
+
+    /** 🆕创建新 查询变量，保证【不与「基于的词项」中变量的id重复】 */
+    public static final Variable makeVarQ(final Term baseOfMaximumID) {
+        return new Variable(Symbols.VAR_QUERY, maximumVariableId(baseOfMaximumID) + 1);
     }
 
     /** 🆕创建新变量词项，与旧变量词项相同类型，但名称不同 */

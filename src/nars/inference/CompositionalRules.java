@@ -436,55 +436,71 @@ class CompositionalRules {
 
     /* --------------- rules used for variable introduction --------------- */
 
-    /** 🆕入口之一：变量引入 */
+    /**
+     * 🆕入口之一：变量引入
+     */
     static void introVarSameSubjectOrPredicate(
             Judgement originalMainSentence,
             Judgement subSentence, Term component,
-            CompoundTerm content, int index,
+            CompoundTerm subContent, int index,
             DerivationContextReason context) {
         // TODO: 过程笔记注释
-        final Sentence cloned = originalMainSentence.sentenceClone();
-        final Term T1 = cloned.getContent();
-        if (!(T1 instanceof CompoundTerm) || !(content instanceof CompoundTerm)) {
+        // * 🚩词项 * //
+        final Sentence clonedMain = originalMainSentence.sentenceClone();
+        final Term clonedMainT = clonedMain.getContent();
+        if (!(clonedMainT instanceof CompoundTerm) || !(subContent instanceof CompoundTerm)) {
             return;
         }
-        CompoundTerm T = (CompoundTerm) T1;
-        CompoundTerm T2 = content.clone();
-        if (!((component instanceof Inheritance && content instanceof Inheritance) ||
-                (component instanceof Similarity && content instanceof Similarity)))
+
+        final CompoundTerm mainCompound = (CompoundTerm) clonedMainT;
+        CompoundTerm subCompound = subContent.clone();
+        if (!((component instanceof Inheritance && subContent instanceof Inheritance) ||
+                (component instanceof Similarity && subContent instanceof Similarity)))
             return;
-        // CompoundTerm result = T;
-        if (component.equals(content)) {
+        final Statement componentS = (Statement) component;
+        final Statement subContentS = (Statement) subContent;
+        // CompoundTerm result = mainCompound;
+        if (component.equals(subContent)) {
             // wouldn't make sense to create a conjunction here,
             // would contain a statement twice
             return;
         }
-        if (((Statement) component).getPredicate().equals(((Statement) content).getPredicate())
-                && !(((Statement) component).getPredicate() instanceof Variable)) {
+
+        final Term content;
+        if (componentS.getPredicate().equals(subContentS.getPredicate())
+                && !(componentS.getPredicate() instanceof Variable)) {
             final Variable V = makeVarD("depIndVar1".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-            final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
+            final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
-            T2 = (CompoundTerm) setComponent(T2, 1, V);
-            if (zw2 == null || T2 == null || zw2.equals(T2)) {
+            subCompound = (CompoundTerm) setComponent(subCompound, 1, V);
+            if (zw2 == null || subCompound == null || zw2.equals(subCompound)) {
                 return;
             }
-            final Conjunction res = (Conjunction) makeConjunction(zw, T2);
-            T = (CompoundTerm) setComponent(T, index, res);
-        } else if (((Statement) component).getSubject().equals(((Statement) content).getSubject())
-                && !(((Statement) component).getSubject() instanceof Variable)) {
+            final Conjunction res = (Conjunction) makeConjunction(zw, subCompound);
+            content = (CompoundTerm) setComponent(mainCompound, index, res);
+        } else if (componentS.getSubject().equals(subContentS.getSubject())
+                && !(componentS.getSubject() instanceof Variable)) {
             final Variable V = makeVarD("depIndVar2".hashCode()); // * ✅不怕重名：其它变量一定会被命名为数字
-            final CompoundTerm zw = (CompoundTerm) T.componentAt(index).clone();
+            final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
-            T2 = (CompoundTerm) setComponent(T2, 0, V);
-            if (zw2 == null || T2 == null || zw2.equals(T2)) {
+            subCompound = (CompoundTerm) setComponent(subCompound, 0, V);
+            if (zw2 == null || subCompound == null || zw2.equals(subCompound)) {
                 return;
             }
-            final Conjunction res = (Conjunction) makeConjunction(zw2, T2);
-            T = (CompoundTerm) setComponent(T, index, res);
+            final Conjunction res = (Conjunction) makeConjunction(zw2, subCompound);
+            content = (CompoundTerm) setComponent(mainCompound, index, res);
+        } else {
+            content = mainCompound;
         }
+
+        // * 🚩真值 * //
         final Truth truth = TruthFunctions.induction(originalMainSentence, subSentence);
-        final Budget budget = BudgetInference.compoundForward(truth, T, context);
-        context.doublePremiseTask(T, truth, budget);
+
+        // * 🚩预算 * //
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
+
+        // * 🚩结论 * //
+        context.doublePremiseTask(content, truth, budget);
     }
 
     /**
@@ -660,26 +676,24 @@ class CompositionalRules {
      * @param index The index of the terms in their statement
      */
     private static Term secondCommonTerm(Term term1, Term term2, int index) {
-        // TODO: 过程笔记注释
+        // * 🚩根据中间条件多次覆盖，最终拿到一个引用
         Term commonTerm = null;
-        if (index == 0) {
-            if ((term1 instanceof ImageExt) && (term2 instanceof ImageExt)) {
-                commonTerm = ((ImageExt) term1).getTheOtherComponent();
-                if ((commonTerm == null) || !((ImageExt) term2).containTerm(commonTerm)) {
-                    commonTerm = ((ImageExt) term2).getTheOtherComponent();
-                    if ((commonTerm == null) || !((ImageExt) term1).containTerm(commonTerm)) {
-                        commonTerm = null;
-                    }
-                }
-            }
-        } else {
-            if ((term1 instanceof ImageInt) && (term2 instanceof ImageInt)) {
-                commonTerm = ((ImageInt) term1).getTheOtherComponent();
-                if ((commonTerm == null) || !((ImageInt) term2).containTerm(commonTerm)) {
-                    commonTerm = ((ImageInt) term2).getTheOtherComponent();
-                    if ((commonTerm == null) || !((ImageExt) term1).containTerm(commonTerm)) {
-                        commonTerm = null;
-                    }
+        if (false
+                // * 📄1: 都是主项，且均为外延像
+                || (index == 0 && term1 instanceof ImageExt && term2 instanceof ImageExt)
+                // * 📄2: 都是谓项，且均为内涵像
+                || (index == 1 && term1 instanceof ImageInt && term2 instanceof ImageInt)) {
+            final Image image1 = (Image) term1;
+            final Image image2 = (Image) term2;
+            // * 🚩先试第一个
+            commonTerm = image1.getTheOtherComponent();
+            // * 🚩尝试不到？考虑第二个/用第二个覆盖
+            if (commonTerm == null || !image2.containTerm(commonTerm)) {
+                // * 🚩再试第二个
+                commonTerm = image2.getTheOtherComponent();
+                // * 🚩尝试不到就是尝试不到
+                if (commonTerm == null || !image1.containTerm(commonTerm)) {
+                    commonTerm = null;
                 }
             }
         }

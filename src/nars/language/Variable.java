@@ -29,6 +29,14 @@ public class Variable extends Term {
     private long id;
 
     /**
+     * 获取变量id
+     * * 🎯用于「获取词项内最大变量id」
+     */
+    long getId() {
+        return this.id;
+    }
+
+    /**
      * Clone a Variable
      *
      * @return The cloned Variable

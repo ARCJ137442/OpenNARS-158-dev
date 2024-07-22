@@ -11,10 +11,7 @@ import nars.io.Symbols;
  * <p>
  * Internally, it is actually (/,A,P)_1, with an index.
  */
-public class ImageExt extends CompoundTerm {
-
-    /** The index of relation in the component list */
-    private final short relationIndex;
+public class ImageExt extends Image {
 
     /**
      * Constructor with partial values, called by make
@@ -24,8 +21,7 @@ public class ImageExt extends CompoundTerm {
      * @param index The index of relation in the component list
      */
     ImageExt(String n, ArrayList<Term> arg, short index) {
-        super(n, arg);
-        relationIndex = index;
+        super(n, arg, index);
     }
 
     /**
@@ -36,8 +32,7 @@ public class ImageExt extends CompoundTerm {
      * @param index      The index of relation in the component list
      */
     private ImageExt(String name, TermComponents components, short index) {
-        super(name, components);
-        relationIndex = index;
+        super(name, components, index);
     }
 
     /**
@@ -46,37 +41,7 @@ public class ImageExt extends CompoundTerm {
      * @return A new object, to be casted into an ImageExt
      */
     public ImageExt clone() {
-        return new ImageExt(name, this.components.deepClone(), relationIndex);
-    }
-
-    /**
-     * get the index of the relation in the component list
-     *
-     * @return the index of relation
-     */
-    public short getRelationIndex() {
-        return relationIndex;
-    }
-
-    /**
-     * Get the relation term in the Image
-     *
-     * @return The term representing a relation
-     */
-    public Term getRelation() {
-        return components.get(relationIndex);
-    }
-
-    /**
-     * Get the other term in the Image
-     *
-     * @return The term related
-     */
-    public Term getTheOtherComponent() {
-        if (components.size() != 2) {
-            return null;
-        }
-        return (relationIndex == 0) ? components.get(1) : components.get(0);
+        return new ImageExt(name, this.components.deepClone(), this.relationIndex);
     }
 
     /**

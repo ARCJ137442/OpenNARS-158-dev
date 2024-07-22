@@ -753,7 +753,7 @@ final class RuleTables {
         final Sentence mainSentence = highOrderSentence.sentenceClone(); // for substitution
         final Statement mainStatement = (Statement) mainSentence.getContent();
         final Term component = mainStatement.componentAt(index); // * 🚩前件
-        final CompoundTerm content = (CompoundTerm) subSentence.getContent(); // * 🚩子句本身
+        final CompoundTerm subContent = (CompoundTerm) subSentence.getContent(); // * 🚩子句本身
         // * 🚩非继承或否定⇒提前结束
         if (!(component instanceof Inheritance || component instanceof Negation))
             return;
@@ -763,8 +763,8 @@ final class RuleTables {
             return;
         }
         // * 🚩若非常量（有变量） ⇒ 尝试统一独立变量
-        final Unification unificationI = VariableProcess.unifyFindI(component, content);
-        final boolean unifiedI = unificationI.applyTo(mainStatement, content);
+        final Unification unificationI = VariableProcess.unifyFindI(component, subContent);
+        final boolean unifiedI = unificationI.applyTo(mainStatement, subContent);
 
         if (unifiedI) {
             // * 🚩统一成功⇒分离
@@ -782,7 +782,7 @@ final class RuleTables {
             // ? 💫【2024-06-10 17:50:36】此处逻辑尚未能完全理解
             if (mainStatement instanceof Implication) {
                 final Statement s2 = (Statement) mainStatement.getPredicate();
-                final Term contentSubject = ((Statement) content).getSubject();
+                final Term contentSubject = ((Statement) subContent).getSubject();
                 if (s2.getSubject().equals(contentSubject)) {
                     // * 📄【2024-06-10 17:46:02】一例：
                     // * Task@838 "<<toothbrush --> $1> ==> <cup --> $1>>.
@@ -791,18 +791,18 @@ final class RuleTables {
                     // * content="<cup --> toothbrush>"
                     // * s2="<cup --> $1>"
                     // * mainStatement="<<toothbrush --> $1> ==> <cup --> $1>>"
-                    CompositionalRules.introVarInner((Statement) content, s2, mainStatement, context);
+                    CompositionalRules.introVarInner((Statement) subContent, s2, mainStatement, context);
                 }
                 CompositionalRules.introVarSameSubjectOrPredicate(
                         highOrderSentence.asJudgement(), subSentence.asJudgement(),
-                        component, content,
+                        component, subContent,
                         index, context);
                 return;
             }
             if (mainStatement instanceof Equivalence) {
                 CompositionalRules.introVarSameSubjectOrPredicate(
                         highOrderSentence.asJudgement(), subSentence.asJudgement(),
-                        component, content,
+                        component, subContent,
                         index, context);
                 return;
             }
