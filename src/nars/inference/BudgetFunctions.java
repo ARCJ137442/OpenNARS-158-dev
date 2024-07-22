@@ -427,13 +427,13 @@ public final class BudgetFunctions extends UtilityFunctions {
      * * 🎯统一呈现「在推理过程中计算预算值」的「预算超参数」
      */
     public static enum BudgetInferenceFunction {
-        /** 正向推理 */
+        /** 前向推理 */
         Forward(forward),
         /** 反向强推理 */
         Backward(backward),
         /** 反向弱推理 */
         BackwardWeak(backwardWeak),
-        /** 复合正向推理 */
+        /** 复合前向推理 */
         CompoundForward(compoundForward),
         /** 复合反向强推理 */
         CompoundBackward(compoundBackward),

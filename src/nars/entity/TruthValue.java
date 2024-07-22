@@ -97,11 +97,6 @@ public class TruthValue implements Truth {
         return v == null ? null : new TruthValue(v);
     }
 
-    @Override
-    public Truth truthClone() {
-        return new TruthValue(this);
-    }
-
     /**
      * Compare two truth values
      *

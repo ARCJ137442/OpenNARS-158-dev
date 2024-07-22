@@ -399,7 +399,7 @@ final class SyllogisticRules {
         final Budget budget = backward
                 // * 🚩反向⇒弱推理
                 ? BudgetInference.backwardWeak(belief, context)
-                // * 🚩其它⇒正向
+                // * 🚩其它⇒前向
                 : BudgetInference.forward(truth, context);
 
         // * 🚩结论 * //
@@ -489,7 +489,7 @@ final class SyllogisticRules {
         final Budget budget = backward
                 // * 🚩反向 ⇒ 弱推理
                 ? BudgetInference.backwardWeak(belief, context)
-                // * 🚩其它 ⇒ 正向推理
+                // * 🚩其它 ⇒ 前向推理
                 : BudgetInference.forward(truth, context);
 
         // * 🚩结论 * //
@@ -561,7 +561,7 @@ final class SyllogisticRules {
             final Budget budget = backward
                     // * 🚩反向 ⇒ 弱
                     ? BudgetInference.backwardWeak(belief, context)
-                    // * 🚩其它 ⇒ 正向
+                    // * 🚩其它 ⇒ 前向
                     : BudgetInference.forward(truth, context);
             // * 🚩结论 * //
             context.doublePremiseTask(content, truth, budget);
@@ -581,7 +581,7 @@ final class SyllogisticRules {
             final Budget budget2 = backward
                     // * 🚩反向 ⇒ 弱
                     ? BudgetInference.backwardWeak(belief, context)
-                    // * 🚩其它 ⇒ 正向
+                    // * 🚩其它 ⇒ 前向
                     : BudgetInference.forward(truth2, context);
             // * 🚩结论 * //
             context.doublePremiseTask(content2, truth2, budget2);
@@ -626,7 +626,7 @@ final class SyllogisticRules {
                         ? BudgetInference.backward(belief, context)
                         // * 🚩其它 ⇒ 反向弱推理
                         : BudgetInference.backwardWeak(belief, context))
-                // * 🚩正向推理
+                // * 🚩前向推理
                 : BudgetInference.compoundForward(truth, content, context);
 
         // * 🚩结论 * //
@@ -638,7 +638,7 @@ final class SyllogisticRules {
      * {<S --> P>, <P --> S} |- <S <-> p>
      * Produce Similarity/Equivalence from a pair of reversed
      * Inheritance/Implication
-     * * 📝非对称⇒对称（正向推理）
+     * * 📝非对称⇒对称（前向推理）
      *
      * @param judgment1 The first premise
      * @param judgment2 The second premise
@@ -664,7 +664,7 @@ final class SyllogisticRules {
     /**
      * {<S <-> P>, <P --> S>} |- <S --> P> Produce an Inheritance/Implication
      * from a Similarity/Equivalence and a reversed Inheritance/Implication
-     * * 📝对称⇒非对称（正向推理）
+     * * 📝对称⇒非对称（前向推理）
      *
      * @param asym    The asymmetric premise
      * @param sym     The symmetric premise
@@ -694,7 +694,7 @@ final class SyllogisticRules {
     /**
      * {<P --> S>} |- <S --> P> Produce an Inheritance/Implication from a
      * reversed Inheritance/Implication
-     * * 📝转换（反向推理，但使用正向预算值）
+     * * 📝转换（反向推理，但使用前向预算值）
      *
      * @param context Reference to the derivation context
      */

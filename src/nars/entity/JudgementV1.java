@@ -73,11 +73,6 @@ public class JudgementV1 extends SentenceV1 implements Judgement {
         return this.truth.__isAnalytic();
     }
 
-    @Override
-    public Truth truthClone() {
-        return this.truth.clone();
-    }
-
     // ! 🚩【2024-06-08 23:30:24】经实验，只会生成key再加入散列表；因此无需参与散列化
 
     // // impl Hash for SentenceV1

@@ -141,11 +141,4 @@ public interface Truth extends Cloneable {
         // * 🚩格式化字符串"%【频率】;【信度】%"
         return s1 + s2 + DELIMITER;
     }
-
-    /**
-     * 🆕复制一个「真值」对象
-     * * 🎯用于复制「TruthValue」
-     * * 🎯让「TruthValue」和「语句」解耦
-     */
-    public Truth truthClone();
 }

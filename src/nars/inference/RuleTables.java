@@ -909,31 +909,17 @@ final class RuleTables {
                 return;
         }
         // * 🚩否定
+        // * 📝【2024-07-22 17:40:06】规则表分派不要过于涉及词项处理：是否要「提取否定内部的词项」要由「具体规则函数」决定
         else if (compound instanceof Negation) {
-            // * 🚩从「当前任务」来⇒转换其中的否定
-            if (isCompoundFromTask) {
-                // * 🚩双重否定⇒肯定
-                // * 📄【2024-06-10 19:57:15】一例：
-                // * compound="(--,(--,A))"
-                // * component="(--,A)"
-                // * currentConcept=Concept@63 "(--,(--,A))"
-                // * currentTask=Task@807 "$0.8000;0.8000;0.9500$ (--,(--,A)). %1.00;0.90%"
-                StructuralRules.transformNegation(
-                        ((Negation) compound).getTheComponent(),
-                        context);
-                return;
-            } else {
-                // * 🚩否则⇒转换整个否定
-                StructuralRules.transformNegation(
-                        compound,
-                        context);
-                return;
-            }
-        }
-        // * 🚩其它⇒无结果
-        else {
+            StructuralRules.transformNegation(
+                    (Negation) compound,
+                    isCompoundFromTask,
+                    context);
             return;
         }
+        // * 🚩其它⇒无结果
+        else
+            return;
     }
 
     /**

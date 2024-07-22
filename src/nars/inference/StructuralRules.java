@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import nars.control.DerivationContextReason;
 import nars.control.Parameters;
 import nars.entity.*;
-import static nars.io.Symbols.*;
 import static nars.language.MakeTerm.*;
 
 import nars.language.*;
@@ -108,18 +107,18 @@ final class StructuralRules {
         final Truth truth = backward
                 // * 🚩反向推理⇒空
                 ? null
-                // * 🚩正向推理
+                // * 🚩前向推理
                 : (compound.size() > 1
                         // * 🚩任务项多于一个元素⇒分析性演绎
                         ? TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE)
-                        // * 🚩其它⇒当前任务的真值
-                        : task.asJudgement().truthClone());
+                        // * 🚩其它⇒恒等@当前任务
+                        : TruthFunctions.identity(task.asJudgement()));
 
         // * 🚩预算 * //
         final Budget budget = backward
                 // * 🚩反向推理⇒复合反向弱
                 ? BudgetInference.compoundBackwardWeak(content, context)
-                // * 🚩正向推理⇒复合正向
+                // * 🚩前向推理⇒复合前向
                 : BudgetInference.compoundForward(truth, content, context);
 
         // * 🚩结论 * //
@@ -171,14 +170,14 @@ final class StructuralRules {
         final Truth truth = backward
                 // * 🚩反向推理⇒空
                 ? null
-                // * 🚩正向推理⇒直接用任务的真值
-                : context.getCurrentTask().asJudgement().truthClone();
+                // * 🚩前向推理⇒直接用任务的真值
+                : TruthFunctions.identity(context.getCurrentTask().asJudgement());
 
         // * 🚩预算 * //
         final Budget budget = backward
                 // * 🚩反向推理⇒复合反向
                 ? BudgetInference.compoundBackward(content, context)
-                // * 🚩正向推理⇒复合正向
+                // * 🚩前向推理⇒复合前向
                 : BudgetInference.compoundForward(truth, content, context);
 
         // * 🚩结论 * //
@@ -224,7 +223,7 @@ final class StructuralRules {
             DerivationContextReason context) {
         final boolean backward = context.isBackward();
 
-        if (backward) // ! 📝此推理只适用于正向推理（目标推理亦不行，refer@304）
+        if (backward) // ! 📝此推理只适用于前向推理（目标推理亦不行，refer@304）
             return;
 
         // * 🚩预先计算真值
@@ -312,7 +311,7 @@ final class StructuralRules {
             DerivationContextReason context) {
         final boolean backward = context.isBackward();
 
-        if (backward) // ! 📝此推理只适用于正向推理（目标推理亦不行，refer@304）
+        if (backward) // ! 📝此推理只适用于前向推理（目标推理亦不行，refer@304）
             return;
 
         // * 🚩预先计算真值
@@ -422,43 +421,68 @@ final class StructuralRules {
     /**
      * {<S --> {P}>} |- <S <-> {P}>
      * {<[S] --> P>} |- <[S] <-> P>
+     * * 📝外延集、内涵集的「定理」
+     * * 📝NAL中「外延集」「内涵集」可以理解为「概念继承关系的上界/下界」，整个继承关系可类比性地构造出Hasse图
      *
      * @param compound  The set compound
      * @param statement The premise
      * @param side      The location of the indicated term in the premise
      * @param context   Reference to the derivation context
      */
-    static void transformSetRelation(CompoundTerm compound, Statement statement, short side,
+    static void transformSetRelation(
+            CompoundTerm compound,
+            Statement statement, short side,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (compound.size() > 1) {
+
+        // * 🚩预筛 * //
+        // * 🚩仅一元集
+        if (compound.size() > 1)
             return;
-        }
-        if (statement instanceof Inheritance) {
-            if (((compound instanceof SetExt) && (side == 0)) || ((compound instanceof SetInt) && (side == 1))) {
+
+        // * 🚩不处理其它「继承」的情况
+        if (statement instanceof Inheritance)
+            // * 📄"<{S} --> X>"
+            if (compound instanceof SetExt && side == 0)
                 return;
-            }
-        }
+            // * 📄"<X --> [P]>"
+            else if (compound instanceof SetInt && side == 1)
+                return;
+
+        // * 🚩词项 * //
         final Term sub = statement.getSubject();
         final Term pre = statement.getPredicate();
-        final Term content;
-        if (statement instanceof Inheritance) {
-            content = makeSimilarity(sub, pre);
-        } else {
-            if (((compound instanceof SetExt) && (side == 0)) || ((compound instanceof SetInt) && (side == 1))) {
-                content = makeInheritance(pre, sub);
-            } else {
-                content = makeInheritance(sub, pre);
-            }
-        }
-        if (content == null) {
+        final Term content = statement instanceof Inheritance
+                // * 📄"<S --> {P}>" => "<S <-> {P}>"
+                // * 📄"<[S] --> P>" => "<[S] <-> P>"
+                ? makeSimilarity(sub, pre)
+                : compound instanceof SetExt && side == 0 || compound instanceof SetInt && side == 1
+                        // * 📄"<{S} <-> P>" => "<P --> {S}>"
+                        // * 📄"<S <-> [P]>" => "<[P] --> S>"
+                        ? makeInheritance(pre, sub)
+                        // * 📄"<S <-> {P}>" => "<S --> {P}>"
+                        // * 📄"<[S] <-> P>" => "<[S] --> P>"
+                        : makeInheritance(sub, pre);
+        if (content == null)
             return;
-        }
+
         final Task task = context.getCurrentTask();
         final boolean backward = context.isBackward();
-        final Truth truth = backward ? null : TruthFunctions.identity(task.asJudgement());
-        final Budget budget = backward ? BudgetInference.compoundBackward(content, context)
+
+        // * 🚩真值 * //
+        final Truth truth = backward
+                // * 🚩反向 ⇒ 空
+                ? null
+                // * 🚩前向 ⇒ 恒等
+                : TruthFunctions.identity(task.asJudgement());
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向⇒复合反向
+                ? BudgetInference.compoundBackward(content, context)
+                // * 🚩前向⇒复合前向
                 : BudgetInference.compoundForward(task.asJudgement(), content, context);
+
+        // * 🚩结论 * //
         context.singlePremiseTaskStructural(content, truth, budget);
     }
 
@@ -476,100 +500,129 @@ final class StructuralRules {
             CompoundTerm compound, Term component,
             boolean isCompoundFromTask,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
-        if (!component.isConstant()) {
+        // * 🚩仅「常量词项」
+        if (!component.isConstant())
             return;
-        }
-        final Term content = (isCompoundFromTask ? component : compound);
+
         final Task task = context.getCurrentTask();
-        final Truth truth;
-        final Budget budget;
-        if (task.isQuestion()) {
-            truth = null;
-            budget = BudgetInference.compoundBackward(content, context);
-        } else {
-            if ((task.isJudgement()) == (isCompoundFromTask == (compound instanceof Conjunction))) {
-                truth = TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE);
-            } else {
-                truth = TruthFunctions.negation(
-                        TruthFunctions.analyticDeduction(
-                                TruthFunctions.negation(task.asJudgement()),
-                                RELIANCE));
-            }
-            budget = BudgetInference.forward(truth, context);
-        }
+        final boolean backward = context.isBackward();
+
+        // * 🚩词项 * //
+        final Term content = isCompoundFromTask
+                // * 🚩复合词项从任务中来 ⇒ 元素
+                ? component
+                // * 🚩其它 ⇒ 整体
+                : compound;
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩前向推理⇒根据「判断句 == (复合词项从任务中来 == 复合词项是合取)」决策
+                : (task.isJudgement() == (isCompoundFromTask == compound instanceof Conjunction))
+                        // * 🚩满足⇒分析性演绎
+                        ? TruthFunctions.analyticDeduction(task.asJudgement(), RELIANCE)
+                        // * 🚩满足⇒分析性反演（非⇒演绎⇒非）
+                        : TruthFunctions.negation(
+                                TruthFunctions.analyticDeduction(TruthFunctions.negation(task.asJudgement()),
+                                        RELIANCE));
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向推理
+                ? BudgetInference.compoundBackward(content, context)
+                // * 🚩前向推理
+                : BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
         context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /* --------------- Negation related rules --------------- */
     /**
      * {A, A@(--, A)} |- (--, A)
+     * * 📝转换「否定」：反推否定、双重否定等
      *
      * @param content The premise
      * @param context Reference to the derivation context
      */
-    static void transformNegation(Term content, DerivationContextReason context) {
-        // TODO: 过程笔记注释
+    static void transformNegation(Negation negation, boolean isCompoundFromTask, DerivationContextReason context) {
         final Task task = context.getCurrentTask();
-        // * 🚩计算真值和预算值
-        final Truth truth;
-        final Budget budget;
-        switch (task.getPunctuation()) {
-            case JUDGMENT_MARK:
-                truth = TruthFunctions.negation(task.asJudgement());
-                budget = BudgetInference.compoundForward(task.asJudgement(), content, context);
-                break;
-            case QUESTION_MARK:
-                truth = null;
-                budget = BudgetInference.compoundBackward(content, context);
-                break;
-            default:
-                throw new AssertionError("未知的标点");
-        }
-        // * 🚩直接导出结论
+        final boolean backward = context.isBackward();
+
+        // * 🚩词项 * //
+        final Term content = isCompoundFromTask
+                // * 🚩从「当前任务」来⇒被否定的值
+                // * 📝双重否定⇒肯定
+                // * 📄【2024-06-10 19:57:15】一例：
+                // * compound="(--,(--,A))"
+                // * component="(--,A)"
+                // * conceptTerm="(--,(--,A))"
+                // * currentTask=Task@807 "$0.8000;0.8000;0.9500$ (--,(--,A)). %1.00;0.90%"
+                // * => "(--,A)"
+                ? negation.getTheComponent()
+                // * 🚩其它⇒转换整个否定
+                // * 📄【2024-07-22 17:52:09】一例：
+                // * compound="(--,A)"
+                // * component="A"
+                // * conceptTerm="A"
+                // * currentTask=Task@386 "$1.0000;0.0971;0.1341$ A. %0.90;0.09%"
+                // * => "(--,A)"
+                : negation;
+
+        // ? 💭【2024-07-22 17:42:55】具体后续是「先『真值→预算』再『判断→问题』」还是「先『判断→问题』再『真值→预算』」，可以进一步探讨
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩前向推理⇒否定
+                : TruthFunctions.negation(task.asJudgement());
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向推理⇒复合反向
+                ? BudgetInference.compoundBackward(content, context)
+                // * 🚩前向推理⇒复合前向
+                : BudgetInference.compoundForward(task.asJudgement(), content, context);
+
+        // * 🚩结论 * //
         context.singlePremiseTaskStructural(content, truth, budget);
     }
 
     /**
      * {<A ==> B>, A@(--, A)} |- <(--, B) ==> (--, A)>
+     * * 📝逆否
      *
      * @param statement The premise
      * @param context   Reference to the derivation context
      */
     static void contraposition(Statement statement, Sentence sentence, DerivationContextReason context) {
+        final boolean backward = context.isBackward();
+
+        // * 🚩词项 * //
         final Term subject = statement.getSubject();
         final Term predicate = statement.getPredicate();
+
         // * 🚩生成新内容
         final Term content = makeStatement(
-                statement,
-                makeNegation(predicate),
+                statement, // 相同系词
+                makeNegation(predicate), // 否定 @ 相反位置
                 makeNegation(subject));
-        // * 🚩计算真值、预算值
-        final Truth truth;
-        final Budget budget;
-        final char punctuation = sentence.getPunctuation();
-        switch (punctuation) {
-            // * 🚩判断
-            case JUDGMENT_MARK:
-                truth = content instanceof Implication
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                : content instanceof Implication
                         // * 🚩蕴含⇒双重否定
                         ? TruthFunctions.contraposition(sentence.asJudgement())
-                        : TruthValue.from(sentence.asJudgement());
-                budget = BudgetInference.compoundForward(truth, content, context);
-                break;
-            // * 🚩问题
-            case QUESTION_MARK:
-                truth = null;
-                budget = content instanceof Implication
+                        // * 🚩其它⇒恒等
+                        : TruthFunctions.identity(sentence.asJudgement());
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向⇒按照「是否为蕴含」分派
+                ? (content instanceof Implication
                         // * 🚩蕴含⇒弱推理
                         ? BudgetInference.compoundBackwardWeak(content, context)
-                        : BudgetInference.compoundBackward(content, context);
-                break;
-            default:
-                System.err.println("未知的标点类型：" + punctuation);
-                return;
-        }
-        // * 🚩导出任务
-        context.singlePremiseTask(content, punctuation, truth, budget);
+                        : BudgetInference.compoundBackward(content, context))
+                // * 🚩前向⇒复合前向
+                : BudgetInference.compoundForward(truth, content, context);
+
+        // * 🚩结论 * //
+        context.singlePremiseTask(content, sentence.getPunctuation(), truth, budget);
     }
 }
