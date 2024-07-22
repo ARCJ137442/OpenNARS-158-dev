@@ -43,7 +43,7 @@ final class SyllogisticRules {
         if (Statement.invalidStatement(sub, pre))
             return;
         // * 🚩后续根据「是否反向推理」安排真值和预算值
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
         final Statement oldContent = (Statement) task.getContent();
 
         // * 🚩演绎 & 举例
@@ -104,7 +104,7 @@ final class SyllogisticRules {
             return;
         // * 🚩提取信息
         final Statement taskContent = (Statement) task.getContent();
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
 
         // * 🚩归因 & 归纳 & 比较
         abduction(sub, pre, task, belief, context, taskContent, backward);
@@ -221,7 +221,7 @@ final class SyllogisticRules {
         if (Statement.invalidStatement(subject, predicate))
             return;
         // * 🚩提取参数
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
         final Statement st = (Statement) belief.getContent();
         // * 🚩词项
         final Term statement = makeStatement(st, subject, predicate);
@@ -263,9 +263,8 @@ final class SyllogisticRules {
         final Statement statement = (Statement) mainSentence.getContent();
         final Term subject = statement.getSubject();
         final Term predicate = statement.getPredicate();
-        final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
 
         // * 🚩词项
         final Term term = subSentence.getContent();
@@ -456,7 +455,7 @@ final class SyllogisticRules {
         final Judgement belief = context.getCurrentBelief();
         final boolean conditionalTask = VariableProcess.hasUnificationI(
                 premise2, belief.getContent());
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
 
         // * 🚩词项 * //
         final Term commonComponent;
@@ -549,7 +548,7 @@ final class SyllogisticRules {
         // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
 
         // * 🚩预置词项：分别消去彼此间的「内含条件」
         final Term term1 =
@@ -631,7 +630,7 @@ final class SyllogisticRules {
         // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
-        final boolean backward = task.isQuestion();
+        final boolean backward = context.isBackward();
 
         // * 🚩词项 * //
         final Term content = reduceComponents(compound, component);
