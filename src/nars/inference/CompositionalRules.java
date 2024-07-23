@@ -438,59 +438,87 @@ class CompositionalRules {
 
     /**
      * 🆕入口之一：变量引入
+     * ! ⚠️【2024-07-23 12:20:18】逻辑未完全被测试覆盖，代码理解度低
+     * * 📝【2024-07-23 12:04:33】OpenNARS 3.1.0仍然没有样例注释……
+     * * 📄一例（平凡情况）：
+     * * * originalMainSentence = "<<$1 --> swimmer> ==> <$1 --> bird>>"
+     * * * subSentence = "<bird --> animal>"
+     * * * component = "<$1 --> bird>"
+     * * * subContent = "<bird --> animal>"
+     * * * index = 1 @ originalMainSentence
+     * * * => "<<$1 --> swimmer> ==> <$1 --> bird>>"
      */
     static void introVarSameSubjectOrPredicate(
-            Judgement originalMainSentence,
-            Judgement subSentence, Term component,
-            CompoundTerm subContent, int index,
+            Judgement originalMainSentence, Judgement subSentence,
+            Term component, CompoundTerm subContent,
+            int index,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
         // * 🚩词项 * //
         final Sentence clonedMain = originalMainSentence.sentenceClone();
         final Term clonedMainT = clonedMain.getContent();
-        if (!(clonedMainT instanceof CompoundTerm) || !(subContent instanceof CompoundTerm)) {
+        // * 🚩仅对复合词项
+        if (!(clonedMainT instanceof CompoundTerm) || !(subContent instanceof CompoundTerm))
             return;
-        }
 
         final CompoundTerm mainCompound = (CompoundTerm) clonedMainT;
-        CompoundTerm subCompound = subContent.clone();
+        final CompoundTerm subCompound = subContent.clone();
+        // * 🚩对内部内容，仅适用于「继承×继承」与「相似×相似」
         if (!((component instanceof Inheritance && subContent instanceof Inheritance) ||
                 (component instanceof Similarity && subContent instanceof Similarity)))
             return;
         final Statement componentS = (Statement) component;
         final Statement subContentS = (Statement) subContent;
         // CompoundTerm result = mainCompound;
-        if (component.equals(subContent)) {
+        if (componentS.equals(subContentS))
             // wouldn't make sense to create a conjunction here,
             // would contain a statement twice
             return;
-        }
 
         final Term content;
         if (componentS.getPredicate().equals(subContentS.getPredicate())
                 && !(componentS.getPredicate() instanceof Variable)) {
+            // ! ⚠️【2024-07-23 12:17:44】目前还没真正触发过此处逻辑
+            // ! * 诸多尝试均被「变量分离规则」等 截胡
+            /*
+             * 📄已知如下输入无法触发：
+             * <swam --> swimmer>.
+             * <swam --> bird>.
+             * <bird --> swimmer>.
+             * <<$1 --> swimmer> ==> <$1 --> bird>>.
+             * <<bird --> $1> ==> <swimmer --> $1>>.
+             * 1000
+             */
             final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
             final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
-            subCompound = (CompoundTerm) setComponent(subCompound, 1, V);
-            if (zw2 == null || subCompound == null || zw2.equals(subCompound)) {
+            final CompoundTerm newSubCompound = (CompoundTerm) setComponent(subCompound, 1, V);
+            if (zw2 == null || newSubCompound == null || zw2.equals(newSubCompound))
                 return;
-            }
-            final Conjunction res = (Conjunction) makeConjunction(zw, subCompound);
+            final Conjunction res = (Conjunction) makeConjunction(zw, newSubCompound);
             content = (CompoundTerm) setComponent(mainCompound, index, res);
         } else if (componentS.getSubject().equals(subContentS.getSubject())
                 && !(componentS.getSubject() instanceof Variable)) {
+            // ! ⚠️【2024-07-23 12:17:44】目前还没真正触发过此处逻辑
+            // ! * 诸多尝试均被「变量分离规则」等 截胡
+            /*
+             * 📄已知如下输入无法触发：
+             * <swam --> swimmer>.
+             * <swam --> bird>.
+             * <bird --> swimmer>.
+             * <<$1 --> swimmer> ==> <$1 --> bird>>.
+             * <<bird --> $1> ==> <swimmer --> $1>>.
+             * 1000
+             */
             final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
             final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
-            subCompound = (CompoundTerm) setComponent(subCompound, 0, V);
-            if (zw2 == null || subCompound == null || zw2.equals(subCompound)) {
+            final CompoundTerm newSubCompound = (CompoundTerm) setComponent(subCompound, 0, V);
+            if (zw2 == null || newSubCompound == null || zw2.equals(newSubCompound))
                 return;
-            }
-            final Conjunction res = (Conjunction) makeConjunction(zw2, subCompound);
+            final Conjunction res = (Conjunction) makeConjunction(zw2, newSubCompound);
             content = (CompoundTerm) setComponent(mainCompound, index, res);
         } else {
-            content = mainCompound;
+            content = mainCompound; // ? 【2024-07-23 12:20:27】为何要重复得出结果
         }
 
         // * 🚩真值 * //
@@ -505,6 +533,25 @@ class CompositionalRules {
 
     /**
      * Introduce a dependent variable in an outer-layer conjunction
+     * * 📝「变量外引入」系列规则
+     *
+     * * 📌导出结论：「正反似合」
+     * * * 外延正传递（演绎）
+     * * * 外延反传递（举例）
+     * * * 相似の传递（比较）
+     * * * 因变量引入（合取）
+     *
+     * * 📄@主项: "<M --> S>" × "<M --> P>"
+     * * * => "<<$1 --> S> ==> <$1 --> P>>"
+     * * * => "<<$1 --> P> ==> <$1 --> S>>"
+     * * * => "<<$1 --> S> <=> <$1 --> P>>"
+     * * * => "(&&,<#1 --> S>,<#1 --> P>)"
+     *
+     * * 📄@谓项: "<S --> M>" × "<P --> M>"
+     * * * => "<<S --> $1> ==> <P --> $1>>"
+     * * * => "<<P --> $1> ==> <S --> $1>>"
+     * * * => "<<P --> $1> <=> <S --> $1>>"
+     * * * => "(&&,<P --> #1>,<S --> #1>)"
      *
      * @param taskContent   The first premise <M --> S>
      * @param beliefContent The second premise <M --> P>
@@ -517,90 +564,182 @@ class CompositionalRules {
             Statement beliefContent,
             int index,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
+        // * 🚩任务/信念 的真值 | 仅适用于前向推理
         final Truth truthT = context.getCurrentTask().asJudgement();
         final Truth truthB = context.getCurrentBelief();
-        final Variable varInd = makeVarI("varInd1".hashCode());
-        final Variable varInd2 = makeVarI("varInd2".hashCode());
+
+        // * 🚩词项初步：引入变量 * //
+        final Statement[] statesInd = introVarStatesInd(taskContent, beliefContent, index);
+        final Statement stateI1 = statesInd[0];
+        final Statement stateI2 = statesInd[1];
+
+        final Statement[] statesDep = introVarStatesDep(taskContent, beliefContent, index);
+        final Statement stateD1 = statesDep[0];
+        final Statement stateD2 = statesDep[1];
+
+        // * 🚩继续分派：词项、真值、预算、结论 * //
+        introVarOuter1(stateI1, stateI2, truthT, truthB, context);
+        introVarOuter2(stateI1, stateI2, truthT, truthB, context);
+        introVarOuter3(stateI1, stateI2, truthT, truthB, context);
+        introVarOuter4(stateD1, stateD2, truthT, truthB, context);
+    }
+
+    /**
+     * 🆕以「变量外引入」的内部词项，计算「引入状态」陈述
+     * * 📌引入的是「独立变量/自变量」"$"
+     * * 🎯产生的陈述（二元组）用于生成新结论内容
+     */
+    private static Statement[] introVarStatesInd(
+            final Statement taskContent, final Statement beliefContent,
+            final int index) {
+        final Variable varInd = makeVarI(taskContent, beliefContent);
         final Term term11, term12, term21, term22;
-        Term commonTerm;
-        final HashMap<Term, Term> subs = new HashMap<>();
+        final Term needCommon1, needCommon2;
+        // * 🚩根据索引决定「要组成新陈述的词项的位置」
         if (index == 0) {
             term11 = varInd;
             term21 = varInd;
-            term12 = taskContent.getPredicate();
-            term22 = beliefContent.getPredicate();
-            // * 🚩对「外延像」的特殊处理
-            if (term12 instanceof ImageExt && term22 instanceof ImageExt) {
-                commonTerm = ((ImageExt) term12).getTheOtherComponent();
-                if (commonTerm == null || !((ImageExt) term22).containTerm(commonTerm)) {
-                    commonTerm = ((ImageExt) term22).getTheOtherComponent();
-                    if (commonTerm == null || !((ImageExt) term12).containTerm(commonTerm)) {
-                        commonTerm = null;
-                    }
-                }
-                if (commonTerm != null) {
-                    subs.put(commonTerm, varInd2);
-                    VariableProcess.applySubstitute((ImageExt) term12, subs);
-                    VariableProcess.applySubstitute((ImageExt) term22, subs);
-                }
-            }
-        } else {
-            term11 = taskContent.getSubject();
-            term21 = beliefContent.getSubject();
+            term12 = needCommon1 = taskContent.getPredicate();
+            term22 = needCommon2 = beliefContent.getPredicate();
+        } else { // index == 1
+            term11 = needCommon1 = taskContent.getSubject();
+            term21 = needCommon2 = beliefContent.getSubject();
             term12 = varInd;
             term22 = varInd;
-            // * 🚩对「内涵像」的特殊处理
-            if (term11 instanceof ImageInt && term21 instanceof ImageInt) {
-                commonTerm = ((ImageInt) term11).getTheOtherComponent();
-                if (commonTerm == null || !((ImageInt) term21).containTerm(commonTerm)) {
-                    commonTerm = ((ImageInt) term21).getTheOtherComponent();
-                    if (commonTerm == null || !((ImageInt) term11).containTerm(commonTerm)) {
-                        commonTerm = null;
-                    }
-                }
-                if (commonTerm != null) {
-                    subs.put(commonTerm, varInd2);
-                    VariableProcess.applySubstitute((ImageInt) term11, subs);
-                    VariableProcess.applySubstitute((ImageInt) term21, subs);
-                }
-            }
         }
-
-        final Statement state1 = makeInheritance(term11, term12);
-        final Statement state2 = makeInheritance(term21, term22);
-        Term content = makeImplication(state1, state2);
-        if (content == null) {
-            return;
+        // * 🚩寻找「第二个相同词项」并在内容中替换 | 对「外延像@0」「内涵像@1」的特殊处理
+        /// * 📌【2024-07-23 13:19:30】此处原码与secondCommonTerm相同，故提取简并
+        final Term secondCommonTerm = secondCommonTerm(needCommon1, needCommon2, index);
+        if (secondCommonTerm != null) {
+            // * 🚩产生一个新的独立变量，并以此替换
+            final Variable varInd2 = makeVarI(taskContent, beliefContent, varInd);
+            final HashMap<Term, Term> subs = new HashMap<>();
+            subs.put(secondCommonTerm, varInd2);
+            // ! ⚠️在此期间【修改】其【所指向】的词项
+            VariableProcess.applySubstitute(needCommon1, subs);
+            VariableProcess.applySubstitute(needCommon2, subs);
         }
-        Truth truth;
-        Budget budget;
-        truth = TruthFunctions.induction(truthT, truthB);
-        budget = BudgetInference.compoundForward(truth, content, context);
-        context.doublePremiseTask(content, truth, budget);
+        // * 🚩返回：从元素构造继承陈述
+        return new Statement[] { makeInheritance(term11, term12), makeInheritance(term21, term22) };
+    }
 
-        content = makeImplication(state2, state1);
-        truth = TruthFunctions.induction(truthB, truthT);
-        budget = BudgetInference.compoundForward(truth, content, context);
-        context.doublePremiseTask(content, truth, budget);
-
-        content = makeEquivalence(state1, state2);
-        truth = TruthFunctions.comparison(truthT, truthB);
-        budget = BudgetInference.compoundForward(truth, content, context);
-        context.doublePremiseTask(content, truth, budget);
-
+    /**
+     * 🆕以「变量外引入」的内部词项，计算「引入状态」陈述
+     * * 📌引入的是「非独变量/因变量」"#"
+     * * 🎯产生的陈述（二元组）用于生成新结论内容
+     */
+    private static Statement[] introVarStatesDep(
+            final Statement taskContent, final Statement beliefContent,
+            final int index) {
         final Variable varDep = makeVarD(taskContent, beliefContent);
-        final Statement newState1, newState2;
+        final Statement state1, state2;
         if (index == 0) {
-            newState1 = makeInheritance(varDep, taskContent.getPredicate());
-            newState2 = makeInheritance(varDep, beliefContent.getPredicate());
+            state1 = makeInheritance(varDep, taskContent.getPredicate());
+            state2 = makeInheritance(varDep, beliefContent.getPredicate());
         } else {
-            newState1 = makeInheritance(taskContent.getSubject(), varDep);
-            newState2 = makeInheritance(beliefContent.getSubject(), varDep);
+            state1 = makeInheritance(taskContent.getSubject(), varDep);
+            state2 = makeInheritance(beliefContent.getSubject(), varDep);
         }
-        content = makeConjunction(newState1, newState2);
-        truth = TruthFunctions.intersection(truthT, truthB);
-        budget = BudgetInference.compoundForward(truth, content, context);
+        return new Statement[] { state1, state2 };
+    }
+
+    /**
+     * 「变量外引入」规则 结论1
+     * * 📄"<bird --> animal>" × "<bird --> swimmer>"
+     * * * => "<<$1 --> animal> ==> <$1 --> swimmer>>"
+     * * 📄"<sport --> competition>" × "<chess --> competition>"
+     * * * => "<<sport --> $1> ==> <chess --> $1>>"
+     *
+     * @param state1
+     * @param state2
+     * @param truthT
+     * @param truthB
+     * @param context
+     */
+    private static void introVarOuter1(
+            Statement state1, Statement state2,
+            Truth truthT, Truth truthB,
+            DerivationContextReason context) {
+        final Term content = makeImplication(state1, state2);
+        if (content == null)
+            return;
+        final Truth truth = TruthFunctions.induction(truthT, truthB);
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
+        context.doublePremiseTask(content, truth, budget);
+    }
+
+    /**
+     * 「变量外引入」规则 结论2
+     * * 📄"<bird --> animal>" × "<bird --> swimmer>"
+     * * * => "<<$1 --> swimmer> ==> <$1 --> animal>>"
+     * * 📄"<sport --> competition>" × "<chess --> competition>"
+     * * * => "<<chess --> $1> ==> <sport --> $1>>"
+     *
+     * @param state1
+     * @param state2
+     * @param truthT
+     * @param truthB
+     * @param context
+     */
+    private static void introVarOuter2(
+            Statement state1, Statement state2,
+            Truth truthT, Truth truthB,
+            DerivationContextReason context) {
+        final Term content = makeImplication(state2, state1);
+        if (content == null)
+            return;
+        final Truth truth = TruthFunctions.induction(truthB, truthT);
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
+        context.doublePremiseTask(content, truth, budget);
+    }
+
+    /**
+     * 「变量外引入」规则 结论3
+     * * 📄"<bird --> animal>" × "<bird --> swimmer>"
+     * * * => "<<$1 --> animal> <=> <$1 --> swimmer>>"
+     * * 📄"<sport --> competition>" × "<chess --> competition>"
+     * * * => "<<chess --> $1> <=> <sport --> $1>>"
+     *
+     * @param state1
+     * @param state2
+     * @param truthT
+     * @param truthB
+     * @param context
+     */
+    private static void introVarOuter3(
+            final Statement state1, final Statement state2,
+            final Truth truthT, final Truth truthB,
+            DerivationContextReason context) throws AssertionError {
+        final Term content = makeEquivalence(state1, state2);
+        if (content == null)
+            return;
+        final Truth truth = TruthFunctions.comparison(truthT, truthB);
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
+        context.doublePremiseTask(content, truth, budget);
+    }
+
+    /**
+     * 「变量外引入」规则 结论4
+     * * 📄"<bird --> animal>" × "<bird --> swimmer>"
+     * * * => "(&&,<#1 --> animal>,<#1 --> swimmer>)"
+     * * 📄"<sport --> competition>" × "<chess --> competition>"
+     * * * => "(&&,<chess --> #1>,<sport --> #1>)"
+     *
+     * @param state1
+     * @param state2
+     * @param truthT
+     * @param truthB
+     * @param context
+     */
+    private static void introVarOuter4(
+            final Statement state1, final Statement state2,
+            final Truth truthT, final Truth truthB,
+            DerivationContextReason context) {
+        final Term content = makeConjunction(state1, state2);
+        if (content == null)
+            return;
+        final Truth truth = TruthFunctions.intersection(truthT, truthB);
+        final Budget budget = BudgetInference.compoundForward(truth, content, context);
         context.doublePremiseTaskNotRevisable(content, truth, budget);
     }
 
@@ -675,9 +814,7 @@ class CompositionalRules {
      * @param term2 The second term
      * @param index The index of the terms in their statement
      */
-    private static Term secondCommonTerm(Term term1, Term term2, int index) {
-        // * 🚩根据中间条件多次覆盖，最终拿到一个引用
-        Term commonTerm = null;
+    private static Term secondCommonTerm(final Term term1, final Term term2, final int index) {
         if (false
                 // * 📄1: 都是主项，且均为外延像
                 || (index == 0 && term1 instanceof ImageExt && term2 instanceof ImageExt)
@@ -686,7 +823,7 @@ class CompositionalRules {
             final Image image1 = (Image) term1;
             final Image image2 = (Image) term2;
             // * 🚩先试第一个
-            commonTerm = image1.getTheOtherComponent();
+            Term commonTerm = image1.getTheOtherComponent();
             // * 🚩尝试不到？考虑第二个/用第二个覆盖
             if (commonTerm == null || !image2.containTerm(commonTerm)) {
                 // * 🚩再试第二个
@@ -696,7 +833,9 @@ class CompositionalRules {
                     commonTerm = null;
                 }
             }
+            // * 🚩根据中间条件多次覆盖，最终拿到一个引用
+            return commonTerm;
         }
-        return commonTerm;
+        return null;
     }
 }

@@ -23,12 +23,13 @@ public abstract class VariableProcess {
      *
      * @param subs
      */
-    public static void applySubstitute(CompoundTerm self, final HashMap<Term, Term> subs) {
+    public static void applySubstitute(Term self, final HashMap<Term, Term> subs) {
         // final Term original = self.clone();
         // final Term n = applySubstitute2New(self, subs, true);
         // * 🚩【2024-06-15 12:10:14】除了下边这一行，其它都是验证「跟函数式替换是否一致」的代码
         // * ✅【2024-06-15 12:10:54】目前验证结果：替换后不等⇔当且仅当替换后是空的——替换结果的无效性被提前揭露
-        _applySubstitute(self, subs);
+        if (self instanceof CompoundTerm) // 只有复合词项能替换
+            _applySubstitute((CompoundTerm) self, subs);
         // if (!((n == null) == !self.equals(n)))
         // throw new AssertionError("【2024-06-14 23:09:32】替换后不等 当且仅当替换后是空的！");
         // if (n == null)
