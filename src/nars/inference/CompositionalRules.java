@@ -536,8 +536,8 @@ class CompositionalRules {
      * * 📝「变量外引入」系列规则
      *
      * * 📌导出结论：「正反似合」
-     * * * 外延正传递（演绎）
-     * * * 外延反传递（举例）
+     * * * 外延正传递（归因/归纳）
+     * * * 外延反传递（归因/归纳）
      * * * 相似の传递（比较）
      * * * 因变量引入（合取）
      *
@@ -759,50 +759,126 @@ class CompositionalRules {
             Statement premise1, Statement premise2,
             CompoundTerm oldCompound,
             DerivationContextReason context) {
-        // TODO: 过程笔记注释
         final Task task = context.getCurrentTask();
-        if (!task.isJudgement() || (!premise1.isSameType(premise2))
-                || oldCompound.containComponent(premise1)) {
-            return;
-        }
-        final Term subject1 = premise1.getSubject();
-        final Term subject2 = premise2.getSubject();
-        final Term predicate1 = premise1.getPredicate();
-        final Term predicate2 = premise2.getPredicate();
-        final Term commonTerm1, commonTerm2;
-        if (subject1.equals(subject2)) {
-            commonTerm1 = subject1;
-            commonTerm2 = secondCommonTerm(predicate1, predicate2, 0);
-        } else if (predicate1.equals(predicate2)) {
-            commonTerm1 = predicate1;
-            commonTerm2 = secondCommonTerm(subject1, subject2, 0);
-        } else {
-            return;
-        }
         final Judgement belief = context.getCurrentBelief();
-        final HashMap<Term, Term> substitute = new HashMap<>();
-        substitute.put(commonTerm1, makeVarD("varDep2".hashCode()));
-        CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
-        VariableProcess.applySubstitute(content, substitute);
-        Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
-        Budget budget = BudgetInference.forward(truth, context);
-        context.doublePremiseTaskNotRevisable(content, truth, budget);
-        substitute.clear();
-        substitute.put(commonTerm1, makeVarI("varInd1".hashCode()));
-        if (commonTerm2 != null) {
-            substitute.put(commonTerm2, makeVarI("varInd2".hashCode()));
-        }
-        content = makeImplication(premise1, oldCompound);
-        if (content == null) {
+        // * 🚩仅适用于前向推理
+        if (!task.isJudgement())
             return;
+        // * 🚩前提1与前提2必须是相同类型，且「旧复合词项」不能包括前提1
+        if (!premise1.isSameType(premise2) || oldCompound.containComponent(premise1))
+            return;
+
+        // * 🚩计算共有词项
+        final Term[] commonTerms = introVarCommons(premise1, premise2);
+        if (commonTerms == null)
+            return;
+        final Term commonTerm1 = commonTerms[0], commonTerm2 = commonTerms[1];
+
+        // * 🚩继续向下分派
+        introVarInner1(premise1, oldCompound, task, belief, commonTerm1, commonTerm2, context);
+        introVarInner2(premise1, oldCompound, task, belief, commonTerm1, commonTerm2, context);
+    }
+
+    /**
+     * 🆕以「变量内引入」的内部词项，计算「共有词项」
+     * * 🎯产生的词项（二元组/空）用于生成新结论内容
+     */
+    private static Term[] introVarCommons(final Statement premise1, final Statement premise2) {
+        final Term term11 = premise1.getSubject();
+        final Term term21 = premise2.getSubject();
+        final Term term12 = premise1.getPredicate();
+        final Term term22 = premise2.getPredicate();
+        // * 🚩轮流判等以决定所抽取的词项
+        if (term11.equals(term21))
+            // * 🚩共有主项 ⇒ 11→(12×22)
+            return new Term[] { term11, secondCommonTerm(term12, term22, 0) };
+        else if (term12.equals(term22))
+            // * 🚩共有谓项 ⇒ 12→(11×21)
+            return new Term[] { term12, secondCommonTerm(term11, term21, 0) };
+        else
+            // * 🚩无共有词项⇒空
+            return null;
+    }
+
+    /**
+     * 「变量内引入」规则 结论1
+     * * 📝引入第二个变量，并在替换后产生一个合取
+     *
+     * * 📄"<{lock1} --> lock>" × "<{lock1} --> (/,open,$1,_)>"
+     * * * @ "<<$1 --> key> ==> <{lock1} --> (/,open,$1,_)>>"
+     * * * => "(&&,<#2 --> lock>,<<$1 --> key> ==> <#2 --> (/,open,$1,_)>>)"
+     *
+     * * 📄"<{Tweety} --> [chirping]>" × "<robin --> [chirping]>"
+     * * * @ "(&&,<robin --> [chirping]>,<robin --> [with_wings]>)"
+     * * * => "(&&,<robin --> #1>,<robin --> [with_wings]>,<{Tweety} --> #1>)"
+     */
+    private static void introVarInner1(
+            Statement premise1, CompoundTerm oldCompound,
+            final Task task, final Judgement belief,
+            final Term commonTerm1, final Term commonTerm2,
+            DerivationContextReason context) {
+        // * 🚩词项 * //
+        final CompoundTerm content = (CompoundTerm) makeConjunction(premise1, oldCompound);
+        if (content == null)
+            return;
+        // * 🚩将「共有词项」替换成变量
+        final HashMap<Term, Term> substitute = new HashMap<>();
+        final Variable varD = makeVarD(content);
+        substitute.put(commonTerm1, varD);
+        VariableProcess.applySubstitute(content, substitute);
+
+        // * 🚩真值 * //
+        final Truth truth = TruthFunctions.intersection(task.asJudgement(), belief);
+
+        // * 🚩预算 * //
+        final Budget budget = BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
+        context.doublePremiseTaskNotRevisable(content, truth, budget);
+    }
+
+    /**
+     * 「变量内引入」规则 结论2
+     * * 📝引入第二个变量，并在替换后产生一个蕴含
+     *
+     * * 📄"<{lock1} --> lock>" × "<{lock1} --> (/,open,$1,_)>"
+     * * * @ "<<$1 --> key> ==> <{lock1} --> (/,open,$1,_)>>"
+     * * * => "<(&&,<$1 --> key>,<$2 --> lock>) ==> <$2 --> (/,open,$1,_)>>"
+     *
+     * * 📄"<{Tweety} --> [chirping]>" × "<robin --> [chirping]>"
+     * * * @ "(&&,<robin --> [chirping]>,<robin --> [with_wings]>)"
+     * * * => "<<{Tweety} --> $1> ==> (&&,<robin --> $1>,<robin --> [with_wings]>)>"
+     */
+    private static void introVarInner2(
+            Statement premise1, CompoundTerm oldCompound,
+            final Task task, final Judgement belief,
+            final Term commonTerm1, final Term commonTerm2,
+            DerivationContextReason context) {
+        // * 🚩词项 * //
+        final Term content = makeImplication(premise1, oldCompound);
+        if (content == null)
+            return;
+        // * 🚩将「共有词项」替换成变量
+        final HashMap<Term, Term> substitute = new HashMap<>();
+        final Variable varI = makeVarI(content);
+        substitute.put(commonTerm1, varI);
+        if (commonTerm2 != null) {
+            final Variable varI2 = makeVarI(content, varI);
+            substitute.put(commonTerm2, varI2);
         }
         VariableProcess.applySubstitute(content, substitute);
-        if (premise1.equals(task.getContent())) {
-            truth = TruthFunctions.induction(belief, task.asJudgement());
-        } else {
-            truth = TruthFunctions.induction(task.asJudgement(), belief);
-        }
-        budget = BudgetInference.forward(truth, context);
+
+        // * 🚩真值 * //
+        final Truth truth = premise1.equals(task.getContent())
+                // * 🚩前提 == 任务 ⇒ 归纳 信念→任务
+                ? TruthFunctions.induction(belief, task.asJudgement())
+                // * 🚩前提 != 任务 ⇒ 归纳 任务→信念
+                : TruthFunctions.induction(task.asJudgement(), belief);
+
+        // * 🚩预算 * //
+        final Budget budget = BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
         context.doublePremiseTask(content, truth, budget);
     }
 
