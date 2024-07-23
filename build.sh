@@ -18,6 +18,6 @@ echo 'java -jar NARS.jar &'
 echo or
 echo 'java -jar NARS.jar nars-dist/Examples/Example-NAL1-edited.txt --silence 90 &'
 echo or
-echo 'java -cp NARS.jar nars.main_nogui.NARSBatch nars-dist/Examples/Example-NAL1-edited.txt'
+echo 'java -cp NARS.jar nars.main.NARSBatch nars-dist/Examples/Example-NAL1-edited.txt'
 echo or
-echo 'java -cp "*" nars.main_nogui.Shell'
+echo 'java -cp "*" nars.main.Shell'

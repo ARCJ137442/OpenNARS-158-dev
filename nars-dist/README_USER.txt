@@ -8,7 +8,7 @@ java -jar NARS.jar
 java -jar NARS.jar Examples/Example-NAL1-edited.txt --silence 90
 
 - reasoner in batch:
-java -cp NARS.jar nars.main_nogui.NARSBatch Examples/Example-NAL1-edited.txt
+java -cp NARS.jar nars.main.NARSBatch Examples/Example-NAL1-edited.txt
 
 Example experience files are in directory Examples.
 - "Example-NALn-*.txt" contains single step examples for most of the inference rules defined in NAL level n. The "edited" version contains English translations, and with the unrelated information removed; the "unedited" version contains the actual input/output data recorded by the "Save Experience" function of the GUI. The files can be loaded using the "Load Experience" function of the GUI.
