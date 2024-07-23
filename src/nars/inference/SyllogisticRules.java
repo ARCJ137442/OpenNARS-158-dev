@@ -139,7 +139,7 @@ final class SyllogisticRules {
         // * 🚩词项
         final Statement statement = makeStatement(taskContent, pre, sub);
         // * 🚩真值
-        final Truth truth = backward ? null : TruthFunctions.abduction(belief, task.asJudgement());
+        final Truth truth = backward ? null : TruthFunctions.induction(task.asJudgement(), belief);
         // * 🚩预算
         final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
                 : BudgetInference.forward(truth, context);
