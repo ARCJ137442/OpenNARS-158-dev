@@ -162,6 +162,11 @@ public final class DerivationContextReason implements DerivationContextConcept {
      * * ✅每行代码后加`verify`都不会有事
      */
     public TermLink nextBelief() {
+        // * 🚩处理所有旧任务的「导出」
+        for (Derivation derivation : this.core.derivations)
+            this.handleDerivation(derivation);
+        this.core.derivations.clear();
+
         // * 🚩先尝试拿出下一个词项链，若拿不出则返回空值
         final TermLink oldTermLink = this.getCurrentBeliefLink();
         final TermLink currentBeliefLink = this.beliefLinksToReason.poll();
@@ -194,10 +199,6 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
     /** 🆕通过设置好的（非空的）「当前信念链」返回更新的「当前信念」（所有权） */
     private Judgement updatedCurrentBelief() {
-        // * 🚩处理所有旧任务的「导出」
-        for (Derivation derivation : this.core.derivations)
-            this.handleDerivation(derivation);
-        this.core.derivations.clear();
         // * 🚩背景变量
         final TermLink newBeliefLink = this.currentBeliefLink;
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
@@ -283,6 +284,7 @@ public final class DerivationContextReason implements DerivationContextConcept {
         for (Derivation derivation : this.core.derivations)
             this.handleDerivation(derivation);
         this.core.derivations.clear();
+
         // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
         this.getCurrentConcept().putTermLinkBack(this.currentBeliefLink);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）

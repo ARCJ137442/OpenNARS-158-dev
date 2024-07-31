@@ -64,13 +64,13 @@ final class SyllogisticRules {
         // * 🚩真值
         final Truth truth = backward ? null : TruthFunctions.deduction(task.asJudgement(), belief);
         // * 🚩预算
-        final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
-                : BudgetInference.forward(truth, context);
-        // * 🚩结论
         final BudgetInferenceTask budgetTask = backward
                 //
                 ? BudgetInferenceTask.backwardWeak(belief)
                 : BudgetInferenceTask.forward(truth);
+        final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
+                : BudgetInference.forward(truth, context);
+        // * 🚩结论
         context.sendDerivation(new Derivation(content, truth, budgetTask));
         context.doublePremiseTask(content, truth, budget);
     }

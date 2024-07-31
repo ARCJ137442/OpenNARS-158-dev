@@ -184,7 +184,8 @@ public interface DerivationContext extends DerivationIn, DerivationOut {
         }
 
         public void sendDerivation(Derivation derivation) {
-            System.out.println("Derivation sent: " + derivation);
+            // // ! 不能用out打印：5.1、5.2测试失败
+            // System.err.println("Derivation sent: " + derivation + " @ " + derivation.content);
             this.derivations.add(derivation);
         }
     }
