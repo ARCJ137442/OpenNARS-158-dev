@@ -189,7 +189,7 @@ final class SyllogisticRules {
         // * 🚩词项
         // * 📝取「反对称」那个词项的系词
         final Statement asym = (Statement) asymmetric.getContent();
-        Term content = makeStatement(asym, subj, pred);
+        final Term content = makeStatement(asym, subj, pred);
         // * 🚩真值
         final Truth truth = backward ? null : TruthFunctions.analogy(asymmetric.asJudgement(), symmetric.asJudgement());
         // * 🚩预算
