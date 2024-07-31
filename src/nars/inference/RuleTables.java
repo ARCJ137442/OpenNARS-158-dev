@@ -464,7 +464,8 @@ final class RuleTables {
                 term1 = bTerm.getSubject();
                 term2 = tTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                unifiedQ = VariableProcess.unifyFindQ(term1, term2).applyTo(tTerm, bTerm);
+                // * ⚠️【2024-07-31 21:37:10】激进改良：无需应用变量替换，只需考虑「是否可替换」，并忽略「俩term是否为复合词项」
+                unifiedQ = VariableProcess.hasUnificationQ(term1, term2);
                 if (unifiedQ)
                     // * 🚩成功统一 ⇒ 匹配反向
                     matchReverse(context);
@@ -487,7 +488,8 @@ final class RuleTables {
                 term1 = tTerm.getSubject();
                 term2 = bTerm.getPredicate();
                 // * 🚩尝试统一查询变量
-                unifiedQ = VariableProcess.unifyFindQ(term1, term2).applyTo(tTerm, bTerm);
+                // * ⚠️【2024-07-31 21:37:10】激进改良：无需应用变量替换，只需考虑「是否可替换」，并忽略「俩term是否为复合词项」
+                unifiedQ = VariableProcess.hasUnificationQ(term1, term2);
                 if (unifiedQ)
                     // * 🚩成功统一 ⇒ 匹配反向
                     matchReverse(context);
@@ -625,7 +627,7 @@ final class RuleTables {
      * The task and belief match reversely
      * * 📄<A --> B> + <B --> A>
      * * * inferToSym: <A --> B>. => <A <-> B>.
-     * * * conversion: <A --> B>? => <A --> B>.
+     * * * conversion: <A --> B>? => <B --> A>.
      *
      * @param context Reference to the derivation context
      */
@@ -695,37 +697,32 @@ final class RuleTables {
         final Term tS = tTerm.getSubject();
         final Term bP = bTerm.getPredicate();
         final Term tP = tTerm.getPredicate();
-        final Unification unification;
         final boolean unified;
         switch (figure) {
             case SS:
                 // * 🚩尝试以不同方式统一独立变量 @ 公共词项
-                unification = VariableProcess.unifyFindI(bS, tS);
-                unified = unification.applyTo(bTerm, tTerm);
+                unified = VariableProcess.unifyFindI(bS, tS).applyTo(bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tP, belief, taskSentence, context);
                 return;
             case SP:
                 // * 🚩尝试以不同方式统一独立变量 @ 公共词项
-                unification = VariableProcess.unifyFindI(bS, tP);
-                unified = unification.applyTo(bTerm, tTerm);
+                unified = VariableProcess.unifyFindI(bS, tP).applyTo(bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bP, tS, belief, taskSentence, context);
                 return;
             case PS:
                 // * 🚩尝试以不同方式统一独立变量 @ 公共词项
-                unification = VariableProcess.unifyFindI(bP, tS);
-                unified = unification.applyTo(bTerm, tTerm);
+                unified = VariableProcess.unifyFindI(bP, tS).applyTo(bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tP, belief, taskSentence, context);
                 return;
             case PP:
                 // * 🚩尝试以不同方式统一独立变量 @ 公共词项
-                unification = VariableProcess.unifyFindI(bP, tP);
-                unified = unification.applyTo(bTerm, tTerm);
+                unified = VariableProcess.unifyFindI(bP, tP).applyTo(bTerm, tTerm);
                 // * 🚩成功统一 ⇒ 相似传递
                 if (unified)
                     SyllogisticRules.resemblance(bS, tS, belief, taskSentence, context);

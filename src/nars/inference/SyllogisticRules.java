@@ -229,16 +229,15 @@ final class SyllogisticRules {
             return;
         // * 🚩提取参数
         final boolean backward = context.isBackward();
-        final Statement st = (Statement) belief.getContent();
         // * 🚩词项
-        final Term statement = makeStatement(st, subject, predicate);
+        final Term content = makeStatement((Statement) belief.getContent(), subject, predicate);
         // * 🚩真值
         final Truth truth = backward ? null : TruthFunctions.resemblance(belief, task.asJudgement());
         // * 🚩预算
         final Budget budget = backward ? BudgetInference.backward(belief, context)
                 : BudgetInference.forward(truth, context);
         // * 🚩结论
-        context.doublePremiseTask(statement, truth, budget);
+        context.doublePremiseTask(content, truth, budget);
     }
 
     /* --------------- rules used only in conditional inference --------------- */
@@ -679,9 +678,9 @@ final class SyllogisticRules {
     static void inferToSym(Judgement judgment1, Judgement judgment2, DerivationContextReason context) {
         // * 🚩词项 * //
         final Statement statement1 = (Statement) judgment1.getContent();
-        final Term term1 = statement1.getSubject();
-        final Term term2 = statement1.getPredicate();
-        final Term content = makeStatementSymmetric(statement1, term1, term2);
+        final Term sub = statement1.getSubject();
+        final Term pre = statement1.getPredicate();
+        final Term content = makeStatementSymmetric(statement1, sub, pre);
 
         // * 🚩真值 * //
         final Truth truth = TruthFunctions.intersection(judgment1, judgment2);
@@ -732,7 +731,8 @@ final class SyllogisticRules {
      */
     static void conversion(Question taskQuestion, Judgement belief, DerivationContextReason context) {
         // * 🚩真值 * //
-        final Truth truth = TruthFunctions.conversion(context.getCurrentBelief());
+        // * 📝假定：此处使用的`belief`就是推理的「当前信念」（保证非空）
+        final Truth truth = TruthFunctions.conversion(belief);
         // * 🚩预算 * //
         final Budget budget = BudgetInference.forward(truth, context);
         // * 🚩转发到统一的逻辑
