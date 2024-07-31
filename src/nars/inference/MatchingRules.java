@@ -76,22 +76,23 @@ final class MatchingRules {
         final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
         // * 🚩预算
         final BudgetInferenceTask budgetTask = BudgetInferenceTask.reviseMatching(newBelief, oldBelief, revisedTruth);
-        final Budget budget = BudgetInference.reviseMatching(newBelief, oldBelief, revisedTruth, context);
+        // final Budget budget = BudgetInference.reviseMatching(newBelief, oldBelief,
+        // revisedTruth, context);
         // * 🚩结论：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp newStamp = Stamp.uncheckedMerge(
                 newBelief, oldBelief,
                 context.getTime(),
                 context.getMaxEvidenceBaseLength());
-        context.sendDerivation(
-                new Derivation(context.getCurrentTask(),
-                        content,
-                        revisedTruth, budgetTask,
-                        newStamp));
-        context.doublePremiseTask(
+        context.sendDerivation(new Derivation(
                 context.getCurrentTask(),
                 content,
-                revisedTruth, budget,
-                newStamp);
+                revisedTruth, budgetTask,
+                newStamp));
+        // context.doublePremiseTask(
+        // context.getCurrentTask(),
+        // content,
+        // revisedTruth, budget,
+        // newStamp);
     }
 }

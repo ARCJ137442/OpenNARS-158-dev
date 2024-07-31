@@ -7,6 +7,8 @@ import nars.entity.Judgement;
 import nars.entity.Task;
 import nars.entity.TaskLink;
 import nars.entity.TermLink;
+import nars.inference.Budget;
+import nars.inference.BudgetInference;
 import nars.language.Term;
 import nars.storage.Memory;
 
@@ -303,6 +305,21 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
     @Override
     public void handleDerivation(Derivation derivation) {
-        System.err.println("TODO: handleDerivation");
+        final Budget budget;
+        switch (derivation.budget.type) {
+            case ReviseMatch:
+                budget = BudgetInference.reviseMatching(
+                        derivation.budget.newBeliefTruth, derivation.budget.oldBeliefTruth,
+                        derivation.budget.truth, this);
+                this.doublePremiseTask(
+                        this.getCurrentTask(),
+                        derivation.content,
+                        derivation.truth, budget,
+                        derivation.stamp);
+                break;
+
+            default:
+                System.err.println("尚未支持的预算推理类型：" + derivation.budget.type);
+        }
     }
 }

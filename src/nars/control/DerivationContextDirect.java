@@ -181,17 +181,17 @@ public final class DerivationContextDirect implements DerivationContext {
 
     @Override
     public void handleDerivation(Derivation derivation) {
+        final Budget budget;
         switch (derivation.budget.type) {
             case ReviseDirect:
-                // TODO: 【2024-07-31 16:15:42】待实装替代（因为会重复修改）
-                // final Budget budget = BudgetInference.reviseDirect(
-                // derivation.budget.newBeliefTruth, derivation.budget.oldBeliefTruth,
-                // derivation.budget.truth,
-                // derivation.budget.currentTaskBudget);
-                // this.doublePremiseTaskRevision(
-                // derivation.content,
-                // derivation.truth, budget,
-                // derivation.stamp);
+                budget = BudgetInference.reviseDirect(
+                        derivation.budget.newBeliefTruth, derivation.budget.oldBeliefTruth,
+                        derivation.budget.truth,
+                        derivation.budget.currentTaskBudget);
+                this.doublePremiseTaskRevision(
+                        derivation.content,
+                        derivation.truth, budget,
+                        derivation.stamp);
                 break;
 
             default:

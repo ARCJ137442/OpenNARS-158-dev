@@ -147,9 +147,9 @@ final class LocalInference {
         final BudgetInferenceTask budgetTask = BudgetInferenceTask.reviseDirect(
                 newBelief, oldBelief, revisedTruth,
                 context.getCurrentTask());
-        final Budget budget = BudgetInference.reviseDirect(
-                newBelief, oldBelief, revisedTruth,
-                context.getCurrentTask());
+        // final Budget budget = BudgetInference.reviseDirect(
+        //         newBelief, oldBelief, revisedTruth,
+        //         context.getCurrentTask());
         // * 🚩导出
         // * 📝仅在此处用到「当前信念」作为「导出信念」
         // * 📝此处用不到「当前信念」（旧信念）
@@ -159,10 +159,10 @@ final class LocalInference {
                 context.getTime(),
                 context.getMaxEvidenceBaseLength());
         context.sendDerivation(new Derivation(content, revisedTruth, budgetTask, newStamp));
-        context.doublePremiseTaskRevision(
-                content,
-                revisedTruth, budget,
-                newStamp);
+        // context.doublePremiseTaskRevision(
+        //         content,
+        //         revisedTruth, budget,
+        //         newStamp);
     }
 
     /**
