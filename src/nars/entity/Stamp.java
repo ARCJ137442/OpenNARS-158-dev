@@ -93,7 +93,7 @@ public class Stamp implements Cloneable, Evidential {
      * * 🚩完整拷贝其中的数据
      */
     public static final Stamp from(Evidential template) {
-        return new Stamp(template.getEvidentialBase(), template.getCreationTime());
+        return template == null ? null : new Stamp(template.getEvidentialBase(), template.getCreationTime());
     }
 
     /**
