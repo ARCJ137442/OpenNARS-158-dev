@@ -1,6 +1,7 @@
 package nars.inference;
 
 import nars.entity.*;
+import nars.inference.BudgetInference.BudgetInferenceTask;
 import nars.inference.TruthFunctions.TruthFAnalytic;
 import nars.language.*;
 import nars.language.VariableProcess.AppliedCompounds;
@@ -10,6 +11,7 @@ import nars.io.Symbols;
 import static nars.language.MakeTerm.*;
 
 import nars.control.DerivationContextReason;
+import nars.control.DerivationOut.Derivation;
 
 /**
  * Syllogisms: Inference rules based on the transitivity of the relation.
@@ -65,6 +67,11 @@ final class SyllogisticRules {
         final Budget budget = backward ? BudgetInference.backwardWeak(belief, context)
                 : BudgetInference.forward(truth, context);
         // * 🚩结论
+        final BudgetInferenceTask budgetTask = backward
+                //
+                ? BudgetInferenceTask.backwardWeak(belief)
+                : BudgetInferenceTask.forward(truth);
+        context.sendDerivation(new Derivation(content, truth, budgetTask));
         context.doublePremiseTask(content, truth, budget);
     }
 

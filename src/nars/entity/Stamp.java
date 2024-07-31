@@ -89,6 +89,14 @@ public class Stamp implements Cloneable, Evidential {
     }
 
     /**
+     * 🆕从一个「证据基」中构造时间戳
+     * * 🚩完整拷贝其中的数据
+     */
+    public static final Stamp from(Evidential template) {
+        return new Stamp(template.getEvidentialBase(), template.getCreationTime());
+    }
+
+    /**
      * Generate a new stamp for derived sentence by merging the two from parents
      * // the first one is no shorter than the second
      * * 📌逻辑：不经检查的合并

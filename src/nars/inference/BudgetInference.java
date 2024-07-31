@@ -3,8 +3,10 @@ package nars.inference;
 import nars.control.DerivationContext;
 import nars.control.DerivationContextConcept;
 import nars.control.DerivationContextReason;
+import nars.entity.BudgetValue;
 import nars.entity.Concept;
 import nars.entity.TermLink;
+import nars.entity.TruthValue;
 import nars.inference.BudgetFunctions.BudgetInferenceFunction;
 import nars.inference.BudgetFunctions.BudgetInferenceResult;
 import nars.inference.BudgetFunctions.ReviseResult;
@@ -25,6 +27,180 @@ import nars.language.*;
 public final class BudgetInference {
 
     /**
+     * 预算推理任务的类型
+     * * 🎯用于在后续「延迟计算」中决定分派
+     */
+    public static enum BudgetInferenceTaskType {
+        /** 修正推理/直接 */
+        ReviseDirect,
+        /** 修正推理/转换 */
+        ReviseMatch,
+        /** 前向推理 */
+        Forward,
+        /** 反向强推理 */
+        Backward,
+        /** 反向弱推理 */
+        BackwardWeak,
+        /** 复合前向推理 */
+        CompoundForward,
+        /** 复合反向强推理 */
+        CompoundBackward,
+        /** 复合反向弱推理 */
+        CompoundBackwardWeak;
+    }
+
+    /**
+     * 预算推理任务
+     * * 📌【2024-07-31 14:43:44】核心架构原则：在「具体推理过程」中，除了指定的输出端口，不对推理器作修改
+     * * * 亦即：不获取推理器其它地方的可变引用
+     * * 🚩在「具体推理过程」中只产生「预算推理任务」而不执行任务，避免修改推理器
+     * * * 在整个「具体推理过程」完成后，产生的「预算推理任务」才被推理器执行
+     * * * 执行时方开始修改推理器（更新预算值、增加新任务 等）
+     */
+    public static final class BudgetInferenceTask {
+        // pub enum BudgetInferenceTask
+        /**
+         * 任务类型
+         * * 📌与「旧信念任务」「新信念任务」存在一定耦合
+         * * * 当【非修正】时，上述两个字段均为`null`
+         */
+        public final BudgetInferenceTaskType type;
+
+        /**
+         * 预算推理参考的「词项」
+         * * 📌可空
+         * * 🎯用于「获取复杂度」
+         */
+        public final Term term;
+
+        /**
+         * 预算推理参考的「真值」
+         * * 📌可空
+         * * 🎯用于「依照真值更新预算」
+         */
+        public final Truth truth;
+
+        /**
+         * 预算推理参考的「旧信念真值」
+         * * 📌可空
+         * * 🎯用于「修正规则」计算（其它情况均null）
+         */
+        public final Truth oldBeliefTruth;
+
+        /**
+         * 预算推理参考的「新信念真值」
+         * * 📌可空
+         * * 🎯用于「修正规则」计算（其它情况均null）
+         */
+        public final Truth newBeliefTruth;
+
+        /**
+         * 预算推理参考的「当前任务预算值」
+         * * 📌可空
+         * * 🎯用于「修正规则」计算（其它情况均null）
+         */
+        public final Budget currentTaskBudget;
+
+        /** 完全参数构造函数 */
+        private BudgetInferenceTask(
+                BudgetInferenceTaskType type,
+                Term term, Truth truth,
+                Truth oldBeliefTruth, Truth newBeliefTruth,
+                Budget currentTaskBudget) {
+            this.type = type;
+            this.term = term;
+            this.truth = TruthValue.from(truth); // * 🚩【2024-07-31 15:29:54】做一个彻底的引用隔离
+            this.oldBeliefTruth = TruthValue.from(oldBeliefTruth); // * 🚩【2024-07-31 15:29:54】做一个彻底的引用隔离
+            this.newBeliefTruth = TruthValue.from(newBeliefTruth); // * 🚩【2024-07-31 15:29:54】做一个彻底的引用隔离
+            this.currentTaskBudget = BudgetValue.from(currentTaskBudget); // * 🚩【2024-07-31 15:29:54】做一个彻底的引用隔离
+        }
+
+        /**
+         * 一般六大预算推理过程
+         * * 🚩对于「信念真值」默认为空
+         */
+        private BudgetInferenceTask(
+                BudgetInferenceTaskType type,
+                Term term, Truth truth) {
+            this(type, term, truth, null, null, null);
+        }
+
+        /**
+         * 一些简略的推理过程：省去词项
+         * * 🚩对于「词项」默认为空
+         */
+        private BudgetInferenceTask(
+                BudgetInferenceTaskType type,
+                Truth truth) {
+            this(type, null, truth);
+        }
+
+        /**
+         * 一些简略的推理过程：省去真值
+         * * 🚩对于「真值」默认为空
+         */
+        private BudgetInferenceTask(
+                BudgetInferenceTaskType type,
+                Term term) {
+            this(type, term, null);
+        }
+
+        /** 修正/直接推理 */
+        public static BudgetInferenceTask reviseDirect(
+                final Truth newBeliefTruth,
+                final Truth oldBeliefTruth,
+                final Truth revisedTruth,
+                final Budget currentTaskBudget) {
+            return new BudgetInferenceTask(
+                    BudgetInferenceTaskType.ReviseDirect,
+                    null, revisedTruth,
+                    newBeliefTruth, oldBeliefTruth,
+                    currentTaskBudget);
+        }
+
+        /** 修正/匹配推理 */
+        public static BudgetInferenceTask reviseMatching(
+                final Truth newBeliefTruth,
+                final Truth oldBeliefTruth,
+                final Truth revisedTruth) {
+            return new BudgetInferenceTask(
+                    BudgetInferenceTaskType.ReviseMatch,
+                    null, revisedTruth,
+                    newBeliefTruth, oldBeliefTruth, null);
+        }
+
+        /** 前向推理 */
+        public static BudgetInferenceTask forward(Truth truth) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.Forward, null, truth);
+        }
+
+        /** 反向强推理 */
+        public static BudgetInferenceTask backward(Truth truth) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.Backward, null, truth);
+        }
+
+        /** 反向弱推理 */
+        public static BudgetInferenceTask backwardWeak(Truth truth) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.BackwardWeak, null, truth);
+        }
+
+        /** 复合前向推理 */
+        public static BudgetInferenceTask compoundForward(Truth truth, Term content) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.CompoundForward, content, truth);
+        }
+
+        /** 复合反向强推理 */
+        public static BudgetInferenceTask compoundBackward(Term content) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.CompoundBackward, content, null);
+        }
+
+        /** 复合反向弱推理 */
+        public static BudgetInferenceTask compoundBackwardWeak(Term content) {
+            return new BudgetInferenceTask(BudgetInferenceTaskType.CompoundBackwardWeak, content, null);
+        }
+    }
+
+    /**
      * Evaluate the quality of a revision, then de-prioritize the premises
      * * 🚩【2024-05-21 10:30:50】现在仅用于直接推理，但逻辑可以共用：「反馈到链接」与「具体任务计算」并不矛盾
      *
@@ -39,7 +215,7 @@ public final class BudgetInference {
             final Truth oldBeliefTruth,
             final Truth revisedTruth,
             // boolean feedbackToLinks = false,
-            Budget currentTaskBudget) {
+            final Budget currentTaskBudget) {
         // * 🚩计算
         final ReviseResult result = BudgetFunctions.revise(
                 newBeliefTruth, oldBeliefTruth, revisedTruth,
@@ -91,7 +267,7 @@ public final class BudgetInference {
      * @param context [&m] The derivation context
      * @return [] The budget value of the conclusion
      */
-    static Budget forward(Truth truth, DerivationContextConcept context) {
+    public static Budget forward(Truth truth, DerivationContextConcept context) {
         return budgetInference(BudgetInferenceFunction.Forward, truth, null, context);
     }
 

@@ -1,11 +1,13 @@
 package nars.inference;
 
 import nars.control.DerivationContextDirect;
+import nars.control.DerivationOut.Derivation;
 import nars.entity.Concept;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.Stamp;
 import nars.entity.Task;
+import nars.inference.BudgetInference.BudgetInferenceTask;
 import nars.io.Symbols;
 import nars.language.Term;
 
@@ -142,6 +144,9 @@ final class LocalInference {
         // * 🚩真值
         final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
         // * 🚩预算值
+        final BudgetInferenceTask budgetTask = BudgetInferenceTask.reviseDirect(
+                newBelief, oldBelief, revisedTruth,
+                context.getCurrentTask());
         final Budget budget = BudgetInference.reviseDirect(
                 newBelief, oldBelief, revisedTruth,
                 context.getCurrentTask());
@@ -153,6 +158,7 @@ final class LocalInference {
                 newBelief, oldBelief,
                 context.getTime(),
                 context.getMaxEvidenceBaseLength());
+        context.sendDerivation(new Derivation(content, revisedTruth, budgetTask, newStamp));
         context.doublePremiseTaskRevision(
                 content,
                 revisedTruth, budget,

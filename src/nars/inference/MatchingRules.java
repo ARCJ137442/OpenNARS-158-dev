@@ -3,9 +3,11 @@ package nars.inference;
 import static nars.io.Symbols.*;
 
 import nars.control.DerivationContextReason;
+import nars.control.DerivationOut.Derivation;
 import nars.entity.Judgement;
 import nars.entity.Stamp;
 import nars.entity.Task;
+import nars.inference.BudgetInference.BudgetInferenceTask;
 import nars.language.Term;
 import nars.language.VariableProcess;
 
@@ -68,17 +70,24 @@ final class MatchingRules {
      * * 💭【2024-06-09 01:35:41】需要合并逻辑
      */
     private static void revision(Judgement newBelief, Judgement oldBelief, DerivationContextReason context) {
-        // * 🚩内容
+        // * 🚩词项
         final Term content = newBelief.getContent();
-        // * 🚩计算真值/预算值
+        // * 🚩真值
         final Truth revisedTruth = TruthFunctions.revision(newBelief, oldBelief);
+        // * 🚩预算
+        final BudgetInferenceTask budgetTask = BudgetInferenceTask.reviseMatching(newBelief, oldBelief, revisedTruth);
         final Budget budget = BudgetInference.reviseMatching(newBelief, oldBelief, revisedTruth, context);
-        // * 🚩创建并导入结果：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
+        // * 🚩结论：双前提 | 📝仅在此处用到「当前信念」作为「导出信念」
         // * 🚩【2024-06-06 08:52:56】现场构建「新时间戳」
         final Stamp newStamp = Stamp.uncheckedMerge(
                 newBelief, oldBelief,
                 context.getTime(),
                 context.getMaxEvidenceBaseLength());
+        context.sendDerivation(
+                new Derivation(context.getCurrentTask(),
+                        content,
+                        revisedTruth, budgetTask,
+                        newStamp));
         context.doublePremiseTask(
                 context.getCurrentTask(),
                 content,

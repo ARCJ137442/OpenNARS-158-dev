@@ -1,13 +1,16 @@
 package nars.control;
 
 import nars.entity.BudgetValue;
+import nars.entity.Evidential;
 import nars.entity.Judgement;
 import nars.entity.Sentence;
 import nars.entity.SentenceV1;
 import nars.entity.Stamp;
 import nars.entity.Task;
+import nars.entity.TruthValue;
 import nars.inference.Budget;
 import nars.inference.Truth;
+import nars.inference.BudgetInference.BudgetInferenceTask;
 import nars.language.Term;
 
 /**
@@ -17,6 +20,47 @@ import nars.language.Term;
  * TODO: 【2024-07-02 14:25:45】后续需要挪走其中的继承关系——消去「导出任务」中的「curentTask」
  */
 public interface DerivationOut extends DerivationIn {
+
+    public static class Derivation {
+
+        /**
+         * 所基于的「当前任务」
+         * * 🎯用于`decomposeStatement`
+         * * 🚩若为空，则自动补全为「当前任务」
+         */
+        public final Task currentTask;
+
+        /** 新产生的任务词项（非空） */
+        public final Term content;
+
+        /** 新产生的任务真值（可空@反向推理） */
+        public final Truth truth;
+
+        /** 需要处理的「预算推理任务」 */
+        public final BudgetInferenceTask budget;
+
+        /**
+         * 新产生的时间戳
+         * * 🚩若为空，则根据上下文自动补全
+         */
+        public final Stamp stamp;
+
+        public Derivation(Task currentTask, Term content, Truth truth, BudgetInferenceTask budget, Evidential stamp) {
+            this.currentTask = currentTask;
+            this.content = content;
+            this.truth = TruthValue.from(truth); // 拷贝以分离所有权
+            this.budget = budget;
+            this.stamp = Stamp.from(stamp); // 拷贝以分离所有权
+        }
+
+        public Derivation(Term content, Truth truth, BudgetInferenceTask budget) {
+            this(null, content, truth, budget, null);
+        }
+
+        public Derivation(Term content, Truth truth, BudgetInferenceTask budget, Evidential newStamp) {
+            this(null, content, truth, budget, newStamp);
+        }
+    }
 
     /**
      * Actually means that there are no new Tasks
@@ -127,5 +171,10 @@ public interface DerivationOut extends DerivationIn {
         // ! ⚠️由于「语句」和「任务」的扁平化（`.getSentence()`的消失），此处将直接打印作为「语句」的「任务」
         // * 💭思想：「任务」也是一种「语句」，只不过带了「物品」特性，可以被「袋」分派而已
         return type.toString() + ": " + sentence.toStringBrief();
+    }
+
+    public default void sendDerivation(Derivation derivation) {
+        // TODO: 测试
+        System.out.println("Derivation sent: " + derivation);
     }
 }
