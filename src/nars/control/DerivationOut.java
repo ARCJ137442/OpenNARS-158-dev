@@ -173,8 +173,11 @@ public interface DerivationOut extends DerivationIn {
         return type.toString() + ": " + sentence.toStringBrief();
     }
 
-    public default void sendDerivation(Derivation derivation) {
-        // TODO: 测试
-        System.out.println("Derivation sent: " + derivation);
-    }
+    public void sendDerivation(Derivation derivation);
+
+    /**
+     * 过程：导出结论⇒各类`XXXPremiseTask`
+     * * 📌在「具体推理规则」运行后执行
+     */
+    public void handleDerivation(Derivation derivation);
 }

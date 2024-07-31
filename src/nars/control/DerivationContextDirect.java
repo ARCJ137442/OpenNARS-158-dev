@@ -2,6 +2,8 @@ package nars.control;
 
 import nars.entity.Concept;
 import nars.entity.Task;
+import nars.inference.Budget;
+import nars.inference.BudgetInference;
 import nars.language.Term;
 import nars.storage.Memory;
 import static nars.control.DerivationContext.drop;
@@ -145,6 +147,10 @@ public final class DerivationContextDirect implements DerivationContext {
 
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
+        // * 🚩处理所有「导出」
+        for (Derivation derivation : this.core.derivations)
+            this.handleDerivation(derivation);
+        this.core.derivations.clear();
         // * 🚩销毁「当前任务」
         drop(this.currentTask);
         // * 🚩继续销毁核心
@@ -164,5 +170,32 @@ public final class DerivationContextDirect implements DerivationContext {
     @Override
     public Concept getCurrentConcept() {
         return this.core.currentConcept;
+    }
+
+    // 惰性推理结果处理
+
+    @Override
+    public void sendDerivation(Derivation derivation) {
+        this.core.sendDerivation(derivation);
+    }
+
+    @Override
+    public void handleDerivation(Derivation derivation) {
+        switch (derivation.budget.type) {
+            case ReviseDirect:
+                // TODO: 【2024-07-31 16:15:42】待实装替代（因为会重复修改）
+                // final Budget budget = BudgetInference.reviseDirect(
+                // derivation.budget.newBeliefTruth, derivation.budget.oldBeliefTruth,
+                // derivation.budget.truth,
+                // derivation.budget.currentTaskBudget);
+                // this.doublePremiseTaskRevision(
+                // derivation.content,
+                // derivation.truth, budget,
+                // derivation.stamp);
+                break;
+
+            default:
+                System.err.println("未支持的预算推理类型：" + derivation.budget.type);
+        }
     }
 }

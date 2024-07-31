@@ -162,9 +162,23 @@ public final class DerivationContextTransform implements DerivationContextConcep
 
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
+        // * 🚩处理所有「导出」
+        for (Derivation derivation : this.core.derivations)
+            this.handleDerivation(derivation);
+        this.core.derivations.clear();
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
         this.getCurrentConcept().putTaskLinkBack(this.currentTaskLink);
         // * 🚩从基类方法继续
         this.core.absorbedByReasoner(reasoner);
+    }
+
+    @Override
+    public void sendDerivation(Derivation derivation) {
+        this.core.sendDerivation(derivation);
+    }
+
+    @Override
+    public void handleDerivation(Derivation derivation) {
+        System.err.println("TODO: handleDerivation");
     }
 }

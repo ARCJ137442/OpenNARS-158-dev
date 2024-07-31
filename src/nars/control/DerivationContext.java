@@ -116,6 +116,14 @@ public interface DerivationContext extends DerivationIn, DerivationOut {
         public static Random randomNumber = new Random(1);
 
         /**
+         * 记录所有的「导出结果」
+         * * ️📝可空性：非空
+         * * 📝可变性：可变 | 在「打乱集合」时被`shuffle`函数修改
+         * * 📝所有权：具所有权
+         */
+        public LinkedList<Derivation> derivations = new LinkedList<>();
+
+        /**
          * 构造函数
          * * 🚩创建一个空的「推理上下文」，默认所有参数为空
          *
@@ -173,6 +181,11 @@ public interface DerivationContext extends DerivationIn, DerivationOut {
         /** 🆕对上层暴露的方法 */
         float getSilencePercent() {
             return this.silenceValue / 100.0f;
+        }
+
+        public void sendDerivation(Derivation derivation) {
+            System.out.println("Derivation sent: " + derivation);
+            this.derivations.add(derivation);
         }
     }
 }

@@ -210,12 +210,12 @@ public final class BudgetInference {
      * @param currentTaskBudget [&m] The budget of the current task
      * @return [] The budget for the new task
      */
-    static Budget reviseDirect(
+    public static Budget reviseDirect(
             final Truth newBeliefTruth,
             final Truth oldBeliefTruth,
             final Truth revisedTruth,
             // boolean feedbackToLinks = false,
-            final Budget currentTaskBudget) {
+            Budget currentTaskBudget) {
         // * 🚩计算
         final ReviseResult result = BudgetFunctions.revise(
                 newBeliefTruth, oldBeliefTruth, revisedTruth,
@@ -237,7 +237,7 @@ public final class BudgetInference {
      * @param context        [&m]
      * @return []
      */
-    static Budget reviseMatching(
+    public static Budget reviseMatching(
             final Truth newBeliefTruth,
             final Truth oldBeliefTruth,
             final Truth revisedTruth,

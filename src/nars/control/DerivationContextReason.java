@@ -194,6 +194,10 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
     /** 🆕通过设置好的（非空的）「当前信念链」返回更新的「当前信念」（所有权） */
     private Judgement updatedCurrentBelief() {
+        // * 🚩处理所有旧任务的「导出」
+        for (Derivation derivation : this.core.derivations)
+            this.handleDerivation(derivation);
+        this.core.derivations.clear();
         // * 🚩背景变量
         final TermLink newBeliefLink = this.currentBeliefLink;
         // * 🚩尝试从「当前信念链的目标」获取「当前信念」所对应的概念
@@ -275,6 +279,10 @@ public final class DerivationContextReason implements DerivationContextConcept {
 
     @Override
     public void absorbedByReasoner(Reasoner reasoner) {
+        // * 🚩处理最后一个「当前信念」的所有「导出」
+        for (Derivation derivation : this.core.derivations)
+            this.handleDerivation(derivation);
+        this.core.derivations.clear();
         // * 🚩将最后一个「当前信念链」归还给「当前信念」（所有权转移）
         this.getCurrentConcept().putTermLinkBack(this.currentBeliefLink);
         // * 🚩将「当前任务链」归还给「当前概念」（所有权转移）
@@ -284,5 +292,15 @@ public final class DerivationContextReason implements DerivationContextConcept {
         drop(currentBelief);
         // * 🚩吸收核心
         this.core.absorbedByReasoner(reasoner);
+    }
+
+    @Override
+    public void sendDerivation(Derivation derivation) {
+        this.core.sendDerivation(derivation);
+    }
+
+    @Override
+    public void handleDerivation(Derivation derivation) {
+        System.err.println("TODO: handleDerivation");
     }
 }
