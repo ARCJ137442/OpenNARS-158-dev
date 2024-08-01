@@ -327,19 +327,19 @@ final class SyllogisticRules {
      *
      * * 📝条件演绎/条件归纳
      *
-     * @param conditional The conditional premise
-     * @param index       The location of the shared term in the condition of
-     *                    premise1
-     * @param premise2    The premise which, or part of which, appears in the
-     *                    condition of premise1
-     * @param side        The location of the shared term in premise2:
-     *                    0 for subject, 1 for predicate, -1 for the whole term
-     * @param context     Reference to the derivation context
+     * @param conditional      The conditional premise
+     * @param indexInCondition The location of the shared term in the condition of
+     *                         premise1
+     * @param premise2         The premise which, or part of which, appears in the
+     *                         condition of premise1
+     * @param side             The location of the shared term in premise2:
+     *                         0 for subject, 1 for predicate, -1 for the whole term
+     * @param context          Reference to the derivation context
      */
     static void conditionalDedInd(
-            Implication conditional, short index,
-            Term premise2, int side,
-            DerivationContextReason context) {
+            final Implication conditional, final short indexInCondition,
+            final Term premise2, final int side,
+            final DerivationContextReason context) {
         // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
         final Judgement belief = context.getCurrentBelief();
@@ -370,14 +370,16 @@ final class SyllogisticRules {
         // * 🚩根据「旧条件」选取元素（或应用「变量统一」）
         final Conjunction oldCondition = (Conjunction) subj;
         final int index2 = oldCondition.indexOfComponent(commonComponent);
+        final short indexInOldCondition;
         final Statement conditionalUnified; // 经过（潜在的）「变量统一」之后的「前提1」
         if (index2 >= 0) {
-            index = (short) index2;
+            indexInOldCondition = (short) index2;
             conditionalUnified = conditional.clone();
         } else {
             // * 🚩尝试数次匹配，将其中的变量归一化
             // * 📝两次尝试的变量类型相同，但应用的位置不同
-            final Term conditionToUnify = oldCondition.componentAt(index);
+            indexInOldCondition = indexInCondition;
+            final Term conditionToUnify = oldCondition.componentAt(indexInOldCondition);
             final Unification unification1 = VariableProcess.unifyFindI(conditionToUnify, commonComponent);
             if (unification1.hasUnification()) {
                 final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
@@ -385,7 +387,7 @@ final class SyllogisticRules {
                         unification1);
                 conditionalUnified = (Statement) appliedCompounds.extractApplied1();
             } else if (commonComponent.isSameType(oldCondition)) {
-                final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(index);
+                final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(indexInOldCondition);
                 // * 🚩尝试寻找并应用变量归一化
                 final Unification unification2 = VariableProcess.unifyFindI(
                         conditionToUnify, commonComponentComponent);
@@ -404,7 +406,7 @@ final class SyllogisticRules {
         if (oldCondition.equals(commonComponent)) {
             newCondition = null;
         } else {
-            newCondition = setComponent(oldCondition, index, newComponent);
+            newCondition = setComponent(oldCondition, indexInOldCondition, newComponent);
         }
         // * 🚩根据「新条件」构造新词项
         final Term content;
