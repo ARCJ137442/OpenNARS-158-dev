@@ -151,7 +151,7 @@ final class RuleTables {
                             throw new AssertionError("【2024-06-14 17:38:35】任务链是「复合某某」的，当前任务一定是复合词项");
                         if (!(beliefTerm instanceof Implication))
                             throw new AssertionError("【2024-06-14 17:38:35】信念链是「复合条件」的，当前信念一定是「蕴含」");
-                        reason_compoundAndCompoundCondition(
+                        compoundAndCompoundCondition(
                                 context,
                                 task, (CompoundTerm) taskTerm,
                                 belief, (Implication) beliefTerm,
@@ -269,7 +269,7 @@ final class RuleTables {
                     context);
     }
 
-    private static void reason_compoundAndCompoundCondition(
+    private static void compoundAndCompoundCondition(
             final DerivationContextReason context,
             final Task task,
             final CompoundTerm taskTerm,
