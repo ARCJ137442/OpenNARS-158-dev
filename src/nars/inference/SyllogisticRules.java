@@ -618,7 +618,7 @@ final class SyllogisticRules {
     }
 
     /**
-     * {(&&, <#x() --> S>, <#x() --> P>>, <M --> P>} |- <M --> S>
+     * {(&&, <#x() --> S>, <#x() --> P>), <M --> P>} |- <M --> S>
      *
      * @param compound           The compound term to be decomposed
      * @param component          The part of the compound to be removed
