@@ -540,12 +540,10 @@ final class SyllogisticRules {
             Statement st1, Statement st2,
             DerivationContextReason context) {
         // * 🚩检验合法性 * //
-        if (!(st1 instanceof Implication) || !(st2 instanceof Implication)) {
+        if (!(st1 instanceof Implication) || !(st2 instanceof Implication)) // 📝都要是蕴含
             return false;
-        }
-        if (!(cond1 instanceof Conjunction) && !(cond2 instanceof Conjunction)) {
+        if (!(cond1 instanceof Conjunction) && !(cond2 instanceof Conjunction)) // 📝必须其中一个是合取
             return false;
-        }
 
         // * 🚩提取参数 * //
         final Task task = context.getCurrentTask();
@@ -570,53 +568,46 @@ final class SyllogisticRules {
                         // * 🚩其它⇒空
                         : null;
 
-        // * 🚩都消没了⇒推理失败
-        if ((term1 == null) && (term2 == null))
-            return false;
         final Truth truth1 = task.asJudgement();
         final Truth truth2 = belief;
-        // * 📝【2024-08-04 23:28:02】经过别处实验，此处实质上就是「12互换」的「样板代码」
-        if (term1 != null) {
-            // * 🚩词项 * //
-            final Term content = term2 != null
-                    // * 🚩仍然是条件句
-                    ? makeStatement(st2, term2, term1)
-                    // * 🚩只剩下条件
-                    : term1;
-            // * 🚩真值 * //
-            final Truth truth = backward ? null
-                    // * 🚩类比
-                    : TruthFunctions.abduction(truth2, truth1);
-            // * 🚩预算 * //
-            final Budget budget = backward
-                    // * 🚩反向 ⇒ 弱
-                    ? BudgetInference.backwardWeak(belief, context)
-                    // * 🚩其它 ⇒ 前向
-                    : BudgetInference.forward(truth, context);
-            // * 🚩结论 * //
-            context.doublePremiseTask(content, truth, budget);
-        }
-        if (term2 != null) {
-            // * 🚩词项 * //
-            final Term content = term1 != null
-                    // * 🚩仍然是条件句
-                    ? makeStatement(st1, term1, term2)
-                    // * 🚩只剩下条件
-                    : term2;
-            // * 🚩真值 * //
-            final Truth truth = backward ? null
-                    // * 🚩类比
-                    : TruthFunctions.abduction(truth1, truth2);
-            // * 🚩预算 * //
-            final Budget budget = backward
-                    // * 🚩反向 ⇒ 弱
-                    ? BudgetInference.backwardWeak(belief, context)
-                    // * 🚩其它 ⇒ 前向
-                    : BudgetInference.forward(truth, context);
-            // * 🚩结论 * //
-            context.doublePremiseTask(content, truth, budget);
-        }
+        conditionalAbdDerive(context, belief, backward, st2, term2, term1, truth2, truth1); // 任务→信念
+        conditionalAbdDerive(context, belief, backward, st1, term1, term2, truth1, truth2); // 信念→任务
         // * 🚩匹配成功
+        return true;
+    }
+
+    /** 从「条件归纳」中提取出的「导出」模块 */
+    private static boolean conditionalAbdDerive(
+            DerivationContextReason context, final Judgement belief, final boolean backward,
+            Statement otherStatement,
+            final Term otherTerm, final Term selfTerm, final Truth otherTruth, final Truth selfTruth) {
+        if (selfTerm == null)
+            return false;
+
+        // * 🚩词项 * //
+        final Term content = otherTerm != null
+                // * 🚩仍然是条件句
+                ? makeStatement(otherStatement, otherTerm, selfTerm)
+                // * 🚩只剩下条件
+                : selfTerm;
+        if (content == null)
+            return false;
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩类比
+                : TruthFunctions.abduction(otherTruth, selfTruth);
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                // * 🚩反向 ⇒ 弱
+                ? BudgetInference.backwardWeak(belief, context)
+                // * 🚩其它 ⇒ 前向
+                : BudgetInference.forward(truth, context);
+
+        // * 🚩结论 * //
+        context.doublePremiseTask(content, truth, budget);
+
         return true;
     }
 
