@@ -573,6 +573,9 @@ final class SyllogisticRules {
         // * 🚩都消没了⇒推理失败
         if ((term1 == null) && (term2 == null))
             return false;
+        final Truth truth1 = task.asJudgement();
+        final Truth truth2 = belief;
+        // * 📝【2024-08-04 23:28:02】经过别处实验，此处实质上就是「12互换」的「样板代码」
         if (term1 != null) {
             // * 🚩词项 * //
             final Term content = term2 != null
@@ -583,7 +586,7 @@ final class SyllogisticRules {
             // * 🚩真值 * //
             final Truth truth = backward ? null
                     // * 🚩类比
-                    : TruthFunctions.abduction(belief, task.asJudgement());
+                    : TruthFunctions.abduction(truth2, truth1);
             // * 🚩预算 * //
             final Budget budget = backward
                     // * 🚩反向 ⇒ 弱
@@ -595,23 +598,23 @@ final class SyllogisticRules {
         }
         if (term2 != null) {
             // * 🚩词项 * //
-            final Term content2 = term1 != null
+            final Term content = term1 != null
                     // * 🚩仍然是条件句
                     ? makeStatement(st1, term1, term2)
                     // * 🚩只剩下条件
                     : term2;
             // * 🚩真值 * //
-            final Truth truth2 = backward ? null :
-            // * 🚩类比
-                    TruthFunctions.abduction(task.asJudgement(), belief);
+            final Truth truth = backward ? null
+                    // * 🚩类比
+                    : TruthFunctions.abduction(truth1, truth2);
             // * 🚩预算 * //
-            final Budget budget2 = backward
+            final Budget budget = backward
                     // * 🚩反向 ⇒ 弱
                     ? BudgetInference.backwardWeak(belief, context)
                     // * 🚩其它 ⇒ 前向
-                    : BudgetInference.forward(truth2, context);
+                    : BudgetInference.forward(truth, context);
             // * 🚩结论 * //
-            context.doublePremiseTask(content2, truth2, budget2);
+            context.doublePremiseTask(content, truth, budget);
         }
         // * 🚩匹配成功
         return true;
