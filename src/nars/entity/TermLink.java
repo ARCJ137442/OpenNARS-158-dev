@@ -147,19 +147,17 @@ public class TermLink implements TLink<Term>, Item, ToStringBriefAndLong {
         if (!templateType.isToCompound())
             throw new AssertionError("模板必定是「从元素链接到整体」");
         // * 🚩开始计算类型
-        final TLinkType result;
-        if (template.willFromSelfTo().equals(target))
-            // * 🚩自「元素→整体」来（复合词项的「模板链接」指向自身）
-            // * 🚩到「整体→元素」去
-            // * 📄【2024-06-04 20:35:22】
-            // * Concept@48 "<{tim} --> (/,livingIn,_,{graz})>" ~> target="{tim}"
-            // * + template: willFromSelfTo="{tim}"
-            // * 📄【2024-06-04 20:35:32】
-            // * Concept@52 "<{tim} --> (/,livingIn,_,{graz})>" ~> target="tim"
-            // * + template: willFromSelfTo="tim"
-            result = templateType.tryPointToComponent(); // point to component
-        else
-            result = templateType;
+        final TLinkType result = template.willFromSelfTo().equals(target)
+                // * 🚩自「元素→整体」来（复合词项的「模板链接」指向自身）
+                // * 🚩到「整体→元素」去
+                // * 📄【2024-06-04 20:35:22】
+                // * Concept@48 "<{tim} --> (/,livingIn,_,{graz})>" ~> target="{tim}"
+                // * + template: willFromSelfTo="{tim}"
+                // * 📄【2024-06-04 20:35:32】
+                // * Concept@52 "<{tim} --> (/,livingIn,_,{graz})>" ~> target="tim"
+                // * + template: willFromSelfTo="tim"
+                ? templateType.tryPointToComponent() // point to component
+                : templateType;
         // * 🚩到此处可能是「元素→整体」也可能是「整体→元素」
         return result;
     }

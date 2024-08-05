@@ -379,17 +379,17 @@ final class SyllogisticRules {
                 final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
                         conditional, (CompoundTerm) premise2,
                         unification1);
-                conditionalUnified = (Statement) appliedCompounds.extractApplied1();
+                conditionalUnified = (Statement) appliedCompounds.extractApplied1(); // 📝实际上只需用到一个映射表
             } else if (commonComponent.isSameType(oldCondition)) {
                 final Term commonComponentComponent = ((CompoundTerm) commonComponent).componentAt(indexInOldCondition);
-                // * 🚩尝试寻找并应用变量归一化
+                // * 🚩尝试寻找并应用变量归一化 @ 共同子项
                 final Unification unification2 = VariableProcess.unifyFindI(
                         conditionToUnify, commonComponentComponent);
                 if (unification2.hasUnification()) {
                     final AppliedCompounds appliedCompounds = VariableProcess.unifyApplied(
                             conditional, (CompoundTerm) premise2,
                             unification2);
-                    conditionalUnified = (Statement) appliedCompounds.extractApplied1();
+                    conditionalUnified = (Statement) appliedCompounds.extractApplied1(); // 📝实际上只需用到一个映射表
                 } else
                     return;
             } else
