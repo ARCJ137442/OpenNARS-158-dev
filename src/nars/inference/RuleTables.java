@@ -975,7 +975,7 @@ final class RuleTables {
                 final boolean unifiedD = VariableProcess.unifyFindD(component, statement).applyTo(compound, statement);
                 if (unifiedD)
                     // * 🚩能消去⇒三段论消元
-                    SyllogisticRules.eliminateVarDep(
+                    CompositionalRules.eliminateVarDep(
                             compound, component,
                             statementEqualsBelief, // ? 【2024-06-10 19:38:32】为何要如此
                             context);

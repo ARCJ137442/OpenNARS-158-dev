@@ -914,4 +914,47 @@ class CompositionalRules {
         }
         return null;
     }
+
+    /**
+     * {(&&, <#x() --> S>, <#x() --> P>), <M --> P>} |- <M --> S>
+     *
+     * @param compound           The compound term to be decomposed
+     * @param component          The part of the compound to be removed
+     * @param isCompoundFromTask Whether the compound comes from the task
+     * @param context            Reference to the derivation context
+     */
+    static void eliminateVarDep(
+            CompoundTerm compound, Term component,
+            boolean isCompoundFromTask,
+            DerivationContextReason context) {
+        // * 🚩提取参数 * //
+        final Task task = context.getCurrentTask();
+        final Judgement belief = context.getCurrentBelief();
+        final boolean backward = context.isBackward();
+
+        // * 🚩词项 * //
+        final Term content = reduceComponents(compound, component);
+        if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
+            return;
+
+        // * 🚩真值 * //
+        final Truth truth = backward ? null
+                // * 🚩复合词项来自任务 ⇒ 任务，信念
+                : isCompoundFromTask ? TruthFunctions.anonymousAnalogy(task.asJudgement(), belief)
+                        // * 🚩否则 ⇒ 信念，任务
+                        : TruthFunctions.anonymousAnalogy(belief, task.asJudgement());
+
+        // * 🚩预算 * //
+        final Budget budget = backward
+                ? (isCompoundFromTask
+                        // * 🚩复合词项来自任务 ⇒ 反向
+                        ? BudgetInference.backward(belief, context)
+                        // * 🚩其它 ⇒ 反向弱推理
+                        : BudgetInference.backwardWeak(belief, context))
+                // * 🚩前向推理
+                : BudgetInference.compoundForward(truth, content, context);
+
+        // * 🚩结论 * //
+        context.doublePremiseTask(content, truth, budget);
+    }
 }
