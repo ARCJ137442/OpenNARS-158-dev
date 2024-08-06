@@ -141,7 +141,7 @@ final class RuleTables {
                         compoundAndStatement(
                                 (CompoundTerm) taskTerm, tIndex,
                                 (Statement) beliefTerm, bIndex,
-                                taskTerm.equals(beliefTerm), context);
+                                beliefTerm, context);
                         return;
                     case COMPOUND_CONDITION:
                         // *📄T="(||,<{tom}-->[aggressive]>,<{tom}-->(/,livingIn,_,{graz})>)"
@@ -182,7 +182,7 @@ final class RuleTables {
                         compoundAndStatement(
                                 (CompoundTerm) beliefTerm, bIndex,
                                 (Statement) taskTerm, tIndex,
-                                taskTerm.equals(beliefTerm), context);
+                                beliefTerm, context);
                         return;
                     case COMPOUND_STATEMENT:
                         // * 📄T="<{tim} --> (/,livingIn,_,{graz})>"
@@ -963,7 +963,7 @@ final class RuleTables {
     private static void compoundAndStatement(
             CompoundTerm compound, short index,
             Statement statement, short side,
-            boolean statementEqualsBelief, DerivationContextReason context) {
+            Term beliefTerm, DerivationContextReason context) {
         final Term component = compound.componentAt(index);
         // ! ⚠️可能与「当前概念」的词项不一致：元素"{tom}"🆚概念"tom"
         final Task task = context.getCurrentTask();
@@ -977,7 +977,7 @@ final class RuleTables {
                 if (unifiedD)
                     CompositionalRules.eliminateVarDep(
                             compound, component,
-                            statementEqualsBelief, // ? 【2024-06-10 19:38:32】为何要如此
+                            statement.equals(beliefTerm), // ? 【2024-06-10 19:38:32】为何要如此
                             context);
                 // * 🚩不能消去，但任务是判断句⇒内部引入变量
                 else if (task.isJudgement()) // && !compound.containComponent(component)) {
