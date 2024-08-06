@@ -967,25 +967,25 @@ final class RuleTables {
         final Term component = compound.componentAt(index);
         // ! ⚠️可能与「当前概念」的词项不一致：元素"{tom}"🆚概念"tom"
         final Task task = context.getCurrentTask();
-        // * 🚩均为陈述，且为同一类型
+        // * 🚩均为陈述，且为同一类型⇒组合规则
         if (component.isSameType(statement)) {
             // * 其内元素是「合取」且有「当前信念」
             if (compound instanceof Conjunction && context.hasCurrentBelief()) {
                 // * 🚩先尝试消去非独变量 #
                 final boolean unifiedD = VariableProcess.unifyFindD(component, statement).applyTo(compound, statement);
+                // * 🚩能消去⇒三段论消元
                 if (unifiedD)
-                    // * 🚩能消去⇒三段论消元
                     CompositionalRules.eliminateVarDep(
                             compound, component,
                             statementEqualsBelief, // ? 【2024-06-10 19:38:32】为何要如此
                             context);
-                /// * 🚩不能消去，但任务是判断句⇒内部引入变量
+                // * 🚩不能消去，但任务是判断句⇒内部引入变量
                 else if (task.isJudgement()) // && !compound.containComponent(component)) {
                     CompositionalRules.introVarInner(
                             statement, (Statement) component,
                             compound,
                             context);
-                /// * 🚩是疑问句，且能消去查询变量⇒解构出元素作为结论
+                // * 🚩是疑问句，且能消去查询变量⇒解构出元素作为结论
                 else if (VariableProcess.unifyFindQ(component, statement).applyTo(compound, statement))
                     CompositionalRules.decomposeStatement(
                             compound, component,
@@ -994,7 +994,7 @@ final class RuleTables {
             }
         }
         // if (!task.isStructural() && task.isJudgment()) {
-        // * 🚩类型不同 且为双判断
+        // * 🚩类型不同 且为双判断⇒结构规则
         else if (task.isJudgement()) {
             final boolean canComposeBoth;
             // * 🚩涉及的陈述是「继承」

@@ -61,28 +61,21 @@ final class StructuralRules {
 
         final Term subj;
         final Term pred;
-        if (side == 0) {
-            if (components.contains(statementSubject)) {
-                // * 🚩主项：原来的复合词项
-                subj = compound;
-                // * 🚩谓项：替换后的复合词项
-                components.set(index, statementPredicate);
-                pred = makeCompoundTerm(compound, components);
-            } else {
-                subj = statementSubject;
-                pred = statementPredicate;
-            }
-        } else { // side == 1
-            if (components.contains(statementPredicate)) {
-                // * 🚩主项：替换后的复合词项
-                components.set(index, statementSubject);
-                subj = makeCompoundTerm(compound, components);
-                // * 🚩谓项：原来的复合词项
-                pred = compound;
-            } else {
-                subj = statementSubject;
-                pred = statementPredicate;
-            }
+        if (side == 0 && components.contains(statementSubject)) {
+            // * 🚩主项：原来的复合词项
+            subj = compound;
+            // * 🚩谓项：替换后的复合词项
+            components.set(index, statementPredicate);
+            pred = makeCompoundTerm(compound, components);
+        } else if (side == 1 && components.contains(statementPredicate)) {
+            // * 🚩主项：替换后的复合词项
+            components.set(index, statementSubject);
+            subj = makeCompoundTerm(compound, components);
+            // * 🚩谓项：原来的复合词项
+            pred = compound;
+        } else {
+            subj = statementSubject;
+            pred = statementPredicate;
         }
         if (subj == null || pred == null)
             // * 📄compound = "(&,[yellow],{Birdie})" @ 0 => "[yellow]"
@@ -269,14 +262,14 @@ final class StructuralRules {
             // * 📄"P"@"(P&Q)" × "<S --> P>"
             if (compound instanceof IntersectionInt) {
                 // * 🚩内涵交
-                // * 📄"P"@"(P&Q)" × "<S --> P>"
+                // * 📄"P"@"(P|Q)" × "<S --> P>"
                 // * * component=pred="P"
-                // * * compound="(P&Q)"
+                // * * compound="(P|Q)"
                 // * * subj="S"
-                // * * => "<S --> (P&Q)>"
+                // * * => "<S --> (P|Q)>"
                 structuralStatement(subj, compound, truthDed, context);
             } else if (compound instanceof DifferenceExt && index == 1) {
-                // * 🚩外延差 @ "P"@"(Q-P)"
+                // * 🚩外延差@谓项
                 // * 📄"P"@"(Q-P)" × "<S --> P>"
                 // * * component=pred="P"
                 // * * compound="(Q-P)"
@@ -285,7 +278,7 @@ final class StructuralRules {
                 // * 📝真值取【否定】
                 structuralStatement(subj, compound, truthNDed, context);
             } else if (compound instanceof DifferenceInt && index == 0) {
-                // * 🚩内涵差 @ "P"@"(P~Q)"
+                // * 🚩内涵差@主项
                 // * 📄"P"@"(P~Q)" × "<S --> P>"
                 // * * component=pred="P"
                 // * * compound="(P~Q)"
@@ -327,6 +320,7 @@ final class StructuralRules {
         final Term pred = statement.getPredicate();
         if (compound.equals(subj)) {
             // * 🚩复合词项是主项
+            // * 📄"P"@"(P&Q)" × "<(P&Q) --> S>"
             if (compound instanceof IntersectionInt) {
                 // * 🚩内涵交
                 // * 📄"S"@"(S|T)" × "<(S|T) --> P>"

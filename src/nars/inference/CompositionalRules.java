@@ -212,7 +212,7 @@ class CompositionalRules {
      *
      * @param implication        The implication term to be decomposed
      * @param componentCommon    The part of the implication to be removed
-     * @param term1              The other term in the contentInd
+     * @param componentCommon    The other term in the contentInd
      * @param side               The location of the shared term: 0 for subject, 1
      *                           for predicate
      * @param isCompoundFromTask Whether the implication comes from the task
@@ -220,7 +220,7 @@ class CompositionalRules {
      */
     private static void decomposeCompound(
             CompoundTerm compound, Term component,
-            Term term1, int side,
+            Term componentCommon, int side,
             boolean isCompoundFromTask, DerivationContextReason context) {
         // * 🚩「参考的复合词项」是 陈述/像 ⇒ 不解构
         if (compound instanceof Statement || compound instanceof ImageExt || compound instanceof ImageInt)
@@ -237,9 +237,9 @@ class CompositionalRules {
         final Statement oldTaskContent = (Statement) task.getContent();
         final Term content = side == 0
                 // * 🚩共有前项
-                ? makeStatement(oldTaskContent, term1, term2)
+                ? makeStatement(oldTaskContent, componentCommon, term2)
                 // * 🚩共有后项
-                : makeStatement(oldTaskContent, term2, term1);
+                : makeStatement(oldTaskContent, term2, componentCommon);
         if (content == null)
             return;
 
@@ -744,6 +744,7 @@ class CompositionalRules {
     }
 
     /**
+     * * 📝入口2：变量内引入
      * {<M --> S>, <C ==> <M --> P>>} |- <(&&, <#x --> S>, C) ==> <#x --> P>>
      * {<M --> S>, (&&, C, <M --> P>)} |- (&&, C, <<#x --> S> ==> <#x --> P>>)
      *
