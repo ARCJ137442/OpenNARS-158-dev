@@ -798,8 +798,7 @@ final class RuleTables {
                         component, subContent,
                         index, context);
                 return;
-            }
-            if (mainStatement instanceof Equivalence) {
+            } else if (mainStatement instanceof Equivalence) {
                 CompositionalRules.introVarSameSubjectOrPredicate(
                         highOrderSentence.asJudgement(), subSentence.asJudgement(),
                         component, subContent,

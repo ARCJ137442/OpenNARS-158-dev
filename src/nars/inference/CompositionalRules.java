@@ -115,11 +115,15 @@ class CompositionalRules {
                         throw new IllegalStateException("unreachable");
                 }
             } else if (taskContent instanceof Implication) {
+                // * 🚩「或」析取
                 termOr = makeDisjunction(componentT, componentB);
+                // * 🚩「与」合取
                 termAnd = makeConjunction(componentT, componentB);
+                // * 🚩没有「差」
                 termDif = null;
                 truthDif = null;
             } else {
+                // * 🚩其它情况都没有
                 termOr = null;
                 termAnd = null;
                 termDif = null;
@@ -160,11 +164,15 @@ class CompositionalRules {
                         throw new IllegalStateException("unreachable");
                 }
             } else if (taskContent instanceof Implication) {
+                // * 🚩「或」合取
                 termOr = makeConjunction(componentT, componentB);
+                // * 🚩「与」析取
                 termAnd = makeDisjunction(componentT, componentB);
+                // * 🚩没有「差」
                 termDif = null;
                 truthDif = null;
             } else {
+                // * 🚩其它情况都没有
                 termOr = null;
                 termAnd = null;
                 termDif = null;
@@ -246,8 +254,8 @@ class CompositionalRules {
         // * 🚩真值 * //
         if (!task.isJudgement())
             return; // ! 只能是判断句、正向推理
-        final Judgement belief = context.getCurrentBelief();
-        final Judgement taskJudgement = context.getCurrentTask().asJudgement();
+        final Truth belief = context.getCurrentBelief();
+        final Truth taskJudgement = context.getCurrentTask().asJudgement();
         final Truth v1, v2;
         if (isCompoundFromTask) {
             v1 = taskJudgement;
@@ -325,13 +333,16 @@ class CompositionalRules {
                         // * 🚩其它 ⇒ 合取否定
                         truth = TruthFunctions.reduceConjunctionNeg(v1, v2);
                 else
+                    // * 🚩其它 ⇒ 否决
                     return;
             else if (oldTaskContent instanceof Implication)
                 // * 🚩旧任务内容 <: 蕴含
-                if (compound instanceof Disjunction)
-                    truth = TruthFunctions.reduceConjunction(v1, v2);
-                else if (compound instanceof Conjunction)
+                if (compound instanceof Conjunction)
+                    // * 🚩合取 ⇒ 析取
                     truth = TruthFunctions.reduceDisjunction(v1, v2);
+                else if (compound instanceof Disjunction)
+                    // * 🚩析取 ⇒ 合取
+                    truth = TruthFunctions.reduceConjunction(v1, v2);
                 else
                     // * 🚩其它 ⇒ 否决
                     return;
@@ -451,7 +462,7 @@ class CompositionalRules {
     static void introVarSameSubjectOrPredicate(
             Judgement originalMainSentence, Judgement subSentence,
             Term component, CompoundTerm subContent,
-            int index,
+            int side,
             DerivationContextReason context) {
         // * 🚩词项 * //
         final Sentence clonedMain = originalMainSentence.sentenceClone();
@@ -460,7 +471,7 @@ class CompositionalRules {
         if (!(clonedMainT instanceof CompoundTerm) || !(subContent instanceof CompoundTerm))
             return;
 
-        final CompoundTerm mainCompound = (CompoundTerm) clonedMainT;
+        final Statement mainStatement = (Statement) clonedMainT;
         final CompoundTerm subCompound = subContent.clone();
         // * 🚩对内部内容，仅适用于「继承×继承」与「相似×相似」
         if (!((component instanceof Inheritance && subContent instanceof Inheritance) ||
@@ -488,14 +499,14 @@ class CompositionalRules {
              * <<bird --> $1> ==> <swimmer --> $1>>.
              * 1000
              */
-            final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
-            final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
+            final Variable V = makeVarD(mainStatement, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
+            final CompoundTerm zw = (CompoundTerm) mainStatement.componentAt(side).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 1, V);
             final CompoundTerm newSubCompound = (CompoundTerm) setComponent(subCompound, 1, V);
             if (zw2 == null || newSubCompound == null || zw2.equals(newSubCompound))
                 return;
             final Conjunction res = (Conjunction) makeConjunction(zw, newSubCompound);
-            content = (CompoundTerm) setComponent(mainCompound, index, res);
+            content = (CompoundTerm) setComponent(mainStatement, side, res);
         } else if (componentS.getSubject().equals(subContentS.getSubject())
                 && !(componentS.getSubject() instanceof Variable)) {
             // ! ⚠️【2024-07-23 12:17:44】目前还没真正触发过此处逻辑
@@ -509,16 +520,16 @@ class CompositionalRules {
              * <<bird --> $1> ==> <swimmer --> $1>>.
              * 1000
              */
-            final Variable V = makeVarD(mainCompound, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
-            final CompoundTerm zw = (CompoundTerm) mainCompound.componentAt(index).clone();
+            final Variable V = makeVarD(mainStatement, subCompound); // * ✅不怕重名：现在始终是「最大词项的最大id+1」的模式
+            final CompoundTerm zw = (CompoundTerm) mainStatement.componentAt(side).clone();
             final CompoundTerm zw2 = (CompoundTerm) setComponent(zw, 0, V);
             final CompoundTerm newSubCompound = (CompoundTerm) setComponent(subCompound, 0, V);
             if (zw2 == null || newSubCompound == null || zw2.equals(newSubCompound))
                 return;
             final Conjunction res = (Conjunction) makeConjunction(zw2, newSubCompound);
-            content = (CompoundTerm) setComponent(mainCompound, index, res);
+            content = (CompoundTerm) setComponent(mainStatement, side, res);
         } else {
-            content = mainCompound; // ? 【2024-07-23 12:20:27】为何要重复得出结果
+            content = mainStatement; // ? 【2024-07-23 12:20:27】为何要重复得出结果
         }
 
         // * 🚩真值 * //
@@ -608,7 +619,7 @@ class CompositionalRules {
             term22 = varInd;
         }
         // * 🚩寻找「第二个相同词项」并在内容中替换 | 对「外延像@0」「内涵像@1」的特殊处理
-        /// * 📌【2024-07-23 13:19:30】此处原码与secondCommonTerm相同，故提取简并
+        // * 📌【2024-07-23 13:19:30】此处原码与secondCommonTerm相同，故提取简并
         final Term secondCommonTerm = secondCommonTerm(needCommon1, needCommon2, index);
         if (secondCommonTerm != null) {
             // * 🚩产生一个新的独立变量，并以此替换
