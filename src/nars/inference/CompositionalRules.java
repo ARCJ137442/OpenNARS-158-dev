@@ -505,7 +505,7 @@ class CompositionalRules {
             final CompoundTerm newSubCompound = (CompoundTerm) setComponent(subCompound, 1, V);
             if (zw2 == null || newSubCompound == null || zw2.equals(newSubCompound))
                 return;
-            final Conjunction res = (Conjunction) makeConjunction(zw, newSubCompound);
+            final Conjunction res = (Conjunction) makeConjunction(zw2, newSubCompound);
             content = (CompoundTerm) setComponent(mainStatement, side, res);
         } else if (componentS.getSubject().equals(subContentS.getSubject())
                 && !(componentS.getSubject() instanceof Variable)) {
