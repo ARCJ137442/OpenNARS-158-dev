@@ -605,30 +605,30 @@ class CompositionalRules {
             final int index) {
         final Variable varInd = makeVarI(taskContent, beliefContent);
         final Term term11, term12, term21, term22;
-        final Term needCommon1, needCommon2;
+        final Term needCommonT, needCommonB;
         // * 🚩根据索引决定「要组成新陈述的词项的位置」
         if (index == 0) {
             term11 = varInd;
             term21 = varInd;
-            term12 = needCommon1 = taskContent.getPredicate();
-            term22 = needCommon2 = beliefContent.getPredicate();
+            term12 = needCommonT = taskContent.getPredicate();
+            term22 = needCommonB = beliefContent.getPredicate();
         } else { // index == 1
-            term11 = needCommon1 = taskContent.getSubject();
-            term21 = needCommon2 = beliefContent.getSubject();
+            term11 = needCommonT = taskContent.getSubject();
+            term21 = needCommonB = beliefContent.getSubject();
             term12 = varInd;
             term22 = varInd;
         }
         // * 🚩寻找「第二个相同词项」并在内容中替换 | 对「外延像@0」「内涵像@1」的特殊处理
         // * 📌【2024-07-23 13:19:30】此处原码与secondCommonTerm相同，故提取简并
-        final Term secondCommonTerm = secondCommonTerm(needCommon1, needCommon2, index);
+        final Term secondCommonTerm = secondCommonTerm(needCommonT, needCommonB, index);
         if (secondCommonTerm != null) {
             // * 🚩产生一个新的独立变量，并以此替换
             final Variable varInd2 = makeVarI(taskContent, beliefContent, varInd);
             final HashMap<Term, Term> subs = new HashMap<>();
             subs.put(secondCommonTerm, varInd2);
             // ! ⚠️在此期间【修改】其【所指向】的词项
-            VariableProcess.applySubstitute(needCommon1, subs);
-            VariableProcess.applySubstitute(needCommon2, subs);
+            VariableProcess.applySubstitute(needCommonT, subs);
+            VariableProcess.applySubstitute(needCommonB, subs);
         }
         // * 🚩返回：从元素构造继承陈述
         return new Statement[] { makeInheritance(term11, term12), makeInheritance(term21, term22) };
@@ -643,15 +643,21 @@ class CompositionalRules {
             final Statement taskContent, final Statement beliefContent,
             final int index) {
         final Variable varDep = makeVarD(taskContent, beliefContent);
-        final Statement state1, state2;
+        // * 🚩根据索引决定「要组成新陈述的词项的位置」
+        final Term term11, term12, term21, term22;
         if (index == 0) {
-            state1 = makeInheritance(varDep, taskContent.getPredicate());
-            state2 = makeInheritance(varDep, beliefContent.getPredicate());
+            term11 = varDep;
+            term21 = varDep;
+            term12 = taskContent.getPredicate();
+            term22 = beliefContent.getPredicate();
         } else {
-            state1 = makeInheritance(taskContent.getSubject(), varDep);
-            state2 = makeInheritance(beliefContent.getSubject(), varDep);
+            term11 = taskContent.getSubject();
+            term21 = beliefContent.getSubject();
+            term12 = varDep;
+            term22 = varDep;
         }
-        return new Statement[] { state1, state2 };
+        // * 🚩返回：从元素构造继承陈述
+        return new Statement[] { makeInheritance(term11, term12), makeInheritance(term21, term22) };
     }
 
     /**
@@ -946,7 +952,11 @@ class CompositionalRules {
 
         // * 🚩词项 * //
         final Term content = reduceComponents(compound, component);
-        if ((content == null) || ((content instanceof Statement) && ((Statement) content).invalid()))
+        if (content == null)
+            // * 🚩【2024-11-11 22:01:36】消去元素失败 ⇒ 中止
+            return;
+        if (content instanceof Statement && ((Statement) content).invalid())
+            // * 🚩【2024-11-11 22:01:36】无效陈述 ⇒ 中止
             return;
 
         // * 🚩真值 * //
